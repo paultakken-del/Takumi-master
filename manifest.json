@@ -1,0 +1,48 @@
+{
+  "name": "Takumi Master",
+  "short_name": "Takumi",
+  "description": "Digitale dojo om te leren spelen met de elementen. Vijf stemmen die je leren beter te zien.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f0e8",
+  "theme_color": "#c4532a",
+  "lang": "nl",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cockpit",
+      "short_name": "Cockpit",
+      "description": "Open je dag in één blik",
+      "url": "/?v=ck",
+      "icons": [{"src": "/icon-192.png", "sizes": "192x192"}]
+    },
+    {
+      "name": "Dojo",
+      "short_name": "Dojo",
+      "description": "Oefenruimte",
+      "url": "/?v=dj",
+      "icons": [{"src": "/icon-192.png", "sizes": "192x192"}]
+    }
+  ]
+}
