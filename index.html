@@ -753,6 +753,18 @@ input[type=range]{width:100%;accent-color:var(--acc)}
       <span style="font-size:14px;color:var(--acc);flex-shrink:0">→</span>
     </div>
 
+    <!-- BACKUP NUDGE — verschijnt als user data heeft en backup oud/ontbreekt -->
+    <div id="ck-backup-nudge" style="display:none;margin:var(--sp-sm) 0 0;padding:11px 12px 11px 16px;background:rgba(60,90,80,.06);border:1px solid rgba(60,90,80,.16);border-radius:var(--rs);align-items:center;justify-content:space-between;gap:8px;transition:all .2s">
+      <div onclick="goToBackup()" style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;cursor:pointer">
+        <span style="font-family:var(--FJ);font-size:18px;color:rgba(60,90,80,.85);flex-shrink:0;width:22px;text-align:center">空</span>
+        <div style="min-width:0">
+          <div id="ck-backup-nudge-t" style="font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:1px">Tijd voor een backup</div>
+          <div id="ck-backup-nudge-s" style="font-size:11px;color:var(--m);line-height:1.4"></div>
+        </div>
+      </div>
+      <button onclick="dismissBackupNudge(event)" aria-label="Sluit" style="background:none;border:none;color:var(--m);font-size:18px;cursor:pointer;padding:6px 8px;line-height:1;flex-shrink:0;-webkit-tap-highlight-color:transparent;opacity:.55" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.55'">×</button>
+    </div>
+
     <!-- ── AFSPRAKEN ── meesters die op je wachten ── -->
     <div id="ck-appointments" style="display:none;margin-top:16px"></div>
 
@@ -2779,6 +2791,9 @@ function initCkOpening(){
       nudge.style.display = (isMorning && !alreadyStarted) ? 'flex' : 'none';
     }
   } catch(e){}
+
+  // BACKUP NUDGE — apart van ochtend-nudge, dezelfde refresh-cyclus
+  try { renderBackupNudge(); } catch(e){}
 
   // Update question
   var qEl = document.getElementById('ck-opening-q');
@@ -6277,6 +6292,74 @@ function importBackup(event){
   };
   reader.onerror = function(){ toast('Kon bestand niet lezen', 'err'); };
   reader.readAsText(file);
+}
+
+// ── BACKUP NUDGE — cockpit-reminder als data niet beschermd is ──────
+function goToBackup(){
+  go('da');
+  setTimeout(function(){
+    var tabs = document.querySelectorAll('#v-da .tab');
+    for(var i=0;i<tabs.length;i++){
+      if(tabs[i].textContent.indexOf('Backup') !== -1){ stab('backup', tabs[i]); break; }
+    }
+  }, 80);
+}
+
+function dismissBackupNudge(ev){
+  if(ev && ev.stopPropagation) ev.stopPropagation();
+  var today = new Date().toISOString().slice(0,10);
+  lsSet('tm2_backup_nudge_dismissed', today);
+  var el = document.getElementById('ck-backup-nudge');
+  if(el) el.style.display = 'none';
+}
+
+function _hasMeaningfulData(){
+  try {
+    if(S.actions && S.actions.length > 0) return true;
+    if(S.chat && Object.keys(S.chat).length > 0) return true;
+    if(S.goals && S.goals.length > 0) return true;
+    if(ls('tm2_dojo_history', null)) return true;
+    if(ls('tm2_dojo_entry', null)) return true;
+    if(ls('tm2_ritme', null)) return true;
+    if(S.appointments && S.appointments.length > 0) return true;
+  } catch(e){}
+  return false;
+}
+
+function renderBackupNudge(){
+  var el = document.getElementById('ck-backup-nudge');
+  if(!el) return;
+
+  // Niet tonen voordat welkom-modal is gezien (anders dubbel-info-shock)
+  if(!localStorage.getItem('tm_welcome_seen_v1')){ el.style.display = 'none'; return; }
+
+  // Vandaag al weggeklikt?
+  var today = new Date().toISOString().slice(0,10);
+  if(ls('tm2_backup_nudge_dismissed', null) === today){ el.style.display = 'none'; return; }
+
+  // Geen significant data? Niets te beschermen, niet zeuren
+  if(!_hasMeaningfulData()){ el.style.display = 'none'; return; }
+
+  var lastBackup = ls('tm2_last_backup', null);
+  var titleEl = document.getElementById('ck-backup-nudge-t');
+  var subEl = document.getElementById('ck-backup-nudge-s');
+  var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
+
+  if(!lastBackup){
+    if(titleEl) titleEl.textContent = isEn ? 'Make your first backup' : 'Maak je eerste backup';
+    if(subEl) subEl.textContent = isEn ? 'Your Takumi data lives in this browser. Save a copy so you don\'t lose it.' : 'Je Takumi-data leeft in deze browser. Maak een kopie zodat je niets kwijtraakt.';
+    el.style.display = 'flex';
+    return;
+  }
+
+  var days = Math.floor((Date.now() - lastBackup) / 86400000);
+  if(days < 14){ el.style.display = 'none'; return; }
+
+  if(titleEl) titleEl.textContent = isEn ? 'Time for a new backup' : 'Tijd voor een nieuwe backup';
+  if(subEl) subEl.textContent = isEn
+    ? 'Last backup was ' + days + ' days ago.'
+    : 'Laatste backup was ' + days + ' dagen geleden.';
+  el.style.display = 'flex';
 }
 
 async function syncPort(){
