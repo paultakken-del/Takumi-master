@@ -2087,8 +2087,10 @@ const S={
 })();
 
 // Helper: heeft user ECHTE HRV-data (vs lege/null state)?
+// Check op saved tm2_hrv key — de defaults in S.hrv zijn altijd gevuld
+// (45/58/7/7.2) en mogen NIET als "echte data" gelden.
 function hasRealHrv(){
-  return !!(S.hrv && (S.hrv.rmssd != null || S.hrv.recovery != null || S.hrv.sleep != null));
+  try { return !!localStorage.getItem(_ukey('tm2_hrv')); } catch(e){ return false; }
 }
 
 // ── DAG VOORTGANG TRACKING ─────────────────────────────────────────
@@ -2278,7 +2280,7 @@ const AGENTS={
     return`Je bent de 師匠会 — het Master Council van Takumi Master. Je spreekt als vijf Godai-stemmen die elk vanuit hun element influisteren. Gebruik tools voor actuele data.\n\nTOOLS:\n- get_portfolio() → vermogen, posities, P&L\n- get_hrv() → rMSSD, herstel, slaap, energie\n- get_goals() → doelen, voortgang, open acties\n- get_learning('board') → wat werkte eerder\n\nCONTEXT: ${allCtx()}\n\nANTWOORD ALTIJD in dit formaat — elke stem max 2 zinnen, scherp en direct:\n\n地 Chi — Fundament\n[Structuur, strategie, vermogen. Wat is de solide basis hier?]\n\n水 Sui — Flow\n[Energie, herstel, beweging. Hoe stroomt dit het beste?]\n\n風 Fū — Geest\n[Communicatie, relaties, creativiteit. Wat zegt de intuïtie?]\n\n火 Ka — Energie\n[Actie, focus, beslissing. Wat moet NU gebeuren?]\n\n空 Kū — Ruimte\n[Synthese, stilte, het grotere geheel. Wat is de werkelijke vraag?]\n\n匠 Advies\n[Eén concrete actie. Max 15 woorden.]\n\nREGELS:\n- Elke stem spreekt vanuit zijn element, niet generiek\n- Meesters mogen kort influisteren bijv: 略 Ryaku: tip of 気 Ki: tip\n- Als HRV < 45: Kū geeft stilte-advies\n- Geen opsommingstekens, geen herhaling\n- Nederlands, direct, meesterlijk kort`;
   }},
   strategic:{id:'strategic',name:'略 Ryaku — Strateeg',ico:'略',dom:'Work',col:'#384888',sys(){return`Strategic Advisor. Besluitvorming, prioriteiten, strategie.\n"Every decision has a cost. Strategy is choosing what not to do."\nStem: Chi (Aarde) — traag, met gewicht. Korte zekere zinnen. Geen vragen. Bouw fundament.\n${allCtx()}\n${learnCtx('strategic')}${memoirCtx('strategic')}\n1 insight + 1 actie. Max 30w. Nederlands.`;}},
-  health:{id:'health',name:'気 Ki — Gezondheid',ico:'気',dom:'Health',col:'var(--teal)',sys(){return`Health & Energy Coach. HRV, herstel, energie.\n"Energy precedes performance."\nStem: Sui (Water) — vloeiend, schakel vragen in. Zacht maar vasthoudend. Vorm volgt.\n${allCtx()}\nHRV: rMSSD ${S.hrv.rmssd} (gem.53), herstel ${S.hrv.recovery}/10, HR ${S.hrv.hr}bpm, slaap ${S.hrv.sleep}u\n${learnCtx('health')}${memoirCtx('health')}\n1 insight op ECHTE data + 1 actie passend bij dagdeel. Max 30w. Nederlands.`;}},
+  health:{id:'health',name:'気 Ki — Gezondheid',ico:'気',dom:'Health',col:'var(--teal)',sys(){return`Health & Energy Coach. HRV, herstel, energie.\n"Energy precedes performance."\nStem: Sui (Water) — vloeiend, schakel vragen in. Zacht maar vasthoudend. Vorm volgt.\n${allCtx()}\n${hasRealHrv() ? `HRV: rMSSD ${S.hrv.rmssd} (gem.53), herstel ${S.hrv.recovery}/10, HR ${S.hrv.hr}bpm, slaap ${S.hrv.sleep}u` : 'HRV: nog niet gekoppeld — vraag de leerling om biometrie te delen voordat je over fysieke staat adviseert.'}\n${learnCtx('health')}${memoirCtx('health')}\n1 insight op ECHTE data + 1 actie passend bij dagdeel. Max 30w. Nederlands.`;}},
   finance:{id:'finance',name:'財 Zai — Financieel',ico:'財',dom:'Finance',col:'var(--gold)',sys(){return`Financial Risk & Wealth Advisor. Portfolio, risico, vermogen.\n"Risk first, return second. Avoid irreversible loss."\nStem: Chi (Aarde) — traag, met gewicht. Korte zekere zinnen. Geen vragen. Bouw fundament.\n${allCtx()}\n${portCtx()}\nWorld: Crypto mixed, Finance negatief (ECB)\n${learnCtx('finance')}${memoirCtx('finance')}\n1 financieel insight + 1 actie passend bij dagdeel. Max 30w. Nederlands.`;}},
   reflection:{id:'reflection',name:'観 Kan — Reflectie',ico:'観',dom:'Reflection',col:'#7a4a8a',sys(){return`Reflective Sensemaker. Patronen, zelfinzicht.\n"Observe before intervening."\nStem: Sui (Water) — vloeiend, schakel vragen in. Zacht maar vasthoudend. Vorm volgt.\n${allCtx()}\n${learnCtx('reflection')}${memoirCtx('reflection')}\n1 observatie die aan het denken zet. Max 30w. Nederlands.`;}},
   productivity:{id:'productivity',name:'働 Hataraki — Productiviteit',ico:'働',dom:'Work',col:'#384888',sys(){return`Productiviteits & Focus Coach.\n"Deep work beats busy work."\nStem: Ka (Vuur) — urgent, dwingend, dichtbij. Eis actie nu, geen morgen.\n${allCtx()}\n${learnCtx('productivity')}${memoirCtx('productivity')}\n1 focus-protocol + 1 actie. Max 30w. Nederlands.`;}},
@@ -3048,15 +3050,24 @@ function renderWave(moodOverride){
   var hrvVal = S.hrv.rmssd || 45;
   var recVal = S.hrv.recovery || 7;
   var slaapVal = S.hrv.sleep || 7;
-  var hasRealHrv = !!localStorage.getItem(_ukey('tm2_hrv'));
+  var hasReal = hasRealHrv();
   var hrvElEarly = document.getElementById('ck-stat-hrv');
   var sleepElEarly = document.getElementById('ck-stat-sleep');
   var recElEarly = document.getElementById('ck-stat-rec');
-  if (hrvElEarly) hrvElEarly.textContent = hasRealHrv ? (hrvVal + ' rMSSD') : '–';
-  if (sleepElEarly) sleepElEarly.textContent = hasRealHrv ? (slaapVal.toFixed(1) + 'u') : '–';
-  if (recElEarly) recElEarly.textContent = hasRealHrv ? (recVal + '/10') : '–';
+  if (hrvElEarly) hrvElEarly.textContent = hrvVal + ' rMSSD';
+  if (sleepElEarly) sleepElEarly.textContent = slaapVal.toFixed(1) + 'u';
+  if (recElEarly) recElEarly.textContent = recVal + '/10';
+  // Demo-modus: lichte opacity op getallen + hint zichtbaar
+  [hrvElEarly, sleepElEarly, recElEarly].forEach(function(el){
+    if(el && el.parentElement) el.parentElement.style.opacity = hasReal ? '1' : '.55';
+  });
   var hintEl = document.getElementById('ck-stat-hint');
-  if (hintEl) hintEl.style.display = hasRealHrv ? 'none' : 'block';
+  if (hintEl){
+    hintEl.style.display = hasReal ? 'none' : 'block';
+    hintEl.textContent = (typeof LANG !== 'undefined' && LANG === 'en')
+      ? '↗ Demo values — tap to connect your HRV'
+      : '↗ Voorbeeldwaarden — tik om je HRV te koppelen';
+  }
 
   // Store wave state globally for allCtx (gebruikt door agents)
   window._wavePhase = w.phase;
@@ -3126,15 +3137,23 @@ function renderWave(moodOverride){
   var hrv = S.hrv.rmssd || 45;
   var rec = S.hrv.recovery || 7;
   var slaap = S.hrv.sleep || 7;
-  var hasRealHrv = !!localStorage.getItem(_ukey('tm2_hrv'));
+  var hasReal = hasRealHrv();
   var hrvEl = document.getElementById('ck-stat-hrv');
   var sleepEl = document.getElementById('ck-stat-sleep');
   var recEl = document.getElementById('ck-stat-rec');
-  if (hrvEl) hrvEl.textContent = hasRealHrv ? (hrv + ' rMSSD') : '–';
-  if (sleepEl) sleepEl.textContent = hasRealHrv ? (slaap.toFixed(1) + 'u') : '–';
-  if (recEl) recEl.textContent = hasRealHrv ? (rec + '/10') : '–';
+  if (hrvEl) hrvEl.textContent = hrv + ' rMSSD';
+  if (sleepEl) sleepEl.textContent = slaap.toFixed(1) + 'u';
+  if (recEl) recEl.textContent = rec + '/10';
+  [hrvEl, sleepEl, recEl].forEach(function(el){
+    if(el && el.parentElement) el.parentElement.style.opacity = hasReal ? '1' : '.55';
+  });
   var hintEl2 = document.getElementById('ck-stat-hint');
-  if (hintEl2) hintEl2.style.display = hasRealHrv ? 'none' : 'block';
+  if (hintEl2){
+    hintEl2.style.display = hasReal ? 'none' : 'block';
+    hintEl2.textContent = (typeof LANG !== 'undefined' && LANG === 'en')
+      ? '↗ Demo values — tap to connect your HRV'
+      : '↗ Voorbeeldwaarden — tik om je HRV te koppelen';
+  }
 
   // Store wave state globally for allCtx
   window._wavePhase = w.phase;
