@@ -889,6 +889,12 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 
 <!-- BOARD -->
 <div class="view" id="v-bo">
+  <div class="tb">
+    <div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span style="font-family:var(--FJ);font-weight:300;color:var(--acc)">師匠会</span><span>Raad van Meesters</span></div>
+      <div class="tb-s">Stel je vraag aan de Godai — vijf elementen, vijf perspectieven</div>
+    </div>
+  </div>
   <div class="bl">
     <div class="bleft">
       <div class="agw" id="agw">
@@ -896,14 +902,18 @@ input[type=range]{width:100%;accent-color:var(--acc)}
         <div class="ag" id="ag"></div>
       </div>
       <div class="go-grid" id="go-grid" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 14px 4px">
-          <span style="font-size:13px;font-weight:600;color:var(--ink)">Kies een element</span>
-          <button onclick="showChat()" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--m);-webkit-tap-highlight-color:transparent;padding:4px 8px;border:1px solid var(--b);border-radius:20px;line-height:1.5">← Terug naar chat</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 14px 12px;gap:12px">
+          <div style="min-width:0">
+            <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:2px">Wie spreekt vandaag?</div>
+            <div style="font-size:11.5px;color:var(--m);line-height:1.45">De Council geeft alle vijf stemmen tegelijk. Of kies één element voor diepere focus.</div>
+          </div>
+          <button id="go-grid-close" onclick="showChat()" style="background:none;border:1px solid var(--b);cursor:pointer;font-size:11px;color:var(--m);-webkit-tap-highlight-color:transparent;padding:6px 12px;border-radius:20px;line-height:1.4;flex-shrink:0;white-space:nowrap">← Chat</button>
         </div>
-        <div class="go-card go-master" onclick="openWarrior('board')">
-          <div class="go-card-top"><div class="go-kanji" style="color:var(--acc);font-size:28px">匠</div><div><div class="go-name">師匠会 · Master Council</div><div class="go-sub">Volledig Board · Alle vijf stemmen</div></div></div>
-          <div class="go-desc">Alle vijf Godai meesters influisteren. Volledige synthese — elk element spreekt vanuit zijn kracht.</div>
+        <div class="go-card go-master" onclick="openWarrior('board')" style="background:linear-gradient(135deg,rgba(196,83,42,.04),rgba(196,83,42,.01));border-left-width:4px">
+          <div class="go-card-top"><div class="go-kanji" style="color:var(--acc);font-size:32px">匠</div><div><div class="go-name" style="font-size:15px">師匠会 · Master Council</div><div class="go-sub" style="color:var(--acc);font-weight:500">Aanbevolen · alle vijf stemmen samen</div></div></div>
+          <div class="go-desc">Voor strategische vragen, kruispunten, of als je het overzicht kwijt bent. De vijf Godai geven elk hun perspectief, gevolgd door één concrete actie.</div>
         </div>
+        <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--m);padding:8px 14px 0;margin-top:6px">Individuele elementen</div>
         <div class="go-card go-chi" onclick="openWarrior('strategic')">
           <div class="go-card-top"><div class="go-kanji">地</div><div><div class="go-name">Chi · 地</div><div class="go-sub">Foundation · Fundament</div></div></div>
           <div class="go-desc">Structuur, strategie en vermogensopbouw. De aarde die alles draagt.</div>
@@ -7286,6 +7296,19 @@ function showGoGrid(){
   if(grid){
     grid.style.pointerEvents='none';
     setTimeout(function(){grid.style.pointerEvents='';},500);
+  }
+  // Verberg de '← Chat' knop als er geen chat-history is om naar terug te keren.
+  // Anders geeft 'terug naar chat' voor first-time users een verwarrende lege state.
+  var closeBtn = document.getElementById('go-grid-close');
+  if(closeBtn){
+    var hasChat = false;
+    try {
+      var anyChat = S.chat && Object.keys(S.chat).some(function(k){
+        return Array.isArray(S.chat[k]) && S.chat[k].length > 0;
+      });
+      hasChat = !!anyChat;
+    } catch(e){}
+    closeBtn.style.display = hasChat ? '' : 'none';
   }
 }
 function showChat(){
