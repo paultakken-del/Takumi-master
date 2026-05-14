@@ -2039,6 +2039,14 @@ function _ukey(k){return k.startsWith('tm2_user')||k.startsWith('tm2_lf')?k:k+'_
 function ls(k,d){try{var v=localStorage.getItem(_ukey(k));return v?JSON.parse(v):d}catch{return d}}
 function lsSet(k,v){try{localStorage.setItem(_ukey(k),JSON.stringify(v))}catch{}}
 
+// ── MODELS — kosten-bewuste routering ──────────────────────────────
+// MODEL_HEAVY: Master Council + individuele meester-chat (multi-perspectief, conversationeel)
+// MODEL_FAST:  insights, dojo-evals, balans-analyse, weekly review, vision-extractie
+//              (gestructureerde JSON of korte tekst, geen multi-turn nuances)
+// Haiku 4.5 is ~3-4× goedkoper dan Sonnet 4.5 en accuraat genoeg voor de fast-lane.
+var MODEL_HEAVY = 'claude-sonnet-4-5';
+var MODEL_FAST  = 'claude-haiku-4-5-20251001';
+
 const S={
   cur:'board',
   chat:ls('tm2_chat',{}),
@@ -3799,10 +3807,16 @@ async function send(){
     const msgs=raw.reduce((acc,m)=>{if(acc.length&&acc[acc.length-1].role===m.role)acc[acc.length-1].content+='\n'+m.content;else acc.push({...m});return acc;},[]);
     if(!msgs.length||msgs[msgs.length-1].role!=='user')msgs.push({role:'user',content:text});
     const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,stream:true,system:a.sys(),messages:msgs})});
+      body:JSON.stringify({model:MODEL_HEAVY,max_tokens:2000,stream:true,system:a.sys(),messages:msgs})});
     if(!res.ok){
       let e='API '+res.status;
-      try{const j=await res.json();e=j.error||e;}catch{try{e=await res.text()||e;}catch{}}
+      try{const j=await res.json();e=j.error||e;
+        if(res.status === 429 && j.rateLimited){
+          e = (typeof LANG !== 'undefined' && LANG === 'en')
+            ? `Daily limit reached (${j.used}/${j.limit} messages). Resets at midnight. Tip: use the Dojo for reflection without API call.`
+            : `Dagelijkse limiet bereikt (${j.used}/${j.limit} berichten). Reset om middernacht. Tip: gebruik de Dojo voor reflectie zonder API-call.`;
+        }
+      }catch{try{e=await res.text()||e;}catch{}}
       throw new Error(e);
     }
     S.chat[S.cur].splice(li,1);
@@ -3860,7 +3874,7 @@ async function saveMemoir(masterId, userText, masterReply){
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-5',
+        model:MODEL_FAST,
         max_tokens:80,
         messages:[{role:'user',content:prompt}]
       })
@@ -3957,7 +3971,7 @@ async function detectObservations(){
         var res = await fetch('/api/claude',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:80,messages:[{role:'user',content:prompt}]})
+          body:JSON.stringify({model:MODEL_FAST,max_tokens:80,messages:[{role:'user',content:prompt}]})
         });
         if(!res.ok) continue;
         var j = await res.json();
@@ -4416,7 +4430,7 @@ async function loadLeaderMessage(goal, leader){
   if(cached){ msgEl.textContent = cached; return; }
   try {
     var prompt = 'Je bent '+(leader.warrior?.name||'een Godai-meester')+'. Vandaag is '+(new Date().toLocaleDateString('nl-NL',{weekday:'long'}))+', het element dat leidt is '+(leader.element?.name||'Kū')+'. De gebruiker werkt aan dit doel: "'+goal.title+'" (voortgang '+goal.pct+'%). Schrijf één korte observatie in jouw stem, max 22 woorden, Nederlands, geen aanhalingstekens. Spreek vanuit jouw element naar dit specifieke doel — niet generiek wijs, maar concreet en persoonlijk voor vandaag.';
-    var res = await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:120,messages:[{role:'user',content:prompt}]})});
+    var res = await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:MODEL_FAST,max_tokens:120,messages:[{role:'user',content:prompt}]})});
     if(!res.ok){ msgEl.textContent = 'De meester is even stil.'; return; }
     var j = await res.json();
     var txt = j.content?.[0]?.text?.trim();
@@ -4667,7 +4681,7 @@ async function loadBalanceAnalysis(bal, doenRatio){
     var res = await fetch('/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:200,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:MODEL_FAST,max_tokens:200,messages:[{role:'user',content:prompt}]})
     });
     if(!res.ok) return;
     var j = await res.json();
@@ -4745,7 +4759,7 @@ async function deepenBalanceInDojo(){
     var res = await fetch('/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:120,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:MODEL_FAST,max_tokens:120,messages:[{role:'user',content:prompt}]})
     });
     if(res.ok){
       var j = await res.json();
@@ -4827,7 +4841,7 @@ async function maybeProposeAppointment(masterId, lastUserMsg, lastAssistantMsg){
     var res = await fetch('/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:200,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:MODEL_FAST,max_tokens:200,messages:[{role:'user',content:prompt}]})
     });
     if(!res.ok) return null;
     var j = await res.json();
@@ -5137,7 +5151,7 @@ async function generateElementQuestion(dj, el){
     var res = await fetch('/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:300,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:MODEL_FAST,max_tokens:300,messages:[{role:'user',content:prompt}]})
     });
     if(!res.ok) throw new Error('API fout');
     var j = await res.json();
@@ -5224,7 +5238,7 @@ async function generateSynthesis(dj){
     var res = await fetch('/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:400,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:MODEL_FAST,max_tokens:400,messages:[{role:'user',content:prompt}]})
     });
     if(!res.ok) throw new Error('API fout');
     var j = await res.json();
@@ -5610,7 +5624,7 @@ async function generateElementInsight(ep, memoirs, dojoAnswers){
     var res = await fetch('/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:250,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:MODEL_FAST,max_tokens:250,messages:[{role:'user',content:prompt}]})
     });
     if(!res.ok) throw new Error();
     var j = await res.json();
@@ -5710,7 +5724,7 @@ async function submitLeesraster(){
     var res = await fetch('/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:MODEL_FAST,max_tokens:1500,messages:[{role:'user',content:prompt}]})
     });
     if(!res.ok) throw new Error('API fout');
     var j = await res.json();
@@ -5933,7 +5947,7 @@ async function generateWeekCouncil(){
     var res = await fetch('/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:300,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:MODEL_FAST,max_tokens:300,messages:[{role:'user',content:prompt}]})
     });
     if(!res.ok) return;
     var j = await res.json();
@@ -6884,7 +6898,7 @@ async function loadWorld(){
   el.innerHTML='<div style="text-align:center;padding:60px;color:var(--m)"><span class="spin">⟳</span><div style="margin-top:12px">World Intelligence ophalen...</div></div>';
   try{
     const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',max_tokens:1200,
+      model:MODEL_FAST,max_tokens:1200,
       tools:[{type:'web_search_20250305',name:'web_search'}],
       messages:[{role:'user',content:'Zoek actuele marktinformatie voor: crypto (Bitcoin, Ethereum), aandelenmarkten (S&P500, AEX), economie (ECB rente, inflatie), geopolitiek (relevante ontwikkelingen). Datum vandaag: '+new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'. Na het zoeken, return ALLEEN valid JSON zonder markdown:\n{"items":[{"domain":"Crypto","sentiment":"Mixed","score":7,"headline":"max 60 chars","summary":"max 100 chars","impact":"max 60 chars"},{"domain":"Aandelen","sentiment":"...","score":6,"headline":"...","summary":"...","impact":"..."},{"domain":"Economie","sentiment":"...","score":6,"headline":"...","summary":"...","impact":"..."},{"domain":"Geopolitiek","sentiment":"...","score":5,"headline":"...","summary":"...","impact":"..."},{"domain":"Tech/AI","sentiment":"...","score":8,"headline":"...","summary":"...","impact":"..."}],"portfolioSignal":"max 80 chars","dataSource":"web_search"}'}]})});
     const data=await res.json();
@@ -6910,7 +6924,7 @@ async function genReview(){
   const sc=Object.values(S.chat).reduce((s,m)=>s+m.filter(x=>x.role==='user').length,0);
   const lp=Object.values(S.learn).reduce((s,l)=>s+(l.pos?.length||0),0);
   try{
-    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:`Weekly review data: HRV rMSSD ${S.hrv.rmssd} (doel 53+), herstel ${S.hrv.recovery}/10, slaap ${S.hrv.sleep}u. ${portCtx()}. Board sessies: ${sc}. Learning positief: ${lp}.\nReturn ALLEEN valid JSON:\n{"weekHighlight":"max 80 chars","energyAvg":${S.hrv.recovery},"sessionsCount":${sc},"actionsCompleted":2,"insights":[{"ico":"❤","title":"string","body":"max 2 zinnen"},{"ico":"📊","title":"string","body":"max 2 zinnen"},{"ico":"🎯","title":"string","body":"max 2 zinnen"}],"nextWeekFocus":"max 80 chars","domainBreakdown":{"Gezondheid":30,"Finance":25,"Work":35,"Persoonlijk":10},"patternNote":"max 60 chars"}`}]})});
+    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:MODEL_FAST,max_tokens:1200,messages:[{role:'user',content:`Weekly review data: HRV rMSSD ${S.hrv.rmssd} (doel 53+), herstel ${S.hrv.recovery}/10, slaap ${S.hrv.sleep}u. ${portCtx()}. Board sessies: ${sc}. Learning positief: ${lp}.\nReturn ALLEEN valid JSON:\n{"weekHighlight":"max 80 chars","energyAvg":${S.hrv.recovery},"sessionsCount":${sc},"actionsCompleted":2,"insights":[{"ico":"❤","title":"string","body":"max 2 zinnen"},{"ico":"📊","title":"string","body":"max 2 zinnen"},{"ico":"🎯","title":"string","body":"max 2 zinnen"}],"nextWeekFocus":"max 80 chars","domainBreakdown":{"Gezondheid":30,"Finance":25,"Work":35,"Persoonlijk":10},"patternNote":"max 60 chars"}`}]})});
     const data=await res.json();
     const raw=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
     let r;try{r=JSON.parse(raw);}catch{try{const m=raw.match(/\{[\s\S]*\}/);if(m)r=JSON.parse(m[0]);}catch{}}
@@ -7035,7 +7049,7 @@ async function handleHealthScreenshot(ev){
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
+        model:MODEL_FAST,
         max_tokens:400,
         messages:[{
           role:'user',
