@@ -3263,7 +3263,11 @@ function initCK(){
   if(syn){
     const goals=typeof GOALS!=='undefined'?GOALS:[];
     const actief=goals.filter(g=>g.status==='Actief');
-    const openActs=goals.flatMap(g=>g.actions||[]).filter(a=>!a.done);
+    // Telt alleen ECHTE acties — niet de auto-generated placeholder
+    // 'Eerste stap definiëren' die bij nieuwe doelen wordt aangemaakt.
+    // Anders zegt cockpit '1 open actie' terwijl detail 'voeg eerste
+    // echte actie toe' toont — verwarrend voor de gebruiker.
+    const openActs=goals.flatMap(g=>g.actions||[]).filter(a=>!a.done && a.txt !== 'Eerste stap definiëren');
     const urgentDoel=actief.find(g=>g.pct<25)||actief[0];
     var synText='';
     var openActsLink = openActs.length>0
@@ -6764,7 +6768,7 @@ function renderGoals(){
       <div class="gp"><div class="gf" style="width:${g.pct}%;background:${g.color}"></div></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
         <div style="font-size:11px;color:${kleur};font-family:var(--F)">${vitaal}</div>
-        <div style="font-size:11px;color:var(--m)">${g.actions.filter(a=>!a.done).length} open acties</div>
+        <div style="font-size:11px;color:var(--m)">${g.actions.filter(a=>!a.done && a.txt !== 'Eerste stap definiëren').length} open acties</div>
       </div>
     </div>`;
   }).join('');
