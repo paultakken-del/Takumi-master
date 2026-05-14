@@ -742,6 +742,20 @@ input[type=range]{width:100%;accent-color:var(--acc)}
       <div class="ck-date" id="ck-d"></div>
     </div>
 
+    <!-- ── DAG-ELEMENT ── identiteitsanker bovenaan cockpit ──
+         Toont vandaag's leidende element + warrior. Vervangt de
+         filosofische lading die de yin-yang vroeger gaf. Klein
+         genoeg om niet dominant te worden, prominent genoeg om
+         Takumi-eigen te voelen. Klikbaar → opent die meester. -->
+    <div id="ck-day-leader" onclick="openDayLeader()" style="display:none;margin:18px 0 4px;padding:18px 20px;background:var(--p2);border:1px solid var(--b);border-radius:14px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:16px;-webkit-tap-highlight-color:transparent" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b)'">
+      <div id="ck-day-leader-kanji" style="font-family:var(--FJ);font-size:46px;line-height:1;flex-shrink:0;font-weight:300">働</div>
+      <div style="flex:1;min-width:0">
+        <div id="ck-day-leader-name" style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:3px;line-height:1.2">Hataraki</div>
+        <div id="ck-day-leader-sub" style="font-size:11.5px;color:var(--m);line-height:1.5;letter-spacing:.02em">Productiviteit · Vuur leidt vandaag</div>
+      </div>
+      <span style="font-size:13px;color:var(--m);flex-shrink:0;opacity:.6">→</span>
+    </div>
+
     <!-- OCHTEND NUDGE — verschijnt alleen 's ochtends voor dagstart -->
     <div id="ck-ochtend-nudge" style="display:none;margin:var(--sp-md) 0 0;padding:14px 18px;background:linear-gradient(135deg,rgba(196,83,42,.08),rgba(196,83,42,.03));border:1px solid rgba(196,83,42,.18);border-radius:var(--rs);cursor:pointer;transition:all .2s;display:none;align-items:center;justify-content:space-between;gap:12px" onclick="go('dy')" onmouseover="this.style.background='linear-gradient(135deg,rgba(196,83,42,.14),rgba(196,83,42,.06))'" onmouseout="this.style.background='linear-gradient(135deg,rgba(196,83,42,.08),rgba(196,83,42,.03))'">
       <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
@@ -798,16 +812,9 @@ input[type=range]{width:100%;accent-color:var(--acc)}
       <div class="dash-label"><svg class="ico ico-sm"><use href="#i-wave"/></svg> <span data-i18n="ck.music">Muziek</span></div>
       <div class="ck-music" id="ck-music"></div>
     </div>
+    </div>
 
-    <!-- ── WIJSHEID ── quote als afsluiter ── -->
-    <div class="dash-section dash-quiet" id="ck-wisdom-section">
-      <div class="dash-label"><svg class="ico ico-sm"><use href="#i-sparkle"/></svg> <span data-i18n="ck.wisdom">Wijsheid</span></div>
-      <div style="text-align:center;padding:8px 12px">
-        <div id="ck-quote" style="font-size:14px;color:var(--ink);opacity:.7;font-style:italic;line-height:1.7;word-wrap:break-word;font-family:var(--serif)"> </div>
-        <div id="ck-quote-auth" style="font-size:var(--text-xs);color:var(--ink);opacity:.4;margin-top:8px;letter-spacing:.1em;text-transform:uppercase"> </div>
-      </div>
-    </div>
-    </div>
+    <!-- ── WIJSHEID-sectie verhuisd naar einde van cockpit — zie hieronder ── -->
 
     <!-- ── BALANS-sectie is verhuisd naar Dojo (#v-dj) — past beter
          bij reflectie-ruimte dan dag-cockpit. Zie renderElementBalance()
@@ -853,6 +860,16 @@ input[type=range]{width:100%;accent-color:var(--acc)}
           <span id="pill-ri-lbl" style="font-size:9px;color:var(--m);letter-spacing:.03em">Avond</span>
         </button>
       </div>
+    </div>
+
+    <!-- ── WIJSHEID ── ademruimte-afsluiter van cockpit ──
+         Verhuisd uit 'Meer voor vandaag' collapse — quote verdient een
+         vaste, prominente plek als afsluiter. Geeft cockpit een 'einde'
+         in plaats van mechanisch te stoppen bij dag-cyclus. -->
+    <div id="ck-wisdom-section" style="padding:40px 24px 32px;text-align:center;max-width:520px;margin:0 auto">
+      <div style="width:32px;height:1px;background:var(--b);margin:0 auto 24px;opacity:.5"></div>
+      <div id="ck-quote" style="font-size:16px;color:var(--ink);opacity:.72;font-style:italic;line-height:1.7;word-wrap:break-word;font-family:var(--serif)"> </div>
+      <div id="ck-quote-auth" style="font-size:10.5px;color:var(--ink);opacity:.42;margin-top:12px;letter-spacing:.14em;text-transform:uppercase"> </div>
     </div>
 
   </div>
@@ -3272,6 +3289,9 @@ function initCK(){
   document.getElementById('ck-g').textContent=gr;
   document.getElementById('ck-d').textContent=now.toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});
 
+  // Dag-element card — toont welk Godai-element vandaag leidt
+  try { renderDayLeader(); } catch(e){}
+
   const hrv=S.hrv.rmssd||45;
   const rec=S.hrv.recovery||7;
   const slaap=S.hrv.sleep||7;
@@ -4407,6 +4427,71 @@ function getDayLeader(){
     return {eid:'ku', element:ELEMENTS.ku, warrior:AGENTS[info.warriorId], label:'空 Kū — Leegte', sub:subLabel};
   }
   return {eid:info.eid, element:ELEMENTS[info.eid], warrior:AGENTS[info.warriorId], label:ELEMENTS[info.eid].kanji+' '+ELEMENTS[info.eid].name+' — '+ELEMENTS[info.eid].sub.split(' · ')[1], sub:''};
+}
+
+// Render dag-leider card op cockpit — vervangt de filosofische
+// lading die de yin-yang (nu in Dojo) op cockpit innam.
+function renderDayLeader(){
+  var el = document.getElementById('ck-day-leader');
+  if(!el) return;
+  var leader = getDayLeader();
+  var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
+
+  // Kanji: warrior-icoon als beschikbaar, anders element-kanji
+  var kanji = (leader.warrior && leader.warrior.ico)
+    || (leader.element && leader.element.kanji)
+    || '匠';
+  // Naam: korte vorm — alleen de warrior-naam zonder element-prefix
+  // "働 Hataraki — Productiviteit" → "Hataraki"
+  var warriorName = (leader.warrior && leader.warrior.name) || 'Council';
+  var shortName = warriorName.replace(/^[^\s]+\s+/, '').split(/[—\-·]/)[0].trim();
+
+  // Subtitle: domein + element-context
+  var domein = '';
+  if(leader.warrior && leader.warrior.name){
+    var parts = leader.warrior.name.split('—');
+    if(parts.length > 1) domein = parts[1].trim();
+  }
+  var elementName = leader.element ? leader.element.name : '匠';
+  var elementKanjiContext = leader.element ? leader.element.kanji : '';
+
+  var sub;
+  if(leader.eid === 'board'){
+    sub = isEn ? 'Synthesis · Master Council leads today' : 'Synthese · Master Council leidt vandaag';
+  } else if(leader.eid === 'ku'){
+    sub = isEn ? (domein || 'Void') + ' · Kū leads today' : (domein || 'Leegte') + ' · Kū leidt vandaag';
+  } else {
+    sub = (domein || '') + (domein ? ' · ' : '') + elementName + (isEn ? ' leads today' : ' leidt vandaag');
+  }
+
+  var kanjiEl = document.getElementById('ck-day-leader-kanji');
+  var nameEl = document.getElementById('ck-day-leader-name');
+  var subEl = document.getElementById('ck-day-leader-sub');
+  if(kanjiEl){
+    kanjiEl.textContent = kanji;
+    // Element-kleur voor de kanji — geeft visueel onderscheid per dag
+    if(leader.element && leader.element.col){
+      kanjiEl.style.color = leader.element.col;
+    } else {
+      kanjiEl.style.color = 'var(--acc)';
+    }
+  }
+  if(nameEl) nameEl.textContent = shortName;
+  if(subEl) subEl.textContent = sub;
+  el.style.display = 'flex';
+  // Bewaar voor click-handler
+  el.dataset.warriorId = (leader.warrior && leader.warrior.id) || 'board';
+}
+
+function openDayLeader(){
+  var el = document.getElementById('ck-day-leader');
+  if(!el) return;
+  var wid = el.dataset.warriorId || 'board';
+  go('bo');
+  setTimeout(function(){
+    if(typeof openWarrior === 'function') openWarrior(wid);
+    else if(typeof selAg === 'function') selAg(wid);
+  }, 80);
 }
 
 function renderPrimaryGoal(){
