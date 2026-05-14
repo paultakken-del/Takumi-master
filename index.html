@@ -1094,7 +1094,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
             <div style="font-family:var(--FJ);font-size:28px;color:var(--acc);line-height:1;flex-shrink:0">問</div>
             <div style="flex:1">
               <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:6px" data-i18n="dojo.transformative">Transformatief gesprek</div>
-              <div style="font-size:13px;color:var(--m);line-height:1.6;margin-bottom:10px" data-i18n="dojo.transformative_sub">Voor vragen waar geen advies bij past. Vier elementen, vier vragen, één spiegel. Zo leer je welke stem nu spreekt.</div>
+              <div style="font-size:13px;color:var(--m);line-height:1.6;margin-bottom:10px" data-i18n="dojo.transformative_sub">Voor vragen waar geen advies bij past. Vijf elementen — vier vragen, Kū als spiegel. Zo leer je welke stem nu spreekt.</div>
               <div style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--acc);font-weight:500"><span data-i18n="dojo.begin_exercise">Begin oefening</span> <svg class="ico ico-sm" style="color:var(--acc)"><use href="#i-arrow-right"/></svg></div>
             </div>
           </div>
@@ -1563,7 +1563,7 @@ var I18N = {
     'dojo.intro_quote': '"Niet AI die alles weet. Vijf stemmen die je leren beter te zien."',
     'dojo.intro_text': 'De dojo is een oefenruimte. Geen advies, geen voortgang — alleen het slijpen van je waarneming. Welke vraag heb je vandaag te dragen?',
     'dojo.transformative': 'Transformatief gesprek',
-    'dojo.transformative_sub': 'Voor vragen waar geen advies bij past. Vier elementen, vier vragen, één spiegel. Zo leer je welke stem nu spreekt.',
+    'dojo.transformative_sub': 'Voor vragen waar geen advies bij past. Vijf elementen — vier vragen, Kū als spiegel. Zo leer je welke stem nu spreekt.',
     'dojo.begin_exercise': 'Begin oefening',
     'dojo.element_portraits': 'Element-portretten',
     'dojo.element_portraits_sub': 'Wat heb jij geleerd over Chi, Sui, Fū, Ka en Kū door je gesprekken? Een portret per element, gevuld door jouw eigen geschiedenis.',
@@ -1780,7 +1780,7 @@ var I18N = {
     'dojo.intro_quote': '"Not AI that knows everything. Five voices that teach you to see better."',
     'dojo.intro_text': 'The dojo is a practice space. No advice, no progress — only sharpening your perception. What question do you carry today?',
     'dojo.transformative': 'Transformative conversation',
-    'dojo.transformative_sub': 'For questions advice cannot answer. Four elements, four questions, one mirror. This is how you learn which voice now speaks.',
+    'dojo.transformative_sub': 'For questions advice cannot answer. Five elements — four questions, Kū as mirror. This is how you learn which voice now speaks.',
     'dojo.begin_exercise': 'Begin exercise',
     'dojo.element_portraits': 'Element portraits',
     'dojo.element_portraits_sub': 'What have you learned about Chi, Sui, Fū, Ka and Kū through your conversations? A portrait per element, filled by your own history.',
@@ -5024,7 +5024,8 @@ function openAppointment(aptId){
 }
 
 // ── DOJO — TRANSFORMATIEF GESPREK ───────────────────────────────────
-// Vier elementen vragen één vraag elk, dan synthese.
+// Vijf elementen: Chi, Sui, Fū en Ka stellen elk één doorvraag,
+// Kū (Leegte) brengt de synthese als spiegel.
 // Geen advies — een spiegel uit jouw eigen antwoorden.
 
 // Helper: vertaal element-domein als LANG === 'en'
@@ -5039,7 +5040,8 @@ function translateDomein(domein){
   return map[domein] || domein;
 }
 
-// Vier elementen + hun vragen-prompt voor deze oefening
+// De vier vragenstellers — Kū (Leegte) is geen vragensteller maar
+// brengt de synthese aan het einde (zie compleetTransformatief).
 var DOJO_ELEMENTS = [
   {id:'chi', kanji:'地', name:'Chi', warrior:'Ryaku', domein:'Aarde · Fundament', col:'var(--ink)'},
   {id:'sui', kanji:'水', name:'Sui', warrior:'Kan',   domein:'Water · Reflectie', col:'var(--ink)'},
@@ -5257,7 +5259,7 @@ async function generateSynthesis(dj){
     }
   }
   if(LANG === 'en'){
-    prompt = 'You are the Master Council — five Godai masters together. The user has explored a transformative question through four elements. Read the answers and give a synthesis.\n\n'+
+    prompt = 'You are the Master Council — five Godai masters together. The user has explored a transformative question through four asking elements (Chi, Sui, Fū, Ka). You bring the fifth voice — Kū, the Void — as synthesis. Read the answers and give a synthesis.\n\n'+
       'Original question: "'+dj.initialQuestion+'"'+balCtxSyn+'\n\n'+
       'Answers:\n'+antwoorden+'\n\n'+
       'Write a synthesis in 4-6 sentences in English that:\n'+
@@ -5267,7 +5269,7 @@ async function generateSynthesis(dj){
       '\n'+
       'No advice. No solution. A mirror. Use a calm, serif-like tone. No quotation marks around your own text, but yes around the reformulated question.';
   } else {
-    prompt = 'Je bent het Master Council — vijf Godai-meesters samen. De gebruiker heeft een transformatieve vraag onderzocht via vier elementen. Lees de antwoorden en geef een synthese.\n\n'+
+    prompt = 'Je bent het Master Council — vijf Godai-meesters samen. De gebruiker heeft een transformatieve vraag onderzocht via vier vragende elementen (Chi, Sui, Fū, Ka). Jij brengt de vijfde stem — Kū, de Leegte — als synthese. Lees de antwoorden en geef een synthese.\n\n'+
       'Oorspronkelijke vraag: "'+dj.initialQuestion+'"'+balCtxSyn+'\n\n'+
       'Antwoorden:\n'+antwoorden+'\n\n'+
       'Schrijf een synthese in 4-6 zinnen Nederlands die:\n'+
@@ -7681,7 +7683,7 @@ var STEPS_NL = [
   },
   {
     title: '道 Dojo — oefenruimte',
-    text: 'Het hart van Takumi. Hier oefen je transformatieve gesprekken: vier elementen stellen elk één doorvraag, dan synthese. Of bekijk je element-portretten — wat jij hebt geleerd over elke kant van jezelf.',
+    text: 'Het hart van Takumi. Hier oefen je transformatieve gesprekken: vier elementen stellen elk één doorvraag, Kū (Leegte) brengt de synthese. Of bekijk je element-portretten — wat jij hebt geleerd over elke kant van jezelf.',
     target: null,
     navItem: 'dj',
     pos: 'right'
@@ -7732,7 +7734,7 @@ var STEPS_EN = [
   },
   {
     title: '道 Dojo — practice space',
-    text: 'The heart of Takumi. Here you practice transformative conversations: four elements each ask one deeper question, then synthesis. Or view element portraits — what you have learned about each side of yourself.',
+    text: 'The heart of Takumi. Here you practice transformative conversations: four elements each ask one deeper question, Kū (Void) brings the synthesis. Or view element portraits — what you have learned about each side of yourself.',
     target: null,
     navItem: 'dj',
     pos: 'right'
