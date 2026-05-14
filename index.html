@@ -4241,7 +4241,7 @@ function saveAsAction(masterId, msgIdx, kind){
       sourceMsgId: msgKey,
       sourceMaster: masterId,
       milestones: [{pct:25,name:'25% bereikt',s:'open'},{pct:50,name:'50% bereikt',s:'open'},{pct:75,name:'75% bereikt',s:'open'},{pct:100,name:'Doel bereikt!',s:'open'}],
-      actions: [{txt:'Eerste stap definiëren',effort:'S',done:false}]
+      actions: []
     };
     GOALS.push(newGoal);
     if(typeof saveGoals === 'function') saveGoals();
@@ -6777,9 +6777,10 @@ function renderGoals(){
 function openGoal(id){
   const g=GOALS.find(x=>x.id===id);if(!g)return;
   activeGId=id;
-  // Echte acties (zonder placeholder)
+  // Echte acties (zonder legacy placeholder)
   const realActs = g.actions.filter(function(a){ return a.txt !== 'Eerste stap definiëren'; });
-  const hasOnlyPlaceholder = g.actions.length === 1 && g.actions[0].txt === 'Eerste stap definiëren';
+  // "Empty state" — geen acties OF alleen een legacy placeholder uit oude data
+  const isEmptyActions = realActs.length === 0;
   document.getElementById('gs-t').textContent=g.ico+' '+g.title;
   document.getElementById('gs-s').textContent=g.status+' · '+g.pct+'% voltooid';
   document.getElementById('gs-b').style.width=g.pct+'%';
@@ -6804,7 +6805,7 @@ function openGoal(id){
     </div>
     <div style="margin-bottom:20px">
       <div class="ct">Acties</div>
-      ${hasOnlyPlaceholder ? '<div style="font-size:12px;color:var(--m);font-style:italic;padding:8px 0">Voeg eerste echte actie toe ↓</div>' : g.actions.map((a,i)=>`<div class="ai" onclick="togAct('${id}',${i})"><div class="ak${a.done?' on':''}">${a.done?'✓':''}</div><span class="at2${a.done?' done':''}">${a.txt}</span><span class="ae">${a.effort}</span></div>`).join('')}
+      ${isEmptyActions ? '<div style="font-size:12px;color:var(--m);font-style:italic;padding:8px 0">Voeg eerste echte actie toe ↓</div>' : realActs.map((a,i)=>`<div class="ai" onclick="togAct('${id}',${g.actions.indexOf(a)})"><div class="ak${a.done?' on':''}">${a.done?'✓':''}</div><span class="at2${a.done?' done':''}">${a.txt}</span><span class="ae">${a.effort}</span></div>`).join('')}
       <div class="aar"><input class="aai" id="na-inp" placeholder="Nieuwe actie..." onkeydown="if(event.key==='Enter')addAct('${id}')"><button class="btn sm acc" onclick="addAct('${id}')">+</button></div>
     </div>
   `;
@@ -6892,7 +6893,7 @@ function saveNG(){
   if(!title){toast('Vul een titel in','err');return;}
   const g={id:'g_'+Date.now(),ico:document.getElementById('ng-i').value.trim()||'🎯',title,desc:document.getElementById('ng-desc').value.trim()||'Geen omschrijving',pct:0,color:ngColor,status:'Actief',
     milestones:[{pct:25,name:'25% bereikt',s:'open'},{pct:50,name:'50% bereikt',s:'open'},{pct:75,name:'75% bereikt',s:'open'},{pct:100,name:'Doel bereikt!',s:'open'}],
-    actions:[{txt:'Eerste stap definiëren',effort:'S',done:false}]};
+    actions:[]};
   GOALS.push(g);saveGoals();closeNG();renderGoals();toast('"'+title+'" aangemaakt','ok');setTimeout(()=>openGoal(g.id),100);
 }
 
