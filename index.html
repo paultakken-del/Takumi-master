@@ -141,6 +141,8 @@ button,input,textarea,select{font-family:var(--F);font-size:13px;font-weight:400
 .sb-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:baseline;gap:10px}
 .sb-kanji{font-family:var(--FJ);font-size:26px;color:var(--acc);line-height:1}
 .sb-brand{font-family:var(--FD);font-size:11px;font-weight:700;color:#fff;letter-spacing:.12em;text-transform:uppercase}
+.sb-beta{display:inline-block;font-family:var(--FD);font-size:9px;font-weight:700;letter-spacing:.14em;color:var(--acc);background:rgba(196,83,42,.14);border:1px solid rgba(196,83,42,.3);border-radius:10px;padding:2px 7px;margin-left:6px;text-transform:uppercase;vertical-align:middle}
+[data-theme="light"] .sb-beta{background:rgba(196,83,42,.1);border-color:rgba(196,83,42,.25)}
 .sb-nav{flex:1;padding:8px 0;overflow-y:auto}
 .sb-sec{padding:16px 18px 4px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45)}
 .ni{display:flex;align-items:center;gap:10px;padding:12px 18px;font-size:14px;color:rgba(255,255,255,.68);cursor:pointer;border-left:2px solid transparent;transition:all .12s;user-select:none;-webkit-tap-highlight-color:transparent}
@@ -677,14 +679,16 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <!-- AUTH GATE -->
 <div id="auth-gate" style="display:none;position:fixed;inset:0;background:var(--paper);z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center">
   <div style="width:64px;height:64px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-family:var(--FJ);font-size:32px;color:#fff;margin:0 auto 24px">匠</div>
-  <div style="font-family:var(--FD);font-size:28px;font-weight:700;color:var(--ink);margin-bottom:8px">Takumi</div>
-  <div style="font-size:13px;color:var(--m);margin-bottom:40px;line-height:1.6;max-width:280px">Persoonlijk levensadvies platform.<br>Meld je aan om verder te gaan.</div>
+  <div style="font-family:var(--FD);font-size:28px;font-weight:700;color:var(--ink);margin-bottom:8px;display:flex;align-items:center;gap:10px">Takumi<span style="font-family:var(--FD);font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--acc);background:rgba(196,83,42,.12);border:1px solid rgba(196,83,42,.28);border-radius:10px;padding:3px 9px;text-transform:uppercase">Beta</span></div>
+  <div style="font-size:13px;color:var(--m);margin-bottom:32px;line-height:1.65;max-width:320px">Een digitale dojo om te leren spelen met de elementen.<br><span style="opacity:.75">Publieke beta — in ontwikkeling, feedback welkom.</span></div>
   <a href="/auth/google" style="display:inline-flex;align-items:center;gap:10px;padding:14px 24px;background:var(--ink);color:var(--paper);border-radius:var(--r);font-size:14px;font-weight:600;text-decoration:none;-webkit-tap-highlight-color:transparent">
     <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
     Aanmelden met Google
   </a>
-  <div style="margin-top:16px;font-size:11px;color:var(--m);opacity:.7">Je bent afgemeld. Klik om opnieuw in te loggen.</div>
-  <div style="margin-top:8px;font-size:11px;color:var(--m);opacity:.4">Jouw data blijft lokaal op dit apparaat</div>
+  <div style="margin-top:20px;font-size:11.5px;color:var(--m);line-height:1.7;max-width:300px">
+    <div style="margin-bottom:4px">Jouw data blijft lokaal op dit apparaat.</div>
+    <div style="opacity:.6">Takumi slaat geen gesprekken of inzichten op een server op. Maak regelmatig een backup naar je eigen Drive of iCloud.</div>
+  </div>
 </div>
 
 <div id="sb-overlay" onclick="closeSidebar()"></div>
@@ -696,7 +700,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div id="app">
 <!-- SIDEBAR -->
 <nav id="sb">
-  <div class="sb-logo"><span class="sb-kanji">匠</span><div><div class="sb-brand">Takumi</div></div></div>
+  <div class="sb-logo"><span class="sb-kanji">匠</span><div><div class="sb-brand">Takumi<span class="sb-beta">Beta</span></div></div></div>
   <div class="sb-nav">
     <div class="ni on" data-v="ck"><span class="ico">⬡</span><span data-i18n="nav.cockpit">Cockpit</span></div>
     <div class="ni" data-v="bo"><span class="ico">◈</span><span data-i18n="nav.board">Raad van Meesters</span></div>

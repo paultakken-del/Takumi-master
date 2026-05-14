@@ -349,6 +349,9 @@ h1 em { font-style: italic; color: var(--acc); }
 .tak-photo { width: 100%; border-radius: 12px; display: block; box-shadow: 0 20px 60px rgba(28,24,21,.16); }
 .tak-photo-btn { position: absolute; bottom: 20px; left: 20px; box-shadow: 0 4px 20px rgba(0,0,0,.35); }
 .tak-label { font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--acc); margin-bottom: 14px; }
+.tak-beta { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: .18em; color: var(--acc); background: rgba(196,83,42,.1); border: 1px solid rgba(196,83,42,.28); border-radius: 10px; padding: 3px 8px; margin-left: 8px; text-transform: uppercase; vertical-align: middle; }
+.tak-beta-note { font-size: 12.5px; color: var(--muted); margin-top: 14px; line-height: 1.65; opacity: .82; max-width: 480px; }
+.tak-beta-note strong { color: var(--ink); font-weight: 600; }
 .tak-kop { font-family: var(--serif); font-size: clamp(22px, 2.8vw, 34px); font-weight: 300; color: var(--ink); line-height: 1.2; margin-bottom: 14px; }
 .tak-kop em { font-style: italic; color: var(--acc); }
 .tak-sub { font-family: var(--serif); font-style: italic; font-size: 16px; color: var(--acc); margin-bottom: 20px; }
@@ -623,9 +626,10 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
 <section class="takumi" id="takumi">
   <div class="tak-inner-2">
     <div class="tak-text" data-r>
-      <p class="tak-label" data-i18n="tak-label">Takumi — 匠</p>
+      <p class="tak-label" data-i18n="tak-label">Takumi — 匠 <span class="tak-beta">Beta</span></p>
       <h2 class="tak-kop" data-i18n="tak-kop">Een digitale dojo om te leren<br><em>spelen met de elementen</em></h2><p class="tak-sub" data-i18n="tak-sub">Niet AI die alles weet. Een raad van meesters die je leren beter te zien.</p>
       <p class="tak-p" data-i18n="tak-p">Waar platte AI één antwoord geeft, biedt Takumi een leesraster. 地 Aarde voor fundament. 水 Water voor herstel. 風 Wind voor scherpte. 火 Vuur voor actie. 空 Leegte voor wat ontbreekt. Geworteld in Musashi's Go Rin No Sho en het werk uit Natuurlijk Agile. Toepasbaar in jouw werk, jouw team, jouw leven. Niet één gesprek, maar een oefenruimte voor een rijkere manier van waarnemen.</p>
+      <p class="tak-beta-note" data-i18n="tak-beta-note"><strong>Publieke beta.</strong> Takumi is in ontwikkeling — verwacht ruwe randjes, en feedback is welkom. Takumi slaat geen data op een server op; alles blijft lokaal op jouw apparaat, met backup naar je eigen Drive of iCloud.</p>
     </div>
     <div class="tak-visual-wrap" data-r data-d="1">
       <div class="tak-photo-wrap">
@@ -723,10 +727,11 @@ var NL = {
   'breaker-kop':  'Klaar om te beginnen?',
   'breaker-sub':  'Niet na een traject. Niet na het boek. Vandaag.',
   'breaker-btn':  'Begin met Takumi ↗',
-  'tak-label':   'Takumi — 匠',
+  'tak-label':   'Takumi — 匠 <span class="tak-beta">Beta</span>',
   'tak-kop':     'Een digitale dojo om te leren<br><em>spelen met de elementen</em>',
   'tak-sub':     'Niet AI die alles weet. Een raad van meesters die je leren beter te zien.',
   'tak-p':       'Waar platte AI één antwoord geeft, biedt Takumi een leesraster. 地 Aarde voor fundament. 水 Water voor herstel. 風 Wind voor scherpte. 火 Vuur voor actie. 空 Leegte voor wat ontbreekt. Geworteld in Musashi\'s Go Rin No Sho en het werk uit Natuurlijk Agile. Toepasbaar in jouw werk, jouw team, jouw leven. Niet één gesprek, maar een oefenruimte voor een rijkere manier van waarnemen.',
+  'tak-beta-note': '<strong>Publieke beta.</strong> Takumi is in ontwikkeling — verwacht ruwe randjes, en feedback is welkom. Takumi slaat geen data op een server op; alles blijft lokaal op jouw apparaat, met backup naar je eigen Drive of iCloud.',
   'tak-btn':     'Begin met Takumi ↗',
   'v01-n':'Valkuil 01','v01-h':'De efficiëntieval','v01-p':'Agile als bezuinigingstool. Velocity als heilige metric. De waarde die er echt toe doet, wordt niet gemeten.',
   'v02-n':'Valkuil 02','v02-h':'Onvoldoende wortels','v02-p':'Agile ingevoerd zonder filosofisch fundament. Een boom zonder wortels staat, totdat de eerste storm komt.',
@@ -778,10 +783,11 @@ var EN = {
   'breaker-kop':  'Ready to start?',
   'breaker-sub':  'Not after a programme. Not after the book. Today.',
   'breaker-btn':  'Start Takumi ↗',
-  'tak-label':   'Takumi — 匠',
+  'tak-label':   'Takumi — 匠 <span class="tak-beta">Beta</span>',
   'tak-kop':     'A digital dojo to learn<br><em>playing with the elements</em>',
   'tak-sub':     'Not AI that knows everything. A council of masters who teach you to see better.',
   'tak-p':       'Where flat AI gives one answer, Takumi offers a reading grid. 地 Earth for foundation. 水 Water for recovery. 風 Wind for sharpness. 火 Fire for action. 空 Void for what is missing. Rooted in Musashi\'s Go Rin No Sho and the work from Natural Agile. Applicable to your work, your team, your life. Not a single conversation, but a practice space for a richer way of perceiving.',
+  'tak-beta-note': '<strong>Public beta.</strong> Takumi is under active development — expect rough edges, and feedback is welcome. Takumi stores no data on a server; everything stays local on your device, with backup to your own Drive or iCloud.',
   'tak-btn':     'Start with Takumi ↗',
   'v01-n':'Pitfall 01','v01-h':'The efficiency trap','v01-p':'Agile as a cost-cutting tool. Velocity as the sacred metric. The value that truly matters goes unmeasured.',
   'v02-n':'Pitfall 02','v02-h':'Insufficient roots','v02-p':'Agile introduced without philosophical foundation. A tree without roots stands — until the first storm.',
