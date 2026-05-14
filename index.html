@@ -7270,6 +7270,73 @@ document.addEventListener('DOMContentLoaded', function(){
 (function(){
 
 var TOUR_KEY = 'tm_tour_done_v2';
+var WELCOME_KEY = 'tm_welcome_seen_v1';
+
+// ── WELCOME MODAL — eenmalig voor elke user, vóór tour ──────────────
+function showWelcomeModal(opts){
+  opts = opts || {};
+  var startTourAfter = !!opts.startTourAfter;
+
+  // Build overlay
+  var ov = document.createElement('div');
+  ov.id = 'welcome-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(20,18,14,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity .35s';
+
+  var card = document.createElement('div');
+  card.style.cssText = 'background:#faf7f2;color:#1a1815;border-radius:16px;padding:32px 28px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);font-family:system-ui,sans-serif;border:1px solid rgba(28,24,21,.08);position:relative';
+
+  card.innerHTML = ''
+    + '<div style="text-align:center;margin-bottom:22px">'
+    + '  <div style="width:56px;height:56px;border-radius:50%;background:#c4532a;display:inline-flex;align-items:center;justify-content:center;font-family:\'Noto Serif JP\',serif;font-size:30px;color:#fff;margin-bottom:14px">匠</div>'
+    + '  <div style="font-family:\'Noto Serif Display\',\'Noto Serif\',serif;font-size:22px;font-weight:600;color:#1a1815;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:10px">Welkom in Takumi<span style="font-size:9px;font-weight:700;letter-spacing:.16em;color:#c4532a;background:rgba(196,83,42,.12);border:1px solid rgba(196,83,42,.28);border-radius:10px;padding:3px 8px;text-transform:uppercase">Beta</span></div>'
+    + '  <div style="font-family:Georgia,serif;font-style:italic;font-size:14px;color:#7a7060;line-height:1.5">Een digitale dojo om te leren spelen met de elementen.</div>'
+    + '</div>'
+    + '<div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px">'
+    + '  <div style="display:flex;gap:14px;align-items:flex-start">'
+    + '    <div style="font-family:\'Noto Serif JP\',serif;font-size:24px;color:#c4532a;flex-shrink:0;width:32px;text-align:center;line-height:1">道</div>'
+    + '    <div style="font-size:13.5px;line-height:1.6;color:#1a1815"><strong style="font-weight:600">Geen advies-tool, maar een oefenruimte.</strong> <span style="color:#5a5248">Vijf stemmen die je leren beter te zien — niet AI die alles weet.</span></div>'
+    + '  </div>'
+    + '  <div style="display:flex;gap:14px;align-items:flex-start">'
+    + '    <div style="font-family:\'Noto Serif JP\',serif;font-size:24px;color:#c4532a;flex-shrink:0;width:32px;text-align:center;line-height:1">空</div>'
+    + '    <div style="font-size:13.5px;line-height:1.6;color:#1a1815"><strong style="font-weight:600">Jouw data blijft van jou.</strong> <span style="color:#5a5248">Takumi raakt geen server aan. Alles staat lokaal op dit apparaat — backup naar je eigen Drive of iCloud via Data Hub.</span></div>'
+    + '  </div>'
+    + '  <div style="display:flex;gap:14px;align-items:flex-start">'
+    + '    <div style="font-family:\'Noto Serif JP\',serif;font-size:24px;color:#c4532a;flex-shrink:0;width:32px;text-align:center;line-height:1">習</div>'
+    + '    <div style="font-size:13.5px;line-height:1.6;color:#1a1815"><strong style="font-weight:600">Publieke beta.</strong> <span style="color:#5a5248">In ontwikkeling, verwacht ruwe randjes. Feedback is welkom — mail <a href="mailto:paul.takken@gmail.com?subject=Takumi%20beta%20feedback" style="color:#c4532a;text-decoration:underline">paul.takken@gmail.com</a>.</span></div>'
+    + '  </div>'
+    + '</div>'
+    + '<div id="welcome-actions" style="display:flex;flex-direction:column;gap:10px">'
+    + (startTourAfter
+        ? '<button id="welcome-tour" style="background:#1a1815;color:#faf7f2;border:none;border-radius:10px;padding:14px 22px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent">Neem me mee — korte tour</button>'
+          + '<button id="welcome-skip" style="background:none;color:#7a7060;border:none;padding:8px;font-size:13px;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent">Sla over, ik kijk zelf rond</button>'
+        : '<button id="welcome-close" style="background:#1a1815;color:#faf7f2;border:none;border-radius:10px;padding:14px 22px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent">Aan de slag</button>'
+      )
+    + '</div>';
+
+  ov.appendChild(card);
+  document.body.appendChild(ov);
+  // Fade in
+  requestAnimationFrame(function(){ ov.style.opacity = '1'; });
+
+  function closeAndMaybeTour(doTour){
+    try { localStorage.setItem(WELCOME_KEY, '1'); } catch(e){}
+    ov.style.opacity = '0';
+    setTimeout(function(){
+      if(ov.parentNode) ov.parentNode.removeChild(ov);
+      if(doTour) setTimeout(startTour, 250);
+    }, 320);
+  }
+
+  if(startTourAfter){
+    card.querySelector('#welcome-tour').addEventListener('click', function(){ closeAndMaybeTour(true); });
+    card.querySelector('#welcome-skip').addEventListener('click', function(){ closeAndMaybeTour(false); });
+  } else {
+    card.querySelector('#welcome-close').addEventListener('click', function(){ closeAndMaybeTour(false); });
+  }
+}
+
+// Expose voor handmatig hertonen (debug / "lees opnieuw")
+window.showTakumiWelcome = function(){ showWelcomeModal({startTourAfter:false}); };
 
 // Helper: t() is global, valt terug op NL als key niet bestaat
 var STEPS_NL = [
@@ -7546,8 +7613,19 @@ function startTour() {
 
 // Start only for first-time users, after app is loaded
 function maybeStartTour() {
-  if (localStorage.getItem(TOUR_KEY)) return;
-  // Wait for app to render
+  // Wacht tot user ingelogd is — anders heeft welcome/tour geen zin op auth-gate scherm
+  if (typeof isSessionValid === 'function' && !isSessionValid()) return;
+
+  var welcomeSeen = localStorage.getItem(WELCOME_KEY);
+  var tourDone = localStorage.getItem(TOUR_KEY);
+
+  if (!welcomeSeen) {
+    // Welcome modal regelt tour-start als startTourAfter:true
+    setTimeout(function(){ showWelcomeModal({ startTourAfter: !tourDone }); }, 600);
+    return;
+  }
+  if (tourDone) return;
+  // Welcome al gezien, tour nog niet — start tour direct
   setTimeout(startTour, 1200);
 }
 
