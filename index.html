@@ -1955,10 +1955,47 @@ document.addEventListener('DOMContentLoaded', applyI18nDOM);
 function parseJWTPayload(token){
   try{var b64=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(atob(b64));}catch{return null;}
 }
+
+// ── SIGNUP SOURCE — capture ?from=<channel> voor login-attributie ──
+// Voorbeeld: app.takumi-master.com?from=webinar-jun26
+// Pre-login: blijft in localStorage tot Google-flow het ophaalt.
+function captureSignupSource(){
+  try {
+    var p = new URLSearchParams(window.location.search);
+    var raw = p.get('from');
+    if(raw){
+      var clean = String(raw).toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40);
+      if(clean){
+        localStorage.setItem('tm_signup_source', clean);
+        // URL opschonen zodat ?from= niet meereist of doorlinkt
+        p.delete('from');
+        var qs = p.toString();
+        var newUrl = window.location.pathname + (qs ? '?'+qs : '') + window.location.hash;
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
+  } catch(e){}
+}
+captureSignupSource();
+
+// Hang source aan Google-login links zodat callback 'm via state-param ontvangt
+function attachSignupSourceToAuthLinks(){
+  try {
+    var s = localStorage.getItem('tm_signup_source');
+    if(!s) return;
+    document.querySelectorAll('a[href^="/auth/google"]').forEach(function(btn){
+      btn.href = '/auth/google?source=' + encodeURIComponent(s);
+    });
+  } catch(e){}
+}
+document.addEventListener('DOMContentLoaded', attachSignupSourceToAuthLinks);
+
 function initGoogleSession(){
   var params=new URLSearchParams(window.location.search);
   var gsession=params.get('gsession');
   if(gsession){ document.cookie='gsession='+gsession+';path=/;max-age=604800;SameSite=Lax';
+    // Source heeft zijn werk gedaan (al doorgegeven via OAuth state) — opruimen
+    try { localStorage.removeItem('tm_signup_source'); } catch(e){}
     try{ var _p=JSON.parse(atob(gsession.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); if(_p.email==='paul.takken@gmail.com'){ var _al=document.getElementById('admin-link'); if(_al) _al.style.display='flex'; } }catch(e){}
     var payload=parseJWTPayload(gsession);
     if(payload&&payload.email){

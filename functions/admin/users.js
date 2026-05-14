@@ -42,15 +42,28 @@ export async function onRequest({ request, env }) {
     .sort((a,b) => b.lastSeen - a.lastSeen);
 
   const fmt = ts => ts ? new Date(ts*1000).toLocaleString('nl-NL', {timeZone:'Europe/Amsterdam'}) : '—';
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const active = users.filter(u => !u.banned);
   const banned = users.filter(u => u.banned);
+
+  // Source-telling (alleen actieve users)
+  const sourceCounts = {};
+  let noSource = 0;
+  active.forEach(u => {
+    if (u.source) sourceCounts[u.source] = (sourceCounts[u.source] || 0) + 1;
+    else noSource++;
+  });
+  const sortedSources = Object.entries(sourceCounts).sort((a,b) => b[1]-a[1]);
+  const sourcesHtml = (sortedSources.length || noSource)
+    ? `<div class="sources">${sortedSources.map(([k,v]) => `<span class="src-pill"><code>${esc(k)}</code> · ${v}</span>`).join('')}${noSource ? `<span class="src-pill src-pill-none">geen tag · ${noSource}</span>` : ''}</div>`
+    : '';
 
   const userCard = (u) => `
 <div class="card ${u.banned ? 'banned' : ''}">
   <div class="card-top">
     <div>
-      <div class="name">${u.name} ${u.banned ? '<span class="badge red">Gebanned</span>' : `<span class="badge">${u.loginCount}×</span>`}</div>
-      <div class="email">${u.email}</div>
+      <div class="name">${esc(u.name)} ${u.banned ? '<span class="badge red">Gebanned</span>' : `<span class="badge">${u.loginCount}×</span>`}</div>
+      <div class="email">${esc(u.email)}</div>
     </div>
     <form method="POST">
       <input type="hidden" name="uid" value="${u.id}">
@@ -61,6 +74,7 @@ export async function onRequest({ request, env }) {
   <div class="meta">
     <span>Eerste login: ${fmt(u.firstSeen)}</span>
     <span>Laatste login: ${fmt(u.lastSeen)}</span>
+    ${u.source ? `<span>Bron: <code>${esc(u.source)}</code></span>` : ''}
     ${u.banned ? `<span>Gebanned op: ${fmt(u.bannedAt)}</span>` : ''}
   </div>
 </div>`;
@@ -86,9 +100,14 @@ h2{font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;c
 .btn-red{background:#c83232;color:#fff}
 .btn-green{background:#2d8a4e;color:#fff}
 .empty{color:#7a7060;font-size:14px;padding:16px 0}
+.sources{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;margin-bottom:6px}
+.src-pill{background:#fff;border:1px solid rgba(28,24,21,.09);border-radius:20px;padding:4px 11px;font-size:11.5px;color:#5a5248}
+.src-pill code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#c4532a;font-size:11px}
+.src-pill-none{color:#a8a097;font-style:italic}
 </style></head><body>
 <h1>匠 Gebruikers</h1>
 <p class="sub">${active.length} actief · ${banned.length} gebanned</p>
+${sourcesHtml}
 <h2>Actief</h2>
 ${active.length ? active.map(userCard).join('') : '<p class="empty">Geen actieve gebruikers.</p>'}
 ${banned.length ? `<h2>Gebanned</h2>${banned.map(userCard).join('')}` : ''}

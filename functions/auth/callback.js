@@ -3,6 +3,10 @@ export async function onRequest({ request, env }) {
   const code = url.searchParams.get('code');
   if (!code) return Response.redirect('https://app.takumi-master.com?auth_error=1', 302);
 
+  // Pak signup-source uit OAuth state (door /auth/google meegegeven)
+  let source = url.searchParams.get('state') || '';
+  source = source.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40);
+
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -38,15 +42,7 @@ export async function onRequest({ request, env }) {
 
   // Sla gebruiker op in KV
   if (env.TAKUMI_USERS) {
-    const userRecord = JSON.stringify({
-      email:     payload.email,
-      name:      payload.name || payload.email,
-      picture:   payload.picture || '',
-      firstSeen: now,
-      lastSeen:  now,
-    });
-
-    // Check of gebruiker al bestaat (bewaar firstSeen)
+    // Check of gebruiker al bestaat (bewaar firstSeen + source)
     const existing = await env.TAKUMI_USERS.get(payload.sub);
     if (existing) {
       const prev = JSON.parse(existing);
@@ -54,6 +50,7 @@ export async function onRequest({ request, env }) {
         ...prev,
         lastSeen: now,
         loginCount: (prev.loginCount || 1) + 1,
+        // source NIET overschrijven — eerste klap is een daalder waard
       }));
     } else {
       await env.TAKUMI_USERS.put(payload.sub, JSON.stringify({
@@ -63,6 +60,7 @@ export async function onRequest({ request, env }) {
         firstSeen:  now,
         lastSeen:   now,
         loginCount: 1,
+        ...(source ? { source } : {}),
       }));
     }
   }
