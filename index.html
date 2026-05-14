@@ -3626,16 +3626,41 @@ function renderChat(){
       setTimeout(function(){ dismissObsForMaster(a.id); }, 4000);
     }
 
+    // Voornaam uit Google-profiel voor persoonlijke begroeting; valt
+    // terug op generieke vorm zonder naam als geen profiel beschikbaar.
+    var _firstName = (function(){
+      try {
+        var n = _rawUser && _rawUser.name ? String(_rawUser.name).trim() : '';
+        if(!n) return '';
+        var first = n.split(/\s+/)[0];
+        return first.length > 1 && first.length <= 30 ? first : '';
+      } catch(e){ return ''; }
+    })();
+    var _addr = _firstName ? ', ' + _firstName : '';
+
     var openings = {
-      strategic:  {q:'Wat speelt er, Paul?', starters:['Hoe prioriteer ik vandaag?','Wat is de juiste volgende stap?','Welk besluit stel ik uit?']},
-      health:     {q:'Hoe voel je je vandaag?', starters:['Wat zegt mijn HRV?','Hoe herstel ik beter?','Energie voor vanmiddag?']},
-      finance:    {q:'Wat speelt er financieel?', starters:['Hoe staat mijn portfolio?','Welk risico negeer ik?','Wanneer herbalanceren?']},
-      reflection: {q:'Wat valt je op?', starters:['Welk patroon zie ik niet?','Wat heb ik vermeden?','Waar voel ik weerstand?']},
-      productivity:{q:'Waar wil je focus?', starters:['Hoe begin ik met deep work?','Wat haal ik weg?','Beste 90 minuten van vandaag?']},
-      decision:   {q:'Welk besluit stel je uit?', starters:['Wat zou ik kiezen als ik moest?','Wat is goed genoeg?','Wat verlies ik door wachten?']},
-      writing:    {q:'Waar werk je aan?', starters:['Hoe begin ik deze tekst?','Welke zin moet weg?','Wat probeer ik echt te zeggen?']},
-      digital:    {q:'Wat trekt je aandacht weg?', starters:['Welke notificaties uit?','Hoe ontvolg ik beter?','Wat is mijn aandacht waard?']},
-      board:      {q:'Wat speelt er, Paul?', starters:['Geef me een dag-overzicht','Wat zien jullie samen?','Wat is mijn blinde vlek?']}
+      // 地 CHI — fundament, structuur, vermogen
+      strategic:   {q:'Wat speelt er'+_addr+'?',        starters:['Wat moet ik deze week juist NIET doen?','Welke twee dingen leveren 80% op?','Welk probleem verplaats ik elke dag?']},
+      finance:     {q:'Wat speelt er financieel?',      starters:['Welk risico negeer ik in mijn portfolio?','Welke positie hou ik uit gewoonte, niet uit overtuiging?','Wat zou ik kopen met de helft van mijn cash?']},
+      routine:     {q:'Welke gewoonte vraagt aandacht?',starters:['Welke routine sloopt me langzaam?','Wat doe ik dagelijks dat 1% beter kan?','Welk ritueel mis ik dat ik nog niet ken?']},
+      // 水 SUI — flow, herstel, zelfinzicht
+      health:      {q:'Hoe voel je je vandaag?',        starters:['Wat zegt mijn lichaam dat ik niet wil horen?','Hoe herstel ik beter dan alleen slapen?','Welke beweging geeft mij vandaag energie terug?']},
+      reflection:  {q:'Wat valt je op?',                starters:['Welk patroon herhaal ik uit angst?','Waarover lieg ik tegen mezelf?','Wat heb ik vermeden om te zien?']},
+      learning:    {q:'Wat groeit in jou?',             starters:['Wat noem ik leren maar is eigenlijk vermijding?','Welke vaardigheid groeit met 30 min per dag?','Waar volg ik nog een verouderde aanpak?']},
+      // 風 FŪ — geest, communicatie, creativiteit
+      writing:     {q:'Waar werk je aan?',              starters:['Welke zin moet weg uit deze tekst?','Wat probeer ik te zeggen maar verstop ik?','Hoe begin ik dit zonder voorwoord?']},
+      relationship:{q:'Welke band vraagt aandacht?',    starters:['Welk gesprek stel ik al weken uit?','Welke vraag durf ik niet te stellen?','Aan wie ben ik iets schuldig dat ik nog niet heb gezegd?']},
+      engagement:  {q:'Hoe diep wil je gaan?',          starters:['Welke meester heb ik nog niet eens gesproken?','Wat heb ik in Takumi geleerd deze week?','Hoe maak ik dit platform meer van mij?']},
+      // 火 KA — energie, actie, beslissing
+      productivity:{q:'Waar wil je focus?',             starters:['Welke 90 minuten zijn vandaag goud waard?','Wat haal ik weg uit mijn agenda?','Waar ben ik morgen al te laat voor?']},
+      decision:    {q:'Welk besluit stel je uit?',      starters:['Welk besluit ligt al een week op mijn bureau?','Wat zou ik kiezen als ik NU moest?','Wat verlies ik elke dag dat ik wacht?']},
+      digital:     {q:'Wat trekt je aandacht weg?',     starters:['Welke app belast me zonder dat ik het merk?','Welke notificaties kunnen uit zonder verlies?','Wat is mijn aandacht eigenlijk waard?']},
+      // 空 KŪ — leegte, stilte, mysterie
+      silence:     {q:'Welke stilte zoek je?',          starters:['Welke pauze ben ik vergeten in te bouwen?','Waar maak ik het lawaaiger dan nodig?','Wat zou ik horen als ik even niets deed?']},
+      letting_go:  {q:'Wat draag je nog mee?',          starters:['Welk project mag eindelijk eindigen?','Wat hou ik vast uit gewoonte, niet uit liefde?','Wie verwacht nog iets van mij dat ik niet meer ben?']},
+      mystery:     {q:'Wat is de echte vraag?',         starters:['Welke vraag heb ik mezelf nog nooit durven stellen?','Welke aanname onder mijn doelen mag op de helling?','Wat ontkennen anderen wat ik wel zie?']},
+      // 師匠会 COUNCIL — alle vijf stemmen
+      board:       {q:'Wat speelt er'+_addr+'?',        starters:['Waarover ben ik het overzicht kwijt?','Welke beslissing wil ik vanuit alle hoeken zien?','Wat is het belangrijkste dat ik vandaag NIET zie?']}
     };
     var op = openings[a.id] || openings.board;
     var memCount = (S.memoirs[a.id] || []).length;
