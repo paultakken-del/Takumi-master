@@ -857,6 +857,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
         <div style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-top:3px">Herstel</div>
       </div>
     </div>
+    <div id="ck-stat-hint" style="display:none;font-size:11px;color:var(--acc);text-align:center;margin-top:8px;opacity:.85;cursor:pointer;-webkit-tap-highlight-color:transparent" onclick="goToHealth()">↗ Koppel HRV via Data Hub</div>
     <!-- Hidden helpers for legacy code that may still reference these -->
     <div style="display:none">
       <span id="wave-phase-name"></span>
@@ -2052,10 +2053,43 @@ const S={
   holdings:ls('tm2_hold',{}),
   degiro:ls('tm2_dg',{}),
   port:ls('tm2_port',null),
-  hrv:ls('tm2_hrv',{rmssd:45,hr:58,recovery:7,sleep:7.2}),
+  hrv:ls('tm2_hrv',{rmssd:null,hr:null,recovery:null,sleep:null}),
   pulse:{step:0,data:{}},
   rejIdx:null,
 };
+
+// ── LEGACY DUMMY CLEANUP — exact match met oude defaults wist beta-rommel ─
+// Doel: bestaande users die nooit echte data hebben geïmporteerd, maar
+// wel ooit de dummy {rmssd:45,hr:58,recovery:7,sleep:7.2} in localStorage
+// kregen, krijgen schone lege state. Echte data (afwijkend van match) blijft.
+(function wipeLegacyDummies(){
+  try {
+    var hk = _ukey('tm2_hrv');
+    var hraw = localStorage.getItem(hk);
+    if(hraw){
+      var h = JSON.parse(hraw);
+      if(h && h.rmssd===45 && h.hr===58 && h.recovery===7 && h.sleep===7.2){
+        localStorage.removeItem(hk);
+        S.hrv = {rmssd:null, hr:null, recovery:null, sleep:null};
+      }
+    }
+    var holdK = _ukey('tm2_hold');
+    var holdRaw = localStorage.getItem(holdK);
+    if(holdRaw){
+      var hd = JSON.parse(holdRaw);
+      if(hd && hd.BTC && hd.BTC.qty===0.62 && hd.BTC.avgBuy===28000
+         && hd.ETH && hd.ETH.qty===4.2 && hd.ETH.avgBuy===1800){
+        localStorage.removeItem(holdK);
+        S.holdings = {};
+      }
+    }
+  } catch(e){}
+})();
+
+// Helper: heeft user ECHTE HRV-data (vs lege/null state)?
+function hasRealHrv(){
+  return !!(S.hrv && (S.hrv.rmssd != null || S.hrv.recovery != null || S.hrv.sleep != null));
+}
 
 // ── DAG VOORTGANG TRACKING ─────────────────────────────────────────
 var _today=new Date().toISOString().slice(0,10);
@@ -2107,7 +2141,7 @@ function updateDagVoortgang(){
 
 // ── CONTEXT HELPERS ────────────────────────────────────────────────
 function portCtx(){
-  if(!S.port?.rows)return'€122.8k (sync voor live)';
+  if(!S.port?.rows)return 'nog niet gekoppeld';
   return'€'+Math.round(S.port.totalValue).toLocaleString('nl-NL')+' — '+S.port.rows.slice(0,3).map(r=>r.sym+(r.pnlPct>=0?' +':' ')+r.pnlPct.toFixed(1)+'%').join(', ');
 }
 function allCtx(){
@@ -2146,7 +2180,11 @@ function allCtx(){
   var phaseLabels={dal:'Herstel (dal)',stijgend:'Opbouw (stijgend)',vlak:'Normaal',top:'Actief (top)',dalend:'Afronden (dalend)'};
   if(window._wavePhase) lines.push('Wave: '+( phaseLabels[window._wavePhase]||window._wavePhase));
   lines.push('Portfolio: '+portCtx());
-  lines.push('HRV: rMSSD '+S.hrv.rmssd+' (baseline 53, delta '+(S.hrv.rmssd-53>=0?'+':'')+(S.hrv.rmssd-53)+'), herstel '+S.hrv.recovery+'/10, slaap '+S.hrv.sleep+'u');
+  if(hasRealHrv()){
+    lines.push('HRV: rMSSD '+S.hrv.rmssd+' (baseline 53, delta '+(S.hrv.rmssd-53>=0?'+':'')+(S.hrv.rmssd-53)+'), herstel '+S.hrv.recovery+'/10, slaap '+S.hrv.sleep+'u');
+  } else {
+    lines.push('HRV: nog niet gekoppeld');
+  }
   if(GOALS&&GOALS.length){
     lines.push('Doelen: '+GOALS.filter(function(g){return g.status==='Actief';}).slice(0,5).map(function(g){
       var tag=g.pct<25?' ⚠STAGNATIE':g.pct>=85?' ✓bijna klaar':'';
@@ -2154,9 +2192,11 @@ function allCtx(){
     }).join(', '));
   }
   var patterns=[];
-  if(S.hrv.recovery<=5)patterns.push('laag herstel');
-  if(S.hrv.rmssd<45)patterns.push('HRV onder baseline');
-  if(S.hrv.sleep<6.5)patterns.push('slaaptekort');
+  if(hasRealHrv()){
+    if(S.hrv.recovery!=null && S.hrv.recovery<=5)patterns.push('laag herstel');
+    if(S.hrv.rmssd!=null && S.hrv.rmssd<45)patterns.push('HRV onder baseline');
+    if(S.hrv.sleep!=null && S.hrv.sleep<6.5)patterns.push('slaaptekort');
+  }
   if(GOALS){GOALS.filter(function(g){return g.pct<25&&g.status==='Actief';}).forEach(function(g){patterns.push(g.title+' stagneert');});}
   var decLearn=S.learn&&S.learn['decision'];
   if(decLearn&&(decLearn.visitCount||0)>5&&(decLearn.rej||[]).length>2)patterns.push('frequent beslissingsoverleg zonder actie');
@@ -3015,6 +3055,8 @@ function renderWave(moodOverride){
   if (hrvElEarly) hrvElEarly.textContent = hasRealHrv ? (hrvVal + ' rMSSD') : '–';
   if (sleepElEarly) sleepElEarly.textContent = hasRealHrv ? (slaapVal.toFixed(1) + 'u') : '–';
   if (recElEarly) recElEarly.textContent = hasRealHrv ? (recVal + '/10') : '–';
+  var hintEl = document.getElementById('ck-stat-hint');
+  if (hintEl) hintEl.style.display = hasRealHrv ? 'none' : 'block';
 
   // Store wave state globally for allCtx (gebruikt door agents)
   window._wavePhase = w.phase;
@@ -3091,6 +3133,8 @@ function renderWave(moodOverride){
   if (hrvEl) hrvEl.textContent = hasRealHrv ? (hrv + ' rMSSD') : '–';
   if (sleepEl) sleepEl.textContent = hasRealHrv ? (slaap.toFixed(1) + 'u') : '–';
   if (recEl) recEl.textContent = hasRealHrv ? (rec + '/10') : '–';
+  var hintEl2 = document.getElementById('ck-stat-hint');
+  if (hintEl2) hintEl2.style.display = hasRealHrv ? 'none' : 'block';
 
   // Store wave state globally for allCtx
   window._wavePhase = w.phase;
