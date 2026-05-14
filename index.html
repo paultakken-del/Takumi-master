@@ -865,11 +865,27 @@ input[type=range]{width:100%;accent-color:var(--acc)}
     <!-- ── WIJSHEID ── ademruimte-afsluiter van cockpit ──
          Verhuisd uit 'Meer voor vandaag' collapse — quote verdient een
          vaste, prominente plek als afsluiter. Geeft cockpit een 'einde'
-         in plaats van mechanisch te stoppen bij dag-cyclus. -->
-    <div id="ck-wisdom-section" style="padding:40px 24px 32px;text-align:center;max-width:520px;margin:0 auto">
-      <div style="width:32px;height:1px;background:var(--b);margin:0 auto 24px;opacity:.5"></div>
-      <div id="ck-quote" style="font-size:16px;color:var(--ink);opacity:.72;font-style:italic;line-height:1.7;word-wrap:break-word;font-family:var(--serif)"> </div>
-      <div id="ck-quote-auth" style="font-size:10.5px;color:var(--ink);opacity:.42;margin-top:12px;letter-spacing:.14em;text-transform:uppercase"> </div>
+         in plaats van mechanisch te stoppen bij dag-cyclus.
+         Ornament + Japanse aanhalingstekens 「」 brengen ceremonie. -->
+    <div id="ck-wisdom-section" style="padding:44px 24px 36px;text-align:center;max-width:540px;margin:0 auto">
+      <!-- Ornament: dunne sierlijn met kanji 心 (hart/geest) in het midden -->
+      <div style="display:flex;align-items:center;gap:14px;justify-content:center;margin-bottom:24px;opacity:.5">
+        <div style="height:1px;width:48px;background:linear-gradient(to right,transparent,var(--b))"></div>
+        <span style="font-family:var(--FJ);font-size:14px;color:var(--m);font-weight:300;line-height:1">心</span>
+        <div style="height:1px;width:48px;background:linear-gradient(to left,transparent,var(--b))"></div>
+      </div>
+      <!-- Quote met Japanse aanhalingstekens 「 」 als visuele frame -->
+      <div style="position:relative;padding:0 28px">
+        <span style="position:absolute;left:0;top:-8px;font-family:var(--FJ);font-size:28px;color:var(--acc);opacity:.35;line-height:1;font-weight:300">「</span>
+        <div id="ck-quote" style="font-size:16.5px;color:var(--ink);opacity:.78;font-style:italic;line-height:1.75;word-wrap:break-word;font-family:var(--serif)"> </div>
+        <span style="position:absolute;right:0;bottom:-8px;font-family:var(--FJ);font-size:28px;color:var(--acc);opacity:.35;line-height:1;font-weight:300">」</span>
+      </div>
+      <!-- Auteur met meer ademruimte en strakkere spacing -->
+      <div style="margin-top:22px;display:flex;align-items:center;justify-content:center;gap:12px">
+        <div style="height:1px;width:18px;background:var(--m);opacity:.35"></div>
+        <div id="ck-quote-auth" style="font-size:10.5px;color:var(--ink);opacity:.52;letter-spacing:.18em;text-transform:uppercase;font-weight:500"> </div>
+        <div style="height:1px;width:18px;background:var(--m);opacity:.35"></div>
+      </div>
     </div>
 
   </div>
@@ -4429,39 +4445,34 @@ function getDayLeader(){
   return {eid:info.eid, element:ELEMENTS[info.eid], warrior:AGENTS[info.warriorId], label:ELEMENTS[info.eid].kanji+' '+ELEMENTS[info.eid].name+' — '+ELEMENTS[info.eid].sub.split(' · ')[1], sub:''};
 }
 
-// Render dag-leider card op cockpit — vervangt de filosofische
-// lading die de yin-yang (nu in Dojo) op cockpit innam.
+// Render dag-leider card op cockpit — minimaal: alleen element-kanji
+// + element-naam + 'leidt vandaag'. Specifieke meester-namen blijven
+// in de Raad — daar horen ze, niet op cockpit (zou identiteit en
+// cockpit-focus vermengen).
 function renderDayLeader(){
   var el = document.getElementById('ck-day-leader');
   if(!el) return;
   var leader = getDayLeader();
   var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
 
-  // Kanji: warrior-icoon als beschikbaar, anders element-kanji
-  var kanji = (leader.warrior && leader.warrior.ico)
-    || (leader.element && leader.element.kanji)
-    || '匠';
-  // Naam: korte vorm — alleen de warrior-naam zonder element-prefix
-  // "働 Hataraki — Productiviteit" → "Hataraki"
-  var warriorName = (leader.warrior && leader.warrior.name) || 'Council';
-  var shortName = warriorName.replace(/^[^\s]+\s+/, '').split(/[—\-·]/)[0].trim();
-
-  // Subtitle: domein + element-context
-  var domein = '';
-  if(leader.warrior && leader.warrior.name){
-    var parts = leader.warrior.name.split('—');
-    if(parts.length > 1) domein = parts[1].trim();
-  }
-  var elementName = leader.element ? leader.element.name : '匠';
-  var elementKanjiContext = leader.element ? leader.element.kanji : '';
-
-  var sub;
+  // Kanji: bij voorkeur het ELEMENT-kanji (niet de meester-warrior-kanji),
+  // omdat we hier het element communiceren. Council = 匠.
+  var kanji, name, sub;
   if(leader.eid === 'board'){
-    sub = isEn ? 'Synthesis · Master Council leads today' : 'Synthese · Master Council leidt vandaag';
-  } else if(leader.eid === 'ku'){
-    sub = isEn ? (domein || 'Void') + ' · Kū leads today' : (domein || 'Leegte') + ' · Kū leidt vandaag';
+    kanji = '匠';
+    name = isEn ? 'Master Council' : 'Master Council';
+    sub = isEn ? 'leads today' : 'leidt vandaag';
+  } else if(leader.element){
+    kanji = leader.element.kanji;
+    // element.sub is bv. 'Earth · Foundation' / 'Aarde · Fundament' —
+    // we tonen het Nederlandse element-domein
+    var domein = (leader.element.sub || '').split('·')[0].trim();
+    name = leader.element.name + (domein ? ' · ' + domein : '');
+    sub = isEn ? 'leads today' : 'leidt vandaag';
   } else {
-    sub = (domein || '') + (domein ? ' · ' : '') + elementName + (isEn ? ' leads today' : ' leidt vandaag');
+    kanji = '匠';
+    name = 'Takumi';
+    sub = '';
   }
 
   var kanjiEl = document.getElementById('ck-day-leader-kanji');
@@ -4469,17 +4480,16 @@ function renderDayLeader(){
   var subEl = document.getElementById('ck-day-leader-sub');
   if(kanjiEl){
     kanjiEl.textContent = kanji;
-    // Element-kleur voor de kanji — geeft visueel onderscheid per dag
     if(leader.element && leader.element.col){
       kanjiEl.style.color = leader.element.col;
     } else {
       kanjiEl.style.color = 'var(--acc)';
     }
   }
-  if(nameEl) nameEl.textContent = shortName;
+  if(nameEl) nameEl.textContent = name;
   if(subEl) subEl.textContent = sub;
   el.style.display = 'flex';
-  // Bewaar voor click-handler
+  // Bewaar voor click-handler — bij doorklikken vinden we de juiste warrior
   el.dataset.warriorId = (leader.warrior && leader.warrior.id) || 'board';
 }
 
