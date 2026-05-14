@@ -722,6 +722,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
     <div class="sb-footer">
       <div class="sb-user" id="sb-user-email"></div>
       <button onclick="window.startTakumiTour && window.startTakumiTour()" style="background:none;border:none;font-size:12px;color:rgba(255,255,255,.3);cursor:pointer;font-family:var(--F);padding:4px 0;text-align:left;transition:color .2s" onmouseover="this.style.color='rgba(196,83,42,.8)'" onmouseout="this.style.color='rgba(255,255,255,.3)'"><span id="sb-tour-text">◎ Rondleiding</span></button>
+      <button onclick="openFeedback()" style="background:none;border:none;font-size:12px;color:rgba(255,255,255,.3);cursor:pointer;font-family:var(--F);padding:4px 0;text-align:left;transition:color .2s" onmouseover="this.style.color='rgba(196,83,42,.8)'" onmouseout="this.style.color='rgba(255,255,255,.3)'"><span id="sb-feedback-text">✉ Feedback</span></button>
       <button class="sb-logout" onclick="logout()"><span id="sb-logout-text">↩ Afmelden</span></button>
     </div>
 </nav>
@@ -1444,6 +1445,7 @@ var I18N = {
     'nav.users': 'Gebruikers',
     'nav.subtitle': 'persoonlijk adviesplatform',
     'nav.tour': '◎ Rondleiding',
+    'nav.feedback': '✉ Feedback',
     'nav.logout': '↩ Afmelden',
     'nav.evening': 'Avond Ritueel',
     'nav.rituals': 'Rituelen',
@@ -1667,6 +1669,7 @@ var I18N = {
     'nav.users': 'Users',
     'nav.subtitle': 'personal advisory platform',
     'nav.tour': '◎ Tour',
+    'nav.feedback': '✉ Feedback',
     'nav.logout': '↩ Sign out',
     'nav.evening': 'Evening Ritual',
     'nav.rituals': 'Rituals',
@@ -1926,6 +1929,8 @@ function applyI18nDOM(){
   // Tour en logout
   var tourEl = document.getElementById('sb-tour-text');
   if(tourEl) tourEl.textContent = t('nav.tour');
+  var feedbackEl = document.getElementById('sb-feedback-text');
+  if(feedbackEl) feedbackEl.textContent = t('nav.feedback');
   var logoutEl = document.getElementById('sb-logout-text');
   if(logoutEl) logoutEl.textContent = t('nav.logout');
   // HTML-lang attribuut
@@ -6987,6 +6992,44 @@ document.addEventListener('DOMContentLoaded',function(){
     n.addEventListener('click',function(){ if(window.innerWidth<=720) closeSidebar(); });
   });
 });
+
+function openFeedback(){
+  // Verzamel context — helpt mij om feedback te plaatsen zonder
+  // dat de gebruiker browser/versie hoeft uit te leggen.
+  var ctx = [];
+  try {
+    var u = _rawUser;
+    if(u && u.email) ctx.push('Email: ' + u.email);
+  } catch(e){}
+  try {
+    var view = document.querySelector('.view.on');
+    if(view){
+      var vid = view.id ? view.id.replace(/^v-/,'') : '?';
+      var names = {ck:'Cockpit', bo:'Raad', dj:'Dojo', gl:'Doelen', rh:'Rituelen', wc:'Wereldcontext', da:'Data Hub', dy:'Ochtend', ri:'Avond', rt:'Ritme'};
+      ctx.push('Huidige view: ' + (names[vid] || vid));
+    }
+  } catch(e){}
+  try {
+    ctx.push('Datum: ' + new Date().toLocaleString('nl-NL',{timeZone:'Europe/Amsterdam'}));
+    ctx.push('Taal: ' + (typeof LANG !== 'undefined' ? LANG : '?'));
+    ctx.push('Theme: ' + (document.documentElement.getAttribute('data-theme') || '?'));
+    ctx.push('Browser: ' + (navigator.userAgent || '?').slice(0, 140));
+    ctx.push('Scherm: ' + window.innerWidth + '×' + window.innerHeight);
+  } catch(e){}
+
+  var intro = (LANG === 'en')
+    ? 'Hi Paul,\n\n[Your feedback, bug report, or idea here]\n\n'
+    : 'Hoi Paul,\n\n[Je feedback, bug-melding of idee hier]\n\n';
+  var ctxLabel = (LANG === 'en') ? '— Context (auto-filled) —' : '— Context (automatisch ingevuld) —';
+  var subject = (LANG === 'en') ? 'Takumi beta feedback' : 'Takumi beta — feedback';
+
+  var body = intro + ctxLabel + '\n' + ctx.join('\n');
+  var href = 'mailto:paul.takken@gmail.com'
+    + '?subject=' + encodeURIComponent(subject)
+    + '&body=' + encodeURIComponent(body);
+  // Use location instead of window.open: mailto: in window.open kan blank tab achterlaten
+  window.location.href = href;
+}
 
 function logout(){
   // Wis user data
