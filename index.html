@@ -956,69 +956,27 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <!-- DATA HUB -->
 <div class="view" id="v-da">
   <div class="tb">
-    <div><div class="tb-t">Data Hub</div><div class="tb-s">Portfolio · Health · Import</div></div>
+    <div><div class="tb-t">Data Hub</div><div class="tb-s">Portfolio · Health · Backup</div></div>
     <div style="display:flex;gap:7px">
       <button class="btn sm" onclick="syncPort()">↺ Live koersen</button>
       <button class="btn sm" onclick="openHold()">⚙ Holdings</button>
     </div>
   </div>
   <div class="tabs">
-    <div class="tab on" onclick="stab('portfolio',this)">Portfolio</div>
-    <div class="tab" onclick="stab('health',this)">Health & HRV</div>
-    <div class="tab" onclick="stab('apple',this)">📸 Screenshot</div>
-    <div class="tab" onclick="stab('oura',this)">Oura Ring</div>
-    <div class="tab" onclick="stab('degiro',this)">DeGiro</div>
+    <div class="tab on" onclick="stab('portfolio',this)">📊 Portfolio</div>
+    <div class="tab" onclick="stab('health',this)">❤ Health</div>
     <div class="tab" onclick="stab('backup',this)">💾 Backup</div>
   </div>
+
+  <!-- ─── PORTFOLIO TAB: overview + DeGiro import ─────────────────── -->
   <div class="tp on" id="tp-portfolio">
     <div class="ph"><div><div class="pt" id="p-tot">€ –</div><span id="p-ch" style="display:none"></span></div><div style="font-size:11px;color:var(--m)" id="p-sync">Nog niet gesynchroniseerd</div></div>
     <table><thead><tr><th>Asset</th><th>Type</th><th style="text-align:right">Waarde</th><th style="text-align:right">P&L</th><th style="text-align:right">Alloc.</th><th style="text-align:right">Bron</th></tr></thead>
     <tbody id="p-rows"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--m)">Klik "↺ Live koersen" om te laden</td></tr></tbody></table>
-  </div>
-  <div class="tp" id="tp-health">
+
+    <div class="ct" style="margin-top:var(--sp-lg)">Import bron</div>
     <div class="card" style="margin-bottom:var(--sp-md)">
-      <div class="ct">HRV4Training import</div>
-      <div class="dz" onclick="document.getElementById('hrv-f').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');handleHRV({target:{files:event.dataTransfer.files}})">
-        <input type="file" id="hrv-f" accept=".csv,.CSV" style="display:none" onchange="handleHRV(event)">
-        <div class="dz-ico">❤</div><div class="dz-t">Sleep HRV4Training CSV of klik</div><div class="dz-s">iOS export · \r-aware parser</div>
-      </div>
-      <button class="btn sm" style="margin-top:10px;width:100%" onclick="document.getElementById('hrv-f').click()">↑ Selecteer CSV</button>
-    </div>
-    <div id="hrv-r"></div>
-  </div>
-  <div class="tp" id="tp-apple">
-    <div class="card" style="margin-bottom:var(--sp-md)">
-      <div class="ct">Gezondheid app — Screenshot import</div>
-      <p style="font-size:13px;color:var(--m);line-height:1.7;margin-bottom:var(--sp-md)">Maak een screenshot van je Gezondheid app (HRV, slaap, hartslag). Takumi leest de waarden automatisch uit met AI en werkt je Wave bij.</p>
-      <div class="dz" id="health-dz"
-        onclick="document.getElementById('health-img').click()"
-        ondragover="event.preventDefault();this.classList.add('drag')"
-        ondragleave="this.classList.remove('drag')"
-        ondrop="event.preventDefault();this.classList.remove('drag');handleHealthScreenshot({target:{files:event.dataTransfer.files}})">
-        <input type="file" id="health-img" accept="image/*" style="display:none" onchange="handleHealthScreenshot(event)">
-        <div class="dz-ico">📸</div>
-        <div class="dz-t">Tik om screenshot te selecteren</div>
-        <div class="dz-s">Gezondheid · Apple Watch · Oura · elk formaat</div>
-      </div>
-      <button class="btn sm" style="margin-top:10px;width:100%" onclick="document.getElementById('health-img').click()">↑ Selecteer screenshot</button>
-    </div>
-    <div id="health-r"></div>
-  </div>
-  <div class="tp" id="tp-oura">
-    <div class="card" style="margin-bottom:var(--sp-md)">
-      <div class="ct">Oura Ring — Live koppeling</div>
-      <p style="font-size:12px;color:var(--m);margin-bottom:14px">Genereer een Personal Access Token via <strong>cloud.ouraring.com/personal-access-tokens</strong> en plak hem hieronder. Data wordt lokaal opgeslagen.</p>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <input id="oura-token-inp" type="password" placeholder="oura_pat_..." style="flex:1;border:1px solid var(--b);border-radius:var(--rs);padding:9px 11px;background:var(--paper);color:var(--ink);font-size:12px;outline:none" value="">
-        <button class="btn sm pri" onclick="saveOuraToken()">Opslaan</button>
-      </div>
-      <button class="btn sm" style="width:100%" onclick="syncOura()">↺ Synchroniseer vandaag</button>
-    </div>
-    <div id="oura-r"></div>
-  </div>
-  <div class="tp" id="tp-degiro">
-    <div class="card" style="margin-bottom:var(--sp-md)">
-      <div class="ct">DeGiro portfolio export</div>
+      <div class="ct">📊 DeGiro portfolio export</div>
       <p style="font-size:12px;color:var(--m);margin-bottom:14px">Export via DeGiro → Portfolio → Export CSV</p>
       <div class="dz" onclick="document.getElementById('dg-f').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');handleDG({target:{files:event.dataTransfer.files}})">
         <input type="file" id="dg-f" accept=".csv,.CSV" style="display:none" onchange="handleDG(event)">
@@ -1028,6 +986,53 @@ input[type=range]{width:100%;accent-color:var(--acc)}
     </div>
     <div id="dg-r"></div>
   </div>
+
+  <!-- ─── HEALTH TAB: HRV-historie + 3 import-bronnen ─────────────── -->
+  <div class="tp" id="tp-health">
+    <div id="hrv-r" style="margin-bottom:var(--sp-md)"></div>
+
+    <div class="ct" style="margin-top:var(--sp-md)">Import bronnen</div>
+
+    <div class="card" style="margin-bottom:var(--sp-md)">
+      <div class="ct">⌚ Oura Ring — live koppeling</div>
+      <p style="font-size:12px;color:var(--m);margin-bottom:14px">Genereer een Personal Access Token via <strong>cloud.ouraring.com/personal-access-tokens</strong> en plak hem hieronder. Data blijft lokaal opgeslagen.</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="oura-token-inp" type="password" placeholder="oura_pat_..." style="flex:1;border:1px solid var(--b);border-radius:var(--rs);padding:9px 11px;background:var(--paper);color:var(--ink);font-size:12px;outline:none" value="">
+        <button class="btn sm pri" onclick="saveOuraToken()">Opslaan</button>
+      </div>
+      <button class="btn sm" style="width:100%" onclick="syncOura()">↺ Synchroniseer vandaag</button>
+    </div>
+    <div id="oura-r" style="margin-bottom:var(--sp-md)"></div>
+
+    <div class="card" style="margin-bottom:var(--sp-md)">
+      <div class="ct">📸 Health screenshot — AI import</div>
+      <p style="font-size:13px;color:var(--m);line-height:1.7;margin-bottom:var(--sp-md)">Maak een screenshot van je Gezondheid app (HRV, slaap, hartslag). Takumi leest de waarden automatisch uit en werkt je Wave bij.</p>
+      <div class="dz" id="health-dz"
+        onclick="document.getElementById('health-img').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="event.preventDefault();this.classList.remove('drag');handleHealthScreenshot({target:{files:event.dataTransfer.files}})">
+        <input type="file" id="health-img" accept="image/*" style="display:none" onchange="handleHealthScreenshot(event)">
+        <div class="dz-ico">📸</div>
+        <div class="dz-t">Tik om screenshot te selecteren</div>
+        <div class="dz-s">Gezondheid · Apple Watch · Oura · Garmin</div>
+      </div>
+      <button class="btn sm" style="margin-top:10px;width:100%" onclick="document.getElementById('health-img').click()">↑ Selecteer screenshot</button>
+    </div>
+    <div id="health-r" style="margin-bottom:var(--sp-md)"></div>
+
+    <div class="card" style="margin-bottom:var(--sp-md)">
+      <div class="ct">❤ HRV4Training — CSV import</div>
+      <p style="font-size:12px;color:var(--m);margin-bottom:14px">Export uit de HRV4Training iOS app en upload hier.</p>
+      <div class="dz" onclick="document.getElementById('hrv-f').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');handleHRV({target:{files:event.dataTransfer.files}})">
+        <input type="file" id="hrv-f" accept=".csv,.CSV" style="display:none" onchange="handleHRV(event)">
+        <div class="dz-ico">❤</div><div class="dz-t">Sleep HRV4Training CSV of klik</div><div class="dz-s">iOS export · \r-aware parser</div>
+      </div>
+      <button class="btn sm" style="margin-top:10px;width:100%" onclick="document.getElementById('hrv-f').click()">↑ Selecteer CSV</button>
+    </div>
+  </div>
+
+  <!-- ─── BACKUP TAB: ongewijzigd ─────────────────────────────────── -->
   <div class="tp" id="tp-backup">
     <div class="card" style="margin-bottom:var(--sp-md)">
       <div class="ct">Backup van jouw Takumi-data</div>
@@ -6627,7 +6632,7 @@ function saveOuraToken(){
 
 async function syncOura(){
   const tok=ls('tm2_oura_token','');
-  if(!tok){toast('Sla eerst een Oura token op','err');stab('oura',document.querySelector('.tab[onclick*="oura"]'));return;}
+  if(!tok){toast('Sla eerst een Oura token op','err');stab('health',document.querySelector('.tab[onclick*="health"]'));return;}
   const el=document.getElementById('oura-r');
   if(el)el.innerHTML='<div style="text-align:center;padding:20px;color:var(--m)">Laden...</div>';
   try{
