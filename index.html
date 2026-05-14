@@ -3114,16 +3114,19 @@ function initCK(){
     const openActs=goals.flatMap(g=>g.actions||[]).filter(a=>!a.done);
     const urgentDoel=actief.find(g=>g.pct<25)||actief[0];
     var synText='';
+    var openActsLink = openActs.length>0
+      ? '<span onclick="go(\'gl\')" style="color:var(--acc);cursor:pointer;text-decoration:underline;text-decoration-color:rgba(196,83,42,.35);text-underline-offset:3px;-webkit-tap-highlight-color:transparent" onmouseover="this.style.textDecorationColor=\'var(--acc)\'" onmouseout="this.style.textDecorationColor=\'rgba(196,83,42,.35)\'">'+openActs.length+' open '+(openActs.length===1?'actie':'acties')+' wachten</span>.'
+      : 'Voortgang op koers.';
     if(rec<5||hrv<40){
       synText='Herstelmodus. Je biometrie vraagt rust — plan geen grote beslissingen. Ideaal moment voor Rituelen en reflectie.';
     } else if(rec>=8&&hrv>=55){
-      synText='Topdag. '+(urgentDoel?'Je '+urgentDoel.title+' vraagt aandacht ('+urgentDoel.pct+'%). ':'')+' Gebruik deze energie voor diep werk en beslissingen.';
+      synText='Topdag. '+(urgentDoel?'Je '+esc(urgentDoel.title)+' vraagt aandacht ('+urgentDoel.pct+'%). ':'')+' Gebruik deze energie voor diep werk en beslissingen.';
     } else if(actief.length===0){
       synText='Geen actieve doelen. Stel vandaag je eerste doel in — dat is de basis voor alles wat het systeem voor je kan doen.';
     } else {
-      synText='Normale staat. '+(urgentDoel?urgentDoel.title+' staat op '+urgentDoel.pct+'%. ':'')+''+(openActs.length>0?openActs.length+' open '+(openActs.length===1?'actie':'acties')+' wachten.':'Voortgang op koers.');
+      synText='Normale staat. '+(urgentDoel?esc(urgentDoel.title)+' staat op '+urgentDoel.pct+'%. ':'')+openActsLink;
     }
-    syn.textContent=synText;
+    syn.innerHTML=synText;
   }
 
   // ── DOELEN STRIP ──────────────────────────────────────────
