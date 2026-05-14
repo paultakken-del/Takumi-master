@@ -737,7 +737,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
     </div>
 
     <!-- OCHTEND NUDGE — verschijnt alleen 's ochtends voor dagstart -->
-    <div id="ck-ochtend-nudge" style="display:none;margin:var(--sp-md) 0 0;padding:14px 18px;background:linear-gradient(135deg,rgba(196,83,42,.08),rgba(196,83,42,.03));border:1px solid rgba(196,83,42,.18);border-radius:var(--rs);cursor:pointer;transition:all .2s;display:none;align-items:center;justify-content:space-between;gap:12px" onclick="(function(){var dy=document.querySelector('[data-v=\'dy\']');if(dy)dy.click();})()" onmouseover="this.style.background='linear-gradient(135deg,rgba(196,83,42,.14),rgba(196,83,42,.06))'" onmouseout="this.style.background='linear-gradient(135deg,rgba(196,83,42,.08),rgba(196,83,42,.03))'">
+    <div id="ck-ochtend-nudge" style="display:none;margin:var(--sp-md) 0 0;padding:14px 18px;background:linear-gradient(135deg,rgba(196,83,42,.08),rgba(196,83,42,.03));border:1px solid rgba(196,83,42,.18);border-radius:var(--rs);cursor:pointer;transition:all .2s;display:none;align-items:center;justify-content:space-between;gap:12px" onclick="go('dy')" onmouseover="this.style.background='linear-gradient(135deg,rgba(196,83,42,.14),rgba(196,83,42,.06))'" onmouseout="this.style.background='linear-gradient(135deg,rgba(196,83,42,.08),rgba(196,83,42,.03))'">
       <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
         <span style="font-family:var(--FJ);font-size:22px;color:var(--acc);flex-shrink:0">匠</span>
         <div style="min-width:0">
@@ -775,15 +775,6 @@ input[type=range]{width:100%;accent-color:var(--acc)}
     </div>
 
     <div id="ck-more-content" style="display:none">
-    <!-- ── ENERGIE ── micro-ritueel ── -->
-    <div class="dash-section">
-      <div class="dash-label"><svg class="ico ico-sm"><use href="#i-wave"/></svg> <span data-i18n="ck.energy">Energie</span></div>
-      <div class="ck-opening" id="ck-opening">
-        <div class="ck-opening-q" id="ck-opening-q"></div>
-        <div class="ck-opening-cards" id="ck-opening-cards"></div>
-      </div>
-    </div>
-
     <!-- ── MUZIEK ── -->
     <div class="dash-section" id="ck-music-section" style="display:none">
       <div class="dash-label"><svg class="ico ico-sm"><use href="#i-wave"/></svg> <span data-i18n="ck.music">Muziek</span></div>
