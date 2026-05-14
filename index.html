@@ -843,7 +843,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
     </div>
 
     <!-- COMPACTE DAG-METRICS — vervangt wave -->
-    <div style="padding:16px 4px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;cursor:pointer" onclick="go('da')">
+    <div style="padding:16px 4px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;cursor:pointer" onclick="goToHealth()" title="Open Health & HRV in Data Hub">
       <div style="text-align:center;padding:12px 8px;background:var(--p2);border:1px solid var(--b);border-radius:10px">
         <div style="font-size:17px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums" id="ck-stat-hrv">–</div>
         <div style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-top:3px">HRV</div>
@@ -2049,7 +2049,7 @@ const S={
   weekCouncil:ls('tm2_week_council',null), // {weekKey, advice, leadElement, supportElement, restElement, generatedAt, dismissed}
   appointments:ls('tm2_appointments',[]), // [{id, master, dueDate, openingPhrase, sourceMsgId, createdAt, status:'open'|'kept'|'missed'}]
   goals:ls('tm2_goals',null),
-  holdings:ls('tm2_hold',{BTC:{qty:.62,avgBuy:28000,name:'Bitcoin'},ETH:{qty:4.2,avgBuy:1800,name:'Ethereum'}}),
+  holdings:ls('tm2_hold',{}),
   degiro:ls('tm2_dg',{}),
   port:ls('tm2_port',null),
   hrv:ls('tm2_hrv',{rmssd:45,hr:58,recovery:7,sleep:7.2}),
@@ -3008,12 +3008,13 @@ function renderWave(moodOverride){
   var hrvVal = S.hrv.rmssd || 45;
   var recVal = S.hrv.recovery || 7;
   var slaapVal = S.hrv.sleep || 7;
+  var hasRealHrv = !!localStorage.getItem(_ukey('tm2_hrv'));
   var hrvElEarly = document.getElementById('ck-stat-hrv');
   var sleepElEarly = document.getElementById('ck-stat-sleep');
   var recElEarly = document.getElementById('ck-stat-rec');
-  if (hrvElEarly) hrvElEarly.textContent = hrvVal + ' rMSSD';
-  if (sleepElEarly) sleepElEarly.textContent = slaapVal.toFixed(1) + 'u';
-  if (recElEarly) recElEarly.textContent = recVal + '/10';
+  if (hrvElEarly) hrvElEarly.textContent = hasRealHrv ? (hrvVal + ' rMSSD') : '–';
+  if (sleepElEarly) sleepElEarly.textContent = hasRealHrv ? (slaapVal.toFixed(1) + 'u') : '–';
+  if (recElEarly) recElEarly.textContent = hasRealHrv ? (recVal + '/10') : '–';
 
   // Store wave state globally for allCtx (gebruikt door agents)
   window._wavePhase = w.phase;
@@ -3083,12 +3084,13 @@ function renderWave(moodOverride){
   var hrv = S.hrv.rmssd || 45;
   var rec = S.hrv.recovery || 7;
   var slaap = S.hrv.sleep || 7;
+  var hasRealHrv = !!localStorage.getItem(_ukey('tm2_hrv'));
   var hrvEl = document.getElementById('ck-stat-hrv');
   var sleepEl = document.getElementById('ck-stat-sleep');
   var recEl = document.getElementById('ck-stat-rec');
-  if (hrvEl) hrvEl.textContent = hrv + ' rMSSD';
-  if (sleepEl) sleepEl.textContent = slaap.toFixed(1) + 'u';
-  if (recEl) recEl.textContent = rec + '/10';
+  if (hrvEl) hrvEl.textContent = hasRealHrv ? (hrv + ' rMSSD') : '–';
+  if (sleepEl) sleepEl.textContent = hasRealHrv ? (slaap.toFixed(1) + 'u') : '–';
+  if (recEl) recEl.textContent = hasRealHrv ? (rec + '/10') : '–';
 
   // Store wave state globally for allCtx
   window._wavePhase = w.phase;
@@ -6339,6 +6341,17 @@ function goToBackup(){
     var tabs = document.querySelectorAll('#v-da .tab');
     for(var i=0;i<tabs.length;i++){
       if(tabs[i].textContent.indexOf('Backup') !== -1){ stab('backup', tabs[i]); break; }
+    }
+  }, 80);
+}
+
+// Open Data Hub direct op Health & HRV tab (vanaf cockpit-stats-strip)
+function goToHealth(){
+  go('da');
+  setTimeout(function(){
+    var tabs = document.querySelectorAll('#v-da .tab');
+    for(var i=0;i<tabs.length;i++){
+      if(tabs[i].textContent.indexOf('Health') !== -1){ stab('health', tabs[i]); break; }
     }
   }, 80);
 }
