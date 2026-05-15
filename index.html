@@ -726,6 +726,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
       <button onclick="window.startTakumiTour && window.startTakumiTour()" style="background:none;border:none;font-size:12px;color:rgba(255,255,255,.3);cursor:pointer;font-family:var(--F);padding:4px 0;text-align:left;transition:color .2s" onmouseover="this.style.color='rgba(196,83,42,.8)'" onmouseout="this.style.color='rgba(255,255,255,.3)'"><span id="sb-tour-text">◎ Rondleiding</span></button>
       <button onclick="openFeedback()" style="background:none;border:none;font-size:12px;color:rgba(255,255,255,.3);cursor:pointer;font-family:var(--F);padding:4px 0;text-align:left;transition:color .2s" onmouseover="this.style.color='rgba(196,83,42,.8)'" onmouseout="this.style.color='rgba(255,255,255,.3)'"><span id="sb-feedback-text">✉ Feedback</span></button>
       <button class="sb-logout" onclick="logout()"><span id="sb-logout-text">↩ Afmelden</span></button>
+      <div class="sb-version" id="sb-version" style="font-family:ui-monospace,Menlo,monospace;font-size:10px;color:rgba(255,255,255,.22);letter-spacing:.06em;margin-top:8px;text-align:left">v0.100</div>
     </div>
 </nav>
 
@@ -2027,6 +2028,12 @@ function attachSignupSourceToAuthLinks(){
 }
 document.addEventListener('DOMContentLoaded', attachSignupSourceToAuthLinks);
 
+// Sync sidebar versie-display met APP_VERSION constante
+document.addEventListener('DOMContentLoaded', function(){
+  var v = document.getElementById('sb-version');
+  if(v && typeof APP_VERSION !== 'undefined') v.textContent = 'v' + APP_VERSION;
+});
+
 function initGoogleSession(){
   var params=new URLSearchParams(window.location.search);
   var gsession=params.get('gsession');
@@ -2081,6 +2088,11 @@ function lsSet(k,v){try{localStorage.setItem(_ukey(k),JSON.stringify(v))}catch{}
 // Haiku 4.5 is ~3-4× goedkoper dan Sonnet 4.5 en accuraat genoeg voor de fast-lane.
 var MODEL_HEAVY = 'claude-sonnet-4-5';
 var MODEL_FAST  = 'claude-haiku-4-5-20251001';
+
+// App-versie — wordt onderaan de sidebar getoond.
+// Bump regel: bij elke push naar main +0.01. Drie decimalen voor
+// consistente weergave (0.100, 0.110, 0.120, ...).
+const APP_VERSION = '0.100';
 
 const S={
   cur:'board',
