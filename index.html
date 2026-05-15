@@ -704,7 +704,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
   <div class="sb-logo" onclick="go('ck');if(window.innerWidth<=720)closeSidebar();" style="cursor:pointer;-webkit-tap-highlight-color:transparent" title="Naar Cockpit"><span class="sb-kanji">匠</span><div><div class="sb-brand">Takumi<span class="sb-beta">Beta</span></div></div></div>
   <div class="sb-nav">
     <div class="ni on" data-v="ck"><span class="ico">⬡</span><span data-i18n="nav.cockpit">Cockpit</span></div>
-    <div class="ni" data-v="bo"><span class="ico">◈</span><span data-i18n="nav.board">Raad van Meesters</span></div>
+    <div class="ni" data-v="bo"><span class="ico">◈</span><span data-i18n="nav.board">Master Council</span></div>
     <div class="ni" data-v="dj"><span class="ico" style="font-family:var(--FJ)">道</span><span data-i18n="nav.dojo">Dojo</span></div>
     <div class="ni" data-v="gl"><span class="ico">◇</span><span data-i18n="nav.goals">Doelen</span></div>
     <div class="ni" data-v="rh"><span class="ico">習</span><span data-i18n="nav.rituals">Rituelen</span></div>
@@ -891,7 +891,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="view" id="v-bo">
   <div class="tb">
     <div>
-      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--acc);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">師匠会</span><span>Raad van Meesters</span></div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--acc);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">師匠会</span><span>Master Council</span></div>
       <div class="tb-s">Stel je vraag aan de Godai — vijf elementen, vijf perspectieven</div>
     </div>
   </div>
@@ -1485,7 +1485,7 @@ var I18N = {
     // Sidebar nav
     'nav.cockpit': 'Cockpit',
     'nav.daily': 'Ochtend Start',
-    'nav.board': 'Raad van Meesters',
+    'nav.board': 'Master Council',
     'nav.section_day': 'Dag',
     'nav.section_evening': 'Avond',
     'nav.section_week_month': 'Week · Maand',
@@ -1519,7 +1519,7 @@ var I18N = {
     'rh.rhythm_desc': 'Cycli van werk en rust — zie hoe je week-ritme zich ontvouwt.',
     // Mobile bottom nav
     'mob.cockpit': 'Cockpit',
-    'mob.board': 'Raad',
+    'mob.board': 'Council',
     'mob.dojo': 'Dojo',
     'mob.goals': 'Doelen',
     'mob.rituals': 'Rituelen',
@@ -1709,7 +1709,7 @@ var I18N = {
   en: {
     'nav.cockpit': 'Cockpit',
     'nav.daily': 'Morning Start',
-    'nav.board': 'Council of Masters',
+    'nav.board': 'Master Council',
     'nav.section_day': 'Day',
     'nav.section_evening': 'Evening',
     'nav.section_week_month': 'Week · Month',
@@ -7368,7 +7368,7 @@ function openFeedback(){
     var view = document.querySelector('.view.on');
     if(view){
       var vid = view.id ? view.id.replace(/^v-/,'') : '?';
-      var names = {ck:'Cockpit', bo:'Raad', dj:'Dojo', gl:'Doelen', rh:'Rituelen', wc:'Wereldcontext', da:'Data Hub', dy:'Ochtend', ri:'Avond', rt:'Ritme'};
+      var names = {ck:'Cockpit', bo:'Council', dj:'Dojo', gl:'Doelen', rh:'Rituelen', wc:'Wereldcontext', da:'Data Hub', dy:'Ochtend', ri:'Avond', rt:'Ritme'};
       ctx.push('Huidige view: ' + (names[vid] || vid));
     }
   } catch(e){}
@@ -7780,7 +7780,7 @@ var STEPS_NL = [
     pos: 'right'
   },
   {
-    title: '◈ Raad van Meesters',
+    title: '◈ Master Council',
     text: 'Dertien meesters, vijf elementen. Stel een vraag aan Ki (Sui) over herstel, aan Hataraki (Ka) over actie, aan Ryaku (Chi) over strategie. Of vraag het Master Council voor synthese.',
     target: null,
     navItem: 'bo',
@@ -7831,7 +7831,7 @@ var STEPS_EN = [
     pos: 'right'
   },
   {
-    title: '◈ Council of Masters',
+    title: '◈ Master Council',
     text: 'Thirteen masters, five elements. Ask Ki (Sui) about recovery, Hataraki (Ka) about action, Ryaku (Chi) about strategy. Or ask the Master Council for synthesis.',
     target: null,
     navItem: 'bo',
