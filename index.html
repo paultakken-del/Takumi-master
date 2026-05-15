@@ -283,6 +283,10 @@ td{padding:10px;border-bottom:1px solid var(--b);font-size:12px}
 .df{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
 .cr{display:flex;gap:8px;margin-top:5px}
 .csw{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .12s}
+.isw{width:40px;height:40px;border-radius:10px;cursor:pointer;border:2px solid var(--b);background:var(--p2);display:inline-flex;align-items:center;justify-content:center;font-size:20px;transition:all .12s;-webkit-tap-highlight-color:transparent;line-height:1}
+.isw:hover{border-color:var(--m)}
+.isw.on{border-color:var(--acc);background:var(--p1);box-shadow:0 0 0 1px var(--acc)}
+.cr:has(.isw){flex-wrap:wrap;gap:8px}
 .csw.on{border-color:var(--ink)}
 .tw{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
 .toast{background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--rs);font-size:12px;animation:tin .2s ease;border-left:3px solid var(--acc);white-space:nowrap}
@@ -1433,7 +1437,18 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="do" id="ng-d" onclick="if(event.target===this)closeNG()">
   <div class="db">
     <div class="dt">Nieuw doel</div><div class="ds">Voeg een strategisch doel toe</div>
-    <div class="field"><label>Icoon</label><input id="ng-i" type="text" maxlength="2" value="🎯" style="width:60px;text-align:center;font-size:20px"></div>
+    <div class="field"><label>Icoon</label><div class="cr">
+      <div class="isw on" onclick="selIco('🎯',this)">🎯</div>
+      <div class="isw" onclick="selIco('💪',this)">💪</div>
+      <div class="isw" onclick="selIco('💰',this)">💰</div>
+      <div class="isw" onclick="selIco('📚',this)">📚</div>
+      <div class="isw" onclick="selIco('❤️',this)">❤️</div>
+      <div class="isw" onclick="selIco('🏠',this)">🏠</div>
+      <div class="isw" onclick="selIco('💼',this)">💼</div>
+      <div class="isw" onclick="selIco('✈️',this)">✈️</div>
+      <div class="isw" onclick="selIco('🧘',this)">🧘</div>
+      <div class="isw" onclick="selIco('🌱',this)">🌱</div>
+    </div><input type="hidden" id="ng-i" value="🎯"></div>
     <div class="field"><label>Kleur</label><div class="cr">
       <div class="csw on" style="background:var(--teal)" onclick="selCol('#28897a',this)"></div>
       <div class="csw" style="background:var(--acc)" onclick="selCol('#c4532a',this)"></div>
@@ -7117,7 +7132,16 @@ function saveGoals(){S.goals=GOALS;lsSet('tm2_goals',GOALS);}
 
 let ngColor='#28897a';
 function selCol(c,el){ngColor=c;document.querySelectorAll('.csw').forEach(s=>s.classList.remove('on'));el.classList.add('on');}
-function openNG(){document.getElementById('ng-d').classList.add('on');document.getElementById('ng-t').value='';document.getElementById('ng-desc').value='';document.getElementById('ng-i').value='🎯';}
+function selIco(ico,el){document.getElementById('ng-i').value=ico;document.querySelectorAll('.isw').forEach(s=>s.classList.remove('on'));el.classList.add('on');}
+function openNG(){
+  document.getElementById('ng-d').classList.add('on');
+  document.getElementById('ng-t').value='';
+  document.getElementById('ng-desc').value='';
+  document.getElementById('ng-i').value='🎯';
+  // Reset icoon-grid: zet alleen 🎯 (default) op .on
+  var isws=document.querySelectorAll('.isw');
+  isws.forEach(function(s){s.classList.toggle('on', s.textContent.trim()==='🎯');});
+}
 function closeNG(){document.getElementById('ng-d').classList.remove('on');}
 function saveNG(){
   const title=document.getElementById('ng-t').value.trim();
