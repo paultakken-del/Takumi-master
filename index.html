@@ -2092,7 +2092,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.130';
+const APP_VERSION = '0.140';
 
 const S={
   cur:'board',
@@ -4364,20 +4364,50 @@ function openActionPicker(masterId, msgIdx, btn){
       '<div style="font-size:10.5px;color:'+mutedColor+';margin-bottom:8px;padding:0 2px;letter-spacing:.02em">'+(prefillAction ? 'Pas aan als je iets anders wilt:' : 'De meester reikt aan — jij maakt het concreet:')+'</div>' +
       '<input type="text" id="action-text" value="'+esc(prefillAction).replace(/"/g,'&quot;')+'" maxlength="120" style="width:100%;padding:11px 14px;border:1px solid '+borderColor+';border-radius:8px;font-size:14px;font-family:inherit;background:'+bgSolid+';color:'+inkColor+';margin-bottom:14px;box-sizing:border-box" placeholder="Wat ga je hier mee doen?">' +
       '<div style="display:flex;flex-direction:column;gap:8px">' +
-        '<button onclick="saveAsAction(\''+masterId+'\','+msgIdx+',\'today\')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:'+bgInset+';border:1px solid '+borderColor+';border-radius:10px;cursor:pointer;font-size:14px;color:'+inkColor+';text-align:left;font-family:inherit;transition:all .15s" onmouseover="this.style.borderColor=\'#c4532a\'" onmouseout="this.style.borderColor=\''+borderColor+'\'">' +
+        '<button class="action-save-btn" data-kind="today" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:'+bgInset+';border:1px solid '+borderColor+';border-radius:10px;cursor:pointer;font-size:14px;color:'+inkColor+';text-align:left;font-family:inherit;transition:all .15s;-webkit-tap-highlight-color:transparent" onmouseover="this.style.borderColor=\'#c4532a\'" onmouseout="this.style.borderColor=\''+borderColor+'\'">' +
           '<svg class="ico ico-lg"><use href="#i-circle"/></svg><div style="flex:1"><div style="font-weight:500">Vandaag</div><div style="font-size:11px;color:'+mutedColor+'">Verschijnt op cockpit, vinkt af aan einde dag</div></div><span style="color:'+mutedColor+';font-size:18px;flex-shrink:0">›</span>' +
         '</button>' +
-        '<button onclick="saveAsAction(\''+masterId+'\','+msgIdx+',\'goal\')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:'+bgInset+';border:1px solid '+borderColor+';border-radius:10px;cursor:pointer;font-size:14px;color:'+inkColor+';text-align:left;font-family:inherit;transition:all .15s" onmouseover="this.style.borderColor=\'#c4532a\'" onmouseout="this.style.borderColor=\''+borderColor+'\'">' +
+        '<button class="action-save-btn" data-kind="goal" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:'+bgInset+';border:1px solid '+borderColor+';border-radius:10px;cursor:pointer;font-size:14px;color:'+inkColor+';text-align:left;font-family:inherit;transition:all .15s;-webkit-tap-highlight-color:transparent" onmouseover="this.style.borderColor=\'#c4532a\'" onmouseout="this.style.borderColor=\''+borderColor+'\'">' +
           '<svg class="ico ico-lg"><use href="#i-target"/></svg><div style="flex:1"><div style="font-weight:500">Doel</div><div style="font-size:11px;color:'+mutedColor+'">Lange termijn met voortgangs-percentage</div></div><span style="color:'+mutedColor+';font-size:18px;flex-shrink:0">›</span>' +
         '</button>' +
-        '<button onclick="saveAsAction(\''+masterId+'\','+msgIdx+',\'plan\')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:'+bgInset+';border:1px solid '+borderColor+';border-radius:10px;cursor:pointer;font-size:14px;color:'+inkColor+';text-align:left;font-family:inherit;transition:all .15s" onmouseover="this.style.borderColor=\'#c4532a\'" onmouseout="this.style.borderColor=\''+borderColor+'\'">' +
+        '<button class="action-save-btn" data-kind="plan" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:'+bgInset+';border:1px solid '+borderColor+';border-radius:10px;cursor:pointer;font-size:14px;color:'+inkColor+';text-align:left;font-family:inherit;transition:all .15s;-webkit-tap-highlight-color:transparent" onmouseover="this.style.borderColor=\'#c4532a\'" onmouseout="this.style.borderColor=\''+borderColor+'\'">' +
           '<svg class="ico ico-lg"><use href="#i-calendar"/></svg><div style="flex:1"><div style="font-weight:500">Plannen voor…</div><div style="font-size:11px;color:'+mutedColor+'">Verschijnt op cockpit op gekozen dag</div></div><span style="color:'+mutedColor+';font-size:18px;flex-shrink:0">›</span>' +
         '</button>' +
       '</div>' +
       '<button onclick="closeActionPicker()" style="margin-top:14px;width:100%;padding:10px;background:none;border:none;color:'+mutedColor+';font-size:13px;cursor:pointer;font-family:inherit">Annuleren</button>' +
     '</div>';
   document.body.appendChild(pop);
-  setTimeout(function(){ var inp=document.getElementById('action-text'); if(inp){inp.focus(); inp.select();} }, 100);
+
+  // Hang click-handlers op de save-buttons VIA addEventListener ipv
+  // inline onclick. Reden: op iOS Safari, als het input element
+  // focused is met selection-handles zichtbaar, blokkeert de eerste
+  // tap op een andere button vaak het normale click-event (eerste
+  // tap dismisst alleen het toetsenbord/selection). addEventListener
+  // op click + expliciete input.blur() als eerste actie omzeilt dit
+  // gedrag — de handler vuurt direct en het toetsenbord sluit als
+  // bijwerking.
+  pop.querySelectorAll('.action-save-btn').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      var kind = this.getAttribute('data-kind');
+      // Blur het input-element zodat iOS keyboard en selection sluiten
+      // voordat saveAsAction draait. Voorkomt verwarring 'eerste tap
+      // doet niets, tweede tap werkt'.
+      var inp = document.getElementById('action-text');
+      if(inp) inp.blur();
+      // Kleine vertraging zodat blur en eventuele iOS-cleanup compleet
+      // zijn voordat we de modal closen en redirecten
+      setTimeout(function(){ saveAsAction(masterId, msgIdx, kind); }, 30);
+    });
+  });
+
+  // Auto-focus alleen als input leeg is — bij voorvulde actie heeft
+  // de gebruiker niets te bewerken en hoeft het toetsenbord niet
+  // open. Voorkomt iOS focus/keyboard die de save-buttons bemoeilijkt.
+  if(!prefillAction){
+    setTimeout(function(){ var inp=document.getElementById('action-text'); if(inp){inp.focus();} }, 100);
+  }
 }
 
 function closeActionPicker(){
@@ -4469,34 +4499,36 @@ function closeDatePicker(){
 }
 
 function saveAsAction(masterId, msgIdx, kind){
-  var input = document.getElementById('action-text');
-  var text = (input?.value || '').trim();
-  if(!text){
-    toast('Formuleer eerst je actie','err');
-    if(input){ input.focus(); }
-    return;
-  }
-  var msgKey = masterId + '_' + msgIdx;
+  try {
+    var input = document.getElementById('action-text');
+    var text = (input?.value || '').trim();
+    if(!text){
+      toast('Formuleer eerst je actie','err');
+      if(input){ input.focus(); }
+      return;
+    }
+    var msgKey = masterId + '_' + msgIdx;
 
-  if(kind === 'today'){
-    if(!S.actions) S.actions = [];
-    S.actions.push({
-      id: 'a_'+Date.now(),
-      t: Date.now(),
-      master: masterId,
-      sourceMsgId: msgKey,
-      text: text,
-      kind: 'today',
-      done: false
-    });
-    lsSet('tm2_actions', S.actions);
-    toast('✓ Toegevoegd aan vandaag','ok');
-    closeActionPicker();
-    renderChat(); // refresh status pill in chat
-    if(typeof updateCockpit === 'function') try{ updateCockpit(); }catch(e){} try{ renderCkActions(); }catch(e){} try{ renderPrimaryGoal(); }catch(e){}
-    // Redirect naar cockpit zodat gebruiker meteen ziet waar de actie staat
-    setTimeout(function(){ go('ck'); }, 300);
-  }
+    if(kind === 'today'){
+      if(!S.actions) S.actions = [];
+      S.actions.push({
+        id: 'a_'+Date.now(),
+        t: Date.now(),
+        master: masterId,
+        sourceMsgId: msgKey,
+        text: text,
+        kind: 'today',
+        done: false
+      });
+      lsSet('tm2_actions', S.actions);
+      toast('✓ Toegevoegd aan vandaag','ok');
+      closeActionPicker();
+      renderChat(); // refresh status pill in chat
+      if(typeof updateCockpit === 'function') try{ updateCockpit(); }catch(e){} try{ renderCkActions(); }catch(e){} try{ renderPrimaryGoal(); }catch(e){}
+      // Redirect naar cockpit zodat gebruiker meteen ziet waar de actie staat
+      setTimeout(function(){ go('ck'); }, 300);
+      return;
+    }
   else if(kind === 'goal'){
     if(typeof GOALS === 'undefined') return;
     var agent = AGENTS[masterId];
@@ -4560,6 +4592,15 @@ function saveAsAction(masterId, msgIdx, kind){
       try{ renderCkActions(); }catch(e){} try{ renderPrimaryGoal(); }catch(e){}
     });
     return;
+  }
+  } catch(err){
+    // Vang silent failures op — voorheen kon een fout (bv. lsSet
+    // localStorage quota, of een undefined helper) saveAsAction stil
+    // killen zodat de gebruiker dacht 'tap doet niets'. Nu krijgt
+    // hij in elk geval een toast en kan in console (Chrome DevTools)
+    // de werkelijke error vinden.
+    console.error('[saveAsAction] error:', err);
+    try{ toast('Opslaan mislukte — probeer opnieuw','err'); }catch(e){}
   }
 }
 
