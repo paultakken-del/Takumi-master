@@ -2092,7 +2092,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.110';
+const APP_VERSION = '0.120';
 
 const S={
   cur:'board',
@@ -4488,8 +4488,10 @@ function saveAsAction(masterId, msgIdx, kind){
     lsSet('tm2_actions', S.actions);
     toast('✓ Toegevoegd aan vandaag','ok');
     closeActionPicker();
-    renderChat(); // refresh status pill
+    renderChat(); // refresh status pill in chat
     if(typeof updateCockpit === 'function') try{ updateCockpit(); }catch(e){} try{ renderCkActions(); }catch(e){} try{ renderPrimaryGoal(); }catch(e){}
+    // Redirect naar cockpit zodat gebruiker meteen ziet waar de actie staat
+    setTimeout(function(){ go('ck'); }, 300);
   }
   else if(kind === 'goal'){
     if(typeof GOALS === 'undefined') return;
@@ -4528,6 +4530,8 @@ function saveAsAction(masterId, msgIdx, kind){
     toast('✓ Doel "'+text.slice(0,30)+'" aangemaakt','ok');
     closeActionPicker();
     renderChat();
+    // Redirect naar Doelen-view zodat gebruiker het nieuwe doel ziet
+    setTimeout(function(){ go('gl'); }, 300);
   }
   else if(kind === 'plan'){
     // Vraag om datum, sla op met plannedFor timestamp
