@@ -701,7 +701,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div id="app">
 <!-- SIDEBAR -->
 <nav id="sb">
-  <div class="sb-logo"><span class="sb-kanji">匠</span><div><div class="sb-brand">Takumi<span class="sb-beta">Beta</span></div></div></div>
+  <div class="sb-logo" onclick="go('ck');if(window.innerWidth<=720)closeSidebar();" style="cursor:pointer;-webkit-tap-highlight-color:transparent" title="Naar Cockpit"><span class="sb-kanji">匠</span><div><div class="sb-brand">Takumi<span class="sb-beta">Beta</span></div></div></div>
   <div class="sb-nav">
     <div class="ni on" data-v="ck"><span class="ico">⬡</span><span data-i18n="nav.cockpit">Cockpit</span></div>
     <div class="ni" data-v="bo"><span class="ico">◈</span><span data-i18n="nav.board">Raad van Meesters</span></div>
