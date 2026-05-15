@@ -898,7 +898,6 @@ input[type=range]{width:100%;accent-color:var(--acc)}
   <div class="bl">
     <div class="bleft">
       <div class="agw" id="agw">
-        <div id="agw-context" style="font-size:10.5px;letter-spacing:.04em;color:var(--m);margin-bottom:8px;padding:0 2px;font-style:italic;font-family:var(--serif)"></div>
         <div class="ag" id="ag"></div>
       </div>
       <div class="go-grid" id="go-grid" style="display:none">
@@ -3456,33 +3455,16 @@ function renderGrid(){
   document.getElementById('ag').innerHTML =
     '<div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-bottom:6px;padding:0 2px;font-weight:500;opacity:.7">Elementen</div>'+
     '<div class="ag-row-elements">'+elPillsHtml+'</div>'+
-    (warriorsHtml ? '<div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-top:10px;margin-bottom:6px;padding:0 2px;font-weight:500;opacity:.7">'+(activeEl !== 'board' && ELEMENTS[activeEl] ? (LANG==='en'?'Masters of ':'Meesters van ')+ELEMENTS[activeEl].name : (LANG==='en'?'Actions':'Acties'))+'</div>' : '')+
+    // Geef alleen 'Meesters van X' label als er ECHT meesters zijn (>1 warrior);
+    // pure actie-knopjes (脳, ↺) staan onder Council/Kū-warriors zonder label —
+    // anders krijg je een 'ACTIES' header met alleen 2 icoontjes eronder = rommel.
+    (warriorsHtml && activeEl !== 'board' && ELEMENTS[activeEl] && ELEMENTS[activeEl].warriors.length > 1
+      ? '<div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-top:10px;margin-bottom:6px;padding:0 2px;font-weight:500;opacity:.7">'+(LANG==='en'?'Masters of ':'Meesters van ')+ELEMENTS[activeEl].name+'</div>'
+      : '')+
     warriorsHtml;
 
-  // Dag-context boven pillen — geen breadcrumb meer, wel tijdsbesef
-  var ctxEl = document.getElementById('agw-context');
-  if(ctxEl){
-    try {
-      var dagen = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
-      var dagNaam = dagen[new Date().getDay()];
-      // Als warrior actief is in een element: toon dat element. Anders: toon dag-leider
-      var contextLine;
-      if(activeEl && activeEl !== 'board' && ELEMENTS[activeEl]){
-        var el = ELEMENTS[activeEl];
-        contextLine = dagNaam + ' · <span style="color:var(--ink)">'+el.kanji+' '+esc(el.name)+'</span> — '+esc(el.sub.split(' · ')[1]||'');
-      } else if(typeof getDayLeader === 'function') {
-        var leader = getDayLeader();
-        var leaderShort = leader.warrior?.name?.split(' ')[1] || leader.element?.name || 'Council';
-        var leaderKanji = leader.warrior?.ico || '匠';
-        contextLine = 'Vandaag · ' + dagNaam + ' — <span style="color:var(--ink)">'+leaderKanji+' '+esc(leaderShort)+'</span> leidt';
-      } else {
-        contextLine = dagNaam;
-      }
-      ctxEl.innerHTML = contextLine;
-    } catch(e){
-      ctxEl.textContent = '';
-    }
-  }
+  // Dag-context regel boven pillen is verwijderd — dubbel met cockpit's
+  // dag-element card en visueel ruis op deze pagina.
 }
 
 // Kies element — als element 1 warrior heeft (board, ku) selecteer die direct,
@@ -3606,16 +3588,17 @@ function selAg(id){
   const warriorName = a.id==='board' ? '' : (a.name.split('—')[0]?.replace(/^[^\s]+\s*/,'').trim() || '');
   const avatar=document.getElementById('ch-avatar');
   if(avatar){avatar.textContent=a.ico;avatar.style.background=a.col;}
-  // Memoir badge update
+  // Memoir badge update — ch-mem-badge is een legacy hidden helper
+  // (zie regel 946 comment). Bevat enkel het count getal en wordt door
+  // andere code gelezen. Mag nooit visible worden — anders lekt een
+  // orphan-nummer (bv. '3') boven de chat. De zichtbare badge zit nu
+  // op de element-pills zelf (.el-mem). Hier dus alleen textContent
+  // updaten, geen display-toggle.
   var memCount = (S.memoirs[id] || []).length;
   var badge = document.getElementById('ch-mem-badge');
   if(badge){
-    if(memCount){
-      badge.textContent = memCount > 99 ? '99+' : memCount;
-      badge.style.display = 'flex';
-    } else {
-      badge.style.display = 'none';
-    }
+    badge.textContent = memCount > 99 ? '99+' : (memCount || '');
+    badge.style.display = 'none';
   }
   var btnCount = document.getElementById('btn-mem-count');
   if(btnCount) btnCount.textContent = memCount ? memCount : '';
