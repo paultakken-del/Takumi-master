@@ -891,7 +891,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="view" id="v-bo">
   <div class="tb">
     <div>
-      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span style="font-family:var(--FJ);font-weight:300;color:var(--acc)">師匠会</span><span>Raad van Meesters</span></div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--acc);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">師匠会</span><span>Raad van Meesters</span></div>
       <div class="tb-s">Stel je vraag aan de Godai — vijf elementen, vijf perspectieven</div>
     </div>
   </div>
@@ -959,14 +959,14 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 
 <!-- DAILY PULSE -->
 <div class="view" id="v-dy">
-  <div class="tb"><div><div class="tb-t" id="pulse-t">脈 Ochtend Start</div><div class="tb-s">Energie · Loslaten · Board advies</div></div></div>
+  <div class="tb"><div><div class="tb-t" id="pulse-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">脈</span><span>Ochtend Start</span></div><div class="tb-s">Energie · Loslaten · Board advies</div></div></div>
   <div class="vs"><div class="pw2"><div class="pst" id="pst"></div><div id="pb"></div></div></div>
 </div>
 
 <!-- DATA HUB -->
 <div class="view" id="v-da">
   <div class="tb">
-    <div><div class="tb-t">Data Hub</div><div class="tb-s">Portfolio · Health · Backup</div></div>
+    <div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">蔵</span><span>Data Hub</span></div><div class="tb-s">Portfolio · Health · Backup</div></div>
     <div style="display:flex;gap:7px">
       <button class="btn sm" onclick="syncPort()">↺ Live koersen</button>
       <button class="btn sm" onclick="openHold()">⚙ Holdings</button>
@@ -1063,7 +1063,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 
 <!-- DOELEN -->
 <div class="view" id="v-gl">
-  <div class="tb"><div><div class="tb-t">Strategische Doelen <span style="font-family:var(--FJ);font-weight:300;color:var(--gold)">配</span></div><div class="tb-s" id="g-sub">laden...</div></div><div style="display:flex;align-items:center;gap:10px"><div id="snoei-indicator" style="font-size:11px;color:var(--m)"></div><button class="btn sm pri" onclick="checkSnoei()">+ Nieuw doel</button></div></div>
+  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--gold);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">配</span><span>Strategische Doelen</span></div><div class="tb-s" id="g-sub">laden...</div></div><div style="display:flex;align-items:center;gap:10px"><div id="snoei-indicator" style="font-size:11px;color:var(--m)"></div><button class="btn sm pri" onclick="checkSnoei()">+ Nieuw doel</button></div></div>
   <div class="vs"><div class="gg" id="gg"></div></div>
 </div>
 
@@ -1071,7 +1071,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="view" id="v-dj">
   <div class="tb">
     <div>
-      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span style="font-family:var(--FJ);font-weight:300;color:var(--ink)">道</span><span data-i18n="dojo.title">Dojo</span></div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">道</span><span data-i18n="dojo.title">Dojo</span></div>
       <div class="tb-s" data-i18n="dojo.subtitle">Leer spelen met de elementen</div>
     </div>
   </div>
@@ -1167,7 +1167,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="view" id="v-rh">
   <div class="tb">
     <div>
-      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span style="font-family:var(--FJ);font-weight:300;color:var(--ink)">習</span><span data-i18n="rh.title">Rituelen</span></div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">習</span><span data-i18n="rh.title">Rituelen</span></div>
       <div class="tb-s" data-i18n="rh.subtitle">Momenten van afstemming — dagelijks, wekelijks, in ritme</div>
     </div>
   </div>
@@ -1230,13 +1230,13 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 
 <!-- WORLD CONTEXT -->
 <div class="view" id="v-wc">
-  <div class="tb"><div><div class="tb-t">World Intelligence</div><div class="tb-s">AI-gegenereerde marktanalyse</div></div><button class="btn sm pri" onclick="loadWorld()">↺ Verversen</button></div>
+  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">世</span><span>World Intelligence</span></div><div class="tb-s">AI-gegenereerde marktanalyse</div></div><button class="btn sm pri" onclick="loadWorld()">↺ Verversen</button></div>
   <div class="vs" id="wc-body"><div style="text-align:center;padding:40px;color:var(--m)">Klik "↺ Verversen" voor actuele world intelligence</div><div style="font-size:10px;color:var(--acc);padding:0 16px 16px;text-align:center">⚠ AI-inschattingen op basis van live webdata. Geen beleggingsadvies.</div></div>
 </div>
 
 <!-- WEEKLY REVIEW -->
 <div class="view" id="v-wr">
-  <div class="tb"><div><div class="tb-t">律 Week Reflectie <span id="wr-vrijdag-badge" style="display:none;font-size:10px;background:var(--acc);color:#fff;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle">Vandaag</span></div><div class="tb-s" id="wr-w">Wekelijkse terugblik — inzichten, patronen, lessen</div></div><button class="btn sm pri" onclick="genReview()">⚡ Genereer</button></div>
+  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">律</span><span>Week Reflectie</span><span id="wr-vrijdag-badge" style="display:none;font-size:10px;background:var(--acc);color:#fff;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle">Vandaag</span></div><div class="tb-s" id="wr-w">Wekelijkse terugblik — inzichten, patronen, lessen</div></div><button class="btn sm pri" onclick="genReview()">⚡ Genereer</button></div>
   <div class="vs" id="wr-body"><div style="text-align:center;padding:60px;color:var(--m)">Klik "⚡ Genereer" voor je wekelijkse AI review</div><div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--b);margin-top:var(--sp-xs)"><span style="font-size:11px;color:var(--m)">週 Week cyclus · volgende laag</span><button onclick="go('rt')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--acc);display:flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent">律 Ritme & Herstel <span style="font-size:14px">→</span></button></div></div>
 </div>
 
@@ -1244,7 +1244,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <!-- RITME & SEIZOEN -->
 <div class="view" id="v-rt">
   <div class="tb">
-    <div><div class="tb-t">律 Ritme & Herstel</div><div class="tb-s">Jouw maandcyclus en herstelplanning</div></div>
+    <div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">律</span><span>Ritme & Herstel</span></div><div class="tb-s">Jouw maandcyclus en herstelplanning</div></div>
   </div>
   <div class="vs">
 
@@ -1306,7 +1306,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="view" id="v-ri">
   <div class="tb">
     <div>
-      <div class="tb-t">習 Avond Check-out</div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">習</span><span>Avond Check-out</span></div>
       <div class="tb-s">Energie · Leren · Dankbaarheid</div>
     </div>
     <button class="btn sm pri" onclick="raadpleegVanuitRituelen()">匠 Council</button>
