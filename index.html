@@ -425,8 +425,10 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 .ck-music-genre{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--acc);margin-bottom:2px;font-weight:600}
 .ck-music-name{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ck-music-sub{font-size:11px;color:var(--m);margin-top:1px}
-.ck-music-btn{background:none;border:1.5px solid var(--acc);border-radius:20px;padding:7px 14px;color:var(--acc);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.04em;white-space:nowrap;-webkit-tap-highlight-color:transparent;flex-shrink:0;transition:all .12s}
+.ck-music-btn{background:none;border:1.5px solid var(--acc);border-radius:50%;width:34px;height:34px;color:var(--acc);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.04em;white-space:nowrap;-webkit-tap-highlight-color:transparent;flex-shrink:0;transition:all .12s;display:inline-flex;align-items:center;justify-content:center;padding:0}
 .ck-music-btn:active,.ck-music-btn:hover{background:var(--acc);color:#fff}
+.ck-music-cycle{background:none;border:1px solid var(--b);border-radius:50%;width:30px;height:30px;color:var(--m);font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;transition:all .12s;display:inline-flex;align-items:center;justify-content:center;padding:0;margin-right:4px}
+.ck-music-cycle:active,.ck-music-cycle:hover{border-color:var(--acc);color:var(--acc)}
 [data-theme="dark"] .ck-music-inner{background:#1e1d1a;border-left-color:var(--acc)}
 [data-theme="dark"] .ck-music-name{color:#ede9e0}
 .ck-opening{margin:24px 0 0;padding:16px;background:transparent;border-radius:var(--r);border:1px solid var(--b);opacity:.9}
@@ -3207,58 +3209,149 @@ function renderWave(moodOverride){
 }
 
 
-// ── SPOTIFY MUZIEKKOMPAS ────────────────────────────────────────────
-var SPOTIFY_PLAYLISTS = {
-  dal:     {name:'432 Hz Healing Tones', genre:'432 Hz · Zenuwstelsel',   sub:'432 Hz stemming · Diepe herstel',   uri:'spotify:playlist:37i9dQZF1DX1s9knjP51Oa', url:'https://open.spotify.com/playlist/37i9dQZF1DX1s9knjP51Oa'},
-  stijgend:{name:'Lo-Fi Morning',        genre:'Lo-Fi · Opbouw',          sub:'80-95 BPM · Langzame opstart',      uri:'spotify:playlist:37i9dQZF1DX4sWSpwq3LiO', url:'https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO'},
-  vlak:    {name:'Deep Focus',           genre:'Instrumentaal · Flow',    sub:'90-110 BPM · Diepe concentratie',   uri:'spotify:playlist:37i9dQZF1DWZeKCadgRdKQ', url:'https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ'},
-  top:     {name:'Mood Booster',         genre:'Upbeat · Actief',         sub:'115-130 BPM · Piekenergie',          uri:'spotify:playlist:37i9dQZF1DX3rxVfibe1L0', url:'https://open.spotify.com/playlist/37i9dQZF1DX3rxVfibe1L0'},
-  dalend:  {name:'Afternoon Acoustic',   genre:'Acoustic · Afronden',     sub:'85-100 BPM · Rustiger tempo',        uri:'spotify:playlist:37i9dQZF1DX4E3UdUs7fUx', url:'https://open.spotify.com/playlist/37i9dQZF1DX4E3UdUs7fUx'},
-  avond:   {name:'432 Hz Evening',       genre:'432 Hz · Avond',          sub:'432 Hz · Dag loslaten & ontspannen', uri:'spotify:playlist:37i9dQZF1DX1s9knjP51Oa', url:'https://open.spotify.com/playlist/37i9dQZF1DX1s9knjP51Oa'},
-  uitgeput:{name:'432 Hz Deep Healing',  genre:'432 Hz · Diepe rust',     sub:'432 Hz · Zenuwstelsel kalmeren',     uri:'spotify:playlist:37i9dQZF1DX1s9knjP51Oa', url:'https://open.spotify.com/playlist/37i9dQZF1DX1s9knjP51Oa'}
+// ── MUSIC LIBRARY ──────────────────────────────────────────────────
+// Element-aware: vandaag's leidende Godai-element bepaalt de sfeer-set,
+// HRV/mood selecteert binnen die set, dagdeel finaliseert (avond altijd
+// rust-variant). Elke set heeft 3 intensiteiten: soft / mid / drive.
+// Spotify-officiële playlists — stabieler dan curated derden, geen
+// 432 Hz esoterica meer.
+var MUSIC_LIBRARY = {
+  chi: [ // Aarde — grounded, strategie, fundament
+    {intensity:'soft', name:'Peaceful Piano',     genre:'Piano · Grounded',     sub:'Stevige rust · denken zonder druk',  uri:'spotify:playlist:37i9dQZF1DX4sWSpwq3LiO', url:'https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO'},
+    {intensity:'mid',  name:'Deep Focus',         genre:'Instrumental · Vlak',  sub:'Klare horizon · strategisch werk',   uri:'spotify:playlist:37i9dQZF1DWZeKCadgRdKQ', url:'https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ'},
+    {intensity:'drive',name:'Classical Essentials',genre:'Klassiek · Stuwend',  sub:'Symfonisch · grootse blik',          uri:'spotify:playlist:37i9dQZF1DWWEJlAGA9gs0', url:'https://open.spotify.com/playlist/37i9dQZF1DWWEJlAGA9gs0'}
+  ],
+  sui: [ // Water — herstel, zachtheid, beweging
+    {intensity:'soft', name:'Ambient Chill',      genre:'Ambient · Herstel',    sub:'Zacht stromend · zenuwstelsel kalm', uri:'spotify:playlist:37i9dQZF1DX4PP3DA4J0N8', url:'https://open.spotify.com/playlist/37i9dQZF1DX4PP3DA4J0N8'},
+    {intensity:'mid',  name:'Peaceful Piano',     genre:'Piano · Reflectie',    sub:'Vloeiend en bewust',                 uri:'spotify:playlist:37i9dQZF1DX4sWSpwq3LiO', url:'https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO'},
+    {intensity:'drive',name:'Stress Relief',      genre:'Minimal · Doorgang',   sub:'Helder · spanning weg',              uri:'spotify:playlist:37i9dQZF1DWXe9gFZP0gtP', url:'https://open.spotify.com/playlist/37i9dQZF1DWXe9gFZP0gtP'}
+  ],
+  fu: [ // Wind — communicatie, flow, vloeiendheid
+    {intensity:'soft', name:'Jazz Vibes',         genre:'Jazz · Zachte flow',   sub:'Schrijven · denken hardop',          uri:'spotify:playlist:37i9dQZF1DWVqfgj8NZEp1', url:'https://open.spotify.com/playlist/37i9dQZF1DWVqfgj8NZEp1'},
+    {intensity:'mid',  name:'Lofi Beats',         genre:'Lo-Fi · Doorlopend',   sub:'Stabiel ritme · werk zonder pieken', uri:'spotify:playlist:37i9dQZF1DWWQRwui0ExPn', url:'https://open.spotify.com/playlist/37i9dQZF1DWWQRwui0ExPn'},
+    {intensity:'drive',name:'Acoustic Covers',    genre:'Acoustic · Beweging',  sub:'Warm · op tempo blijven',            uri:'spotify:playlist:37i9dQZF1DX78pko7ze4Df', url:'https://open.spotify.com/playlist/37i9dQZF1DX78pko7ze4Df'}
+  ],
+  ka: [ // Vuur — productiviteit, energie, daadkracht
+    {intensity:'soft', name:'Brain Food',         genre:'Electronic · Focus',   sub:'Aan zonder uitputten',               uri:'spotify:playlist:37i9dQZF1DWXLeA8Omikj7', url:'https://open.spotify.com/playlist/37i9dQZF1DWXLeA8Omikj7'},
+    {intensity:'mid',  name:'Mood Booster',       genre:'Upbeat · Stuwend',     sub:'Pieken raken · doorzetten',          uri:'spotify:playlist:37i9dQZF1DX3rxVfibe1L0', url:'https://open.spotify.com/playlist/37i9dQZF1DX3rxVfibe1L0'},
+    {intensity:'drive',name:'Beast Mode',         genre:'Drive · Volle bak',    sub:'Sprintfase · alles op één doel',     uri:'spotify:playlist:37i9dQZF1DX76Wlfdnj7AP', url:'https://open.spotify.com/playlist/37i9dQZF1DX76Wlfdnj7AP'}
+  ],
+  ku: [ // Leegte — reflectie, ruimte, stilte
+    {intensity:'soft', name:'Stress Relief',      genre:'Minimal · Ruimte',     sub:'Niets erbij · alleen zijn',          uri:'spotify:playlist:37i9dQZF1DWXe9gFZP0gtP', url:'https://open.spotify.com/playlist/37i9dQZF1DWXe9gFZP0gtP'},
+    {intensity:'mid',  name:'Ambient Chill',      genre:'Ambient · Mu',         sub:'Leegte tussen tonen',                uri:'spotify:playlist:37i9dQZF1DX4PP3DA4J0N8', url:'https://open.spotify.com/playlist/37i9dQZF1DX4PP3DA4J0N8'},
+    {intensity:'drive',name:'Peaceful Piano',     genre:'Piano · Contemplatie', sub:'Eenzaam helder',                     uri:'spotify:playlist:37i9dQZF1DX4sWSpwq3LiO', url:'https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO'}
+  ],
+  evening: [ // Avond — wind-down, ongeacht element
+    {intensity:'soft', name:'Sleep',              genre:'Sleep · Loslaten',     sub:'Voorbereiding op de nacht',          uri:'spotify:playlist:37i9dQZF1DWZd79rJ6a7lp', url:'https://open.spotify.com/playlist/37i9dQZF1DWZd79rJ6a7lp'},
+    {intensity:'mid',  name:'Ambient Chill',      genre:'Ambient · Avond',      sub:'Dag laten zakken',                   uri:'spotify:playlist:37i9dQZF1DX4PP3DA4J0N8', url:'https://open.spotify.com/playlist/37i9dQZF1DX4PP3DA4J0N8'},
+    {intensity:'drive',name:'Jazz Vibes',         genre:'Jazz · Cooldown',      sub:'Een glas, geen ambitie meer',        uri:'spotify:playlist:37i9dQZF1DWVqfgj8NZEp1', url:'https://open.spotify.com/playlist/37i9dQZF1DWVqfgj8NZEp1'}
+  ]
 };
 
-// Stemming overschrijft fase als het conflicteert
-var STEMMING_OVERRIDE = {
-  // Als stemming zwaar is, altijd herstel ongeacht fase
-  zwaar: 'dal',
-  // rustig: één fase terug
-  rustig: null  // gebruik fase zelf
-};
+// Backward-compat alias zodat oude code die SPOTIFY_PLAYLISTS leest
+// (mocht ergens nog niet gerefactored zijn) geen ReferenceError geeft.
+var SPOTIFY_PLAYLISTS = MUSIC_LIBRARY;
 
-function getSpotifyPlaylist(mood, phase){
+// Map dag-element → music-set key. Vrijdag (board) krijgt geen vaste
+// set — synthese-dag, dan kies fu (wind, beweging tussen elementen).
+function elementToMusicKey(eid){
+  if(eid === 'chi' || eid === 'sui' || eid === 'fu' || eid === 'ka' || eid === 'ku') return eid;
+  if(eid === 'board') return 'fu';  // synthese = wind, vloeit tussen
+  return 'chi';
+}
+
+// Mood + HRV → intensiteit binnen de element-set
+function moodToIntensity(mood, recovery){
+  // Lage HRV/recovery override: altijd soft (rust prioriteit)
+  if(recovery && recovery < 5) return 'soft';
+  if(mood === 'zwaar') return 'soft';
+  if(mood === 'scherp') return 'drive';
+  if(mood === 'rustig') return 'soft';
+  return 'mid';  // fris, default
+}
+
+// Centrale selector: element + mood + dagdeel → primaire + alternatieve
+// keuze. Retourneert {primary, alternatives:[]} zodat UI 'andere keuze'
+// knop kan tonen die door alternatives rouleert.
+function selectMusic(mood){
   var dagdeel = getDagdeel();
-  if(dagdeel === 'avond'){
-    return mood === 'zwaar' ? SPOTIFY_PLAYLISTS.uitgeput : SPOTIFY_PLAYLISTS.avond;
+  var recovery = (S.hrv && S.hrv.recovery) || 7;
+  var setKey;
+
+  if(dagdeel === 'avond' || dagdeel === 'nacht'){
+    setKey = 'evening';
+  } else {
+    // Dag-element bepaalt de set
+    var leader = (typeof getDayLeader === 'function') ? getDayLeader() : null;
+    setKey = elementToMusicKey(leader && leader.eid);
   }
-  if(mood === 'zwaar') return SPOTIFY_PLAYLISTS.dal;
-  if(mood === 'scherp' && phase === 'top') return SPOTIFY_PLAYLISTS.top;
-  if(mood === 'fris' && phase === 'dal') return SPOTIFY_PLAYLISTS.stijgend;
-  if(mood === 'rustig' && (phase === 'top' || phase === 'dalend')) return SPOTIFY_PLAYLISTS.vlak;
-  return SPOTIFY_PLAYLISTS[phase] || SPOTIFY_PLAYLISTS.vlak;
+
+  var set = MUSIC_LIBRARY[setKey] || MUSIC_LIBRARY.chi;
+  var intensity = moodToIntensity(mood, recovery);
+
+  // Primaire keuze: match op intensiteit
+  var primary = set.find(function(t){ return t.intensity === intensity; }) || set[1];
+  // Alternatieven: de andere twee in dezelfde set (zonder de primaire)
+  var alternatives = set.filter(function(t){ return t !== primary; });
+
+  return { primary: primary, alternatives: alternatives, setKey: setKey };
+}
+
+// Legacy alias: oude code kan deze nog aanroepen
+function getSpotifyPlaylist(mood, phase){
+  return selectMusic(mood).primary;
 }
 
 function showMusicSuggestie(mood){
-  var phase = window._wavePhase || 'vlak';
-  var pl = getSpotifyPlaylist(mood, phase);
+  var result = selectMusic(mood);
   var el = document.getElementById('ck-music');
   if(!el) return;
   el.style.display = 'block';
-  // Toon de hele sectie wrapper
   var sec = document.getElementById('ck-music-section');
   if(sec) sec.style.display = 'block';
+  // Bewaar state voor cycleMusic — index in alternatives
+  window._musicState = { mood: mood, result: result, idx: 0 };
+  renderMusicChoice();
+}
+
+// Render de huidige muziek-keuze (uit window._musicState). Aparte
+// functie zodat cycleMusic dezelfde rendering kan hergebruiken.
+function renderMusicChoice(){
+  var st = window._musicState;
+  if(!st) return;
+  var el = document.getElementById('ck-music');
+  if(!el) return;
+  // st.idx === 0 → primary, >0 → alternatives[idx-1]
+  var current = st.idx === 0 ? st.result.primary : st.result.alternatives[st.idx - 1];
+  if(!current) return;
+  var totalOpts = 1 + (st.result.alternatives ? st.result.alternatives.length : 0);
+  var hasMore = totalOpts > 1;
+
   el.innerHTML =
     '<div class="ck-music-inner">' +
     '<div class="ck-music-ico"><svg viewBox="0 0 168 168"><path d="M84 0C37.6 0 0 37.6 0 84s37.6 84 84 84 84-37.6 84-84S130.4 0 84 0zm38.6 121.3c-1.5 2.5-4.8 3.3-7.3 1.8-20-12.2-45.2-15-74.9-8.2-2.9.7-5.7-1.1-6.4-4-.7-2.9 1.1-5.7 4-6.4 32.5-7.4 60.4-4.2 82.9 9.5 2.5 1.5 3.3 4.8 1.8 7.3zm10.3-22.9c-1.9 3.1-6 4.1-9.1 2.2-22.9-14.1-57.8-18.1-84.8-9.9-3.5 1.1-7.2-.9-8.3-4.4-1-3.5.9-7.2 4.4-8.3 31-9.4 69.5-4.9 95.7 11.3 3.1 1.9 4.1 6 2.1 9.1zm.9-23.8c-27.5-16.3-72.8-17.8-99-9.8-4.2 1.3-8.7-1.1-10-5.3-1.3-4.2 1.1-8.7 5.3-10C60.6 40.2 110.1 41.9 141.3 60.5c3.8 2.3 5.1 7.2 2.8 11-2.2 3.8-7.1 5-11 2.7"/></svg></div>' +
     '<div class="ck-music-info">' +
-    '<div class="ck-music-genre">' + pl.genre + '</div>' +
-    '<div class="ck-music-name">' + pl.name + '</div>' +
-    '<div class="ck-music-sub">' + pl.sub + '</div>' +
+    '<div class="ck-music-genre">' + current.genre + '</div>' +
+    '<div class="ck-music-name">' + current.name + '</div>' +
+    '<div class="ck-music-sub">' + current.sub + '</div>' +
     '</div>' +
-    '<button class="ck-music-btn" id="spotify-play-btn" title="Open in Spotify">▶ Spelen</button>' +
+    (hasMore ? '<button class="ck-music-cycle" id="music-cycle-btn" title="Andere keuze in dezelfde sfeer">⇄</button>' : '') +
+    '<button class="ck-music-btn" id="spotify-play-btn" title="Open in Spotify">▶</button>' +
     '</div>';
-  var _sb=document.getElementById('spotify-play-btn');
-  if(_sb){var _pu=pl.url,_pi=pl.uri;_sb.onclick=function(){openSpotify(_pu,_pi);}; }
+
+  var pb = document.getElementById('spotify-play-btn');
+  if(pb){ var u=current.url, ur=current.uri; pb.onclick = function(){ openSpotify(u, ur); }; }
+  var cb = document.getElementById('music-cycle-btn');
+  if(cb){ cb.onclick = cycleMusic; }
+}
+
+// Rouleer naar volgende variant binnen de huidige element-set
+function cycleMusic(){
+  var st = window._musicState;
+  if(!st) return;
+  var total = 1 + (st.result.alternatives ? st.result.alternatives.length : 0);
+  st.idx = (st.idx + 1) % total;
+  renderMusicChoice();
 }
 
 function openSpotify(url, uri){
