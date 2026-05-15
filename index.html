@@ -958,7 +958,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 
 <!-- DAILY PULSE -->
 <div class="view" id="v-dy">
-  <div class="tb"><div><div class="tb-t" id="pulse-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">脈</span><span>Ochtend Start</span></div><div class="tb-s">Energie · Loslaten · Board advies</div></div></div>
+  <div class="tb"><div><div class="tb-t" id="pulse-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">脈</span><span>Ochtend Start</span></div><div class="tb-s">Energie · Loslaten · Master Council</div></div></div>
   <div class="vs"><div class="pw2"><div class="pst" id="pst"></div><div id="pb"></div></div></div>
 </div>
 
@@ -2325,7 +2325,7 @@ function executeTool(name,input){
 }
 
 const AGENTS={
-  board:{id:'board',name:'Volledig Board',ico:'匠',dom:'Board',col:'var(--acc)',sys(){
+  board:{id:'board',name:'Master Council',ico:'匠',dom:'Master Council',col:'var(--acc)',sys(){
     var nieuw=typeof _isNieuwGebruiker!=='undefined'&&_isNieuwGebruiker;
     if(nieuw)return`Je bent 匠 — de meester die een nieuwe leerling verwelkomt in de dojo van Takumi Master.\n\nStem: Kū (Leegte) — spreek zelden, laat ruimte. Eén zin volstaat.\nDeze gebruiker opent Takumi voor het eerst. Verwelkom hem warm maar beknopt. Leg in max 3 zinnen uit:\n1. Wat Takumi is (persoonlijk meesterschap platform, drie dagelijkse stappen)\n2. Wat de vijf Godai-meesters doen (elk spreekt vanuit zijn element)\n3. Stel één concrete vraag: wat is het belangrijkste dat hij dit jaar wil bereiken?\n\nSpreek als één stem — de Meester. Niet als vijf stemmen. Kort, uitnodigend, niet overweldigend. Nederlands.`;
     return`Je bent de 師匠会 — het Master Council van Takumi Master. Je spreekt als vijf Godai-stemmen die elk vanuit hun element influisteren. Gebruik tools voor actuele data.\n\nTOOLS:\n- get_portfolio() → vermogen, posities, P&L\n- get_hrv() → rMSSD, herstel, slaap, energie\n- get_goals() → doelen, voortgang, open acties\n- get_learning('board') → wat werkte eerder\n\nCONTEXT: ${allCtx()}\n\nANTWOORD ALTIJD in dit formaat — elke stem max 2 zinnen, scherp en direct:\n\n地 Chi — Fundament\n[Structuur, strategie, vermogen. Wat is de solide basis hier?]\n\n水 Sui — Flow\n[Energie, herstel, beweging. Hoe stroomt dit het beste?]\n\n風 Fū — Geest\n[Communicatie, relaties, creativiteit. Wat zegt de intuïtie?]\n\n火 Ka — Energie\n[Actie, focus, beslissing. Wat moet NU gebeuren?]\n\n空 Kū — Ruimte\n[Synthese, stilte, het grotere geheel. Wat is de werkelijke vraag?]\n\n匠 Advies\n[Eén concrete actie. Max 15 woorden.]\n\nREGELS:\n- Elke stem spreekt vanuit zijn element, niet generiek\n- Meesters mogen kort influisteren bijv: 略 Ryaku: tip of 気 Ki: tip\n- Als HRV < 45: Kū geeft stilte-advies\n- Geen opsommingstekens, geen herhaling\n- Nederlands, direct, meesterlijk kort`;
@@ -3857,7 +3857,7 @@ async function send(){
     S.chat[S.cur].push({role:'user',content:text});
     S.chat[S.cur].push({
       role:'assistant',
-      content:'Stilte-advies\n\nHRV: ' + S.hrv.rmssd + ' rMSSD, Energie: ' + lastPulseEnergy + '/10, Herstel: ' + S.hrv.recovery + '/10.\n\nDe meester weet wanneer niet te handelen. Vandaag is zo een dag.\n\nBoard advies:\n- Sla deze vraag op voor morgen\n- Prioriteit: herstel en rust\n- Urgent? Typ urgent in je vraag\n\nMa: de juiste actie is soms geen actie.',
+      content:'Stilte-advies\n\nHRV: ' + S.hrv.rmssd + ' rMSSD, Energie: ' + lastPulseEnergy + '/10, Herstel: ' + S.hrv.recovery + '/10.\n\nDe meester weet wanneer niet te handelen. Vandaag is zo een dag.\n\nMaster Council:\n- Sla deze vraag op voor morgen\n- Prioriteit: herstel en rust\n- Urgent? Typ urgent in je vraag\n\nMa: de juiste actie is soms geen actie.',
       toolsUsed:[],
       score:10
     });
@@ -3896,7 +3896,7 @@ async function send(){
     S.chat[S.cur].splice(li,1);
     const mi=S.chat[S.cur].length;
     S.chat[S.cur].push({role:'assistant',content:'',stream:true});
-    if(S.cur==='board')S.chat[S.cur].push({type:'sep',text:'Board Pipeline Actief'});
+    if(S.cur==='board')S.chat[S.cur].push({type:'sep',text:'Master Council Pipeline Actief'});
     renderChat();
     const reader=res.body.getReader(),dec=new TextDecoder();
     let buf='',full='';
@@ -6318,7 +6318,7 @@ function doFB(idx,type){
     const ctx={txt:msg.content.slice(0,150),hrv:S.hrv.rmssd,ts:new Date().toISOString(),toolsUsed:msg.toolsUsed||[]};
     S.learn[S.cur].pos=[ctx,...(S.learn[S.cur].pos||[])].slice(0,10);
     lsSet('tm2_learn',S.learn);
-    toast('Opgeslagen — het Board leert jouw voorkeuren','ok');
+    toast('Opgeslagen — de Master Council leert jouw voorkeuren','ok');
   }
   else{S.rejIdx={idx,agId:S.cur};document.getElementById('rej-d').classList.add('on');}
   lsSet('tm2_chat',S.chat);renderChat();upLearn();
@@ -6334,14 +6334,14 @@ function confRej(){
     const rejCtx={txt:msg.content.slice(0,150),why,ts:new Date().toISOString(),hrv:S.hrv.rmssd,toolsUsed:msg.toolsUsed||[]};
     S.learn[agId].rej=[rejCtx,...(S.learn[agId].rej||[])].slice(0,10);
     lsSet('tm2_learn',S.learn);
-    toast('Board leert dit te vermijden','err');
+    toast('Master Council leert dit te vermijden','err');
   }
   closeRej();renderChat();upLearn();
 }
 
 // ── DAILY PULSE ────────────────────────────────────────────────────
 const MOODS=[{e:'🎯',l:'Gefocust'},{e:'🔥',l:'Gemotiveerd'},{e:'😌',l:'Rustig'},{e:'😴',l:'Moe'},{e:'😰',l:'Gestrest'},{e:'💡',l:'Creatief'},{e:'😟',l:'Onrustig'},{e:'🙏',l:'Dankbaar'}];
-const PSTEPS=['Energie','間 Loslaten','Board Insight'];
+const PSTEPS=['Energie','間 Loslaten','Master Council'];
 
 function initPulse(){
   
@@ -6393,7 +6393,7 @@ function drawPulse(){
       </div>`;
   }else if(step===2){
     const sum='energie '+(data.energy||6)+'/10, stemming '+(RituelenData&&RituelenData.binnenkomst||'–');
-    B.innerHTML=`<div class="pq">Board Insight</div>
+    B.innerHTML=`<div class="pq">Master Council</div>
       <div class="ph2">Je pulse van vandaag</div>
       <div class="card" style="margin-bottom:var(--sp-md)">
         <div style="font-size:13px;line-height:1.8">
@@ -6408,7 +6408,7 @@ function drawPulse(){
           var vbo=document.getElementById('v-bo');if(vbo){vbo.classList.add('on');vbo.classList.remove('grid-mode');}
           renderGrid();renderChat();upCtx();upLearn();markVandaag('bo');
           setTimeout(function(){selAg('board');var ci=document.getElementById('ci');if(ci){ci.value='Dag pulse: ${sum}. Losgelaten: '+(S.pulse.data.ma1||'niets')+'. Wat zie jij?';ci.style.height='auto';ci.style.height=Math.min(ci.scrollHeight,120)+'px';}var cm=document.getElementById('cm');if(cm)setTimeout(function(){cm.scrollTop=cm.scrollHeight;},200);},200)
-        ">Board advies →</button>
+        ">Master Council →</button>
       </div>`;
   }
 }
@@ -6958,7 +6958,7 @@ function openGoal(id){
   `;
   var safeTitle=(g.title||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
   document.getElementById('gs-footer').innerHTML=`
-    <button class="btn sm" onclick="boardAdviesDoel('${id}')">Board advies →</button>
+    <button class="btn sm" onclick="boardAdviesDoel('${id}')">Master Council →</button>
     <button class="btn sm gh" style="color:var(--acc);border-color:var(--acc)" onclick="delGoal('${id}')">Verwijderen</button>
   `;
   document.getElementById('go').classList.add('on');
@@ -7076,7 +7076,7 @@ async function genReview(){
   const sc=Object.values(S.chat).reduce((s,m)=>s+m.filter(x=>x.role==='user').length,0);
   const lp=Object.values(S.learn).reduce((s,l)=>s+(l.pos?.length||0),0);
   try{
-    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:MODEL_FAST,max_tokens:1200,messages:[{role:'user',content:`Weekly review data: HRV rMSSD ${S.hrv.rmssd} (doel 53+), herstel ${S.hrv.recovery}/10, slaap ${S.hrv.sleep}u. ${portCtx()}. Board sessies: ${sc}. Learning positief: ${lp}.\nReturn ALLEEN valid JSON:\n{"weekHighlight":"max 80 chars","energyAvg":${S.hrv.recovery},"sessionsCount":${sc},"actionsCompleted":2,"insights":[{"ico":"❤","title":"string","body":"max 2 zinnen"},{"ico":"📊","title":"string","body":"max 2 zinnen"},{"ico":"🎯","title":"string","body":"max 2 zinnen"}],"nextWeekFocus":"max 80 chars","domainBreakdown":{"Gezondheid":30,"Finance":25,"Work":35,"Persoonlijk":10},"patternNote":"max 60 chars"}`}]})});
+    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:MODEL_FAST,max_tokens:1200,messages:[{role:'user',content:`Weekly review data: HRV rMSSD ${S.hrv.rmssd} (doel 53+), herstel ${S.hrv.recovery}/10, slaap ${S.hrv.sleep}u. ${portCtx()}. Council sessies: ${sc}. Learning positief: ${lp}.\nReturn ALLEEN valid JSON:\n{"weekHighlight":"max 80 chars","energyAvg":${S.hrv.recovery},"sessionsCount":${sc},"actionsCompleted":2,"insights":[{"ico":"❤","title":"string","body":"max 2 zinnen"},{"ico":"📊","title":"string","body":"max 2 zinnen"},{"ico":"🎯","title":"string","body":"max 2 zinnen"}],"nextWeekFocus":"max 80 chars","domainBreakdown":{"Gezondheid":30,"Finance":25,"Work":35,"Persoonlijk":10},"patternNote":"max 60 chars"}`}]})});
     const data=await res.json();
     const raw=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
     let r;try{r=JSON.parse(raw);}catch{try{const m=raw.match(/\{[\s\S]*\}/);if(m)r=JSON.parse(m[0]);}catch{}}
@@ -7086,7 +7086,7 @@ async function genReview(){
       <div class="card" style="margin-bottom:16px;border-left:3px solid var(--acc)"><div class="ct">Week highlight</div><div style="font-size:14px;font-weight:500">${r.weekHighlight}</div></div>
       <div class="rg" style="margin-bottom:16px">
         <div class="rs"><div class="rv" style="color:var(--gold)">${r.energyAvg}</div><div class="rl">Gem. energie</div></div>
-        <div class="rs"><div class="rv">${r.sessionsCount}</div><div class="rl">Board sessies</div></div>
+        <div class="rs"><div class="rv">${r.sessionsCount}</div><div class="rl">Council sessies</div></div>
         <div class="rs"><div class="rv" style="color:var(--teal)">${r.actionsCompleted}</div><div class="rl">Acties voltooid</div></div>
         <div class="rs"><div class="rv" style="color:var(--acc)">${lp}</div><div class="rl">Positieve feedback</div></div>
       </div>
