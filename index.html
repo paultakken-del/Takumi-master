@@ -3701,7 +3701,16 @@ function renderChat(){
     '</div>';
     return;
   }
-  const avatar=`<div style="width:28px;height:28px;border-radius:50%;background:${a.col};display:flex;align-items:center;justify-content:center;font-family:var(--FJ);font-size:13px;color:#fff;flex-shrink:0;margin-top:2px">${a.ico}</div>`;
+  // Avatar: pure kanji in element-kleur, geen ronde gekleurde cirkel.
+  // Border-left op de bubble (3px in element-kleur) blijft het primaire
+  // afkomst-signaal. De kanji ernaast is contextueel anker, geen accent.
+  const avatar=`<span style="font-family:var(--FJ);font-size:16px;color:${a.col};line-height:1;flex-shrink:0;margin-top:6px;opacity:.75;font-weight:300;width:20px;text-align:center">${a.ico}</span>`;
+  // Meet vóór de innerHTML update of gebruiker al onderaan zat. Forceer
+  // alleen scroll-naar-onderen als dat zo is — anders respecteer hun
+  // positie (ze zijn aan het terugscrollen om iets te herlezen).
+  // Drempel 80px: groot genoeg om streaming-updates niet te storen,
+  // klein genoeg om 'echt onderaan' te detecteren.
+  var wasAtBottom = (c.scrollHeight - c.scrollTop - c.clientHeight) < 80;
   c.innerHTML=msgs.map((m,i)=>{
     if(m.type==='sep')return`<div class="psep">${esc(m.text)}</div>`;
     if(m.type==='load')return`<div class="msg a"><div style="display:flex;gap:8px;align-items:flex-start">${avatar}<div class="bub stream" style="border-left:3px solid ${a.col}">${esc(m.text)||'...'}</div></div></div>`;
@@ -3736,7 +3745,9 @@ function renderChat(){
     if(u)return`<div class="msg u"><div class="bub">${esc(m.content)}</div></div>`;
     return`<div class="msg a"><div style="display:flex;gap:8px;align-items:flex-start">${avatar}<div style="flex:1;min-width:0"><div class="bub${m.stream?' stream':''}" style="border-left:3px solid ${a.col}">${esc(m.content)}</div>${actBtn}${actionStatus}<div class="mm">${sc}${tb}${fb}</div></div></div></div>`;
   }).join('');
-  requestAnimationFrame(function(){c.scrollTop=c.scrollHeight;});
+  if(wasAtBottom){
+    requestAnimationFrame(function(){c.scrollTop=c.scrollHeight;});
+  }
 }
 
 // ── DATA BANNER per warrior ────────────────────────────────────────
