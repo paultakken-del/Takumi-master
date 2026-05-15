@@ -708,7 +708,6 @@ input[type=range]{width:100%;accent-color:var(--acc)}
     <div class="ni" data-v="dj"><span class="ico" style="font-family:var(--FJ)">道</span><span data-i18n="nav.dojo">Dojo</span></div>
     <div class="ni" data-v="gl"><span class="ico">◇</span><span data-i18n="nav.goals">Doelen</span></div>
     <div class="ni" data-v="rh"><span class="ico">習</span><span data-i18n="nav.rituals">Rituelen</span></div>
-    <div class="ni" data-v="wc"><span class="ico">○</span><span data-i18n="nav.world">Wereldcontext</span></div>
     <div class="ni" data-v="da"><span class="ico">▤</span><span data-i18n="nav.data_hub">Data Hub</span></div>
     <a id="admin-link" href="/admin/users" target="_blank" style="display:none;align-items:center;gap:10px;padding:8px 16px;font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:8px" onmouseover="this.style.background='rgba(255,255,255,.07)'" onmouseout="this.style.background='none'"><span style="font-size:14px">👥</span><span data-i18n="nav.users">Gebruikers</span></a>
   </div>
@@ -1227,12 +1226,6 @@ input[type=range]{width:100%;accent-color:var(--acc)}
   </div>
 </div>
 
-<!-- WORLD CONTEXT -->
-<div class="view" id="v-wc">
-  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">世</span><span>World Intelligence</span></div><div class="tb-s">AI-gegenereerde marktanalyse</div></div><button class="btn sm pri" onclick="loadWorld()">↺ Verversen</button></div>
-  <div class="vs" id="wc-body"><div style="text-align:center;padding:40px;color:var(--m)">Klik "↺ Verversen" voor actuele world intelligence</div><div style="font-size:10px;color:var(--acc);padding:0 16px 16px;text-align:center">⚠ AI-inschattingen op basis van live webdata. Geen beleggingsadvies.</div></div>
-</div>
-
 <!-- WEEKLY REVIEW -->
 <div class="view" id="v-wr">
   <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">律</span><span>Week Reflectie</span><span id="wr-vrijdag-badge" style="display:none;font-size:10px;background:var(--acc);color:#fff;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle">Vandaag</span></div><div class="tb-s" id="wr-w">Wekelijkse terugblik — inzichten, patronen, lessen</div></div><button class="btn sm pri" onclick="genReview()">⚡ Genereer</button></div>
@@ -1496,7 +1489,6 @@ var I18N = {
     'nav.week_reflection': 'Week Reflectie',
     'nav.rhythm_recovery': 'Ritme & Herstel',
     'nav.goals': 'Doelen',
-    'nav.world': 'Wereldcontext',
     'nav.dojo': 'Dojo',
     'nav.data_hub': 'Data Hub',
     'nav.users': 'Gebruikers',
@@ -1720,7 +1712,6 @@ var I18N = {
     'nav.week_reflection': 'Week Reflection',
     'nav.rhythm_recovery': 'Rhythm & Recovery',
     'nav.goals': 'Goals',
-    'nav.world': 'World context',
     'nav.dojo': 'Dojo',
     'nav.data_hub': 'Data Hub',
     'nav.users': 'Users',
@@ -7044,31 +7035,6 @@ function saveNG(){
   GOALS.push(g);saveGoals();closeNG();renderGoals();toast('"'+title+'" aangemaakt','ok');setTimeout(()=>openGoal(g.id),100);
 }
 
-// ── WORLD CONTEXT ──────────────────────────────────────────────────
-async function loadWorld(){
-  const el=document.getElementById('wc-body');
-  el.innerHTML='<div style="text-align:center;padding:60px;color:var(--m)"><span class="spin">⟳</span><div style="margin-top:12px">World Intelligence ophalen...</div></div>';
-  try{
-    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      model:MODEL_FAST,max_tokens:1200,
-      tools:[{type:'web_search_20250305',name:'web_search'}],
-      messages:[{role:'user',content:'Zoek actuele marktinformatie voor: crypto (Bitcoin, Ethereum), aandelenmarkten (S&P500, AEX), economie (ECB rente, inflatie), geopolitiek (relevante ontwikkelingen). Datum vandaag: '+new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'. Na het zoeken, return ALLEEN valid JSON zonder markdown:\n{"items":[{"domain":"Crypto","sentiment":"Mixed","score":7,"headline":"max 60 chars","summary":"max 100 chars","impact":"max 60 chars"},{"domain":"Aandelen","sentiment":"...","score":6,"headline":"...","summary":"...","impact":"..."},{"domain":"Economie","sentiment":"...","score":6,"headline":"...","summary":"...","impact":"..."},{"domain":"Geopolitiek","sentiment":"...","score":5,"headline":"...","summary":"...","impact":"..."},{"domain":"Tech/AI","sentiment":"...","score":8,"headline":"...","summary":"...","impact":"..."}],"portfolioSignal":"max 80 chars","dataSource":"web_search"}'}]})});
-    const data=await res.json();
-    // Handle response - may contain tool_use blocks before text
-    const allText=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-    const raw=allText.replace(/```json|```/g,'').trim();
-    const isLive=data.content.some(b=>b.type==='tool_use'||b.type==='tool_result');
-    let wi;try{wi=JSON.parse(raw);}catch{try{const m=raw.match(/\{[\s\S]*\}/);if(m)wi=JSON.parse(m[0]);}catch{}}
-    if(!wi?.items)throw new Error('Geen geldige data ontvangen');
-    const sc=s=>s==='Positief'?'sp':s==='Negatief'?'sn':'sm';
-    const disclaimer=isLive
-      ?'<div style="font-size:10px;color:var(--teal);margin-top:var(--sp-xs);text-align:right">✓ Live webdata · '+new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'</div>'
-      :'<div style="font-size:10px;color:var(--acc);margin-top:10px;padding:8px 12px;border:1px solid rgba(196,83,42,.2);border-radius:var(--rs)">⚠ AI-schatting op basis van trainingsdata — geen live marktdata. Gebruik niet voor beleggingsbeslissingen.</div>';
-    el.innerHTML=`<div class="wg">${wi.items.map(it=>`<div class="wc"><div class="wd ${sc(it.sentiment)}">${it.domain} · ${it.sentiment} · ${it.score}/10</div><div class="wh">${it.headline}</div><div class="ws">${it.summary}</div><div class="wi">Impact: ${it.impact}</div></div>`).join('')}</div>${wi.portfolioSignal?`<div class="card" style="border-left:3px solid var(--acc);padding:14px;margin-top:12px"><div class="ct">Portfolio signaal</div><div style="font-size:13px">${wi.portfolioSignal}</div></div>`:''}${disclaimer}`;
-    toast('World Intelligence bijgewerkt'+(isLive?' (live)':''),'ok');
-  }catch(e){el.innerHTML=`<div class="card" style="color:var(--acc)">Ophalen mislukt: ${e.message}<br><button class="btn sm" style="margin-top:10px" onclick="loadWorld()">↺ Opnieuw</button></div>`;}
-}
-
 // ── WEEKLY REVIEW ──────────────────────────────────────────────────
 async function genReview(){
   const el=document.getElementById('wr-body');
@@ -7368,7 +7334,7 @@ function openFeedback(){
     var view = document.querySelector('.view.on');
     if(view){
       var vid = view.id ? view.id.replace(/^v-/,'') : '?';
-      var names = {ck:'Cockpit', bo:'Council', dj:'Dojo', gl:'Doelen', rh:'Rituelen', wc:'Wereldcontext', da:'Data Hub', dy:'Ochtend', ri:'Avond', rt:'Ritme'};
+      var names = {ck:'Cockpit', bo:'Council', dj:'Dojo', gl:'Doelen', rh:'Rituelen', da:'Data Hub', dy:'Ochtend', ri:'Avond', rt:'Ritme'};
       ctx.push('Huidige view: ' + (names[vid] || vid));
     }
   } catch(e){}
