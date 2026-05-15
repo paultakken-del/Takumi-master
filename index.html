@@ -3699,6 +3699,38 @@ function selAg(id){
 }
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+// Lichte markdown-renderer voor chat-bubbles en quote-fragments.
+// Ondersteunt: **bold**, *italic*, regelovergangen, en simpele
+// bullet-lijsten (regel beginnend met '- '). Eerst esc() voor
+// HTML-veiligheid, daarna markdown-substitutie op de geescapede tekst.
+function md(s){
+  if(!s) return '';
+  var html = esc(s);
+  // Bold: **tekst** → <strong>tekst</strong>
+  html = html.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
+  // Italic: *tekst* (niet binnen ** match die al gedaan is)
+  html = html.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>');
+  // Bullet-lijsten: regels die met '- ' beginnen worden li, omsloten met ul
+  html = html.replace(/(^|\n)- ([^\n]+)/g, '$1<li>$2</li>');
+  html = html.replace(/(<li>[^<]*<\/li>)(\n<li>)/g, '$1$2');
+  html = html.replace(/((?:<li>[^<]*<\/li>\n?)+)/g, '<ul style="margin:6px 0;padding-left:20px">$1</ul>');
+  // Resterende regelovergangen → <br>
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
+// Welkomstberichten zijn LLM-output door de Master die nieuwe gebruikers
+// verwelkomt. Geen meester-advies om actie van te maken — daarom
+// verbergen we de 'Maak actie van' knop daar. Heuristic op content:
+// content begint met of bevat welkomst-frases die de master-welcome-
+// prompt produceert (zie regel 2322 system prompt).
+function isWelcomeMessage(content){
+  if(!content) return false;
+  var first = content.toLowerCase().slice(0, 220);
+  return /welkom\s+(in\s+(de\s+)?(dojo|takumi)|bij\s+takumi)/i.test(first) ||
+         /platform\s+voor\s+persoonlijk\s+meesterschap/i.test(first);
+}
+
 function renderChat(){
   const msgs=S.chat[S.cur]||[];
   const c=document.getElementById('cm');
@@ -3823,10 +3855,11 @@ function renderChat(){
       }).join('') + '</div>';
     }
     const fb=u?'':`<div style="display:flex;gap:4px;align-items:center"><button class="fb-btn" onclick="doFB(${i},'like')">👍</button><button class="fb-btn" onclick="doFB(${i},'rej')">👎</button></div>`;
-    // Aparte actie-knop onder het bericht — duidelijk als volgende stap
-    const actBtn = u ? '' : `<button onclick="openActionPicker('${S.cur}',${i},this)" style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:transparent;border:1px solid var(--b);border-radius:14px;font-size:11.5px;font-weight:500;color:var(--acc);cursor:pointer;font-family:inherit;letter-spacing:.02em;transition:all .15s;-webkit-tap-highlight-color:transparent" onmouseover="this.style.background='rgba(196,83,42,.06)';this.style.borderColor='var(--acc)'" onmouseout="this.style.background='transparent';this.style.borderColor='var(--b)'"><svg class="ico ico-sm"><use href="#i-plus"/></svg> Maak actie van dit advies</button>`;
-    if(u)return`<div class="msg u"><div class="bub">${esc(m.content)}</div></div>`;
-    return`<div class="msg a"><div style="display:flex;gap:8px;align-items:flex-start">${avatar}<div style="flex:1;min-width:0"><div class="bub${m.stream?' stream':''}" style="border-left:3px solid ${a.col}">${esc(m.content)}</div>${actBtn}${actionStatus}<div class="mm">${sc}${tb}${fb}</div></div></div></div>`;
+    // 'Maak actie van' knop alleen bij echte meester-adviezen, niet bij
+    // welkomstberichten — die zijn oriëntatie, geen advies.
+    const actBtn = (u || isWelcomeMessage(m.content)) ? '' : `<button onclick="openActionPicker('${S.cur}',${i},this)" style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:transparent;border:1px solid var(--b);border-radius:14px;font-size:11.5px;font-weight:500;color:var(--acc);cursor:pointer;font-family:inherit;letter-spacing:.02em;transition:all .15s;-webkit-tap-highlight-color:transparent" onmouseover="this.style.background='rgba(196,83,42,.06)';this.style.borderColor='var(--acc)'" onmouseout="this.style.background='transparent';this.style.borderColor='var(--b)'"><svg class="ico ico-sm"><use href="#i-plus"/></svg> Maak actie van dit advies</button>`;
+    if(u)return`<div class="msg u"><div class="bub">${md(m.content)}</div></div>`;
+    return`<div class="msg a"><div style="display:flex;gap:8px;align-items:flex-start">${avatar}<div style="flex:1;min-width:0"><div class="bub${m.stream?' stream':''}" style="border-left:3px solid ${a.col}">${md(m.content)}</div>${actBtn}${actionStatus}<div class="mm">${sc}${tb}${fb}</div></div></div></div>`;
   }).join('');
   if(wasAtBottom){
     requestAnimationFrame(function(){c.scrollTop=c.scrollHeight;});
@@ -4258,7 +4291,7 @@ function openActionPicker(masterId, msgIdx, btn){
       '<div style="text-align:center;margin-bottom:18px"><div style="width:32px;height:3px;background:'+borderColor+';border-radius:2px;margin:0 auto 14px"></div>' +
         '<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:'+mutedColor+'">Maak actie van</div>' +
       '</div>' +
-      '<div style="background:'+bgInset+';border-left:3px solid '+(AGENTS[masterId]?.col||'#c4532a')+';padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:13px;color:'+inkColor+';line-height:1.55;font-style:italic">'+esc(quoteFragment)+'</div>' +
+      '<div style="background:'+bgInset+';border-left:3px solid '+(AGENTS[masterId]?.col||'#c4532a')+';padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:13px;color:'+inkColor+';line-height:1.55;font-style:italic">'+md(quoteFragment)+'</div>' +
       '<div style="font-size:10.5px;color:'+mutedColor+';margin-bottom:8px;padding:0 2px;letter-spacing:.02em">De meester reikt aan — jij maakt het concreet:</div>' +
       '<input type="text" id="action-text" value="" maxlength="120" style="width:100%;padding:11px 14px;border:1px solid '+borderColor+';border-radius:8px;font-size:14px;font-family:inherit;background:'+bgSolid+';color:'+inkColor+';margin-bottom:14px;box-sizing:border-box" placeholder="Wat ga je hier mee doen?">' +
       '<div style="display:flex;flex-direction:column;gap:8px">' +
