@@ -4141,12 +4141,23 @@ function openActionPicker(masterId, msgIdx, btn){
   var msgs = S.chat[masterId] || [];
   var msg = msgs[msgIdx];
   if(!msg) return;
-  var text = (msg.content||'').slice(0,200).trim();
+  var text = (msg.content||'').trim();
   if(!text) return;
 
-  // Default suggestie: eerste zin van het bericht, max 80 chars
-  var firstSentence = text.split(/[.!?\n]/)[0].trim();
-  if(firstSentence.length > 80) firstSentence = firstSentence.slice(0,77)+'...';
+  // Quote-fragment: max ~140 chars van het advies als visuele anker.
+  // Liefst tot het eerste natuurlijke breekpunt (zin-einde) binnen die
+  // grens; anders gewoon afkappen op spatie.
+  var quoteFragment;
+  var endPos = text.search(/[.!?](\s|$)/);
+  if(endPos > 30 && endPos < 140){
+    quoteFragment = text.slice(0, endPos+1);
+  } else if(text.length > 140){
+    var cut = text.slice(0,140);
+    var lastSpace = cut.lastIndexOf(' ');
+    quoteFragment = (lastSpace > 100 ? cut.slice(0,lastSpace) : cut) + '…';
+  } else {
+    quoteFragment = text;
+  }
 
   var pop = document.createElement('div');
   pop.id = 'action-picker';
@@ -4164,8 +4175,9 @@ function openActionPicker(masterId, msgIdx, btn){
       '<div style="text-align:center;margin-bottom:18px"><div style="width:32px;height:3px;background:'+borderColor+';border-radius:2px;margin:0 auto 14px"></div>' +
         '<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:'+mutedColor+'">Maak actie van</div>' +
       '</div>' +
-      '<div style="background:'+bgInset+';border-left:3px solid '+(AGENTS[masterId]?.col||'#c4532a')+';padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:18px;font-size:13px;color:'+inkColor+';line-height:1.5;font-style:italic">'+esc(firstSentence)+'</div>' +
-      '<input type="text" id="action-text" value="'+esc(firstSentence).replace(/"/g,'&quot;')+'" maxlength="120" style="width:100%;padding:11px 14px;border:1px solid '+borderColor+';border-radius:8px;font-size:14px;font-family:inherit;background:'+bgSolid+';color:'+inkColor+';margin-bottom:14px;box-sizing:border-box" placeholder="Wat is de actie?">' +
+      '<div style="background:'+bgInset+';border-left:3px solid '+(AGENTS[masterId]?.col||'#c4532a')+';padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:13px;color:'+inkColor+';line-height:1.55;font-style:italic">'+esc(quoteFragment)+'</div>' +
+      '<div style="font-size:10.5px;color:'+mutedColor+';margin-bottom:8px;padding:0 2px;letter-spacing:.02em">De meester reikt aan — jij maakt het concreet:</div>' +
+      '<input type="text" id="action-text" value="" maxlength="120" style="width:100%;padding:11px 14px;border:1px solid '+borderColor+';border-radius:8px;font-size:14px;font-family:inherit;background:'+bgSolid+';color:'+inkColor+';margin-bottom:14px;box-sizing:border-box" placeholder="Wat ga je hier mee doen?">' +
       '<div style="display:flex;flex-direction:column;gap:8px">' +
         '<button onclick="saveAsAction(\''+masterId+'\','+msgIdx+',\'today\')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:'+bgInset+';border:1px solid '+borderColor+';border-radius:10px;cursor:pointer;font-size:14px;color:'+inkColor+';text-align:left;font-family:inherit;transition:all .15s" onmouseover="this.style.borderColor=\'#c4532a\'" onmouseout="this.style.borderColor=\''+borderColor+'\'">' +
           '<svg class="ico ico-lg"><use href="#i-circle"/></svg><div style="flex:1"><div style="font-weight:500">Vandaag</div><div style="font-size:11px;color:'+mutedColor+'">Verschijnt op cockpit, vinkt af aan einde dag</div></div>' +
@@ -4274,7 +4286,11 @@ function closeDatePicker(){
 function saveAsAction(masterId, msgIdx, kind){
   var input = document.getElementById('action-text');
   var text = (input?.value || '').trim();
-  if(!text){ toast('Beschrijving leeg','err'); return; }
+  if(!text){
+    toast('Formuleer eerst je actie','err');
+    if(input){ input.focus(); }
+    return;
+  }
   var msgKey = masterId + '_' + msgIdx;
 
   if(kind === 'today'){
