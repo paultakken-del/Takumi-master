@@ -2092,7 +2092,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.100';
+const APP_VERSION = '0.110';
 
 const S={
   cur:'board',
@@ -3743,6 +3743,50 @@ function isWelcomeMessage(content){
          /platform\s+voor\s+persoonlijk\s+meesterschap/i.test(first);
 }
 
+// Slimme actie-extractie uit een meester-advies. Zoekt advies-markers
+// die de meesters consistent gebruiken (匠 Advies, Concrete actie,
+// Volgende stap, etc) en pakt de inhoud daarna. Geeft {action, context}
+// terug waar action de korte actie-zin is voor het input-veld en
+// context een breder fragment voor het quote-blok.
+//
+// Filosofie: als de meester DUIDELIJK een actie aangeeft (gemarkeerd
+// blok), voorvul het input-veld — bespaart de gebruiker werk. Als
+// het advies vaag is (geen marker), laat leeg en respecteer dat de
+// gebruiker zelf de actie moet formuleren.
+function extractActionFromAdvice(text){
+  if(!text) return {action:'', context:''};
+  // Strip markdown voor schonere matching
+  var clean = text.replace(/\*\*/g,'').replace(/(?<!\*)\*(?!\*)/g,'').trim();
+
+  // Patterns gerangschikt: meest specifiek eerst. Capture group is
+  // de actie-tekst zelf (kan multi-line zijn tot dubbele regelovergang).
+  var patterns = [
+    /匠\s+Advies[:\s]*\n?([^\n]+(?:\n[^\n]+)*?)(?=\n\n|$)/i,
+    /Concrete\s+actie[:\s]*\n?([^\n]+(?:\n[^\n]+)*?)(?=\n\n|$)/i,
+    /Volgende\s+stap[:\s]*\n?([^\n]+(?:\n[^\n]+)*?)(?=\n\n|$)/i,
+    /(?:^|\n)Advies[:\s]+([^\n]+(?:\n[^\n]+)*?)(?=\n\n|$)/i,
+    /(?:^|\n)Actie[:\s]+([^\n]+)/i,
+    /🎯\s*([^\n]+)/
+  ];
+
+  for(var i=0; i<patterns.length; i++){
+    var m = clean.match(patterns[i]);
+    if(m && m[1]){
+      var raw = m[1].trim();
+      // Context: het hele match-block (max 200 chars) voor quote
+      var context = raw.length > 200 ? raw.slice(0,197)+'…' : raw;
+      // Action: alleen eerste zin/regel, max 100 chars, voor input
+      var firstLine = raw.split(/\n/)[0].trim();
+      var firstSentence = firstLine.split(/(?<=[.!?])\s/)[0].trim();
+      var action = firstSentence.length > 100 ? firstSentence.slice(0,97)+'…' : firstSentence;
+      return {action: action, context: context, hasMarker: true};
+    }
+  }
+
+  // Geen marker gevonden: leeg laten, gebruiker formuleert zelf
+  return {action:'', context:'', hasMarker: false};
+}
+
 function renderChat(){
   const msgs=S.chat[S.cur]||[];
   const c=document.getElementById('cm');
@@ -4272,19 +4316,28 @@ function openActionPicker(masterId, msgIdx, btn){
   var text = (msg.content||'').trim();
   if(!text) return;
 
-  // Quote-fragment: max ~140 chars van het advies als visuele anker.
-  // Liefst tot het eerste natuurlijke breekpunt (zin-einde) binnen die
-  // grens; anders gewoon afkappen op spatie.
+  // Probeer eerst slimme actie-extractie via advies-markers. Als de
+  // meester een duidelijke 'Advies / Concrete actie / Volgende stap'
+  // markeerde, gebruik dat voor quote-fragment EN voor voorvulling
+  // van het input-veld. Anders fallback op generieke samenvatting
+  // (eerste 140 chars) en laat input leeg.
+  var extracted = extractActionFromAdvice(text);
   var quoteFragment;
-  var endPos = text.search(/[.!?](\s|$)/);
-  if(endPos > 30 && endPos < 140){
-    quoteFragment = text.slice(0, endPos+1);
-  } else if(text.length > 140){
-    var cut = text.slice(0,140);
-    var lastSpace = cut.lastIndexOf(' ');
-    quoteFragment = (lastSpace > 100 ? cut.slice(0,lastSpace) : cut) + '…';
+  var prefillAction = extracted.action;
+  if(extracted.hasMarker && extracted.context){
+    quoteFragment = extracted.context;
   } else {
-    quoteFragment = text;
+    // Geen marker: pak eerste zin / 140 chars als context-anker
+    var endPos = text.search(/[.!?](\s|$)/);
+    if(endPos > 30 && endPos < 140){
+      quoteFragment = text.slice(0, endPos+1);
+    } else if(text.length > 140){
+      var cut = text.slice(0,140);
+      var lastSpace = cut.lastIndexOf(' ');
+      quoteFragment = (lastSpace > 100 ? cut.slice(0,lastSpace) : cut) + '…';
+    } else {
+      quoteFragment = text;
+    }
   }
 
   var pop = document.createElement('div');
@@ -4304,8 +4357,8 @@ function openActionPicker(masterId, msgIdx, btn){
         '<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:'+mutedColor+'">Maak actie van</div>' +
       '</div>' +
       '<div style="background:'+bgInset+';border-left:3px solid '+(AGENTS[masterId]?.col||'#c4532a')+';padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:13px;color:'+inkColor+';line-height:1.55;font-style:italic">'+md(quoteFragment)+'</div>' +
-      '<div style="font-size:10.5px;color:'+mutedColor+';margin-bottom:8px;padding:0 2px;letter-spacing:.02em">De meester reikt aan — jij maakt het concreet:</div>' +
-      '<input type="text" id="action-text" value="" maxlength="120" style="width:100%;padding:11px 14px;border:1px solid '+borderColor+';border-radius:8px;font-size:14px;font-family:inherit;background:'+bgSolid+';color:'+inkColor+';margin-bottom:14px;box-sizing:border-box" placeholder="Wat ga je hier mee doen?">' +
+      '<div style="font-size:10.5px;color:'+mutedColor+';margin-bottom:8px;padding:0 2px;letter-spacing:.02em">'+(prefillAction ? 'Pas aan als je iets anders wilt:' : 'De meester reikt aan — jij maakt het concreet:')+'</div>' +
+      '<input type="text" id="action-text" value="'+esc(prefillAction).replace(/"/g,'&quot;')+'" maxlength="120" style="width:100%;padding:11px 14px;border:1px solid '+borderColor+';border-radius:8px;font-size:14px;font-family:inherit;background:'+bgSolid+';color:'+inkColor+';margin-bottom:14px;box-sizing:border-box" placeholder="Wat ga je hier mee doen?">' +
       '<div style="display:flex;flex-direction:column;gap:8px">' +
         '<button onclick="saveAsAction(\''+masterId+'\','+msgIdx+',\'today\')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:'+bgInset+';border:1px solid '+borderColor+';border-radius:10px;cursor:pointer;font-size:14px;color:'+inkColor+';text-align:left;font-family:inherit;transition:all .15s" onmouseover="this.style.borderColor=\'#c4532a\'" onmouseout="this.style.borderColor=\''+borderColor+'\'">' +
           '<svg class="ico ico-lg"><use href="#i-circle"/></svg><div style="flex:1"><div style="font-weight:500">Vandaag</div><div style="font-size:11px;color:'+mutedColor+'">Verschijnt op cockpit, vinkt af aan einde dag</div></div>' +
