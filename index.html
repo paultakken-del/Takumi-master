@@ -255,14 +255,15 @@ td{padding:10px;border-bottom:1px solid var(--b);font-size:12px}
 .dz-ico{font-size:28px;margin-bottom:var(--sp-xs);opacity:.5}
 .dz-t{font-size:13px;color:var(--m);margin-bottom:4px}
 .dz-s{font-size:11px;color:var(--f)}
-.gg{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-.gc{background:var(--pc);border-radius:var(--r);padding:18px;box-shadow:var(--sh);cursor:pointer;transition:all .12s;-webkit-tap-highlight-color:transparent}
-.gc:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(18,17,14,.12)}.gc:active{transform:scale(.98)}
-.gi{font-size:24px;margin-bottom:10px}
-.gt{font-size:14px;font-weight:600;font-family:var(--FD);margin-bottom:6px}
-.gd{font-size:11px;color:var(--m);margin-bottom:12px;line-height:1.5}
-.gp{height:5px;background:var(--pw);border-radius:3px;overflow:hidden;margin-bottom:6px}
-.gf{height:100%;border-radius:3px;transition:width .4s}
+.gg{display:flex;flex-direction:column;gap:0;max-width:640px;margin:0 auto;padding:8px 0;border-top:1px solid var(--b)}
+.gc{background:transparent;border-radius:0;padding:26px 20px;border-bottom:1px solid var(--b);cursor:pointer;transition:background .2s;-webkit-tap-highlight-color:transparent}
+.gc:hover{background:var(--acc-soft)}
+.gc:active{transform:none}
+.gi{font-size:30px;margin-bottom:14px;opacity:.85;line-height:1}
+.gt{font-size:18px;font-weight:500;font-family:var(--serif);letter-spacing:-.005em;margin-bottom:6px;color:var(--ink)}
+.gd{font-size:12.5px;color:var(--m);margin-bottom:16px;line-height:1.55}
+.gp{height:3px;background:var(--p2);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.gf{height:100%;border-radius:3px;transition:width .5s cubic-bezier(.16,1,.3,1)}
 .gpc{font-size:11px;color:var(--m)}
 .sa{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;background:rgba(40,137,122,.12);color:var(--teal)}
 .go{display:none;position:fixed;inset:0;background:rgba(18,17,14,.5);z-index:310}
@@ -1006,14 +1007,14 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 
 <!-- DAILY PULSE -->
 <div class="view" id="v-dy">
-  <div class="tb"><div><div class="tb-t" id="pulse-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">脈</span><span>Ochtend Start</span></div><div class="tb-s">Energie · Loslaten · Master Council</div></div></div>
+  <div class="tb"><div><div class="tb-t" id="pulse-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">脈</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Ochtend Start</span></div></div></div>
   <div class="vs"><div class="pw2"><div class="pst" id="pst"></div><div id="pb"></div></div></div>
 </div>
 
 <!-- DATA HUB -->
 <div class="view" id="v-da">
   <div class="tb">
-    <div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">蔵</span><span>Data Hub</span></div><div class="tb-s">Portfolio · Health · Backup</div></div>
+    <div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">蔵</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Data Hub</span></div></div>
     <div style="display:flex;gap:7px">
       <button class="btn sm" onclick="syncPort()">↺ Live koersen</button>
       <button class="btn sm" onclick="openHold()">⚙ Holdings</button>
@@ -1110,7 +1111,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 
 <!-- DOELEN -->
 <div class="view" id="v-gl">
-  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--gold);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">配</span><span>Strategische Doelen</span></div><div class="tb-s" id="g-sub">laden...</div></div><div style="display:flex;align-items:center;gap:10px"><div id="snoei-indicator" style="font-size:11px;color:var(--m)"></div><button class="btn sm pri" onclick="checkSnoei()">+ Nieuw doel</button></div></div>
+  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--gold);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">配</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Strategische Doelen</span></div></div><div style="display:flex;align-items:center;gap:10px"><div id="snoei-indicator" style="font-size:11px;color:var(--m)"></div><button class="btn sm pri" onclick="checkSnoei()">+ Nieuw doel</button></div></div>
   <div class="vs"><div class="gg" id="gg"></div></div>
 </div>
 
@@ -1212,61 +1213,55 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="view" id="v-rh">
   <div class="tb">
     <div>
-      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">習</span><span data-i18n="rh.title">Rituelen</span></div>
-      <div class="tb-s" data-i18n="rh.subtitle">Momenten van afstemming — dagelijks, wekelijks, in ritme</div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">習</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em" data-i18n="rh.title">Rituelen</span></div>
     </div>
   </div>
   <div class="vs">
     <div style="max-width:600px;margin:0 auto;padding:0 4px">
-      <div style="text-align:center;padding:18px 12px 28px">
-        <div style="font-family:var(--FJ);font-size:42px;color:var(--ink);opacity:.7;margin-bottom:14px">習</div>
-        <div style="font-size:13px;color:var(--m);line-height:1.7;max-width:440px;margin:0 auto" data-i18n="rh.intro">Rituelen geven structuur aan reflectie. Begin de dag, sluit hem af, kijk terug op de week, voel je ritme.</div>
+      <div style="text-align:center;padding:36px 12px 44px">
+        <div class="kanji-hero" style="margin-bottom:28px"><div class="kanji-hero-self" style="font-family:var(--FJ);font-size:64px;color:var(--ink);opacity:.55;font-weight:300;line-height:1">習</div></div>
+        <div style="font-family:var(--serif);font-size:17px;color:var(--ink);line-height:1.65;font-style:italic;max-width:380px;margin:0 auto" data-i18n="rh.intro_quote">"Momenten van afstemming — dagelijks, wekelijks, in ritme."</div>
       </div>
 
-      <div style="display:flex;flex-direction:column;gap:10px">
+      <!-- ── VIER RITUELEN ── airy stacked choices ──
+           Zelfde filosofie als Dojo-oefeningen: luchtige rijen met
+           subtiele dividers, kanji als anker, geen p2-backgrounds. -->
+      <div style="border-top:1px solid var(--b);margin:0 -4px">
         <!-- Ochtend Start -->
-        <div onclick="go('dy')" style="padding:18px 20px;background:var(--p2);border:1px solid var(--b);border-radius:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b)'">
-          <div style="display:flex;align-items:flex-start;gap:14px">
-            <div style="font-family:var(--FJ);font-size:28px;color:var(--ink);opacity:.9;line-height:1;flex-shrink:0;width:40px;text-align:center">脈</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px" data-i18n="rh.morning_title">Ochtend Start</div>
-              <div style="font-size:12.5px;color:var(--m);line-height:1.5" data-i18n="rh.morning_desc">Stel je intentie in, voel je energie, laat de dag-leider je begeleiden.</div>
-            </div>
-            <svg class="ico ico-sm" style="color:var(--m);flex-shrink:0;margin-top:6px"><use href="#i-arrow-right"/></svg>
+        <div class="reveal" onclick="go('dy')" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:22px" onmouseover="this.style.background='var(--acc-soft)'" onmouseout="this.style.background=''">
+          <div style="font-family:var(--FJ);font-size:36px;color:var(--acc);line-height:1;flex-shrink:0;font-weight:300;width:46px;text-align:center;opacity:.85">脈</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--serif);font-size:17px;font-weight:500;color:var(--ink);margin-bottom:5px;line-height:1.3;letter-spacing:-.005em" data-i18n="rh.morning_title">Ochtend Start</div>
+            <div style="font-size:12.5px;color:var(--m);line-height:1.55" data-i18n="rh.morning_desc_short">Stel je intentie. Voel je energie.</div>
           </div>
+          <span style="color:var(--m);font-size:14px;flex-shrink:0;opacity:.5">→</span>
         </div>
         <!-- Avond Check-out -->
-        <div onclick="go('ri')" style="padding:18px 20px;background:var(--p2);border:1px solid var(--b);border-radius:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b)'">
-          <div style="display:flex;align-items:flex-start;gap:14px">
-            <div style="font-family:var(--FJ);font-size:28px;color:var(--ink);opacity:.9;line-height:1;flex-shrink:0;width:40px;text-align:center">習</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px" data-i18n="rh.evening_title">Avond Check-out</div>
-              <div style="font-size:12.5px;color:var(--m);line-height:1.5" data-i18n="rh.evening_desc">Sluit bewust af. Reflecteer op energie, leer van de dag.</div>
-            </div>
-            <svg class="ico ico-sm" style="color:var(--m);flex-shrink:0;margin-top:6px"><use href="#i-arrow-right"/></svg>
+        <div class="reveal" onclick="go('ri')" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:22px" onmouseover="this.style.background='var(--acc-soft)'" onmouseout="this.style.background=''">
+          <div style="font-family:var(--FJ);font-size:36px;color:var(--acc);line-height:1;flex-shrink:0;font-weight:300;width:46px;text-align:center;opacity:.85">習</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--serif);font-size:17px;font-weight:500;color:var(--ink);margin-bottom:5px;line-height:1.3;letter-spacing:-.005em" data-i18n="rh.evening_title">Avond Check-out</div>
+            <div style="font-size:12.5px;color:var(--m);line-height:1.55" data-i18n="rh.evening_desc_short">Sluit bewust af. Leer van de dag.</div>
           </div>
+          <span style="color:var(--m);font-size:14px;flex-shrink:0;opacity:.5">→</span>
         </div>
         <!-- Week Reflectie -->
-        <div onclick="go('wr')" style="padding:18px 20px;background:var(--p2);border:1px solid var(--b);border-radius:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b)'">
-          <div style="display:flex;align-items:flex-start;gap:14px">
-            <div style="font-family:var(--FJ);font-size:28px;color:var(--ink);opacity:.9;line-height:1;flex-shrink:0;width:40px;text-align:center">週</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px" data-i18n="rh.week_title">Week Reflectie</div>
-              <div style="font-size:12.5px;color:var(--m);line-height:1.5" data-i18n="rh.week_desc">Terugblik op patronen, lessen, koers van de afgelopen week.</div>
-            </div>
-            <svg class="ico ico-sm" style="color:var(--m);flex-shrink:0;margin-top:6px"><use href="#i-arrow-right"/></svg>
+        <div class="reveal" onclick="go('wr')" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:22px" onmouseover="this.style.background='var(--acc-soft)'" onmouseout="this.style.background=''">
+          <div style="font-family:var(--FJ);font-size:36px;color:var(--acc);line-height:1;flex-shrink:0;font-weight:300;width:46px;text-align:center;opacity:.85">週</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--serif);font-size:17px;font-weight:500;color:var(--ink);margin-bottom:5px;line-height:1.3;letter-spacing:-.005em" data-i18n="rh.week_title">Week Reflectie</div>
+            <div style="font-size:12.5px;color:var(--m);line-height:1.55" data-i18n="rh.week_desc_short">Terugblik op patronen en koers.</div>
           </div>
+          <span style="color:var(--m);font-size:14px;flex-shrink:0;opacity:.5">→</span>
         </div>
         <!-- Ritme & Herstel -->
-        <div onclick="go('rt')" style="padding:18px 20px;background:var(--p2);border:1px solid var(--b);border-radius:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b)'">
-          <div style="display:flex;align-items:flex-start;gap:14px">
-            <div style="font-family:var(--FJ);font-size:28px;color:var(--ink);opacity:.9;line-height:1;flex-shrink:0;width:40px;text-align:center">律</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px" data-i18n="rh.rhythm_title">Ritme & Herstel</div>
-              <div style="font-size:12.5px;color:var(--m);line-height:1.5" data-i18n="rh.rhythm_desc">Cycli van werk en rust — zie hoe je week-ritme zich ontvouwt.</div>
-            </div>
-            <svg class="ico ico-sm" style="color:var(--m);flex-shrink:0;margin-top:6px"><use href="#i-arrow-right"/></svg>
+        <div class="reveal" onclick="go('rt')" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:22px" onmouseover="this.style.background='var(--acc-soft)'" onmouseout="this.style.background=''">
+          <div style="font-family:var(--FJ);font-size:36px;color:var(--acc);line-height:1;flex-shrink:0;font-weight:300;width:46px;text-align:center;opacity:.85">律</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--serif);font-size:17px;font-weight:500;color:var(--ink);margin-bottom:5px;line-height:1.3;letter-spacing:-.005em" data-i18n="rh.rhythm_title">Ritme & Herstel</div>
+            <div style="font-size:12.5px;color:var(--m);line-height:1.55" data-i18n="rh.rhythm_desc_short">Cycli van werk en rust.</div>
           </div>
+          <span style="color:var(--m);font-size:14px;flex-shrink:0;opacity:.5">→</span>
         </div>
       </div>
     </div>
@@ -1275,7 +1270,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 
 <!-- WEEKLY REVIEW -->
 <div class="view" id="v-wr">
-  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">律</span><span>Week Reflectie</span><span id="wr-vrijdag-badge" style="display:none;font-size:10px;background:var(--acc);color:#fff;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle">Vandaag</span></div><div class="tb-s" id="wr-w">Wekelijkse terugblik — inzichten, patronen, lessen</div></div><button class="btn sm pri" onclick="genReview()">⚡ Genereer</button></div>
+  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">律</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Week Reflectie</span><span id="wr-vrijdag-badge" style="display:none;font-size:10px;background:var(--acc);color:#fff;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle">Vandaag</span></div></div><button class="btn sm pri" onclick="genReview()">⚡ Genereer</button></div>
   <div class="vs" id="wr-body"><div style="text-align:center;padding:60px;color:var(--m)">Klik "⚡ Genereer" voor je wekelijkse AI review</div><div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--b);margin-top:var(--sp-xs)"><span style="font-size:11px;color:var(--m)">週 Week cyclus · volgende laag</span><button onclick="go('rt')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--acc);display:flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent">律 Ritme & Herstel <span style="font-size:14px">→</span></button></div></div>
 </div>
 
@@ -1283,7 +1278,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <!-- RITME & SEIZOEN -->
 <div class="view" id="v-rt">
   <div class="tb">
-    <div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">律</span><span>Ritme & Herstel</span></div><div class="tb-s">Jouw maandcyclus en herstelplanning</div></div>
+    <div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">律</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Ritme & Herstel</span></div></div>
   </div>
   <div class="vs">
 
@@ -1345,8 +1340,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="view" id="v-ri">
   <div class="tb">
     <div>
-      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">習</span><span>Avond Check-out</span></div>
-      <div class="tb-s">Energie · Leren · Dankbaarheid</div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">習</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Avond Check-out</span></div>
     </div>
     <button class="btn sm pri" onclick="raadpleegVanuitRituelen()">匠 Council</button>
   </div>
@@ -2136,7 +2130,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.310';
+const APP_VERSION = '0.320';
 
 const S={
   cur:'board',
@@ -7399,16 +7393,21 @@ let GOALS=S.goals&&S.goals.length?S.goals:DEF;
 let activeGId=null;
 
 function renderGoals(){
-  const act=GOALS.filter(g=>g.status==='Actief').length;
-  document.getElementById('g-sub').textContent=GOALS.length===0?'Begin met je eerste doel':act+' actief · '+GOALS.length+' totaal';
+  // g-sub element verwijderd in Stoic-redesign (tb-subtitle weg).
+  // Defensive null-check zodat oude code geen crash veroorzaakt.
+  var gSub = document.getElementById('g-sub');
+  if(gSub){
+    const act=GOALS.filter(g=>g.status==='Actief').length;
+    gSub.textContent=GOALS.length===0?'Begin met je eerste doel':act+' actief · '+GOALS.length+' totaal';
+  }
   updateSnoeiIndicator();
   if(GOALS.length===0){
     document.getElementById('gg').innerHTML=`
-      <div style="padding:40px 24px;text-align:center">
-        <div style="font-family:var(--FJ);font-size:40px;opacity:.2;margin-bottom:16px">配</div>
-        <div style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:var(--sp-xs)">Wat wil je dit jaar bereiken?</div>
-        <div style="font-size:14px;color:var(--m);line-height:1.6;margin-bottom:var(--sp-lg)">Takumi werkt het beste als het weet waar je naartoe wilt. Stel je eerste doel in — het systeem houdt het bij en geeft advies op basis van je staat van de dag.</div>
-        <button class="btn pri" style="width:100%;justify-content:center;font-size:15px;min-height:52px" onclick="checkSnoei()">+ Stel je eerste doel in</button>
+      <div style="padding:60px 24px 80px;text-align:center;max-width:520px;margin:0 auto">
+        <div class="kanji-hero" style="margin-bottom:32px;display:inline-block"><div class="kanji-hero-self" style="font-family:var(--FJ);font-size:64px;color:var(--ink);opacity:.5;font-weight:300;line-height:1">配</div></div>
+        <div style="font-family:var(--serif);font-size:21px;font-weight:500;color:var(--ink);margin-bottom:14px;letter-spacing:-.005em">Wat wil je dit jaar bereiken?</div>
+        <div style="font-family:var(--serif);font-size:14.5px;color:var(--m);line-height:1.7;margin:0 auto 32px;font-style:italic;max-width:380px">Takumi werkt het beste als het weet waar je naartoe wilt. Stel je eerste doel — Takumi geeft advies op je staat van de dag.</div>
+        <button class="btn pri" style="font-size:13px;padding:11px 22px;min-height:auto;border-radius:24px" onclick="checkSnoei()">+ Stel je eerste doel in</button>
       </div>`;
     return;
   }
@@ -7416,20 +7415,22 @@ function renderGoals(){
     const vitaal=g.pct<25?'Zaad — pas geplant':g.pct<50?'Groeit — eerste wortels':g.pct<75?'Bloeit — zichtbare groei':'Rijpt — bijna klaar';
     const kleur=g.pct<25?'var(--m)':g.pct<50?'var(--teal)':g.pct<75?'var(--gold)':'var(--acc)';
     const pauzeer=g.status==='Gepauzeerd'?' style="opacity:.5"':'';
-    return`<div class="gc"${pauzeer} onclick="openGoal('${g.id}')">
+    return`<div class="gc reveal"${pauzeer} onclick="openGoal('${g.id}')">
       <div class="gi">${g.ico}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px">
         <div class="gt">${g.title}</div>
-        <span class="sa" style="${g.status==='Gepauzeerd'?'background:rgba(122,116,110,.1);color:var(--m)':''}">${g.status}</span>
+        ${g.status==='Gepauzeerd'?'<span class="sa" style="background:rgba(122,116,110,.08);color:var(--m);flex-shrink:0">'+g.status+'</span>':''}
       </div>
       <div class="gd">${g.desc}</div>
       <div class="gp"><div class="gf" style="width:${g.pct}%;background:${g.color}"></div></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
-        <div style="font-size:11px;color:${kleur};font-family:var(--F)">${vitaal}</div>
-        <div style="font-size:11px;color:var(--m)">${g.actions.filter(a=>!a.done && a.txt !== 'Eerste stap definiëren').length} open acties</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div style="font-size:11px;color:${kleur};font-family:var(--F);font-style:italic;opacity:.85">${vitaal}</div>
+        <div style="font-size:11px;color:var(--m);opacity:.75">${g.actions.filter(a=>!a.done && a.txt !== 'Eerste stap definiëren').length} open · ${g.pct}%</div>
       </div>
     </div>`;
   }).join('');
+  // Re-scan reveal observer voor de net gerenderde cards
+  if(typeof window.scrollRevealScan === 'function') setTimeout(window.scrollRevealScan, 0);
 }
 
 function openGoal(id){
@@ -7571,7 +7572,8 @@ async function genReview(){
     const raw=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
     let r;try{r=JSON.parse(raw);}catch{try{const m=raw.match(/\{[\s\S]*\}/);if(m)r=JSON.parse(m[0]);}catch{}}
     if(!r)throw new Error('JSON parsing mislukt');
-    document.getElementById('wr-w').textContent=new Date().toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'});
+    var wrW = document.getElementById('wr-w');
+    if(wrW) wrW.textContent=new Date().toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'});
     el.innerHTML=`
       <div class="card" style="margin-bottom:16px;border-left:3px solid var(--acc)"><div class="ct">Week highlight</div><div style="font-size:14px;font-weight:500">${r.weekHighlight}</div></div>
       <div class="rg" style="margin-bottom:16px">
