@@ -830,7 +830,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
         <div style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-top:3px">Herstel</div>
       </div>
     </div>
-    <div id="ck-stat-hint" style="display:none;font-size:11px;color:var(--acc);text-align:center;margin-top:8px;opacity:.85;cursor:pointer;-webkit-tap-highlight-color:transparent" onclick="goToHealth()">↗ Koppel HRV via Data Hub</div>
+    <div id="ck-stat-hint" style="display:none;font-size:10.5px;color:var(--m);text-align:center;margin-top:10px;opacity:.7;cursor:pointer;-webkit-tap-highlight-color:transparent;letter-spacing:.02em" onclick="goToHealth()">Voorbeeldwaarden — tik om je HRV te koppelen</div>
     <!-- Hidden helpers for legacy code that may still reference these -->
     <div style="display:none">
       <span id="wave-phase-name"></span>
@@ -2089,7 +2089,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.240';
+const APP_VERSION = '0.250';
 
 const S={
   cur:'board',
@@ -6436,16 +6436,28 @@ async function generateWeekCouncil(){
 function renderWeekCouncil(){
   var sec = document.getElementById('ck-week-council');
   if(!sec) return;
+  // Council-deze-week en dag-element kaart tonen beide het LEIDT-element.
+  // Voorkom dubbelop door dag-element te verbergen wanneer council toont.
+  var dayLeaderEl = document.getElementById('ck-day-leader');
   if(!isCouncilWeek() || !S.weekCouncil || S.weekCouncil.dismissed){
     sec.style.display = 'none';
+    // Council niet zichtbaar → dag-element mag weer tonen (als 'ie er was)
+    if(dayLeaderEl && dayLeaderEl.dataset.warriorId){
+      dayLeaderEl.style.display = 'flex';
+    }
     return;
   }
   // Check of council nog hoort bij deze week
   var currentWeek = getWeekKey();
   if(S.weekCouncil.weekKey !== currentWeek){
     sec.style.display = 'none';
+    if(dayLeaderEl && dayLeaderEl.dataset.warriorId){
+      dayLeaderEl.style.display = 'flex';
+    }
     return;
   }
+  // Council toont → verberg dag-element (LEIDT-pill dekt zelfde info)
+  if(dayLeaderEl) dayLeaderEl.style.display = 'none';
 
   var c = S.weekCouncil;
   var leadEl = ELEMENTS[c.leadElement] || ELEMENTS.chi;
