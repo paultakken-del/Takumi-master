@@ -526,6 +526,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 .el-kanji{font-family:var(--FJ);font-size:18px;line-height:1}
 .el-name{font-size:10px;font-weight:500;color:var(--ink);letter-spacing:.02em}
 .el-pill.on .el-name{font-weight:600}
+.el-essence{font-size:8.5px;color:var(--m);font-style:italic;line-height:1.2;margin-top:1px;letter-spacing:.02em;opacity:.78;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .el-mem{position:absolute;top:-3px;right:-3px;background:var(--acc);color:#fff;font-size:9px;font-weight:600;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;border:1.5px solid var(--bg)}
 .el-obs{position:absolute;top:-4px;left:-4px;background:linear-gradient(135deg,#d4a847,#e8c060);color:#fff;font-size:10px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1;border:1.5px solid var(--bg);box-shadow:0 0 8px rgba(212,168,71,.5);animation:obsGlow 2.5s ease-in-out infinite}
 .el-pill.has-obs{border-color:rgba(212,168,71,.4)}
@@ -751,7 +752,6 @@ input[type=range]{width:100%;accent-color:var(--acc)}
     <div id="ck-day-leader" onclick="openDayLeader()" style="display:none;margin:20px auto 4px;padding:22px 20px 20px;background:var(--p2);border:1px solid var(--b);border-radius:14px;cursor:pointer;transition:all .15s;flex-direction:column;align-items:center;text-align:center;max-width:340px;-webkit-tap-highlight-color:transparent" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b)'">
       <div id="ck-day-leader-kanji" style="font-family:var(--FJ);font-size:54px;line-height:1;font-weight:300;margin-bottom:10px">火</div>
       <div id="ck-day-leader-name" style="font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.3;letter-spacing:.01em">Ka · Vuur</div>
-      <div id="ck-day-leader-essence" style="font-size:10px;color:var(--m);font-style:italic;line-height:1.4;margin-top:3px;letter-spacing:.03em;opacity:.85">Ka-energie</div>
       <div id="ck-day-leader-sub" style="font-size:11px;color:var(--m);line-height:1.5;margin-top:4px;letter-spacing:.04em">leidt vandaag</div>
     </div>
 
@@ -2093,7 +2093,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.150';
+const APP_VERSION = '0.160';
 
 const S={
   cur:'board',
@@ -3515,10 +3515,16 @@ function renderGrid(){
     var memDot = elMemCount ? '<div class="el-mem">'+(elMemCount>9?'9+':elMemCount)+'</div>' : '';
     var hasObsEl = el.warriors.some(function(wid){ return activeObsForMaster(wid).length > 0; });
     var obsDotEl = hasObsEl ? '<div class="el-obs" title="Nieuwe observatie">✦</div>' : '';
+    // Essence = element-naam + betekenis (deel na de · in element.sub).
+    // Bijv "Vuur · Energie" → "Ka-energie". Heel klein onder de naam.
+    var meaningPart = (el.sub || '').split('·')[1];
+    var meaning = meaningPart ? meaningPart.trim().toLowerCase() : '';
+    var essence = meaning ? (el.name + '-' + meaning) : '';
     return '<div class="el-pill'+(isA?' on':'')+(hasObsEl?' has-obs':'')+'" onclick="selElement(\''+eid+'\')" title="'+el.name+' · '+el.sub+'" style="--ec:'+el.col+'">'+
       memDot+ obsDotEl +
       '<div class="el-kanji" style="color:'+el.col+'">'+el.kanji+'</div>'+
       '<div class="el-name">'+el.name+'</div>'+
+      (essence?'<div class="el-essence">'+essence+'</div>':'')+
     '</div>';
   }).join('');
 
@@ -4712,12 +4718,11 @@ function renderDayLeader(){
 
   // Kanji: bij voorkeur het ELEMENT-kanji (niet de meester-warrior-kanji),
   // omdat we hier het element communiceren. Council = 匠.
-  var kanji, name, sub, essence;
+  var kanji, name, sub;
   if(leader.eid === 'board'){
     kanji = '匠';
     name = isEn ? 'Master Council' : 'Master Council';
     sub = isEn ? 'leads today' : 'leidt vandaag';
-    essence = isEn ? 'Takumi-synthesis' : 'Takumi-synthese';
   } else if(leader.element){
     kanji = leader.element.kanji;
     // element.sub is bv. 'Earth · Foundation' / 'Aarde · Fundament' —
@@ -4725,20 +4730,14 @@ function renderDayLeader(){
     var domein = (leader.element.sub || '').split('·')[0].trim();
     name = leader.element.name + (domein ? ' · ' + domein : '');
     sub = isEn ? 'leads today' : 'leidt vandaag';
-    // Essence = element-naam + betekenis (deel na de ·). Bijv "Vuur · Energie" → "Ka-energie"
-    var meaningPart = (leader.element.sub || '').split('·')[1];
-    var meaning = meaningPart ? meaningPart.trim().toLowerCase() : '';
-    essence = meaning ? (leader.element.name + '-' + meaning) : '';
   } else {
     kanji = '匠';
     name = 'Takumi';
     sub = '';
-    essence = '';
   }
 
   var kanjiEl = document.getElementById('ck-day-leader-kanji');
   var nameEl = document.getElementById('ck-day-leader-name');
-  var essenceEl = document.getElementById('ck-day-leader-essence');
   var subEl = document.getElementById('ck-day-leader-sub');
   if(kanjiEl){
     kanjiEl.textContent = kanji;
@@ -4749,10 +4748,6 @@ function renderDayLeader(){
     }
   }
   if(nameEl) nameEl.textContent = name;
-  if(essenceEl){
-    essenceEl.textContent = essence;
-    essenceEl.style.display = essence ? '' : 'none';
-  }
   if(subEl) subEl.textContent = sub;
   el.style.display = 'flex';
   // Bewaar voor click-handler — bij doorklikken vinden we de juiste warrior
