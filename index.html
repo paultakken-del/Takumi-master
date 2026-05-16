@@ -2092,7 +2092,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.200';
+const APP_VERSION = '0.210';
 
 const S={
   cur:'board',
@@ -5139,23 +5139,29 @@ async function deepenBalanceInDojo(){
 
   var prompt;
   if(LANG === 'en'){
-    prompt = 'A user has just read this balance reading about their week:\n\n"'+analysisText+'"\n\n'+
+    prompt = 'A user has just read this weekly balance observation:\n\n"'+analysisText+'"\n\n'+
       (primary ? 'Their primary goal: "'+primary.title+'"\n\n' : '') +
-      'Formulate ONE transformative question they could explore in a deeper dojo conversation about this — not seeking advice, but inviting them to look at the situation underneath. The question should:\n'+
-      '- Build on what the analysis revealed\n'+
-      '- Be open, not solvable with a yes/no\n'+
-      '- Be in the user\'s own perspective (use "I" or "my")\n'+
-      '- Max 20 words, English, no quotation marks\n\n'+
-      'Just the question itself, nothing else.';
+      'Write ONE question they could carry into a deeper dojo conversation. The question must be GROUNDED and CONCRETE — anchored in their actual goal and real life, not in poetic metaphors.\n\n'+
+      'STRICT RULES:\n'+
+      '- First person ("What stops me from...", "Why do I...", "What do I need to...")\n'+
+      '- Plain, everyday language — do NOT echo metaphors from the analysis (no "touch", "feel grow", "wake the fire", etc.). Translate metaphor into real words.\n'+
+      '- Grammatically correct, natural English\n'+
+      '- Build on what the analysis revealed, but in clear language\n'+
+      '- Open question (no yes/no)\n'+
+      '- Max 25 words\n\n'+
+      'Output only the question itself.';
   } else {
-    prompt = 'Een gebruiker heeft net deze balans-lezing over zijn week gelezen:\n\n"'+analysisText+'"\n\n'+
+    prompt = 'Een gebruiker leest deze balans-observatie over zijn week:\n\n"'+analysisText+'"\n\n'+
       (primary ? 'Hun primaire doel: "'+primary.title+'"\n\n' : '') +
-      'Formuleer ÉÉN transformatieve vraag die ze in een diepere dojo-gesprek kunnen onderzoeken hierover — niet op zoek naar advies, maar uitnodigend om naar de situatie onder de oppervlakte te kijken. De vraag moet:\n'+
-      '- Voortbouwen op wat de analyse onthulde\n'+
-      '- Open zijn, niet oplosbaar met ja/nee\n'+
-      '- In het perspectief van de gebruiker zelf (gebruik "ik" of "mijn")\n'+
-      '- Max 20 woorden, Nederlands, geen aanhalingstekens\n\n'+
-      'Alleen de vraag zelf, niets anders.';
+      'Schrijf ÉÉN vraag die ze meenemen in een dojo-gesprek. De vraag moet GEAARD en CONCREET zijn — geankerd in hun echte doel en werkelijkheid, niet in poëtische metaforen.\n\n'+
+      'STRIKTE REGELS:\n'+
+      '- Eerste persoon ("Wat houdt mij tegen om...", "Waarom voel ik...", "Wat heb ik nodig om...")\n'+
+      '- Gewone, alledaagse taal — neem GEEN metaforen over uit de analyse (geen "aanraken", "voelen groeien", "vuur wakker maken" enz). Vertaal metafoor naar gewone woorden.\n'+
+      '- Grammaticaal correct, natuurlijk Nederlands\n'+
+      '- Bouw op wat de analyse opmerkt, maar in heldere taal\n'+
+      '- Open vraag (geen ja/nee)\n'+
+      '- Max 25 woorden\n\n'+
+      'Geef alleen de vraag zelf.';
   }
 
   var question = '';
