@@ -2089,7 +2089,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.250';
+const APP_VERSION = '0.260';
 
 const S={
   cur:'board',
@@ -4641,14 +4641,13 @@ function renderCkActions(){
     }
     return false;
   });
-  // Altijd tonen — als geen acties, een hint zodat de gebruiker weet
-  // waar ze zouden komen te staan. Voorkomt 'ik zie geen acties-sectie'
-  // verwarring.
+  // Altijd tonen — als geen acties, een dunne hint zodat de gebruiker weet
+  // dat de sectie bestaat. Was eerst dashed-bordered kaart met 2 regels;
+  // dat oogde te zwaar voor een lege state. Nu: 1 regel muted tekst.
   sec.style.display = 'block';
   if(!acts.length){
-    list.innerHTML = '<div style="padding:14px;background:var(--p2);border:1px dashed var(--b);border-radius:10px;color:var(--m);font-size:12.5px;line-height:1.55;text-align:center">'+
-      'Nog geen acties vandaag.<br>'+
-      '<span style="font-size:11.5px;opacity:.8">Stel een vraag aan een meester en sla zijn advies hier op via <strong>+ Maak actie van dit advies</strong>.</span>'+
+    list.innerHTML = '<div style="padding:4px 2px;color:var(--m);font-size:11.5px;line-height:1.55;opacity:.7">'+
+      'Geen acties vandaag. Sla meester-advies hier op via <strong style="font-weight:500">+ Maak actie</strong>.'+
     '</div>';
     return;
   }
@@ -4788,31 +4787,26 @@ function renderPrimaryGoal(){
       // Header — minimal
       '<div style="font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:6px;opacity:.85"><svg class="ico ico-sm"><use href="#i-compass"/></svg> Jouw richting</div>'+
 
-      // Doel — geen kaart, gewoon tekst met progress
-      '<div onclick="openGoal(\''+primary.id+'\')" style="cursor:pointer;margin-bottom:20px">'+
-        (primary.ico && primary.ico !== '🎯' ? '<div style="font-size:22px;line-height:1;margin-bottom:10px">'+primary.ico+'</div>' : '<svg class="ico ico-xl" style="color:var(--acc);margin-bottom:10px;display:block"><use href="#i-target"/></svg>')+
+      // Doel — alleen custom emoji tonen (geen default target-icoon: dat
+      // dupliceert de compass in de header hierboven)
+      '<div onclick="openGoal(\''+primary.id+'\')" style="cursor:pointer">'+
+        (primary.ico && primary.ico !== '🎯' ? '<div style="font-size:22px;line-height:1;margin-bottom:10px">'+primary.ico+'</div>' : '')+
         '<div style="font-size:20px;font-weight:600;color:var(--ink);line-height:1.3;margin-bottom:8px">'+esc(primary.title)+'</div>'+
         '<div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--m);margin-bottom:8px"><span>Week '+weekNumber+'</span><span>·</span><span style="font-weight:500">'+primary.pct+'%</span></div>'+
         '<div style="height:3px;background:var(--p2);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+primary.pct+'%;background:var(--acc);transition:width .4s"></div></div>'+
       '</div>'+
 
-      // Dag-leider in uniforme kaart, geen border-left
-      '<div style="padding:16px;background:var(--p2);border:1px solid var(--b);border-radius:12px">'+
-        '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px">'+
-          '<span style="font-family:var(--FJ);font-size:18px;color:var(--m);line-height:1;margin-top:1px">'+leaderIco+'</span>'+
-          '<div style="flex:1;min-width:0">'+
-            '<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-bottom:2px">Vandaag spreekt</div>'+
-            '<div style="font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.3">'+esc(warriorShort)+(warriorDomain ? ' <span style="font-weight:400;color:var(--m)">· '+esc(warriorDomain)+'</span>' : '')+'</div>'+
-          '</div>'+
-        '</div>'+
-        '<div id="ck-leader-msg" style="font-size:13.5px;color:var(--ink);line-height:1.6;font-style:italic;font-family:var(--serif);min-height:20px;margin-bottom:14px">Een ogenblik...</div>'+
-        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
-          '<button onclick="askLeaderToday()" style="font-size:11.5px;padding:7px 14px;background:var(--acc);color:#fff;border:none;border-radius:14px;cursor:pointer;font-family:inherit;font-weight:500;display:inline-flex;align-items:center;gap:6px"><span style="font-family:var(--FJ);font-size:13px;line-height:1">'+leaderIco+'</span><span>Vraag '+esc(warriorShort)+(warriorDomain ? ' ('+esc(warriorDomain)+')' : '')+'</span><svg class="ico ico-sm" style="color:#fff"><use href="#i-arrow-right"/></svg></button>'+
-          (S.primaryGoalId !== primary.id ? '<button onclick="setPrimaryGoal(\''+primary.id+'\')" style="font-size:11.5px;padding:7px 14px;background:transparent;border:1px solid var(--b);color:var(--m);border-radius:14px;cursor:pointer;font-family:inherit">Zet als focus</button>' : '')+
-        '</div>'+
+      // 'Vandaag spreekt' sub-card verwijderd (v0.260) — was derde Kū-verwijzing
+      // op één scroll (naast dag-element kaart en Council-deze-week LEIDT-pill).
+      // Toegang tot dag-leider blijft via Master Council pill in dag-cyclus.
+      // Compact CTA als footer: 1 regel, zonder kaart en AI-tekst.
+      '<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+        '<button onclick="askLeaderToday()" style="font-size:11.5px;padding:7px 14px;background:transparent;border:1px solid var(--b);color:var(--ink);border-radius:14px;cursor:pointer;font-family:inherit;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:all .15s" onmouseover="this.style.borderColor=\'var(--acc)\';this.style.color=\'var(--acc)\'" onmouseout="this.style.borderColor=\'var(--b)\';this.style.color=\'var(--ink)\'"><span style="font-family:var(--FJ);font-size:13px;line-height:1">'+leaderIco+'</span><span>Vraag '+esc(warriorShort)+(warriorDomain ? ' ('+esc(warriorDomain)+')' : '')+'</span> →</button>'+
+        (S.primaryGoalId !== primary.id ? '<button onclick="setPrimaryGoal(\''+primary.id+'\')" style="font-size:11px;padding:6px 12px;background:none;border:none;color:var(--m);cursor:pointer;font-family:inherit;text-decoration:underline;opacity:.7">Zet als focus</button>' : '')+
       '</div>'+
     '</div>';
-  loadLeaderMessage(primary, leader);
+  // loadLeaderMessage(primary, leader); — verwijderd: ck-leader-msg DOM-element
+  // bestaat niet meer. Functie zelf blijft (null-safe) voor toekomstig hergebruik.
 }
 
 async function loadLeaderMessage(goal, leader){
