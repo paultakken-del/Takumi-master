@@ -330,10 +330,15 @@ td{padding:10px;border-bottom:1px solid var(--b);font-size:12px}
 .rw{margin-bottom:16px}
 .rval{font-family:var(--FD);font-size:32px;font-weight:700;text-align:center;margin-bottom:var(--sp-xs)}
 input[type=range]{width:100%;accent-color:var(--acc)}
-#mob{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--ink2);border-top:1px solid rgba(255,255,255,.1);padding:6px 0 env(safe-area-inset-bottom,6px);z-index:90}
-.mn2{display:flex;justify-content:space-around}
-.mi2{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 12px;cursor:pointer;color:rgba(255,255,255,.65);transition:color .12s;-webkit-tap-highlight-color:transparent;min-height:48px;justify-content:center}
-.mi2.on{color:var(--acc)}
+/* ── BOTTOM-TAB NAV (mobile) ──
+   Was dark-theme en uit op mobile. Nu: light Stoic-stijl, AAN op mobile
+   als primaire navigatie. Hamburger blijft beschikbaar voor settings. */
+#mob{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(248,245,238,.92);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid rgba(0,0,0,.06);padding:8px 0 calc(env(safe-area-inset-bottom,8px) + 4px);z-index:90}
+[data-theme="dark"] #mob{background:rgba(30,28,24,.88);border-top-color:rgba(255,255,255,.06)}
+.mn2{display:flex;justify-content:space-around;max-width:560px;margin:0 auto}
+.mi2{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 14px;cursor:pointer;color:var(--m);transition:color .15s,transform .15s;-webkit-tap-highlight-color:transparent;min-height:48px;justify-content:center;opacity:.7}
+.mi2.on{color:var(--acc);opacity:1}
+.mi2:active{transform:scale(.94)}
 .wk{border-radius:var(--rs);padding:12px 10px;text-align:center;cursor:default;border:1px solid transparent}
 .wk.actief{background:var(--acc);color:#fff;border-color:var(--acc)}
 .wk.herstel{background:rgba(40,137,122,.12);border-color:rgba(40,137,122,.3);color:var(--teal)}
@@ -411,6 +416,16 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 .ck-footer-dot{opacity:.3}
 /* COCKPIT OPENING */
 .ck-greeting-anim #ck-icon-circle{animation:ckIconPulse .6s cubic-bezier(.34,1.56,.64,1) forwards}
+
+/* ── HERO KANJI: breathing + halo ──
+   Stoic/Headspace-stijl: subtiele ademende beweging maakt het scherm levend
+   zonder afleiding. Radial halo geeft visuele warmte voorbij typografie. */
+.kanji-hero{position:relative;display:inline-block}
+.kanji-hero::before{content:"";position:absolute;inset:-30% -30%;background:radial-gradient(circle at center,rgba(196,83,42,.10) 0%,rgba(196,83,42,.04) 35%,transparent 70%);z-index:-1;border-radius:50%;animation:kanjiBreathe 6s ease-in-out infinite}
+[data-theme="dark"] .kanji-hero::before{background:radial-gradient(circle at center,rgba(196,83,42,.18) 0%,rgba(196,83,42,.06) 35%,transparent 70%)}
+@keyframes kanjiBreathe{0%,100%{transform:scale(.92);opacity:.7}50%{transform:scale(1.04);opacity:1}}
+.kanji-hero-self{animation:kanjiBreatheGlyph 6s ease-in-out infinite}
+@keyframes kanjiBreatheGlyph{0%,100%{opacity:.92}50%{opacity:1}}
 .ck-did-anim #ck-icon-circle,.ck-did-anim #ck-g,.ck-did-anim #ck-d,.ck-did-anim #ck-quote,.ck-did-anim #ck-quote-auth{animation:none!important;opacity:inherit}
 .ck-greeting-anim #ck-g{animation:ckGreetIn .45s ease forwards}
 .ck-greeting-anim #ck-d{animation:ckDateIn .45s .1s ease both}
@@ -454,9 +469,15 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 #v-da .tp.on{overflow-y:auto;min-height:0}
 @media(max-width:400px){.mg{grid-template-columns:repeat(2,1fr)!important}}
 
-/* ── HAMBURGER + SIDEBAR SLIDE-IN ── */
-#ham-btn{position:fixed;top:12px;right:12px;z-index:300;background:var(--acc);border:none;border-radius:var(--rs);padding:10px 11px;cursor:pointer;flex-direction:column;gap:4px;display:none;box-shadow:0 2px 12px rgba(0,0,0,.3);-webkit-tap-highlight-color:transparent;width:42px;height:42px;justify-content:center;align-items:center}
-.ham-line{width:20px;height:2px;background:rgba(255,255,255,.9);border-radius:1px;transition:.2s}
+/* ── HAMBURGER + SIDEBAR SLIDE-IN ──
+   Stoic/Headspace-stijl: transparant, klein, niet meer de luidste
+   visuele element op het scherm. Met backdrop-blur voor zachte
+   readability boven varierende achtergronden. */
+#ham-btn{position:fixed;top:14px;right:14px;z-index:300;background:rgba(255,255,255,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(0,0,0,.06);border-radius:50%;padding:0;cursor:pointer;flex-direction:column;gap:3px;display:none;box-shadow:0 1px 3px rgba(0,0,0,.04);-webkit-tap-highlight-color:transparent;width:36px;height:36px;justify-content:center;align-items:center;transition:background .2s,transform .15s}
+#ham-btn:hover{background:rgba(255,255,255,.85);transform:scale(1.04)}
+[data-theme="dark"] #ham-btn{background:rgba(40,38,34,.6);border-color:rgba(255,255,255,.08)}
+.ham-line{width:14px;height:1.5px;background:var(--ink);border-radius:1px;transition:.2s;opacity:.7}
+[data-theme="dark"] .ham-line{background:rgba(255,255,255,.7)}
 #sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:95;backdrop-filter:blur(2px)}
 #sb-overlay.on{display:block}
 @media(max-width:720px){
@@ -468,9 +489,10 @@ input[type=range]{width:100%;accent-color:var(--acc)}
   #v-bo .cia{flex-shrink:0;position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--b);padding-bottom:env(safe-area-inset-bottom,0px)}
   #sb{display:flex!important;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);position:fixed!important;top:0;bottom:0;left:0;z-index:100;width:280px;overflow-y:auto}
   #sb.sb-open{transform:translateX(0)!important}
-  #mob{display:none!important}
+  #mob{display:block!important}
   #ham-btn{display:flex!important}
-  #mn{margin-left:0!important;padding-bottom:24px!important}
+  #mn{margin-left:0!important;padding-bottom:84px!important}
+  .vs{padding-bottom:84px!important}
   .card{padding:20px!important;border-radius:16px!important}
   .btn:not(.sm){min-height:48px!important;padding:12px 20px!important;font-size:15px!important}
   .btn.sm{min-height:44px!important;padding:10px 16px!important;font-size:13px!important}
@@ -791,7 +813,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
     <div id="ck-council-today" style="padding:32px 0 40px">
       <!-- Element + meester — gecentreerd, ruim -->
       <div id="ct-header" onclick="raadpleegCouncil()" style="text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:8px 0">
-        <div id="ct-kanji" style="font-family:var(--FJ);font-size:76px;line-height:1;font-weight:300;color:var(--acc);margin-bottom:18px;transition:transform .3s">空</div>
+        <div class="kanji-hero" style="margin-bottom:18px"><div id="ct-kanji" class="kanji-hero-self" style="font-family:var(--FJ);font-size:76px;line-height:1;font-weight:300;color:var(--acc);transition:transform .3s">空</div></div>
         <div id="ct-element-name" style="font-family:var(--serif,inherit);font-size:18px;font-weight:500;color:var(--ink);line-height:1.3;letter-spacing:-.005em;margin-bottom:6px">Kū · Leegte</div>
         <div id="ct-warrior-line" style="font-size:11.5px;color:var(--m);line-height:1.5;letter-spacing:.04em">leidt vandaag</div>
       </div>
@@ -821,7 +843,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
          en go('dj') trigger. ── -->
 
     <!-- COMPACTE DAG-METRICS — vervangt wave -->
-    <div style="margin-top:24px;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;cursor:pointer" onclick="goToHealth()" title="Open Health & HRV in Data Hub">
+    <div id="ck-metrics-grid" style="margin-top:24px;padding:0;display:none;grid-template-columns:repeat(3,1fr);gap:10px;cursor:pointer" onclick="goToHealth()" title="Open Health & HRV in Data Hub">
       <div style="text-align:center;padding:12px 8px;background:var(--p2);border:1px solid var(--b);border-radius:10px">
         <div style="font-size:17px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums" id="ck-stat-hrv">–</div>
         <div style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-top:3px">HRV</div>
@@ -1082,7 +1104,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
         <div id="dj-return-question" style="display:none"></div>
 
         <div style="text-align:center;padding:36px 12px 44px">
-          <div style="font-family:var(--FJ);font-size:64px;color:var(--ink);opacity:.55;margin-bottom:28px;font-weight:300;line-height:1">道</div>
+          <div class="kanji-hero" style="margin-bottom:28px"><div class="kanji-hero-self" style="font-family:var(--FJ);font-size:64px;color:var(--ink);opacity:.55;font-weight:300;line-height:1">道</div></div>
           <div style="font-family:var(--serif);font-size:17px;color:var(--ink);line-height:1.65;font-style:italic;max-width:380px;margin:0 auto" data-i18n="dojo.intro_quote">"Niet AI die alles weet. Vijf stemmen die je leren beter te zien."</div>
         </div>
 
@@ -2089,7 +2111,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.290';
+const APP_VERSION = '0.300';
 
 const S={
   cur:'board',
@@ -3122,10 +3144,10 @@ function renderWave(moodOverride){
   if (hrvElEarly) hrvElEarly.textContent = hrvVal + ' rMSSD';
   if (sleepElEarly) sleepElEarly.textContent = slaapVal.toFixed(1) + 'u';
   if (recElEarly) recElEarly.textContent = recVal + '/10';
-  // Demo-modus: lichte opacity op getallen + hint zichtbaar
-  [hrvElEarly, sleepElEarly, recElEarly].forEach(function(el){
-    if(el && el.parentElement) el.parentElement.style.opacity = hasReal ? '1' : '.55';
-  });
+  // Stoic/Headspace-aanpak: toon harde biometrie ALLEEN bij echte data.
+  // Anders enkel een zachte hint — geen fake numbers op de cockpit.
+  var metricsGrid = document.getElementById('ck-metrics-grid');
+  if(metricsGrid) metricsGrid.style.display = hasReal ? 'grid' : 'none';
   var hintEl = document.getElementById('ck-stat-hint');
   if (hintEl){
     hintEl.style.display = hasReal ? 'none' : 'block';
@@ -3209,9 +3231,9 @@ function renderWave(moodOverride){
   if (hrvEl) hrvEl.textContent = hrv + ' rMSSD';
   if (sleepEl) sleepEl.textContent = slaap.toFixed(1) + 'u';
   if (recEl) recEl.textContent = rec + '/10';
-  [hrvEl, sleepEl, recEl].forEach(function(el){
-    if(el && el.parentElement) el.parentElement.style.opacity = hasReal ? '1' : '.55';
-  });
+  // Idem fix als hierboven — geen fake numbers tonen
+  var metricsGrid2 = document.getElementById('ck-metrics-grid');
+  if(metricsGrid2) metricsGrid2.style.display = hasReal ? 'grid' : 'none';
   var hintEl2 = document.getElementById('ck-stat-hint');
   if (hintEl2){
     hintEl2.style.display = hasReal ? 'none' : 'block';
