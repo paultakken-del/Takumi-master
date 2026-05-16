@@ -799,18 +799,11 @@ input[type=range]{width:100%;accent-color:var(--acc)}
       <div id="ck-actions-list"></div>
     </div>
 
-    <!-- ── MEER VOOR VANDAAG ── verborgen tot uitgevouwen ── -->
-    <div id="ck-more-toggle" style="padding:18px 4px;text-align:center">
-      <button onclick="toggleCkMore()" id="ck-more-btn" style="background:none;border:1px solid var(--b);color:var(--m);padding:8px 18px;border-radius:18px;font-size:11.5px;font-weight:500;cursor:pointer;font-family:inherit;letter-spacing:.04em;-webkit-tap-highlight-color:transparent;transition:all .15s">Meer voor vandaag ↓</button>
-    </div>
-
-    <div id="ck-more-content" style="display:none">
-    <!-- ── MUZIEK ── -->
-    <div class="dash-section" id="ck-music-section" style="display:none">
-      <div class="dash-label"><svg class="ico ico-sm"><use href="#i-wave"/></svg> <span data-i18n="ck.music">Muziek</span></div>
-      <div class="ck-music" id="ck-music"></div>
-    </div>
-    </div>
+    <!-- ── MUZIEK + 'Meer voor vandaag' toggle verwijderd (v0.230) ──
+         Muziek-sectie voegde te weinig waarde toe. De toggle bevatte
+         alleen muziek dus is samen verwijderd. JS-functies
+         showMusicSuggestie/initMusicSuggestie/toggleCkMore blijven
+         bestaan als null-safe no-ops. ── -->
 
     <!-- ── WIJSHEID-sectie verhuisd naar einde van cockpit — zie hieronder ── -->
 
@@ -2092,7 +2085,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.220';
+const APP_VERSION = '0.230';
 
 const S={
   cur:'board',
