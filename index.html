@@ -2092,7 +2092,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.180';
+const APP_VERSION = '0.190';
 
 const S={
   cur:'board',
@@ -4923,7 +4923,12 @@ function renderElementBalance(){
   var zijn = bal.counts.sui + bal.counts.ku + bal.counts.fu * 0.5;
   var sumDZ = doen + zijn;
   var doenRatio = sumDZ > 0 ? doen / sumDZ : 0.5;
-  doenRatio = Math.max(0.18, Math.min(0.82, doenRatio));
+  // Visueel dempen: ratio compressen rond 0.5 zodat een eenzijdige week niet
+  // meteen apocalyptisch oogt. Behoud richting (>/< 0.5) maar tem de amplitude
+  // — anders triggert het visuele beeld een schuldgevoel ipv reflectie.
+  var rawRatio = doenRatio;
+  doenRatio = 0.5 + (rawRatio - 0.5) * 0.55;
+  doenRatio = Math.max(0.30, Math.min(0.70, doenRatio));
 
   var waveCenterX = 240 * doenRatio;
   var waveAmplitude = 14;
@@ -5013,9 +5018,10 @@ async function loadBalanceAnalysis(bal, doenRatio){
   if(!summaryEl) return;
 
   // Cache key: dagdatum + taal + ruwe ratio (gerond op 5%)
+  // v2 prefix om oude (te negatieve) cache-entries te invalideren
   var dayKey = new Date().toISOString().slice(0,10);
   var ratioKey = Math.round(doenRatio * 20) / 20;
-  var cacheKey = 'tm2_balance_analysis_' + LANG + '_' + dayKey + '_' + ratioKey;
+  var cacheKey = 'tm2_balance_analysis_v2_' + LANG + '_' + dayKey + '_' + ratioKey;
   var cached = ls(cacheKey, null);
   if(cached){
     summaryEl.textContent = cached;
@@ -5048,29 +5054,31 @@ async function loadBalanceAnalysis(bal, doenRatio){
 
   var prompt;
   if(LANG === 'en'){
-    prompt = 'You are a Godai master looking at the week-balance of a user. '+
+    prompt = 'You are a Godai master observing a user\'s weekly balance — kind, curious, never alarming. '+
       'Do-half (Chi+Ka): '+doenPct+'%. Be-half (Sui+Kū): '+(100-doenPct)+'%. '+
       'Activity per element: '+elInfo+'.\n'+
       (primary ? 'Their goal: "'+primary.title+'" (progress '+primary.pct+'%).\n' : '') +
       (leaderName ? 'Today leads: '+leaderName+'.\n' : '') +
       (allMems.length ? 'Recent conversations: '+allMems.join(' | ')+'.\n' : '') +
       '\n'+
-      'Write 2-3 sentences in English that READ this balance — not describe it. '+
-      'Connect with their goal and/or day-leader. End with one concrete suggestion if the balance calls for it. '+
-      'Not generic wisdom, but specific for this week. No quotation marks. Max 50 words. '+
-      'Address the user as "you".';
+      'TONE: motivating, observant, warm — like a wise friend, not a stern teacher. '+
+      'First acknowledge what is alive this week (which element they leaned into and what that gave them). '+
+      'Then offer ONE gentle invitation if a complementary element could enrich it. '+
+      'No warnings, no "must", no alarm. Frame imbalance as a natural rhythm, not a problem. '+
+      'Max 45 words. No quotation marks. Address the user as "you".';
   } else {
-    prompt = 'Je bent een Godai-meester die kijkt naar de week-balans van een gebruiker. '+
+    prompt = 'Je bent een Godai-meester die kijkt naar de week-balans van een gebruiker — vriendelijk, nieuwsgierig, nooit alarmerend. '+
       'Doen-helft (Chi+Ka): '+doenPct+'%. Zijn-helft (Sui+Kū): '+(100-doenPct)+'%. '+
       'Activiteit per element: '+elInfo+'.\n'+
       (primary ? 'Hun doel: "'+primary.title+'" (voortgang '+primary.pct+'%).\n' : '') +
       (leaderName ? 'Vandaag leidt: '+leaderName+'.\n' : '') +
       (allMems.length ? 'Recente gesprekken: '+allMems.join(' | ')+'.\n' : '') +
       '\n'+
-      'Schrijf 2-3 zinnen Nederlands die deze balans LEZEN — niet beschrijven. '+
-      'Verbind met hun doel en/of dag-leider. Eindig met één concrete suggestie als de balans dat vraagt. '+
-      'Niet generiek wijs, maar specifiek voor deze week. Geen aanhalingstekens. Max 50 woorden. '+
-      'Spreek de gebruiker aan met "je".';
+      'TOON: motiverend, observerend, warm — als een wijze vriend, niet een strenge leraar. '+
+      'Erken eerst wat deze week leeft (welk element ze hebben opgezocht en wat dat gaf). '+
+      'Bied daarna ÉÉN zachte uitnodiging als een aanvullend element kan verrijken. '+
+      'Geen waarschuwingen, geen "moet", geen alarm. Eenzijdigheid is een natuurlijk ritme, geen probleem. '+
+      'Max 45 woorden. Geen aanhalingstekens. Spreek aan met "je".';
   }
 
   try {
