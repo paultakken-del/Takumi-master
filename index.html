@@ -2092,7 +2092,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.170';
+const APP_VERSION = '0.180';
 
 const S={
   cur:'board',
@@ -6402,11 +6402,10 @@ function renderWeekCouncil(){
   var supEl = ELEMENTS[c.supportElement] || ELEMENTS.sui;
   var restEl = ELEMENTS[c.restElement] || ELEMENTS.ku;
 
-  // Helper: element.sub is bv 'Vuur · Energie' → essence 'Ka-energie'
+  // Helper: element.sub is bv 'Vuur · Energie' → essence 'Energie'
   function elEssence(el){
     var meaningPart = (el.sub || '').split('·')[1];
-    var meaning = meaningPart ? meaningPart.trim().toLowerCase() : '';
-    return meaning ? (el.name + '-' + meaning) : '';
+    return meaningPart ? meaningPart.trim() : '';
   }
   var leadEss = elEssence(leadEl);
   var supEss  = elEssence(supEl);
