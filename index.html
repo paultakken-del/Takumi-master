@@ -2092,7 +2092,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.210';
+const APP_VERSION = '0.220';
 
 const S={
   cur:'board',
@@ -5543,20 +5543,36 @@ async function generateElementQuestion(dj, el){
   if(LANG === 'en'){
     var domEn = translateDomein(el.domein);
     prompt = 'You are '+el.warrior+', master of the '+el.name+' element ('+domEn+'). The user has presented a transformative question:\n\n"'+dj.initialQuestion+'"'+balCtx+prevContext+
-      '\n\nAsk ONE deeper question from your element. Do not advise, do not answer — only one question that lets the user look deeper. Speak from '+el.name+'\'s perspective:'+
-      (el.id === 'chi' ? ' Chi asks about foundation, structure, what carries beneath the problem.' : '') +
-      (el.id === 'sui' ? ' Sui asks about what is lost, which conversation has disappeared, what flows beneath the surface.' : '') +
-      (el.id === 'fu'  ? ' Fū asks about connections that are broken or changed, about relationships between people or things.' : '') +
-      (el.id === 'ka'  ? ' Ka asks where the energy has gone, where the fire was and is no longer, about moments and places.' : '') +
-      '\n\nFormat: 2-4 sentences in English, no quotation marks. Begin directly with the question or a short lead-in. End with a concrete question the user can work with. Keep it inviting and spacious, not diagnostic.';
+      '\n\nAsk EXACTLY ONE deeper question from your element. Do not advise, do not answer. Speak from '+el.name+'\'s perspective:'+
+      (el.id === 'chi' ? ' Chi asks about foundation, structure, what carries beneath.' : '') +
+      (el.id === 'sui' ? ' Sui asks about what is lost, what flows beneath the surface.' : '') +
+      (el.id === 'fu'  ? ' Fū asks about connections — relationships between people or things.' : '') +
+      (el.id === 'ka'  ? ' Ka asks where the energy has gone, where the fire was and is no longer.' : '') +
+      '\n\nSTRICT FORMAT:\n'+
+      '- Max 3 short sentences total.\n'+
+      '- EXACTLY ONE question mark in the entire response — at the very end.\n'+
+      '- No rhetorical sub-questions in the lead-in. No "and also...", no second question tagged on.\n'+
+      '- Plain, everyday language. Do NOT inherit poetic metaphors from the balance context or previous answers (no "touch", "grow", "wake the fire", etc.). Translate metaphor to concrete words.\n'+
+      '- Short sentences. No long em-dash clauses stacking clarifications.\n'+
+      '- No markdown emphasis (no *word* or _word_).\n'+
+      '- No quotation marks.\n'+
+      '- Inviting and spacious, not diagnostic.';
   } else {
     prompt = 'Je bent '+el.warrior+', meester van het '+el.name+'-element ('+el.domein+'). De gebruiker heeft een transformatieve vraag voorgelegd:\n\n"'+dj.initialQuestion+'"'+balCtx+prevContext+
-      '\n\nStel ÉÉN doorvraag vanuit jouw element. Niet adviseren, niet beantwoorden — alleen één vraag stellen die de gebruiker dieper laat kijken. Spreek vanuit het perspectief van '+el.name+':'+
+      '\n\nStel PRECIES ÉÉN doorvraag vanuit jouw element. Niet adviseren, niet beantwoorden. Spreek vanuit het perspectief van '+el.name+':'+
       (el.id === 'chi' ? ' Chi vraagt naar fundament, structuur, wat draagt onder het probleem.' : '') +
-      (el.id === 'sui' ? ' Sui vraagt naar wat is verloren, welk gesprek verdwenen is, wat onder de oppervlakte stroomt.' : '') +
-      (el.id === 'fu'  ? ' Fū vraagt naar verbindingen die zijn gebroken of veranderd, naar relaties tussen mensen of dingen.' : '') +
-      (el.id === 'ka'  ? ' Ka vraagt naar waar de energie heen is gegaan, waar het vuur was en nu niet meer is, naar momenten en plekken.' : '') +
-      '\n\nFormaat: 2-4 zinnen, Nederlands, geen aanhalingstekens. Begin direct met de vraag of een korte aanloop. Eindig met een concrete vraag waar de gebruiker mee aan de slag kan. Houd het uitnodigend en ruim, niet diagnosticerend.';
+      (el.id === 'sui' ? ' Sui vraagt naar wat is verloren, wat onder de oppervlakte stroomt.' : '') +
+      (el.id === 'fu'  ? ' Fū vraagt naar verbindingen — relaties tussen mensen of dingen.' : '') +
+      (el.id === 'ka'  ? ' Ka vraagt naar waar de energie heen is, waar het vuur was en nu niet meer is.' : '') +
+      '\n\nSTRIKT FORMAAT:\n'+
+      '- Maximaal 3 korte zinnen totaal.\n'+
+      '- PRECIES ÉÉN vraagteken in de hele response — aan het einde.\n'+
+      '- Geen rhetorische sub-vragen in de aanloop. Geen "en ook...", geen tweede vraag erachter geplakt.\n'+
+      '- Gewone, alledaagse taal. Neem GEEN poëtische metaforen over uit de balans-context of eerdere antwoorden (geen "aanraken", "voelen groeien", "vuur wakker maken", enz). Vertaal metafoor naar concrete woorden.\n'+
+      '- Korte zinnen. Geen lange bijzinnen met streepjes die verduidelijking op verduidelijking stapelen.\n'+
+      '- Geen markdown emphasis (geen *woord* of _woord_).\n'+
+      '- Geen aanhalingstekens.\n'+
+      '- Uitnodigend en ruim, niet diagnosticerend.';
   }
 
   try {
@@ -5570,6 +5586,29 @@ async function generateElementQuestion(dj, el){
     var question = j.content?.[0]?.text?.trim();
     if(!question) throw new Error('Geen vraag gegenereerd');
     question = question.replace(/^["'""]|["'""]$/g,'').trim();
+    // Strip markdown emphasis (*woord*, _woord_) — AI doet het soms toch
+    question = question.replace(/\*([^*]+)\*/g, '$1').replace(/_([^_\s][^_]*[^_\s])_/g, '$1');
+    // Veiligheidsnet: als er meerdere vraagtekens zijn, kap af tot en met de
+    // laatste vraagteken. Voorkomt "aanloopvraag? hoofdvraag?" gevallen.
+    var qmarks = (question.match(/\?/g) || []).length;
+    if(qmarks > 1){
+      // Splits op zinnen, hou alleen de zin met het laatste vraagteken
+      var sentences = question.split(/(?<=[.!?])\s+/);
+      // Vind laatste zin met vraagteken
+      var lastQIdx = -1;
+      for(var si = sentences.length - 1; si >= 0; si--){
+        if(sentences[si].indexOf('?') !== -1){ lastQIdx = si; break; }
+      }
+      if(lastQIdx >= 0){
+        // Hou aanloop-zinnen ZONDER vraagteken + de laatste vraag-zin
+        var keep = [];
+        for(var ki = 0; ki < lastQIdx; ki++){
+          if(sentences[ki].indexOf('?') === -1) keep.push(sentences[ki]);
+        }
+        keep.push(sentences[lastQIdx]);
+        question = keep.join(' ').trim();
+      }
+    }
 
     // Toon vraag + input
     var box = document.getElementById('dj-active');
