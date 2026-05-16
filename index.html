@@ -748,15 +748,9 @@ input[type=range]{width:100%;accent-color:var(--acc)}
       <div class="ck-date" id="ck-d"></div>
     </div>
 
-    <!-- ── DAG-ELEMENT ── identiteitsanker bovenaan cockpit ──
-         Toont vandaag's leidende element. Verticaal gecentreerd zodat
-         het visueel rijmt met greeting (boven) en quote (onder) — geen
-         links/rechts-uitlijning die de pagina onrustig maakt. -->
-    <div id="ck-day-leader" onclick="openDayLeader()" style="display:none;margin:20px auto 4px;padding:22px 20px 20px;background:var(--p2);border:1px solid var(--b);border-radius:14px;cursor:pointer;transition:all .15s;flex-direction:column;align-items:center;text-align:center;max-width:340px;-webkit-tap-highlight-color:transparent" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b)'">
-      <div id="ck-day-leader-kanji" style="font-family:var(--FJ);font-size:54px;line-height:1;font-weight:300;margin-bottom:10px">火</div>
-      <div id="ck-day-leader-name" style="font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.3;letter-spacing:.01em">Ka · Vuur</div>
-      <div id="ck-day-leader-sub" style="font-size:11px;color:var(--m);line-height:1.5;margin-top:4px;letter-spacing:.04em">leidt vandaag</div>
-    </div>
+    <!-- Dag-element kaart verwijderd (v0.270) — geïntegreerd in
+         #ck-council-today blok hieronder. Renderfunctie renderDayLeader
+         blijft bestaan als null-safe no-op. -->
 
     <!-- OCHTEND NUDGE — verschijnt alleen 's ochtends voor dagstart -->
     <div id="ck-ochtend-nudge" style="display:none;margin:var(--sp-md) 0 0;padding:14px 18px;background:linear-gradient(135deg,rgba(196,83,42,.08),rgba(196,83,42,.03));border:1px solid rgba(196,83,42,.18);border-radius:var(--rs);cursor:pointer;transition:all .2s;display:none;align-items:center;justify-content:space-between;gap:12px" onclick="go('dy')" onmouseover="this.style.background='linear-gradient(135deg,rgba(196,83,42,.14),rgba(196,83,42,.06))'" onmouseout="this.style.background='linear-gradient(135deg,rgba(196,83,42,.08),rgba(196,83,42,.03))'">
@@ -785,22 +779,44 @@ input[type=range]{width:100%;accent-color:var(--acc)}
     <!-- ── AFSPRAKEN ── meesters die op je wachten ── -->
     <div id="ck-appointments" style="display:none;margin-top:16px"></div>
 
-    <!-- ── COUNCIL DEZE WEEK ── verschijnt zon-do als richting voor de week ── -->
-    <div id="ck-week-council" style="display:none"></div>
+    <!-- ── Council-deze-week verwijderd uit cockpit (v0.270) ──
+         Week-focus hoort niet in dag-cockpit thuis. Renderfunctie blijft
+         als null-safe no-op; kan later in Dojo worden hergeplaatst. -->
 
-    <!-- ── PRIMAIR DOEL ── spil van de app ── -->
+    <!-- ── PRIMAIR DOEL ── gecentreerd, anker van de cockpit ── -->
     <div id="ck-primary-goal" style="display:none"></div>
 
-    <!-- ── VANDAAG ── synthese als hoofdfocus ── -->
-    <div class="dash-section dash-primary">
-      <div class="dash-label"><svg class="ico ico-sm"><use href="#i-sun"/></svg> <span data-i18n="ck.today">Vandaag</span></div>
-      <div id="ck-synthese" style="font-size:15px;line-height:1.65;color:var(--ink);font-weight:400"></div>
-    </div>
+    <!-- ── COUNCIL VANDAAG & ACTIES ── geïntegreerd blok ──
+         Vervangt: dag-element kaart, Vandaag synthese, Acties-vandaag
+         sectie. Eén blok dat element + meester + AI-stem + acties + CTAs
+         combineert. Toont 'jouw' meester voor vandaag in context. -->
+    <div id="ck-council-today" class="dash-section" style="padding:28px 0 24px;border-bottom:1px solid var(--b)">
+      <div style="font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);font-weight:700;margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;opacity:.85">
+        <span style="font-family:var(--FJ);font-size:14px;color:var(--m);font-weight:300;line-height:1">匠</span>
+        <span>Council vandaag &amp; acties</span>
+      </div>
 
-    <!-- ── ACTIES VANDAAG ── van meesters ── -->
-    <div class="dash-section" id="ck-actions-section" style="display:none">
-      <div class="dash-label"><svg class="ico ico-sm"><use href="#i-circle"/></svg> <span data-i18n="ck.actions_today">Acties vandaag</span></div>
-      <div id="ck-actions-list"></div>
+      <!-- Element + meester header — clickable to Master Council -->
+      <div id="ct-header" onclick="raadpleegCouncil()" style="display:flex;align-items:center;gap:16px;padding:18px;background:var(--p2);border:1px solid var(--b);border-radius:12px;margin-bottom:14px;cursor:pointer;transition:border-color .15s,background .15s;-webkit-tap-highlight-color:transparent" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b)'">
+        <div id="ct-kanji" style="font-family:var(--FJ);font-size:38px;line-height:1;font-weight:300;color:var(--acc);min-width:44px;text-align:center">空</div>
+        <div style="flex:1;min-width:0">
+          <div id="ct-element-name" style="font-size:14px;font-weight:600;color:var(--ink);line-height:1.3">Kū · Leegte</div>
+          <div id="ct-warrior-line" style="font-size:11.5px;color:var(--m);line-height:1.45;margin-top:3px">leidt vandaag</div>
+        </div>
+        <span style="font-size:14px;color:var(--m);flex-shrink:0">→</span>
+      </div>
+
+      <!-- AI-stem van vandaag — gepersonaliseerd op doel + element -->
+      <div id="ct-voice" style="padding:0 4px;font-family:var(--serif);font-size:13.5px;font-style:italic;color:var(--ink);line-height:1.65;margin-bottom:18px;opacity:.9;min-height:18px"></div>
+
+      <!-- Acties — embedded sub-section -->
+      <div style="margin-top:6px">
+        <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);margin-bottom:10px;font-weight:500;opacity:.85">Acties</div>
+        <div id="ct-actions"></div>
+      </div>
+
+      <!-- CTAs — vraag specifieke warrior of open council -->
+      <div id="ct-ctas" style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"></div>
     </div>
 
     <!-- ── MUZIEK + 'Meer voor vandaag' toggle verwijderd (v0.230) ──
@@ -2089,7 +2105,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.260';
+const APP_VERSION = '0.270';
 
 const S={
   cur:'board',
@@ -3403,9 +3419,12 @@ function initCK(){
 
   // Dag-element card — toont welk Godai-element vandaag leidt
   try { renderDayLeader(); } catch(e){}
+  // Council vandaag & acties — geïntegreerd blok (v0.270)
+  try { renderCouncilToday(); } catch(e){}
   // Acties-sectie direct renderen zodat placeholder of items meteen
   // zichtbaar zijn (zonder de 1000ms setTimeout-wachttijd in
-  // DOMContentLoaded hieronder).
+  // DOMContentLoaded hieronder). Null-safe; oude #ck-actions-section
+  // bestaat niet meer maar functie kijkt eerst voor het element.
   try { renderCkActions(); } catch(e){}
 
   const hrv=S.hrv.rmssd||45;
@@ -3413,32 +3432,10 @@ function initCK(){
   const slaap=S.hrv.sleep||7;
   const weekNum=Math.ceil(now.getDate()/7);
 
-  // ── SYNTHESE BRIEF — wat het systeem concludeert ──────────
-  const syn=document.getElementById('ck-synthese');
-  if(syn){
-    const goals=typeof GOALS!=='undefined'?GOALS:[];
-    const actief=goals.filter(g=>g.status==='Actief');
-    // Telt alleen ECHTE acties — niet de auto-generated placeholder
-    // 'Eerste stap definiëren' die bij nieuwe doelen wordt aangemaakt.
-    // Anders zegt cockpit '1 open actie' terwijl detail 'voeg eerste
-    // echte actie toe' toont — verwarrend voor de gebruiker.
-    const openActs=goals.flatMap(g=>g.actions||[]).filter(a=>!a.done && a.txt !== 'Eerste stap definiëren');
-    const urgentDoel=actief.find(g=>g.pct<25)||actief[0];
-    var synText='';
-    var openActsLink = openActs.length>0
-      ? '<span onclick="go(\'gl\')" style="color:var(--acc);cursor:pointer;text-decoration:underline;text-decoration-color:rgba(196,83,42,.35);text-underline-offset:3px;-webkit-tap-highlight-color:transparent" onmouseover="this.style.textDecorationColor=\'var(--acc)\'" onmouseout="this.style.textDecorationColor=\'rgba(196,83,42,.35)\'">'+openActs.length+' open '+(openActs.length===1?'actie':'acties')+' wachten</span>.'
-      : 'Voortgang op koers.';
-    if(rec<5||hrv<40){
-      synText='Herstelmodus. Je biometrie vraagt rust — plan geen grote beslissingen. Ideaal moment voor Rituelen en reflectie.';
-    } else if(rec>=8&&hrv>=55){
-      synText='Topdag. '+(urgentDoel?'Je '+esc(urgentDoel.title)+' vraagt aandacht ('+urgentDoel.pct+'%). ':'')+' Gebruik deze energie voor diep werk en beslissingen.';
-    } else if(actief.length===0){
-      synText='Geen actieve doelen. Stel vandaag je eerste doel in — dat is de basis voor alles wat het systeem voor je kan doen.';
-    } else {
-      synText='Normale staat. '+(urgentDoel?esc(urgentDoel.title)+' staat op '+urgentDoel.pct+'%. ':'')+openActsLink;
-    }
-    syn.innerHTML=synText;
-  }
+  // ── ck-synthese filling code verwijderd (v0.270) ──
+  // Status-synthese is verhuisd naar inline regel binnen ck-primary-goal
+  // (via computeStatusSynthese helper). Het DOM-element #ck-synthese
+  // bestaat niet meer in de cockpit; oude code was dead na refactor.
 
   // ── DOELEN STRIP ──────────────────────────────────────────
   const strip=document.getElementById('ck-goals-strip');
@@ -4624,6 +4621,14 @@ function toggleAction(actionId){
 
 // Render vandaag-acties op cockpit (compact)
 function renderCkActions(){
+  // v0.270: Acties-sectie is geïntegreerd in #ck-council-today. Oude
+  // #ck-actions-section element is verwijderd uit cockpit HTML; deze
+  // functie blijft bestaan voor backward-compat met bestaande callers
+  // (toggleAction, openActionPicker, e.d.). Delegeert naar de nieuwe
+  // renderCouncilTodayActions die in het council-today blok rendert.
+  if(typeof renderCouncilTodayActions === 'function'){
+    try { renderCouncilTodayActions(); } catch(e){}
+  }
   var sec = document.getElementById('ck-actions-section');
   var list = document.getElementById('ck-actions-list');
   if(!sec || !list) return;
@@ -4753,6 +4758,158 @@ function openDayLeader(){
   }, 80);
 }
 
+// ── COUNCIL VANDAAG & ACTIES ────────────────────────────────────────
+// Geïntegreerd cockpit-blok dat element + meester + AI-stem + acties +
+// CTAs combineert. Vervangt de oude losse dag-element kaart, Vandaag
+// synthese sectie en Acties-vandaag sectie.
+function renderCouncilToday(){
+  var sec = document.getElementById('ck-council-today');
+  if(!sec) return;
+  var leader = getDayLeader();
+  if(!leader || !leader.element){ sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+
+  // 1. Element + meester header
+  var element = leader.element;
+  var kanjiEl = document.getElementById('ct-kanji');
+  var nameEl = document.getElementById('ct-element-name');
+  var warriorLineEl = document.getElementById('ct-warrior-line');
+  var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
+
+  if(kanjiEl){
+    kanjiEl.textContent = element.kanji;
+    kanjiEl.style.color = element.col || 'var(--acc)';
+  }
+  var elDomein = (element.sub || '').split('·')[0].trim();
+  if(nameEl) nameEl.textContent = element.name + (elDomein ? ' · ' + elDomein : '');
+
+  // Warrior — bv. "観 Kan — Reflectie"
+  var warriorShort = '', warriorDomain = '';
+  if(leader.warrior && leader.warrior.id !== 'board'){
+    var wname = leader.warrior.name || '';
+    warriorShort = wname.split(' ')[1] || wname.split(' ')[0] || '';
+    warriorDomain = wname.split('—')[1]?.trim() || '';
+  }
+  if(warriorLineEl){
+    var leadtTxt = isEn ? 'leads today' : 'leidt vandaag';
+    var spreektTxt = isEn ? 'speaks' : 'spreekt';
+    if(warriorShort){
+      warriorLineEl.innerHTML = leadtTxt + ' · <span style="color:var(--ink)">'+esc(warriorShort)+(warriorDomain?' · '+esc(warriorDomain):'')+' '+spreektTxt+'</span>';
+    } else {
+      warriorLineEl.textContent = leadtTxt;
+    }
+  }
+
+  // 2. AI-stem — async, target ct-voice element
+  loadCouncilTodayVoice(leader);
+
+  // 3. Acties — embedded list
+  renderCouncilTodayActions();
+
+  // 4. CTAs
+  var ctasEl = document.getElementById('ct-ctas');
+  if(ctasEl){
+    var warriorIco = leader.warrior?.ico || element.kanji;
+    var warriorCtaLabel = warriorShort
+      ? (isEn ? 'Ask '+warriorShort : 'Vraag '+warriorShort) + (warriorDomain ? ' ('+warriorDomain+')' : '')
+      : (isEn ? 'Ask the Council' : 'Vraag de Council');
+    ctasEl.innerHTML =
+      '<button onclick="askLeaderToday()" style="font-size:11.5px;padding:8px 14px;background:var(--acc);color:#fff;border:none;border-radius:14px;cursor:pointer;font-family:inherit;font-weight:500;display:inline-flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent">'+
+        '<span style="font-family:var(--FJ);font-size:13px;line-height:1">'+warriorIco+'</span>'+
+        '<span>'+esc(warriorCtaLabel)+'</span> →'+
+      '</button>'+
+      '<button onclick="raadpleegCouncil()" style="font-size:11.5px;padding:8px 14px;background:transparent;border:1px solid var(--b);color:var(--ink);border-radius:14px;cursor:pointer;font-family:inherit;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:all .15s;-webkit-tap-highlight-color:transparent" onmouseover="this.style.borderColor=\'var(--acc)\';this.style.color=\'var(--acc)\'" onmouseout="this.style.borderColor=\'var(--b)\';this.style.color=\'var(--ink)\'">'+
+        '<span style="font-family:var(--FJ);font-size:13px;line-height:1">匠</span>'+
+        '<span>'+(isEn?'Master Council':'Master Council')+'</span> →'+
+      '</button>';
+  }
+}
+
+// Acties list embedded in council-today blok
+function renderCouncilTodayActions(){
+  var list = document.getElementById('ct-actions');
+  if(!list) return;
+  var acts = (S.actions||[]).filter(function(a){
+    if(a.done) return false;
+    if(a.kind === 'today') return isToday(a.t);
+    if(a.kind === 'plan' && a.plannedFor){
+      var d = new Date(a.plannedFor);
+      var n = new Date();
+      var sameDay = d.getDate()===n.getDate() && d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear();
+      var past = a.plannedFor < Date.now();
+      return sameDay || past;
+    }
+    return false;
+  });
+  if(!acts.length){
+    list.innerHTML = '<div style="padding:2px 0;color:var(--m);font-size:11.5px;line-height:1.55;opacity:.7">'+
+      'Geen acties vandaag. Sla meester-advies hier op via <strong style="font-weight:500">+ Maak actie</strong>.'+
+    '</div>';
+    return;
+  }
+  list.innerHTML = acts.map(function(a){
+    var agent = AGENTS[a.master];
+    var planLabel = '';
+    if(a.kind === 'plan' && a.plannedFor){
+      var pd = new Date(a.plannedFor);
+      var isPast = a.plannedFor < (Date.now() - 24*60*60*1000);
+      if(isPast){
+        planLabel = '<span style="font-size:10px;color:var(--acc);font-weight:500;margin-right:6px">↶ uit '+pd.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})+'</span>';
+      } else {
+        planLabel = '<span style="display:inline-flex;align-items:center;color:var(--m);margin-right:6px"><svg class="ico ico-sm"><use href="#i-calendar"/></svg></span>';
+      }
+    }
+    return '<div onclick="toggleAction(\''+a.id+'\')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg);border:1px solid var(--b);border-radius:8px;cursor:pointer;margin-bottom:6px;transition:all .15s;'+(a.done?'opacity:.55':'')+'">'+
+      '<svg class="ico ico-sm" style="color:'+(a.done?'var(--acc)':'var(--m)')+';flex-shrink:0"><use href="'+(a.done?'#i-circle-check':'#i-circle')+'"/></svg>'+
+      '<div style="flex:1;font-size:12.5px;color:var(--ink);line-height:1.4;'+(a.done?'text-decoration:line-through':'')+'">'+planLabel+esc(a.text)+'</div>'+
+      '<div style="font-family:var(--FJ);font-size:12px;color:var(--m);flex-shrink:0;opacity:.6" title="'+(agent?.name||'')+'">'+(agent?.ico||'匠')+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+// AI-stem van vandaag — gepersonaliseerd op huidige doel + element
+async function loadCouncilTodayVoice(leader){
+  var voiceEl = document.getElementById('ct-voice');
+  if(!voiceEl) return;
+  // Find primary goal
+  var primary = null;
+  if(typeof GOALS !== 'undefined' && GOALS && GOALS.length){
+    if(S.primaryGoalId) primary = GOALS.find(function(g){ return g.id === S.primaryGoalId && g.status === 'Actief'; });
+    if(!primary) primary = GOALS.find(function(g){ return g.status === 'Actief'; });
+  }
+  var dayKey = new Date().toISOString().slice(0,10);
+  var leaderKey = leader.warrior?.id || leader.eid;
+  var goalKey = primary?.id || 'nogoal';
+  var cacheKey = 'tm2_council_voice_' + dayKey + '_' + goalKey + '_' + leaderKey;
+  var cached = ls(cacheKey, null);
+  if(cached){ voiceEl.textContent = cached; return; }
+  voiceEl.textContent = 'Een ogenblik...';
+  try {
+    var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
+    var weekday = new Date().toLocaleDateString(isEn?'en-US':'nl-NL',{weekday:'long'});
+    var leaderName = leader.warrior?.name || leader.element?.name || 'Godai';
+    var elementName = leader.element?.name || '';
+    var goalLine = primary ? (isEn?'The user works on this goal: "':'De gebruiker werkt aan dit doel: "')+primary.title+'" ('+(isEn?'progress':'voortgang')+' '+primary.pct+'%).' : (isEn?'The user has no active goal yet.':'De gebruiker heeft nog geen actief doel.');
+    var prompt;
+    if(isEn){
+      prompt = 'You are '+leaderName+', master of the '+elementName+' element. Today is '+weekday+'. '+goalLine+' Write ONE short observation in your voice — max 22 words, English, no quotation marks, no markdown emphasis. Plain language (no metaphors). Specific and grounded for today, not generic wisdom.';
+    } else {
+      prompt = 'Je bent '+leaderName+', meester van het '+elementName+'-element. Vandaag is '+weekday+'. '+goalLine+' Schrijf ÉÉN korte observatie in jouw stem — max 22 woorden, Nederlands, geen aanhalingstekens, geen markdown emphasis. Gewone taal (geen metaforen). Concreet en geaard voor vandaag, geen generieke wijsheid.';
+    }
+    var res = await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:MODEL_FAST,max_tokens:120,messages:[{role:'user',content:prompt}]})});
+    if(!res.ok){ voiceEl.textContent = ''; return; }
+    var j = await res.json();
+    var txt = j.content?.[0]?.text?.trim();
+    if(!txt){ voiceEl.textContent = ''; return; }
+    txt = txt.replace(/^["'""]|["'""]$/g,'').replace(/\*([^*]+)\*/g,'$1').trim();
+    if(txt.length > 220) txt = txt.slice(0,217)+'...';
+    voiceEl.textContent = txt;
+    lsSet(cacheKey, txt);
+  } catch(e){
+    voiceEl.textContent = '';
+  }
+}
+
 function renderPrimaryGoal(){
   var sec = document.getElementById('ck-primary-goal');
   if(!sec) return;
@@ -4761,52 +4918,57 @@ function renderPrimaryGoal(){
     if(S.primaryGoalId) primary = GOALS.find(function(g){ return g.id === S.primaryGoalId && g.status === 'Actief'; });
     if(!primary) primary = GOALS.find(function(g){ return g.status === 'Actief'; });
   }
-  var leader = getDayLeader();
   if(!primary){
     sec.style.display = 'block';
     sec.innerHTML =
-      '<div style="padding:32px 20px;text-align:center;border-bottom:1px solid var(--b)">'+
-        '<div style="font-family:var(--FJ);font-size:32px;color:var(--m);margin-bottom:16px;opacity:.4">空</div>'+
+      '<div style="padding:36px 20px 32px;text-align:center;border-bottom:1px solid var(--b)">'+
+        '<div style="font-family:var(--FJ);font-size:30px;color:var(--m);margin-bottom:14px;opacity:.4">空</div>'+
         '<div style="font-family:var(--serif);font-size:16px;color:var(--ink);line-height:1.5;margin-bottom:8px;font-style:italic">Begin met een doel.</div>'+
-        '<div style="font-size:12.5px;color:var(--m);line-height:1.6;margin-bottom:18px;max-width:280px;margin-left:auto;margin-right:auto">Alles wat hierna komt vloeit voort uit jouw richting.</div>'+
-        '<button onclick="go(\'gl\')" style="background:var(--acc);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit">Stel een doel in →</button>'+
+        '<div style="font-size:12.5px;color:var(--m);line-height:1.55;margin-bottom:20px;max-width:280px;margin-left:auto;margin-right:auto">Alles wat hierna komt vloeit voort uit jouw richting.</div>'+
+        '<button onclick="go(\'gl\')" style="background:var(--acc);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit">Stel een doel in →</button>'+
       '</div>';
     return;
   }
   sec.style.display = 'block';
   var weekNumber = primary.weekNumber || Math.max(1, Math.floor((Date.now() - (primary.createdAt||Date.now()))/(7*24*60*60*1000)) + 1);
-  var warriorShort = leader.warrior?.name?.split(' ')[1] || 'meester';
-  var leaderIco = leader.warrior?.ico || '匠';
-  // Nederlandse domein: na het em-streepje in de meester-naam (bijv. "観 Kan — Reflectie" → "Reflectie")
-  var warriorDomain = leader.warrior?.name?.split('—')[1]?.trim() || '';
-  // Voor Master Council: andere woordkeuze
-  if(leader.warrior?.id === 'board') warriorDomain = 'Synthese van vijf';
+
+  // Status synthese — was eerder #ck-synthese, nu inline onder doel
+  var statusText = computeStatusSynthese(primary);
 
   sec.innerHTML =
-    '<div style="padding:28px 0 24px;border-bottom:1px solid var(--b)">'+
-      // Header — minimal
-      '<div style="font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:6px;opacity:.85"><svg class="ico ico-sm"><use href="#i-compass"/></svg> Jouw richting</div>'+
-
-      // Doel — alleen custom emoji tonen (geen default target-icoon: dat
-      // dupliceert de compass in de header hierboven)
-      '<div onclick="openGoal(\''+primary.id+'\')" style="cursor:pointer">'+
-        (primary.ico && primary.ico !== '🎯' ? '<div style="font-size:22px;line-height:1;margin-bottom:10px">'+primary.ico+'</div>' : '')+
-        '<div style="font-size:20px;font-weight:600;color:var(--ink);line-height:1.3;margin-bottom:8px">'+esc(primary.title)+'</div>'+
-        '<div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--m);margin-bottom:8px"><span>Week '+weekNumber+'</span><span>·</span><span style="font-weight:500">'+primary.pct+'%</span></div>'+
-        '<div style="height:3px;background:var(--p2);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+primary.pct+'%;background:var(--acc);transition:width .4s"></div></div>'+
-      '</div>'+
-
-      // 'Vandaag spreekt' sub-card verwijderd (v0.260) — was derde Kū-verwijzing
-      // op één scroll (naast dag-element kaart en Council-deze-week LEIDT-pill).
-      // Toegang tot dag-leider blijft via Master Council pill in dag-cyclus.
-      // Compact CTA als footer: 1 regel, zonder kaart en AI-tekst.
-      '<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
-        '<button onclick="askLeaderToday()" style="font-size:11.5px;padding:7px 14px;background:transparent;border:1px solid var(--b);color:var(--ink);border-radius:14px;cursor:pointer;font-family:inherit;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:all .15s" onmouseover="this.style.borderColor=\'var(--acc)\';this.style.color=\'var(--acc)\'" onmouseout="this.style.borderColor=\'var(--b)\';this.style.color=\'var(--ink)\'"><span style="font-family:var(--FJ);font-size:13px;line-height:1">'+leaderIco+'</span><span>Vraag '+esc(warriorShort)+(warriorDomain ? ' ('+esc(warriorDomain)+')' : '')+'</span> →</button>'+
-        (S.primaryGoalId !== primary.id ? '<button onclick="setPrimaryGoal(\''+primary.id+'\')" style="font-size:11px;padding:6px 12px;background:none;border:none;color:var(--m);cursor:pointer;font-family:inherit;text-decoration:underline;opacity:.7">Zet als focus</button>' : '')+
-      '</div>'+
+    '<div style="padding:30px 0 26px;text-align:center;border-bottom:1px solid var(--b)" onclick="openGoal(\''+primary.id+'\')" oncontextmenu="event.preventDefault();return false">'+
+      // Custom emoji only — geen default icoon (rust)
+      (primary.ico && primary.ico !== '🎯' ? '<div style="font-size:24px;line-height:1;margin-bottom:12px;opacity:.85">'+primary.ico+'</div>' : '')+
+      // Doeltitel — groot, centraal
+      '<div style="font-size:22px;font-weight:600;color:var(--ink);line-height:1.25;margin-bottom:10px;cursor:pointer">'+esc(primary.title)+'</div>'+
+      // Week + percentage inline
+      '<div style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:11.5px;color:var(--m);margin-bottom:14px"><span>Week '+weekNumber+'</span><span style="opacity:.5">·</span><span style="font-weight:500;color:var(--ink)">'+primary.pct+'%</span></div>'+
+      // Progress bar — gecentreerd, max breedte voor visuele rust
+      '<div style="height:3px;background:var(--p2);border-radius:2px;overflow:hidden;max-width:260px;margin:0 auto 16px"><div style="height:100%;width:'+primary.pct+'%;background:var(--acc);transition:width .4s"></div></div>'+
+      // Status synthese als zachte één-regel
+      (statusText ? '<div style="font-size:11.5px;color:var(--m);font-style:italic;opacity:.78;line-height:1.5;max-width:320px;margin:0 auto;cursor:default" onclick="event.stopPropagation()">'+esc(statusText)+'</div>' : '')+
+      // Optionele 'zet als focus' link als dit niet de primaire is
+      (S.primaryGoalId !== primary.id ? '<div style="margin-top:14px"><button onclick="event.stopPropagation();setPrimaryGoal(\''+primary.id+'\')" style="font-size:11px;padding:5px 10px;background:none;border:none;color:var(--m);cursor:pointer;font-family:inherit;text-decoration:underline;opacity:.7">Zet als focus</button></div>' : '')+
     '</div>';
-  // loadLeaderMessage(primary, leader); — verwijderd: ck-leader-msg DOM-element
-  // bestaat niet meer. Functie zelf blijft (null-safe) voor toekomstig hergebruik.
+}
+
+// Helper: status-synthese (was eerder ck-synthese filling code).
+// Wordt nu inline onder primary-goal getoond, niet als eigen sectie.
+function computeStatusSynthese(primary){
+  try {
+    var hrv = ls('tm2_hrv_today', null);
+    var rec = ls('tm2_recovery_today', null);
+    var actief = (typeof GOALS!=='undefined'?GOALS:[]).filter(function(g){ return g.status==='Actief'; });
+    var openActs = actief.flatMap(function(g){ return g.actions||[]; }).filter(function(a){ return !a.done && a.txt !== 'Eerste stap definiëren'; });
+    var hrvN = hrv ? parseFloat(hrv) : null;
+    var recN = rec ? parseFloat(rec) : null;
+    if(recN!==null && hrvN!==null){
+      if(recN<5 || hrvN<40) return 'Herstelmodus — je biometrie vraagt rust.';
+      if(recN>=8 && hrvN>=55) return 'Topdag — energie voor diep werk.';
+    }
+    if(openActs.length > 0) return openActs.length+' open '+(openActs.length===1?'actie':'acties')+' wachten.';
+    return 'Normale staat — voortgang op koers.';
+  } catch(e){ return ''; }
 }
 
 async function loadLeaderMessage(goal, leader){
