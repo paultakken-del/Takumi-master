@@ -499,8 +499,8 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 
 /* GODAI WARRIOR BOARD */
 .go-grid{display:flex;flex-direction:column;gap:10px;padding:14px;position:relative;z-index:1;min-height:0}
-.go-card{background:var(--pc);border-radius:var(--r);padding:18px 20px;cursor:pointer;transition:all .15s;box-shadow:var(--sh);border-left:3px solid transparent;-webkit-tap-highlight-color:transparent;position:relative;z-index:1}
-.go-card:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(18,17,14,.1)}
+.go-card{background:var(--pc);border-radius:14px;padding:20px 22px;cursor:pointer;transition:all .2s;box-shadow:0 1px 2px rgba(18,17,14,.03);border-left:3px solid transparent;-webkit-tap-highlight-color:transparent;position:relative;z-index:1;margin-bottom:12px}
+.go-card:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(18,17,14,.06)}
 .go-card.go-master{border-left-color:var(--acc)}
 .go-card.go-chi{border-left-color:#8B7355}
 .go-card.go-sui{border-left-color:#4A7C8E}
@@ -895,8 +895,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="view" id="v-bo">
   <div class="tb">
     <div>
-      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--acc);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">師匠会</span><span>Master Council</span></div>
-      <div class="tb-s">Stel je vraag aan de Godai — vijf elementen, vijf perspectieven</div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--acc);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">師匠会</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Master Council</span></div>
     </div>
   </div>
   <div class="bl">
@@ -905,18 +904,16 @@ input[type=range]{width:100%;accent-color:var(--acc)}
         <div class="ag" id="ag"></div>
       </div>
       <div class="go-grid" id="go-grid" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 14px 12px;gap:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:32px 14px 24px;gap:12px">
           <div style="min-width:0">
-            <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:2px">Wie spreekt vandaag?</div>
-            <div style="font-size:11.5px;color:var(--m);line-height:1.45">De Council geeft alle vijf stemmen tegelijk. Of kies één element voor diepere focus.</div>
+            <div style="font-family:var(--serif);font-size:19px;font-weight:500;color:var(--ink);letter-spacing:-.005em">Wie spreekt vandaag?</div>
           </div>
-          <button id="go-grid-close" onclick="showChat()" style="background:none;border:1px solid var(--b);cursor:pointer;font-size:11px;color:var(--m);-webkit-tap-highlight-color:transparent;padding:6px 12px;border-radius:20px;line-height:1.4;flex-shrink:0;white-space:nowrap">← Chat</button>
+          <button id="go-grid-close" onclick="showChat()" style="background:none;border:1px solid var(--b);cursor:pointer;font-size:11px;color:var(--m);-webkit-tap-highlight-color:transparent;padding:6px 12px;border-radius:20px;line-height:1.4;flex-shrink:0;white-space:nowrap;opacity:.75">← Chat</button>
         </div>
-        <div class="go-card go-master" onclick="openWarrior('board')" style="background:linear-gradient(135deg,rgba(196,83,42,.04),rgba(196,83,42,.01));border-left-width:4px">
-          <div class="go-card-top"><div class="go-kanji" style="color:var(--acc);font-size:32px">匠</div><div><div class="go-name" style="font-size:15px">師匠会 · Master Council</div><div class="go-sub" style="color:var(--acc);font-weight:500">Aanbevolen · alle vijf stemmen samen</div></div></div>
-          <div class="go-desc">Voor strategische vragen, kruispunten, of als je het overzicht kwijt bent. De vijf Godai geven elk hun perspectief, gevolgd door één concrete actie.</div>
+        <div class="go-card go-master" onclick="openWarrior('board')" style="background:linear-gradient(135deg,rgba(196,83,42,.05),rgba(196,83,42,.01));border-left-width:4px;padding:24px 22px;margin-bottom:24px">
+          <div class="go-card-top" style="margin-bottom:10px"><div class="go-kanji" style="color:var(--acc);font-size:38px;font-weight:300">匠</div><div><div class="go-name" style="font-size:15px;font-family:var(--serif);font-weight:500;letter-spacing:-.005em;text-transform:none">Master Council</div><div class="go-sub" style="color:var(--acc);font-weight:500;text-transform:none;letter-spacing:.02em;font-size:11px">Alle vijf stemmen samen</div></div></div>
+          <div class="go-desc" style="font-size:12.5px;line-height:1.6">Voor strategische vragen, kruispunten, of als je het overzicht kwijt bent. De vijf Godai geven elk hun perspectief, gevolgd door één concrete actie.</div>
         </div>
-        <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--m);padding:8px 14px 0;margin-top:6px">Individuele elementen</div>
         <div class="go-card go-chi" onclick="openWarrior('strategic')">
           <div class="go-card-top"><div class="go-kanji">地</div><div><div class="go-name">Chi · 地</div><div class="go-sub">Foundation · Fundament</div></div></div>
           <div class="go-desc">Structuur, strategie en vermogensopbouw. De aarde die alles draagt.</div>
@@ -1074,8 +1071,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="view" id="v-dj">
   <div class="tb">
     <div>
-      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">道</span><span data-i18n="dojo.title">Dojo</span></div>
-      <div class="tb-s" data-i18n="dojo.subtitle">Leer spelen met de elementen</div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">道</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em" data-i18n="dojo.title">Dojo</span></div>
     </div>
   </div>
   <div class="vs">
@@ -1085,10 +1081,9 @@ input[type=range]{width:100%;accent-color:var(--acc)}
         <!-- Terugkomvraag — verschijnt als er een oud gesprek is -->
         <div id="dj-return-question" style="display:none"></div>
 
-        <div style="text-align:center;padding:20px 12px 32px">
-          <div style="font-family:var(--FJ);font-size:42px;color:var(--ink);opacity:.7;margin-bottom:18px">道</div>
-          <div style="font-family:var(--serif);font-size:17px;color:var(--ink);line-height:1.6;font-style:italic;max-width:440px;margin:0 auto 12px" data-i18n="dojo.intro_quote">"Niet AI die alles weet. Vijf stemmen die je leren beter te zien."</div>
-          <div style="font-size:13px;color:var(--m);line-height:1.7;max-width:440px;margin:0 auto" data-i18n="dojo.intro_text">De dojo is een oefenruimte. Geen advies, geen voortgang — alleen het slijpen van je waarneming. Welke vraag heb je vandaag te dragen?</div>
+        <div style="text-align:center;padding:36px 12px 44px">
+          <div style="font-family:var(--FJ);font-size:64px;color:var(--ink);opacity:.55;margin-bottom:28px;font-weight:300;line-height:1">道</div>
+          <div style="font-family:var(--serif);font-size:17px;color:var(--ink);line-height:1.65;font-style:italic;max-width:380px;margin:0 auto" data-i18n="dojo.intro_quote">"Niet AI die alles weet. Vijf stemmen die je leren beter te zien."</div>
         </div>
 
         <!-- ── BALANS DEZE WEEK ── yin-yang: Doen vs Zijn ──
@@ -1120,39 +1115,39 @@ input[type=range]{width:100%;accent-color:var(--acc)}
           </div>
         </div>
 
-        <!-- Oefening 1: Transformatief gesprek -->
-        <div onclick="startTransformatief()" style="padding:22px 20px;background:var(--p2);border:1px solid var(--b);border-radius:14px;cursor:pointer;transition:all .15s;margin-bottom:14px" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b)'">
-          <div style="display:flex;align-items:flex-start;gap:14px">
-            <div style="font-family:var(--FJ);font-size:28px;color:var(--acc);line-height:1;flex-shrink:0">問</div>
-            <div style="flex:1">
-              <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:6px" data-i18n="dojo.transformative">Transformatief gesprek</div>
-              <div style="font-size:13px;color:var(--m);line-height:1.6;margin-bottom:10px" data-i18n="dojo.transformative_sub">Voor vragen waar geen advies bij past. Vijf elementen — vier vragen, Kū als spiegel. Zo leer je welke stem nu spreekt.</div>
-              <div style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--acc);font-weight:500"><span data-i18n="dojo.begin_exercise">Begin oefening</span> <svg class="ico ico-sm" style="color:var(--acc)"><use href="#i-arrow-right"/></svg></div>
+        <!-- ── DRIE OEFENINGEN ── airy stacked choices ──
+             Stoic-stijl: geen p2-cards meer, maar luchtige keuzes met
+             subtiele dividers. Kanji als visuele anker, titel groot,
+             subtitel klein. Hover op de hele rij. -->
+        <div style="border-top:1px solid var(--b);margin:0 -4px">
+          <!-- Oefening 1: Transformatief gesprek -->
+          <div onclick="startTransformatief()" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:22px" onmouseover="this.style.background='rgba(196,83,42,.025)'" onmouseout="this.style.background=''">
+            <div style="font-family:var(--FJ);font-size:36px;color:var(--acc);line-height:1;flex-shrink:0;font-weight:300;width:46px;text-align:center;opacity:.85">問</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-family:var(--serif);font-size:17px;font-weight:500;color:var(--ink);margin-bottom:5px;line-height:1.3;letter-spacing:-.005em" data-i18n="dojo.transformative">Transformatief gesprek</div>
+              <div style="font-size:12.5px;color:var(--m);line-height:1.55" data-i18n="dojo.transformative_sub">Vragen waar geen advies bij past. Vijf elementen, vier vragen, Kū als spiegel.</div>
             </div>
+            <span style="color:var(--m);font-size:14px;flex-shrink:0;opacity:.5">→</span>
           </div>
-        </div>
 
-        <!-- Oefening 2: Element-portretten -->
-        <div onclick="openElementPortraits()" style="padding:22px 20px;background:var(--p2);border:1px solid var(--b);border-radius:14px;cursor:pointer;transition:all .15s;margin-bottom:14px" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b)'">
-          <div style="display:flex;align-items:flex-start;gap:14px">
-            <div style="font-family:var(--FJ);font-size:28px;color:var(--acc);line-height:1;flex-shrink:0">五</div>
-            <div style="flex:1">
-              <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:6px" data-i18n="dojo.element_portraits">Element-portretten</div>
-              <div style="font-size:13px;color:var(--m);line-height:1.6;margin-bottom:10px" data-i18n="dojo.element_portraits_sub">Wat heb jij geleerd over Chi, Sui, Fū, Ka en Kū door je gesprekken? Een portret per element, gevuld door jouw eigen geschiedenis.</div>
-              <div style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--acc);font-weight:500"><span data-i18n="dojo.open_portraits">Open portretten</span> <svg class="ico ico-sm" style="color:var(--acc)"><use href="#i-arrow-right"/></svg></div>
+          <!-- Oefening 2: Element-portretten -->
+          <div onclick="openElementPortraits()" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:22px" onmouseover="this.style.background='rgba(196,83,42,.025)'" onmouseout="this.style.background=''">
+            <div style="font-family:var(--FJ);font-size:36px;color:var(--acc);line-height:1;flex-shrink:0;font-weight:300;width:46px;text-align:center;opacity:.85">五</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-family:var(--serif);font-size:17px;font-weight:500;color:var(--ink);margin-bottom:5px;line-height:1.3;letter-spacing:-.005em" data-i18n="dojo.element_portraits">Element-portretten</div>
+              <div style="font-size:12.5px;color:var(--m);line-height:1.55" data-i18n="dojo.element_portraits_sub">Wat heb jij geleerd over Chi, Sui, Fū, Ka en Kū door je gesprekken?</div>
             </div>
+            <span style="color:var(--m);font-size:14px;flex-shrink:0;opacity:.5">→</span>
           </div>
-        </div>
 
-        <!-- Oefening 3: Leesraster -->
-        <div onclick="openLeesraster()" style="padding:22px 20px;background:var(--p2);border:1px solid var(--b);border-radius:14px;cursor:pointer;transition:all .15s;margin-bottom:14px" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b)'">
-          <div style="display:flex;align-items:flex-start;gap:14px">
-            <div style="font-family:var(--FJ);font-size:28px;color:var(--acc);line-height:1;flex-shrink:0">観</div>
-            <div style="flex:1">
-              <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:6px" data-i18n="dojo.reading_grid">Leesraster oefenen</div>
-              <div style="font-size:13px;color:var(--m);line-height:1.6;margin-bottom:10px" data-i18n="dojo.reading_grid_sub">Beschrijf een situatie. Vijf elementen lezen hem tegelijk. Leer waarnemen door vijf lenzen.</div>
-              <div style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--acc);font-weight:500"><span data-i18n="dojo.open_reading">Open leesraster</span> <svg class="ico ico-sm" style="color:var(--acc)"><use href="#i-arrow-right"/></svg></div>
+          <!-- Oefening 3: Leesraster -->
+          <div onclick="openLeesraster()" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:22px" onmouseover="this.style.background='rgba(196,83,42,.025)'" onmouseout="this.style.background=''">
+            <div style="font-family:var(--FJ);font-size:36px;color:var(--acc);line-height:1;flex-shrink:0;font-weight:300;width:46px;text-align:center;opacity:.85">観</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-family:var(--serif);font-size:17px;font-weight:500;color:var(--ink);margin-bottom:5px;line-height:1.3;letter-spacing:-.005em" data-i18n="dojo.reading_grid">Leesraster oefenen</div>
+              <div style="font-size:12.5px;color:var(--m);line-height:1.55" data-i18n="dojo.reading_grid_sub">Beschrijf een situatie. Vijf elementen lezen hem tegelijk.</div>
             </div>
+            <span style="color:var(--m);font-size:14px;flex-shrink:0;opacity:.5">→</span>
           </div>
         </div>
 
@@ -2094,7 +2089,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.280';
+const APP_VERSION = '0.290';
 
 const S={
   cur:'board',
