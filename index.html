@@ -367,6 +367,10 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 /* ── DASHBOARD SECTIES ── */
 .dash-section{padding:24px 0 28px;border-bottom:1px solid var(--b)}
 .dash-section:last-of-type{border-bottom:none}
+/* Vandaag-sectie (dash-primary) krijgt geen border-bottom: voorkomt
+   een dangling streep als Acties-sectie eronder verborgen is, en
+   maakt visueel duidelijk dat Vandaag de hoofdfocus is, niet een lijst-item. */
+.dash-primary{border-bottom:none}
 .dash-label{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);font-weight:700;margin-bottom:14px;display:inline-flex;align-items:center;gap:6px;opacity:.85}
 .ico{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;vertical-align:middle}
 .ico-sm{width:13px;height:13px}
@@ -812,7 +816,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
          en go('dj') trigger. ── -->
 
     <!-- COMPACTE DAG-METRICS — vervangt wave -->
-    <div style="padding:16px 4px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;cursor:pointer" onclick="goToHealth()" title="Open Health & HRV in Data Hub">
+    <div style="margin-top:24px;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;cursor:pointer" onclick="goToHealth()" title="Open Health & HRV in Data Hub">
       <div style="text-align:center;padding:12px 8px;background:var(--p2);border:1px solid var(--b);border-radius:10px">
         <div style="font-size:17px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums" id="ck-stat-hrv">–</div>
         <div style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-top:3px">HRV</div>
@@ -833,8 +837,8 @@ input[type=range]{width:100%;accent-color:var(--acc)}
       <span id="wave-phase-sub"></span>
     </div>
     <!-- DAG CYCLUS — drie stappen -->
-    <div style="padding:16px 16px 0">
-      <div style="font-size:var(--text-xs);letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-bottom:var(--sp-sm)">Dag cyclus</div>
+    <div style="padding:24px 0 0">
+      <div style="font-size:var(--text-xs);letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-bottom:var(--sp-sm);opacity:.85;font-weight:500">Dag cyclus</div>
       <div style="display:flex;align-items:center;gap:0">
         <button id="pill-dy" onclick="go('dy')" style="flex:1;background:none;border:1.5px solid;border-color:var(--acc);border-radius:var(--r);padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .3s,color .3s">
           <div id="pill-dy-ico" style="width:32px;height:32px;border-radius:50%;border:1.5px solid;border-color:var(--acc);display:flex;align-items:center;justify-content:center;font-family:var(--FJ);font-size:16px;color:var(--acc);transition:border-color .3s,color .3s,background .3s">脈</div>
@@ -2085,7 +2089,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.230';
+const APP_VERSION = '0.240';
 
 const S={
   cur:'board',
