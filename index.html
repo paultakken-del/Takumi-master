@@ -18,9 +18,17 @@
   --ink:#12110e;--ink2:#1a1916;--ink3:#2a2822;
   --m:#4a4440;--f:#6a6460;
   --paper:#f5f2ed;--pw:#ede9e0;--pc:#faf9f6;
-  --acc:#c4532a;--gold:#b5872a;--teal:#28897a;
-  --b:rgba(18,17,14,.07);--bm:rgba(18,17,14,.14);
-  --sh:0 1px 3px rgba(18,17,14,.06),0 4px 16px rgba(18,17,14,.08);
+  /* --p2: subtle warm off-paper surface — was undefined, viel terug op
+     transparent. Nu een echte zachte cream tussen paper en pw in. */
+  --p2:#efece4;
+  /* --acc: terracotta. Ietsje gedempt voor Stoic-vibe (was #c4532a). */
+  --acc:#b85631;
+  /* --acc-soft: voor backgrounds bij hover/active. Voorkomt loud rgba()
+     inline overal in de codebase. */
+  --acc-soft:rgba(184,86,49,.07);
+  --gold:#a87f2a;--teal:#28897a;
+  --b:rgba(18,17,14,.055);--bm:rgba(18,17,14,.12);
+  --sh:0 1px 3px rgba(18,17,14,.04),0 4px 16px rgba(18,17,14,.06);
   --r:12px;--rs:8px;
   --sp-xs:8px;--sp-sm:12px;--sp-md:16px;--sp-lg:24px;--sp-xl:32px;
   --text-xs:11px;--text-sm:13px;--text-md:15px;--text-lg:17px;--text-xl:22px;
@@ -30,7 +38,8 @@
   --ink:#12110e;--ink2:#ffffff;--ink3:#f5f2ed;
   --m:#302c28;--f:#4a4440;
   --paper:#fafaf8;--pw:#f0ede8;--pc:#ffffff;
-  --b:rgba(18,17,14,.06);--bm:rgba(18,17,14,.12);
+  --p2:#f3f0ea;
+  --b:rgba(18,17,14,.05);--bm:rgba(18,17,14,.1);
   --sh:0 1px 3px rgba(18,17,14,.04),0 4px 16px rgba(18,17,14,.06);
 }
 [data-theme="light"] #sb{background:#ffffff;border-right:1px solid var(--b)}
@@ -58,7 +67,9 @@
   --ink:#ede9e0;--ink2:#111210;--ink3:#1e1d1a;
   --m:#a09890;--f:#7a746e;
   --paper:#181714;--pw:#1e1d1a;--pc:#242220;
-  --b:rgba(255,255,255,.08);--bm:rgba(255,255,255,.14);
+  --p2:#22201d;
+  --acc-soft:rgba(184,86,49,.14);
+  --b:rgba(255,255,255,.07);--bm:rgba(255,255,255,.13);
 }
 [data-theme="dark"] html,[data-theme="dark"] body{background:#181714;color:#ede9e0}
 [data-theme="dark"] .card{background:#1e1d1a;border-color:rgba(255,255,255,.07)}
@@ -421,11 +432,25 @@ input[type=range]{width:100%;accent-color:var(--acc)}
    Stoic/Headspace-stijl: subtiele ademende beweging maakt het scherm levend
    zonder afleiding. Radial halo geeft visuele warmte voorbij typografie. */
 .kanji-hero{position:relative;display:inline-block}
-.kanji-hero::before{content:"";position:absolute;inset:-30% -30%;background:radial-gradient(circle at center,rgba(196,83,42,.10) 0%,rgba(196,83,42,.04) 35%,transparent 70%);z-index:-1;border-radius:50%;animation:kanjiBreathe 6s ease-in-out infinite}
-[data-theme="dark"] .kanji-hero::before{background:radial-gradient(circle at center,rgba(196,83,42,.18) 0%,rgba(196,83,42,.06) 35%,transparent 70%)}
+.kanji-hero::before{content:"";position:absolute;inset:-30% -30%;background:radial-gradient(circle at center,rgba(184,86,49,.10) 0%,rgba(184,86,49,.04) 35%,transparent 70%);z-index:-1;border-radius:50%;animation:kanjiBreathe 6s ease-in-out infinite}
+[data-theme="dark"] .kanji-hero::before{background:radial-gradient(circle at center,rgba(184,86,49,.18) 0%,rgba(184,86,49,.06) 35%,transparent 70%)}
 @keyframes kanjiBreathe{0%,100%{transform:scale(.92);opacity:.7}50%{transform:scale(1.04);opacity:1}}
 .kanji-hero-self{animation:kanjiBreatheGlyph 6s ease-in-out infinite}
 @keyframes kanjiBreatheGlyph{0%,100%{opacity:.92}50%{opacity:1}}
+
+/* ── SCROLL REVEAL ──
+   Subtle fade-up bij viewport entry. Respecteert prefers-reduced-motion
+   (accessibility). Eenmalig — geen out-fade bij scroll terug.
+   Cubic-bezier (.16,1,.3,1) is een 'easeOutExpo' — zachte deceleratie
+   die organisch voelt, niet mechanisch. */
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .65s cubic-bezier(.16,1,.3,1),transform .75s cubic-bezier(.16,1,.3,1);will-change:opacity,transform}
+.reveal.in-view{opacity:1;transform:translateY(0)}
+.reveal:nth-child(2){transition-delay:.05s}
+.reveal:nth-child(3){transition-delay:.1s}
+.reveal:nth-child(4){transition-delay:.12s}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+}
 .ck-did-anim #ck-icon-circle,.ck-did-anim #ck-g,.ck-did-anim #ck-d,.ck-did-anim #ck-quote,.ck-did-anim #ck-quote-auth{animation:none!important;opacity:inherit}
 .ck-greeting-anim #ck-g{animation:ckGreetIn .45s ease forwards}
 .ck-greeting-anim #ck-d{animation:ckDateIn .45s .1s ease both}
@@ -806,11 +831,11 @@ input[type=range]{width:100%;accent-color:var(--acc)}
          als null-safe no-op; kan later in Dojo worden hergeplaatst. -->
 
     <!-- ── PRIMAIR DOEL ── gecentreerd, anker van de cockpit ── -->
-    <div id="ck-primary-goal" style="display:none"></div>
+    <div id="ck-primary-goal" class="reveal" style="display:none"></div>
 
     <!-- ── COUNCIL VANDAAG ── hero-blok ──
          Kanji als visuele held, generous spacing, één primaire CTA. -->
-    <div id="ck-council-today" style="padding:32px 0 40px">
+    <div id="ck-council-today" class="reveal" style="padding:32px 0 40px">
       <!-- Element + meester — gecentreerd, ruim -->
       <div id="ct-header" onclick="raadpleegCouncil()" style="text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:8px 0">
         <div class="kanji-hero" style="margin-bottom:18px"><div id="ct-kanji" class="kanji-hero-self" style="font-family:var(--FJ);font-size:76px;line-height:1;font-weight:300;color:var(--acc);transition:transform .3s">空</div></div>
@@ -864,7 +889,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
       <span id="wave-phase-sub"></span>
     </div>
     <!-- DAG CYCLUS — drie stappen -->
-    <div style="padding:24px 0 0">
+    <div class="reveal" style="padding:24px 0 0">
       <div style="font-size:var(--text-xs);letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-bottom:var(--sp-sm);opacity:.85;font-weight:500">Dag cyclus</div>
       <div style="display:flex;align-items:center;gap:0">
         <button id="pill-dy" onclick="go('dy')" style="flex:1;background:none;border:1.5px solid;border-color:var(--acc);border-radius:var(--r);padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .3s,color .3s">
@@ -889,24 +914,24 @@ input[type=range]{width:100%;accent-color:var(--acc)}
          vaste, prominente plek als afsluiter. Geeft cockpit een 'einde'
          in plaats van mechanisch te stoppen bij dag-cyclus.
          Ornament + Japanse aanhalingstekens 「」 brengen ceremonie. -->
-    <div id="ck-wisdom-section" style="padding:44px 24px 36px;text-align:center;max-width:540px;margin:0 auto">
+    <div id="ck-wisdom-section" class="reveal" style="padding:80px 24px 64px;text-align:center;max-width:580px;margin:0 auto">
       <!-- Ornament: dunne sierlijn met kanji 心 (hart/geest) in het midden -->
-      <div style="display:flex;align-items:center;gap:14px;justify-content:center;margin-bottom:24px;opacity:.5">
-        <div style="height:1px;width:48px;background:linear-gradient(to right,transparent,var(--b))"></div>
-        <span style="font-family:var(--FJ);font-size:14px;color:var(--m);font-weight:300;line-height:1">心</span>
-        <div style="height:1px;width:48px;background:linear-gradient(to left,transparent,var(--b))"></div>
+      <div style="display:flex;align-items:center;gap:18px;justify-content:center;margin-bottom:40px;opacity:.45">
+        <div style="height:1px;width:60px;background:linear-gradient(to right,transparent,var(--b))"></div>
+        <span style="font-family:var(--FJ);font-size:16px;color:var(--m);font-weight:300;line-height:1">心</span>
+        <div style="height:1px;width:60px;background:linear-gradient(to left,transparent,var(--b))"></div>
       </div>
-      <!-- Quote met Japanse aanhalingstekens 「 」 als visuele frame -->
-      <div style="position:relative;padding:0 28px">
-        <span style="position:absolute;left:0;top:-8px;font-family:var(--FJ);font-size:28px;color:var(--acc);opacity:.35;line-height:1;font-weight:300">「</span>
-        <div id="ck-quote" style="font-size:16.5px;color:var(--ink);opacity:.78;font-style:italic;line-height:1.75;word-wrap:break-word;font-family:var(--serif)"> </div>
-        <span style="position:absolute;right:0;bottom:-8px;font-family:var(--FJ);font-size:28px;color:var(--acc);opacity:.35;line-height:1;font-weight:300">」</span>
+      <!-- Quote als full-attention hero — groter, ruimer, presence -->
+      <div style="position:relative;padding:0 16px">
+        <span style="position:absolute;left:-6px;top:-22px;font-family:var(--FJ);font-size:48px;color:var(--acc);opacity:.18;line-height:1;font-weight:300">「</span>
+        <div id="ck-quote" style="font-size:21px;color:var(--ink);opacity:.86;font-style:italic;line-height:1.65;word-wrap:break-word;font-family:var(--serif);letter-spacing:-.005em"> </div>
+        <span style="position:absolute;right:-6px;bottom:-32px;font-family:var(--FJ);font-size:48px;color:var(--acc);opacity:.18;line-height:1;font-weight:300">」</span>
       </div>
       <!-- Auteur met meer ademruimte en strakkere spacing -->
-      <div style="margin-top:22px;display:flex;align-items:center;justify-content:center;gap:12px">
-        <div style="height:1px;width:18px;background:var(--m);opacity:.35"></div>
-        <div id="ck-quote-auth" style="font-size:10.5px;color:var(--ink);opacity:.52;letter-spacing:.18em;text-transform:uppercase;font-weight:500"> </div>
-        <div style="height:1px;width:18px;background:var(--m);opacity:.35"></div>
+      <div style="margin-top:38px;display:flex;align-items:center;justify-content:center;gap:14px">
+        <div style="height:1px;width:22px;background:var(--m);opacity:.3"></div>
+        <div id="ck-quote-auth" style="font-size:11px;color:var(--ink);opacity:.5;letter-spacing:.22em;text-transform:uppercase;font-weight:500"> </div>
+        <div style="height:1px;width:22px;background:var(--m);opacity:.3"></div>
       </div>
     </div>
 
@@ -932,31 +957,31 @@ input[type=range]{width:100%;accent-color:var(--acc)}
           </div>
           <button id="go-grid-close" onclick="showChat()" style="background:none;border:1px solid var(--b);cursor:pointer;font-size:11px;color:var(--m);-webkit-tap-highlight-color:transparent;padding:6px 12px;border-radius:20px;line-height:1.4;flex-shrink:0;white-space:nowrap;opacity:.75">← Chat</button>
         </div>
-        <div class="go-card go-master" onclick="openWarrior('board')" style="background:linear-gradient(135deg,rgba(196,83,42,.05),rgba(196,83,42,.01));border-left-width:4px;padding:24px 22px;margin-bottom:24px">
+        <div class="go-card go-master reveal" onclick="openWarrior('board')" style="background:linear-gradient(135deg,rgba(196,83,42,.05),rgba(196,83,42,.01));border-left-width:4px;padding:24px 22px;margin-bottom:24px">
           <div class="go-card-top" style="margin-bottom:10px"><div class="go-kanji" style="color:var(--acc);font-size:38px;font-weight:300">匠</div><div><div class="go-name" style="font-size:15px;font-family:var(--serif);font-weight:500;letter-spacing:-.005em;text-transform:none">Master Council</div><div class="go-sub" style="color:var(--acc);font-weight:500;text-transform:none;letter-spacing:.02em;font-size:11px">Alle vijf stemmen samen</div></div></div>
           <div class="go-desc" style="font-size:12.5px;line-height:1.6">Voor strategische vragen, kruispunten, of als je het overzicht kwijt bent. De vijf Godai geven elk hun perspectief, gevolgd door één concrete actie.</div>
         </div>
-        <div class="go-card go-chi" onclick="openWarrior('strategic')">
+        <div class="go-card go-chi reveal" onclick="openWarrior('strategic')">
           <div class="go-card-top"><div class="go-kanji">地</div><div><div class="go-name">Chi · 地</div><div class="go-sub">Foundation · Fundament</div></div></div>
           <div class="go-desc">Structuur, strategie en vermogensopbouw. De aarde die alles draagt.</div>
           <div class="go-warriors"><span class="go-warrior" onclick="event.stopPropagation();openWarrior('strategic')">略 Ryaku · Strateeg</span><span class="go-warrior" onclick="event.stopPropagation();openWarrior('finance')">財 Zai · Financieel</span><span class="go-warrior" onclick="event.stopPropagation();openWarrior('routine')">律 Ritsu · Routine</span></div>
         </div>
-        <div class="go-card go-sui" onclick="openWarrior('health')">
+        <div class="go-card go-sui reveal" onclick="openWarrior('health')">
           <div class="go-card-top"><div class="go-kanji">水</div><div><div class="go-name">Sui · 水</div><div class="go-sub">Flow · Stroom</div></div></div>
           <div class="go-desc">Herstel, energie en zelfinzicht. Water past zich aan maar bereikt altijd zijn doel.</div>
           <div class="go-warriors"><span class="go-warrior" onclick="event.stopPropagation();openWarrior('health')">気 Ki · Gezondheid</span><span class="go-warrior" onclick="event.stopPropagation();openWarrior('reflection')">観 Kan · Reflectie</span><span class="go-warrior" onclick="event.stopPropagation();openWarrior('learning')">学 Gaku · Leren</span></div>
         </div>
-        <div class="go-card go-fu" onclick="openWarrior('writing')">
+        <div class="go-card go-fu reveal" onclick="openWarrior('writing')">
           <div class="go-card-top"><div class="go-kanji">風</div><div><div class="go-name">Fū · 風</div><div class="go-sub">Spirit · Geest</div></div></div>
           <div class="go-desc">Communicatie, relaties en creativiteit. Wind verbindt alles zonder iets vast te houden.</div>
           <div class="go-warriors"><span class="go-warrior" onclick="event.stopPropagation();openWarrior('writing')">筆 Fude · Schrijven</span><span class="go-warrior" onclick="event.stopPropagation();openWarrior('relationship')">縁 En · Relaties</span><span class="go-warrior" onclick="event.stopPropagation();openWarrior('engagement')">道 Dō · Engagement</span></div>
         </div>
-        <div class="go-card go-ka" onclick="openWarrior('productivity')">
+        <div class="go-card go-ka reveal" onclick="openWarrior('productivity')">
           <div class="go-card-top"><div class="go-kanji" style="color:var(--acc)">火</div><div><div class="go-name">Ka · 火</div><div class="go-sub">Energy · Energie</div></div></div>
           <div class="go-desc">Focus, besluitvorming en actie. Vuur transformeert en geeft richting.</div>
           <div class="go-warriors"><span class="go-warrior" onclick="event.stopPropagation();openWarrior('productivity')">働 Hataraki · Productiviteit</span><span class="go-warrior" onclick="event.stopPropagation();openWarrior('decision')">決 Ketsu · Beslissing</span><span class="go-warrior" onclick="event.stopPropagation();openWarrior('digital')">間 Ma · Digitaal</span></div>
         </div>
-        <div class="go-card go-ku" onclick="openWarrior('silence')">
+        <div class="go-card go-ku reveal" onclick="openWarrior('silence')">
           <div class="go-card-top"><div class="go-kanji" style="color:#7A6B8A">空</div><div><div class="go-name">Kū · 空</div><div class="go-sub">Void · Stilte, Loslaten, Mysterie</div></div></div>
           <div class="go-desc">Ruimte, stilte en het verborgene. Leegte als fundament — wat ontbreekt zegt soms meer dan wat er is.</div>
           <div class="go-warriors"><span class="go-warrior" onclick="event.stopPropagation();openWarrior('silence')">静 Sei · Stilte</span><span class="go-warrior" onclick="event.stopPropagation();openWarrior('letting_go')">無 Mu · Loslaten</span><span class="go-warrior" onclick="event.stopPropagation();openWarrior('mystery')">玄 Gen · Mysterie</span></div>
@@ -1143,7 +1168,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
              subtitel klein. Hover op de hele rij. -->
         <div style="border-top:1px solid var(--b);margin:0 -4px">
           <!-- Oefening 1: Transformatief gesprek -->
-          <div onclick="startTransformatief()" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:22px" onmouseover="this.style.background='rgba(196,83,42,.025)'" onmouseout="this.style.background=''">
+          <div class="reveal" onclick="startTransformatief()" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:22px" onmouseover="this.style.background='rgba(196,83,42,.025)'" onmouseout="this.style.background=''">
             <div style="font-family:var(--FJ);font-size:36px;color:var(--acc);line-height:1;flex-shrink:0;font-weight:300;width:46px;text-align:center;opacity:.85">問</div>
             <div style="flex:1;min-width:0">
               <div style="font-family:var(--serif);font-size:17px;font-weight:500;color:var(--ink);margin-bottom:5px;line-height:1.3;letter-spacing:-.005em" data-i18n="dojo.transformative">Transformatief gesprek</div>
@@ -1153,7 +1178,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
           </div>
 
           <!-- Oefening 2: Element-portretten -->
-          <div onclick="openElementPortraits()" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:22px" onmouseover="this.style.background='rgba(196,83,42,.025)'" onmouseout="this.style.background=''">
+          <div class="reveal" onclick="openElementPortraits()" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:22px" onmouseover="this.style.background='rgba(196,83,42,.025)'" onmouseout="this.style.background=''">
             <div style="font-family:var(--FJ);font-size:36px;color:var(--acc);line-height:1;flex-shrink:0;font-weight:300;width:46px;text-align:center;opacity:.85">五</div>
             <div style="flex:1;min-width:0">
               <div style="font-family:var(--serif);font-size:17px;font-weight:500;color:var(--ink);margin-bottom:5px;line-height:1.3;letter-spacing:-.005em" data-i18n="dojo.element_portraits">Element-portretten</div>
@@ -1163,7 +1188,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
           </div>
 
           <!-- Oefening 3: Leesraster -->
-          <div onclick="openLeesraster()" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:22px" onmouseover="this.style.background='rgba(196,83,42,.025)'" onmouseout="this.style.background=''">
+          <div class="reveal" onclick="openLeesraster()" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:22px" onmouseover="this.style.background='rgba(196,83,42,.025)'" onmouseout="this.style.background=''">
             <div style="font-family:var(--FJ);font-size:36px;color:var(--acc);line-height:1;flex-shrink:0;font-weight:300;width:46px;text-align:center;opacity:.85">観</div>
             <div style="flex:1;min-width:0">
               <div style="font-family:var(--serif);font-size:17px;font-weight:500;color:var(--ink);margin-bottom:5px;line-height:1.3;letter-spacing:-.005em" data-i18n="dojo.reading_grid">Leesraster oefenen</div>
@@ -2111,7 +2136,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.300';
+const APP_VERSION = '0.310';
 
 const S={
   cur:'board',
@@ -8522,6 +8547,67 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(maybeStartTour, 800);
 });
 
+})();
+
+// ── SCROLL REVEAL ──
+// Subtiele fade-up van .reveal-elementen wanneer ze de viewport in komen.
+// Eenmalig (geen out-fade bij scroll terug). Respecteert prefers-reduced-motion
+// via CSS — als 'reduce', dan blijft alles meteen zichtbaar.
+(function(){
+  if(typeof IntersectionObserver === 'undefined') {
+    // Fallback: oudere browsers → toon alles direct
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in-view'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        e.target.classList.add('in-view');
+        io.unobserve(e.target);
+      }
+    });
+  }, {
+    threshold: 0.08,
+    // 0px bottom: triggert net voordat element volledig in beeld is.
+    // -8% bottom: wacht tot element net iets verder is. Stoic-feel: niet
+    // op het allerlaatste pixel-moment, maar als 'het er is'.
+    rootMargin: '0px 0px -8% 0px'
+  });
+
+  function scan(){
+    document.querySelectorAll('.reveal:not(.in-view)').forEach(function(el){
+      io.observe(el);
+    });
+  }
+
+  // Initiële scan
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', scan);
+  } else {
+    scan();
+  }
+
+  // Re-scan API voor wanneer JS nieuwe .reveal elementen toevoegt
+  // (bv. na renderCkActions of Dojo history populatie).
+  window.scrollRevealScan = scan;
+
+  // MutationObserver detecteert view-wisselingen (.view krijgt/verliest 'on')
+  // Robuuster dan go() wrappen — go is een function declaration en wrapper-
+  // assignment werkt niet vanwege hoisting. MutationObserver werkt altijd.
+  function attachViewObservers(){
+    var views = document.querySelectorAll('.view');
+    if(!views.length) return false;
+    var mo = new MutationObserver(function(){
+      requestAnimationFrame(function(){ requestAnimationFrame(scan); });
+    });
+    views.forEach(function(v){ mo.observe(v, {attributes:true, attributeFilter:['class','style']}); });
+    return true;
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', attachViewObservers);
+  } else {
+    attachViewObservers();
+  }
 })();
 
 </script>
