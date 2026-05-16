@@ -526,7 +526,6 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 .el-kanji{font-family:var(--FJ);font-size:18px;line-height:1}
 .el-name{font-size:10px;font-weight:500;color:var(--ink);letter-spacing:.02em}
 .el-pill.on .el-name{font-weight:600}
-.el-essence{font-size:8.5px;color:var(--m);font-style:italic;line-height:1.2;margin-top:1px;letter-spacing:.02em;opacity:.78;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .el-mem{position:absolute;top:-3px;right:-3px;background:var(--acc);color:#fff;font-size:9px;font-weight:600;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;border:1.5px solid var(--bg)}
 .el-obs{position:absolute;top:-4px;left:-4px;background:linear-gradient(135deg,#d4a847,#e8c060);color:#fff;font-size:10px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1;border:1.5px solid var(--bg);box-shadow:0 0 8px rgba(212,168,71,.5);animation:obsGlow 2.5s ease-in-out infinite}
 .el-pill.has-obs{border-color:rgba(212,168,71,.4)}
@@ -2093,7 +2092,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.160';
+const APP_VERSION = '0.170';
 
 const S={
   cur:'board',
@@ -3515,16 +3514,10 @@ function renderGrid(){
     var memDot = elMemCount ? '<div class="el-mem">'+(elMemCount>9?'9+':elMemCount)+'</div>' : '';
     var hasObsEl = el.warriors.some(function(wid){ return activeObsForMaster(wid).length > 0; });
     var obsDotEl = hasObsEl ? '<div class="el-obs" title="Nieuwe observatie">✦</div>' : '';
-    // Essence = element-naam + betekenis (deel na de · in element.sub).
-    // Bijv "Vuur · Energie" → "Ka-energie". Heel klein onder de naam.
-    var meaningPart = (el.sub || '').split('·')[1];
-    var meaning = meaningPart ? meaningPart.trim().toLowerCase() : '';
-    var essence = meaning ? (el.name + '-' + meaning) : '';
     return '<div class="el-pill'+(isA?' on':'')+(hasObsEl?' has-obs':'')+'" onclick="selElement(\''+eid+'\')" title="'+el.name+' · '+el.sub+'" style="--ec:'+el.col+'">'+
       memDot+ obsDotEl +
       '<div class="el-kanji" style="color:'+el.col+'">'+el.kanji+'</div>'+
       '<div class="el-name">'+el.name+'</div>'+
-      (essence?'<div class="el-essence">'+essence+'</div>':'')+
     '</div>';
   }).join('');
 
@@ -6409,6 +6402,17 @@ function renderWeekCouncil(){
   var supEl = ELEMENTS[c.supportElement] || ELEMENTS.sui;
   var restEl = ELEMENTS[c.restElement] || ELEMENTS.ku;
 
+  // Helper: element.sub is bv 'Vuur · Energie' → essence 'Ka-energie'
+  function elEssence(el){
+    var meaningPart = (el.sub || '').split('·')[1];
+    var meaning = meaningPart ? meaningPart.trim().toLowerCase() : '';
+    return meaning ? (el.name + '-' + meaning) : '';
+  }
+  var leadEss = elEssence(leadEl);
+  var supEss  = elEssence(supEl);
+  var restEss = elEssence(restEl);
+  var essStyle = 'font-size:9px;color:var(--m);font-style:italic;line-height:1.3;margin-top:2px;letter-spacing:.02em;opacity:.78';
+
   sec.style.display = 'block';
   sec.innerHTML =
     '<div style="padding:20px 16px 18px;margin:0 0 8px;background:var(--p2);border:1px solid var(--b);border-radius:12px;position:relative">'+
@@ -6423,16 +6427,19 @@ function renderWeekCouncil(){
           '<div style="font-family:var(--FJ);font-size:18px;color:'+leadEl.col+';margin-bottom:4px">'+leadEl.kanji+'</div>'+
           '<div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);font-weight:600;margin-bottom:1px">Leidt</div>'+
           '<div style="font-size:11px;color:var(--ink);font-weight:500">'+leadEl.name+'</div>'+
+          (leadEss?'<div style="'+essStyle+'">'+leadEss+'</div>':'')+
         '</div>'+
         '<div style="text-align:center;padding:10px 4px;background:var(--bg);border:1px solid var(--b);border-radius:8px">'+
           '<div style="font-family:var(--FJ);font-size:18px;color:var(--m);margin-bottom:4px">'+supEl.kanji+'</div>'+
           '<div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--m);font-weight:500;margin-bottom:1px">Steunt</div>'+
           '<div style="font-size:11px;color:var(--ink)">'+supEl.name+'</div>'+
+          (supEss?'<div style="'+essStyle+'">'+supEss+'</div>':'')+
         '</div>'+
         '<div style="text-align:center;padding:10px 4px;background:var(--bg);border:1px solid var(--b);border-radius:8px;opacity:.6">'+
           '<div style="font-family:var(--FJ);font-size:18px;color:var(--m);margin-bottom:4px">'+restEl.kanji+'</div>'+
           '<div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--m);font-weight:500;margin-bottom:1px">Rust</div>'+
           '<div style="font-size:11px;color:var(--ink)">'+restEl.name+'</div>'+
+          (restEss?'<div style="'+essStyle+'">'+restEss+'</div>':'')+
         '</div>'+
       '</div>'+
 
