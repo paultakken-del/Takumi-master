@@ -2092,7 +2092,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.190';
+const APP_VERSION = '0.200';
 
 const S={
   cur:'board',
@@ -4927,8 +4927,8 @@ function renderElementBalance(){
   // meteen apocalyptisch oogt. Behoud richting (>/< 0.5) maar tem de amplitude
   // — anders triggert het visuele beeld een schuldgevoel ipv reflectie.
   var rawRatio = doenRatio;
-  doenRatio = 0.5 + (rawRatio - 0.5) * 0.55;
-  doenRatio = Math.max(0.30, Math.min(0.70, doenRatio));
+  doenRatio = 0.5 + (rawRatio - 0.5) * 0.32;
+  doenRatio = Math.max(0.38, Math.min(0.62, doenRatio));
 
   var waveCenterX = 240 * doenRatio;
   var waveAmplitude = 14;
