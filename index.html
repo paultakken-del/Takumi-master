@@ -751,6 +751,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
     <div id="ck-day-leader" onclick="openDayLeader()" style="display:none;margin:20px auto 4px;padding:22px 20px 20px;background:var(--p2);border:1px solid var(--b);border-radius:14px;cursor:pointer;transition:all .15s;flex-direction:column;align-items:center;text-align:center;max-width:340px;-webkit-tap-highlight-color:transparent" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b)'">
       <div id="ck-day-leader-kanji" style="font-family:var(--FJ);font-size:54px;line-height:1;font-weight:300;margin-bottom:10px">火</div>
       <div id="ck-day-leader-name" style="font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.3;letter-spacing:.01em">Ka · Vuur</div>
+      <div id="ck-day-leader-essence" style="font-size:10px;color:var(--m);font-style:italic;line-height:1.4;margin-top:3px;letter-spacing:.03em;opacity:.85">Ka-energie</div>
       <div id="ck-day-leader-sub" style="font-size:11px;color:var(--m);line-height:1.5;margin-top:4px;letter-spacing:.04em">leidt vandaag</div>
     </div>
 
@@ -2092,7 +2093,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.140';
+const APP_VERSION = '0.150';
 
 const S={
   cur:'board',
@@ -2812,7 +2813,16 @@ function go(id){
   if(id==='ck'){initCK();updateDagVoortgang();renderQuote();}
   else{updateDagVoortgang();} // always refresh pills
   if(id==='bo'){renderGrid();renderChat();upCtx();upLearn();showGoGrid();markVandaag('bo');}
-  if(id==='dy'){initPulse();markVandaag('dy');}
+  if(id==='dy'){
+    initPulse();markVandaag('dy');
+    // Dagstart markeren bij elke entry — zorgt dat ochtend-nudge verdwijnt
+    // ongeacht hoe je hier komt (pill, nudge zelf, sidebar). Eerder alleen
+    // sidebar-listener markeerde, waardoor nudge bleef hangen na save.
+    try {
+      var dsKey = 'tm2_dagstart_' + new Date().toISOString().slice(0,10);
+      lsSet(dsKey, '1');
+    } catch(e){}
+  }
   if(id==='gl')renderGoals();
   if(id==='dj'){
     if(typeof renderDojoHistory === 'function') renderDojoHistory();
@@ -4702,11 +4712,12 @@ function renderDayLeader(){
 
   // Kanji: bij voorkeur het ELEMENT-kanji (niet de meester-warrior-kanji),
   // omdat we hier het element communiceren. Council = 匠.
-  var kanji, name, sub;
+  var kanji, name, sub, essence;
   if(leader.eid === 'board'){
     kanji = '匠';
     name = isEn ? 'Master Council' : 'Master Council';
     sub = isEn ? 'leads today' : 'leidt vandaag';
+    essence = isEn ? 'Takumi-synthesis' : 'Takumi-synthese';
   } else if(leader.element){
     kanji = leader.element.kanji;
     // element.sub is bv. 'Earth · Foundation' / 'Aarde · Fundament' —
@@ -4714,14 +4725,20 @@ function renderDayLeader(){
     var domein = (leader.element.sub || '').split('·')[0].trim();
     name = leader.element.name + (domein ? ' · ' + domein : '');
     sub = isEn ? 'leads today' : 'leidt vandaag';
+    // Essence = element-naam + betekenis (deel na de ·). Bijv "Vuur · Energie" → "Ka-energie"
+    var meaningPart = (leader.element.sub || '').split('·')[1];
+    var meaning = meaningPart ? meaningPart.trim().toLowerCase() : '';
+    essence = meaning ? (leader.element.name + '-' + meaning) : '';
   } else {
     kanji = '匠';
     name = 'Takumi';
     sub = '';
+    essence = '';
   }
 
   var kanjiEl = document.getElementById('ck-day-leader-kanji');
   var nameEl = document.getElementById('ck-day-leader-name');
+  var essenceEl = document.getElementById('ck-day-leader-essence');
   var subEl = document.getElementById('ck-day-leader-sub');
   if(kanjiEl){
     kanjiEl.textContent = kanji;
@@ -4732,6 +4749,10 @@ function renderDayLeader(){
     }
   }
   if(nameEl) nameEl.textContent = name;
+  if(essenceEl){
+    essenceEl.textContent = essence;
+    essenceEl.style.display = essence ? '' : 'none';
+  }
   if(subEl) subEl.textContent = sub;
   el.style.display = 'flex';
   // Bewaar voor click-handler — bij doorklikken vinden we de juiste warrior
@@ -4739,13 +4760,12 @@ function renderDayLeader(){
 }
 
 function openDayLeader(){
-  var el = document.getElementById('ck-day-leader');
-  if(!el) return;
-  var wid = el.dataset.warriorId || 'board';
+  // Click op dag-element → altijd naar Master Council (vijf-stemmen synthese),
+  // niet meer naar de dag-specifieke meester. Wie diepere focus wil op één
+  // element kiest die zelf vanuit de Council-grid.
   go('bo');
   setTimeout(function(){
-    if(typeof openWarrior === 'function') openWarrior(wid);
-    else if(typeof selAg === 'function') selAg(wid);
+    if(typeof selAg === 'function') selAg('board');
   }, 80);
 }
 
