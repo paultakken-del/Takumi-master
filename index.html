@@ -2140,7 +2140,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.330';
+const APP_VERSION = '0.340';
 
 const S={
   cur:'board',
@@ -3485,7 +3485,7 @@ function initCK(){
         var col=pct<25?'var(--acc)':pct<75?'var(--gold)':'var(--teal)';
         return'<div onclick="go(\'gl\')" style="margin-bottom:var(--sp-xs);cursor:pointer">'
           +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
-          +'<span style="font-size:13px;font-weight:500;color:var(--ink)">'+(g.ico||'◇')+' '+g.title+'</span>'
+          +'<span style="font-size:13px;font-weight:500;color:var(--ink);display:inline-flex;align-items:center;gap:8px">'+goalIcoHtml(g, 16)+' <span>'+g.title+'</span></span>'
           +'<span style="font-size:12px;color:'+col+';font-weight:600">'+pct+'%</span>'
           +'</div>'
           +'<div style="height:4px;background:var(--pw);border-radius:2px;overflow:hidden">'
@@ -7371,7 +7371,7 @@ function renderSnoeiDialog(){
   var actief = GOALS.filter(function(g){ return g.status === 'Actief'; });
   document.getElementById('snoei-list').innerHTML = actief.map(function(g, i){
     return '<div class="ai" style="padding:10px 0;border-bottom:1px solid var(--b)">' +
-      '<span style="font-size:18px">' + g.ico + '</span>' +
+      '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px">' + goalIcoHtml(g, 18) + '</span>' +
       '<div style="flex:1"><div style="font-size:13px;font-weight:500">' + g.title + '</div>' +
       '<div style="font-size:11px;color:var(--m)">' + g.pct + '% voltooid</div></div>' +
       '<button class="btn sm gh" style="font-size:11px" data-gid="' + g.id + '" onclick="pauzeerGoal(this.dataset.gid)">Pauzeer</button>' +
@@ -7402,6 +7402,18 @@ const DEF=[];
 let GOALS=S.goals&&S.goals.length?S.goals:DEF;
 let activeGId=null;
 
+// Doel-icoon helper — vervangt de standaard 🎯 emoji-sticker door een
+// elegante SVG-target. Custom emojis (door gebruiker gezet) blijven
+// hun persoonlijke identiteit behouden. Vermijdt visuele inconsistentie
+// tussen Stoic/Headspace-stijl en kleurige emoji-stickers.
+function goalIcoHtml(goal, size){
+  size = size || 24;
+  if(!goal || !goal.ico || goal.ico === '🎯'){
+    return '<svg style="width:'+size+'px;height:'+size+'px;color:var(--acc);opacity:.85;display:inline-block;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><use href="#i-target"/></svg>';
+  }
+  return '<span style="font-size:'+Math.round(size*1.15)+'px;line-height:1;display:inline-block;vertical-align:middle">'+goal.ico+'</span>';
+}
+
 function renderGoals(){
   // g-sub element verwijderd in Stoic-redesign (tb-subtitle weg).
   // Defensive null-check zodat oude code geen crash veroorzaakt.
@@ -7410,8 +7422,7 @@ function renderGoals(){
     const act=GOALS.filter(g=>g.status==='Actief').length;
     gSub.textContent=GOALS.length===0?'Begin met je eerste doel':act+' actief · '+GOALS.length+' totaal';
   }
-  updateSnoeiIndicator();
-  if(GOALS.length===0){
+  updateSnoeiIndicator();  if(GOALS.length===0){
     document.getElementById('gg').innerHTML=`
       <div style="padding:60px 24px 80px;text-align:center;max-width:520px;margin:0 auto">
         <div class="kanji-hero" style="margin-bottom:32px;display:inline-block"><div class="kanji-hero-self" style="font-family:var(--FJ);font-size:64px;color:var(--ink);opacity:.5;font-weight:300;line-height:1">配</div></div>
@@ -7426,7 +7437,7 @@ function renderGoals(){
     const kleur=g.pct<25?'var(--m)':g.pct<50?'var(--teal)':g.pct<75?'var(--gold)':'var(--acc)';
     const pauzeer=g.status==='Gepauzeerd'?' style="opacity:.5"':'';
     return`<div class="gc reveal"${pauzeer} onclick="openGoal('${g.id}')">
-      <div class="gi">${g.ico}</div>
+      <div class="gi">${goalIcoHtml(g, 30)}</div>
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px">
         <div class="gt">${g.title}</div>
         ${g.status==='Gepauzeerd'?'<span class="sa" style="background:rgba(122,116,110,.08);color:var(--m);flex-shrink:0">'+g.status+'</span>':''}
@@ -7450,7 +7461,11 @@ function openGoal(id){
   const realActs = g.actions.filter(function(a){ return a.txt !== 'Eerste stap definiëren'; });
   // "Empty state" — geen acties OF alleen een legacy placeholder uit oude data
   const isEmptyActions = realActs.length === 0;
-  document.getElementById('gs-t').textContent=g.ico+' '+g.title;
+  // Zelfde logica als renderGoals: default 🎯 wordt SVG, custom emoji blijft
+  var _gsT = document.getElementById('gs-t');
+  if(_gsT){
+    _gsT.innerHTML = goalIcoHtml(g, 18) + '<span style="margin-left:8px">' + esc(g.title) + '</span>';
+  }
   document.getElementById('gs-s').textContent=g.status+' · '+g.pct+'% voltooid';
   document.getElementById('gs-b').style.width=g.pct+'%';
   document.getElementById('gs-b').style.background=g.color;
