@@ -760,7 +760,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
     <div class="ni on" data-v="ck"><span class="ico">⬡</span><span data-i18n="nav.cockpit">Cockpit</span></div>
     <div class="ni" data-v="bo"><span class="ico">◈</span><span data-i18n="nav.board">Master Council</span></div>
     <div class="ni" data-v="dj"><span class="ico" style="font-family:var(--FJ)">道</span><span data-i18n="nav.dojo">Dojo</span></div>
-    <div class="ni" data-v="gl"><span class="ico">◇</span><span data-i18n="nav.goals">Doelen</span></div>
+    <div class="ni" data-v="gl"><span class="ico">◇</span><span data-i18n="nav.goals">Richting</span></div>
     <div class="ni" data-v="rh"><span class="ico">習</span><span data-i18n="nav.rituals">Rituelen</span></div>
     <div class="ni" data-v="da"><span class="ico">▤</span><span data-i18n="nav.data_hub">Data Hub</span></div>
     <a id="admin-link" href="/admin/users" target="_blank" style="display:none;align-items:center;gap:10px;padding:8px 16px;font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:8px" onmouseover="this.style.background='rgba(255,255,255,.07)'" onmouseout="this.style.background='none'"><span style="font-size:14px">👥</span><span data-i18n="nav.users">Gebruikers</span></a>
@@ -1111,7 +1111,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 
 <!-- DOELEN -->
 <div class="view" id="v-gl">
-  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--gold);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">配</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Strategische Doelen</span></div></div><div style="display:flex;align-items:center;gap:10px"><div id="snoei-indicator" style="font-size:11px;color:var(--m)"></div><button class="btn sm pri" onclick="checkSnoei()">+ Nieuw doel</button></div></div>
+  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--gold);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">配</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Richting</span></div></div><div style="display:flex;align-items:center;gap:10px"><div id="snoei-indicator" style="font-size:11px;color:var(--m)"></div><button class="btn sm pri" onclick="checkSnoei()">+ Richting toevoegen</button></div></div>
   <div class="vs"><div class="gg" id="gg"></div></div>
 </div>
 
@@ -1440,7 +1440,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
   <div class="mi2 on" data-v="ck"><div class="mico">⬡</div><div class="mlb" data-i18n="mob.cockpit">Cockpit</div></div>
   <div class="mi2" data-v="bo"><div class="mico">◈</div><div class="mlb" data-i18n="mob.board">Raad</div></div>
   <div class="mi2" data-v="dj"><div class="mico" style="font-family:var(--FJ)">道</div><div class="mlb" data-i18n="mob.dojo">Dojo</div></div>
-  <div class="mi2" data-v="gl"><div class="mico">◇</div><div class="mlb" data-i18n="mob.goals">Doelen</div></div>
+  <div class="mi2" data-v="gl"><div class="mico">◇</div><div class="mlb" data-i18n="mob.goals">Richting</div></div>
   <div class="mi2" data-v="rh"><div class="mico">習</div><div class="mlb" data-i18n="mob.rituals">Rituelen</div></div>
 </div></nav>
 
@@ -1528,7 +1528,7 @@ var I18N = {
     'nav.evening_checkout': 'Avond Check-out',
     'nav.week_reflection': 'Week Reflectie',
     'nav.rhythm_recovery': 'Ritme & Herstel',
-    'nav.goals': 'Doelen',
+    'nav.goals': 'Richting',
     'nav.dojo': 'Dojo',
     'nav.data_hub': 'Data Hub',
     'nav.users': 'Gebruikers',
@@ -1558,7 +1558,7 @@ var I18N = {
     'mob.cockpit': 'Cockpit',
     'mob.board': 'Council',
     'mob.dojo': 'Dojo',
-    'mob.goals': 'Doelen',
+    'mob.goals': 'Richting',
     'mob.rituals': 'Rituelen',
     // Cockpit sections
     'ck.today': 'Vandaag',
@@ -1756,7 +1756,7 @@ var I18N = {
     'nav.evening_checkout': 'Evening Check-out',
     'nav.week_reflection': 'Week Reflection',
     'nav.rhythm_recovery': 'Rhythm & Recovery',
-    'nav.goals': 'Goals',
+    'nav.goals': 'Direction',
     'nav.dojo': 'Dojo',
     'nav.data_hub': 'Data Hub',
     'nav.users': 'Users',
@@ -1785,7 +1785,7 @@ var I18N = {
     'mob.cockpit': 'Cockpit',
     'mob.board': 'Council',
     'mob.dojo': 'Dojo',
-    'mob.goals': 'Goals',
+    'mob.goals': 'Direction',
     'mob.rituals': 'Rituals',
     'ck.today': 'Today',
     'ck.actions_today': 'Actions today',
@@ -2140,7 +2140,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.380';
+const APP_VERSION = '0.390';
 
 const S={
   cur:'board',
@@ -7551,16 +7551,17 @@ function renderGoals(){
     document.getElementById('gg').innerHTML=`
       <div style="padding:60px 24px 80px;text-align:center;max-width:520px;margin:0 auto">
         <div class="kanji-hero" style="margin-bottom:32px;display:inline-block"><div class="kanji-hero-self" style="font-family:var(--FJ);font-size:64px;color:var(--ink);opacity:.5;font-weight:300;line-height:1">配</div></div>
-        <div style="font-family:var(--serif);font-size:21px;font-weight:500;color:var(--ink);margin-bottom:14px;letter-spacing:-.005em">Wat wil je dit jaar bereiken?</div>
-        <div style="font-family:var(--serif);font-size:14.5px;color:var(--m);line-height:1.7;margin:0 auto 32px;font-style:italic;max-width:380px">Takumi werkt het beste als het weet waar je naartoe wilt. Stel je eerste doel — Takumi geeft advies op je staat van de dag.</div>
-        <button class="btn pri" style="font-size:13px;padding:11px 22px;min-height:auto;border-radius:24px" onclick="checkSnoei()">+ Stel je eerste doel in</button>
+        <div style="font-family:var(--serif);font-size:21px;font-weight:500;color:var(--ink);margin-bottom:14px;letter-spacing:-.005em">Welke richting trekt je nu?</div>
+        <div style="font-family:var(--serif);font-size:14.5px;color:var(--m);line-height:1.7;margin:0 auto 32px;font-style:italic;max-width:380px">Geen targets — een richting is iets levends dat je bijstelt onderweg. Voeg er een toe; Takumi houdt 'm zacht in beeld zonder te pushen.</div>
+        <button class="btn pri" style="font-size:13px;padding:11px 22px;min-height:auto;border-radius:24px" onclick="checkSnoei()">+ Eerste richting</button>
       </div>`;
     return;
   }
   document.getElementById('gg').innerHTML=GOALS.map(g=>{
-    const vitaal=g.pct<25?'Zaad — pas geplant':g.pct<50?'Groeit — eerste wortels':g.pct<75?'Bloeit — zichtbare groei':'Rijpt — bijna klaar';
+    const vitaal=g.pct<25?'Zaad — pas geplant':g.pct<50?'Groeit — eerste wortels':g.pct<75?'Bloeit — zichtbare groei':'Rijpt — volle bloei';
     const kleur=g.pct<25?'var(--m)':g.pct<50?'var(--teal)':g.pct<75?'var(--gold)':'var(--acc)';
     const pauzeer=g.status==='Gepauzeerd'?' style="opacity:.5"':'';
+    var openActies = g.actions.filter(a=>!a.done && a.txt !== 'Eerste stap definiëren').length;
     return`<div class="gc reveal"${pauzeer} onclick="openGoal('${g.id}')">
       <div class="gi">${goalIcoHtml(g, 30)}</div>
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px">
@@ -7568,10 +7569,11 @@ function renderGoals(){
         ${g.status==='Gepauzeerd'?'<span class="sa" style="background:rgba(122,116,110,.08);color:var(--m);flex-shrink:0">'+g.status+'</span>':''}
       </div>
       <div class="gd">${g.desc}</div>
-      <div class="gp"><div class="gf" style="width:${g.pct}%;background:${g.color}"></div></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-        <div style="font-size:11px;color:${kleur};font-family:var(--F);font-style:italic;opacity:.85">${vitaal}</div>
-        <div style="font-size:11px;color:var(--m);opacity:.75">${g.actions.filter(a=>!a.done && a.txt !== 'Eerste stap definiëren').length} open · ${g.pct}%</div>
+      <!-- Geen progress-bar, geen %. Alleen groei-stadium als kwalitatieve hint.
+           Transformatie is niet 47% — het is een fase van groei. -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--b)">
+        <div style="font-size:12px;color:${kleur};font-family:var(--serif);font-style:italic;opacity:.88;letter-spacing:.005em">${vitaal}</div>
+        ${openActies > 0 ? '<div style="font-size:11px;color:var(--m);opacity:.6">'+openActies+' open</div>' : ''}
       </div>
     </div>`;
   }).join('');
