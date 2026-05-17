@@ -847,6 +847,11 @@ input[type=range]{width:100%;accent-color:var(--acc)}
       <!-- AI-stem van vandaag — serif italic, generous breathing room -->
       <div id="ct-voice" style="font-family:var(--serif,inherit);font-size:14px;font-style:italic;color:var(--ink);line-height:1.7;margin:32px auto 32px;opacity:.88;text-align:center;max-width:320px;min-height:20px"></div>
 
+      <!-- Zachte richting-context — vervangt voormalige goal-hero.
+           Toont primary richting ALS context op deze element-dag,
+           niet als achievement-anker. Klik gaat naar Doelen-view. -->
+      <div id="ct-richting-hint" style="text-align:center;margin:-12px auto 22px;display:none;font-family:var(--serif,inherit);font-size:13px;color:var(--m);line-height:1.55;font-style:italic;max-width:340px;opacity:.78;cursor:pointer;-webkit-tap-highlight-color:transparent" onclick="event.stopPropagation();go('gl')"></div>
+
       <!-- Single primary CTA -->
       <div id="ct-ctas" style="text-align:center"></div>
 
@@ -2140,7 +2145,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.390';
+const APP_VERSION = '0.400';
 
 const S={
   cur:'board',
@@ -5070,48 +5075,37 @@ async function loadCouncilTodayVoice(leader){
   }
 }
 
+// renderPrimaryGoal — was eerder een grote hero met goal-titel, %, progress-bar
+// op de cockpit. Dat was het achievement-anker dat elke ochtend doelen
+// vóór reflectie zette. Nu: oude sectie permanent verborgen, en in plaats
+// daarvan een zachte richting-context-regel binnen het Council vandaag blok.
+// "Met aandacht voor [richting-naam]" — leest als een lens, niet als KPI.
 function renderPrimaryGoal(){
-  var sec = document.getElementById('ck-primary-goal');
-  if(!sec) return;
+  // Altijd: oude hero-sectie hard verbergen — geen achievement-anker meer
+  var oldHero = document.getElementById('ck-primary-goal');
+  if(oldHero) oldHero.style.display = 'none';
+
+  var hint = document.getElementById('ct-richting-hint');
+  if(!hint) return;
+
+  // Welke richting krijgt vandaag aandacht?
   var primary = null;
   if(typeof GOALS !== 'undefined' && GOALS && GOALS.length){
     if(S.primaryGoalId) primary = GOALS.find(function(g){ return g.id === S.primaryGoalId && g.status === 'Actief'; });
     if(!primary) primary = GOALS.find(function(g){ return g.status === 'Actief'; });
   }
+
+  // Geen actieve richting: hint helemaal verbergen. Geen CTA, geen druk —
+  // het Council vandaag staat op zichzelf, richting is optioneel.
   if(!primary){
-    sec.style.display = 'block';
-    sec.innerHTML =
-      '<div style="padding:36px 20px 32px;text-align:center;border-bottom:1px solid var(--b)">'+
-        '<div style="font-family:var(--FJ);font-size:30px;color:var(--m);margin-bottom:14px;opacity:.4">空</div>'+
-        '<div style="font-family:var(--serif);font-size:16px;color:var(--ink);line-height:1.5;margin-bottom:8px;font-style:italic">Begin met een doel.</div>'+
-        '<div style="font-size:12.5px;color:var(--m);line-height:1.55;margin-bottom:20px;max-width:280px;margin-left:auto;margin-right:auto">Alles wat hierna komt vloeit voort uit jouw richting.</div>'+
-        '<button onclick="go(\'gl\')" style="background:var(--acc);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit">Stel een doel in →</button>'+
-      '</div>';
+    hint.style.display = 'none';
     return;
   }
-  sec.style.display = 'block';
-  var weekNumber = primary.weekNumber || Math.max(1, Math.floor((Date.now() - (primary.createdAt||Date.now()))/(7*24*60*60*1000)) + 1);
 
-  // Status synthese — was eerder #ck-synthese, nu inline onder doel
-  var statusText = computeStatusSynthese(primary);
-
-  sec.innerHTML =
-    '<div style="padding:38px 0 32px;text-align:center" onclick="openGoal(\''+primary.id+'\')" oncontextmenu="event.preventDefault();return false">'+
-      // Doel-icoon — terug. Gecentreerd, soft, generous space below.
-      // Custom emoji als gezet, anders subtiele target-SVG.
-      (primary.ico && primary.ico !== '🎯'
-        ? '<div style="font-size:32px;line-height:1;margin-bottom:18px;opacity:.9">'+primary.ico+'</div>'
-        : '<svg class="ico" style="width:28px;height:28px;color:var(--acc);margin:0 auto 18px;display:block;opacity:.85"><use href="#i-target"/></svg>'
-      )+
-      // Doeltitel — serif voor warmte, generous spacing
-      '<div style="font-family:var(--serif,inherit);font-size:23px;font-weight:500;color:var(--ink);line-height:1.3;margin-bottom:12px;cursor:pointer;letter-spacing:-.005em">'+esc(primary.title)+'</div>'+
-      // Week + percentage — minimal
-      '<div style="font-size:11px;color:var(--m);margin-bottom:18px;letter-spacing:.06em;opacity:.85">Week '+weekNumber+' &nbsp;·&nbsp; '+primary.pct+'%</div>'+
-      // Progress bar — pillvorm, zachter
-      '<div style="height:4px;background:var(--p2);border-radius:3px;overflow:hidden;max-width:240px;margin:0 auto"><div style="height:100%;width:'+primary.pct+'%;background:var(--acc);border-radius:3px;transition:width .4s"></div></div>'+
-      // 'Zet als focus' link alleen als nodig (niet de primaire)
-      (S.primaryGoalId !== primary.id ? '<div style="margin-top:18px"><button onclick="event.stopPropagation();setPrimaryGoal(\''+primary.id+'\')" style="font-size:11px;padding:5px 10px;background:none;border:none;color:var(--m);cursor:pointer;font-family:inherit;text-decoration:underline;opacity:.6">Zet als focus</button></div>' : '')+
-    '</div>';
+  // Render: zachte regel met richting-naam als lens op deze element-dag.
+  // Geen %, geen progress-bar, geen status — alleen de naam als context.
+  hint.style.display = 'block';
+  hint.innerHTML = 'Met aandacht voor <span style="color:var(--ink);font-style:normal;opacity:.85">'+esc(primary.title)+'</span>';
 }
 
 // Helper: status-synthese (was eerder ck-synthese filling code).
