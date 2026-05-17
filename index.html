@@ -2140,7 +2140,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.360';
+const APP_VERSION = '0.370';
 
 const S={
   cur:'board',
@@ -3033,7 +3033,11 @@ function markNietNieuw(){
   if(badge)badge.style.opacity='0';
 }
 // ── DAGELIJKSE REFLECTIES ──
-// Quotes voor de pop-up bij begin & eind van de dag. Mix van bronnen:
+// Unified quote source — gebruikt voor:
+//  (a) cockpit wisdom-quote (renderQuote) — gefilterd op tone (staat)
+//  (b) ochtend/avond reflectie-popup (showDailyReflection) — gefilterd op time
+//
+// Bronnen:
 //  1. Boek "Natuurlijk Agile" (Paul Takken) — primaire bron
 //  2. Filosofen die de elementen raken (Musashi, Bruce Lee, Nonaka, ea)
 //  3. Element-stemmen — korte reflectieve regels per Godai-element
@@ -3044,6 +3048,7 @@ function markNietNieuw(){
 //   a     - auteur/bron
 //   el    - 'chi'|'sui'|'fu'|'ka'|'ku' (optioneel — boost als element vandaag leidt)
 //   time  - 'morning'|'evening'|'any' (default 'any')
+//   tone  - 'stagnatie'|'herstel'|'voortgang'|'standaard' (optioneel — voor cockpit-filter)
 //
 // Paul levert nieuwe quotes via chat; ik integreer ze hier.
 const REFLECTIONS = [
@@ -3051,29 +3056,32 @@ const REFLECTIONS = [
   { q: 'De rots in de branding houdt geen gevoel, maar kent het beste de zee.', a: 'Natuurlijk Agile', el: 'chi', time: 'morning' },
   { q: 'Creativiteit en vrijheid zijn waardevol — maar discipline redt soms je leven.', a: 'Natuurlijk Agile', el: 'chi', time: 'morning' },
   { q: 'Een goede uitvoering van de basis is nog steeds het grootste belang.', a: 'Natuurlijk Agile', el: 'chi', time: 'any' },
-  { q: 'Today is victory over yourself of yesterday.', a: 'Miyamoto Musashi', el: 'chi', time: 'morning' },
-  { q: 'Do not think dishonestly. The way is in training.', a: 'Miyamoto Musashi', el: 'chi', time: 'any' },
+  { q: 'Today is victory over yourself of yesterday.', a: 'Miyamoto Musashi', el: 'chi', time: 'morning', tone: 'stagnatie' },
+  { q: 'Determine that today you will overcome your self of the day before.', a: 'Miyamoto Musashi', el: 'chi', time: 'morning', tone: 'stagnatie' },
+  { q: 'Do not think dishonestly. The way is in training.', a: 'Miyamoto Musashi', el: 'chi', time: 'any', tone: 'standaard' },
 
   // === SUI · WATER — meebewegen, wendbaarheid, geen weerstand ===
   { q: 'Eerst meebewegen met wat is. Dan pas een nieuwe richting tonen.', a: 'Natuurlijk Agile', el: 'sui', time: 'morning' },
   { q: 'Verplaats jezelf in je tegenstander. Daar verdwijnt de weerstand.', a: 'Natuurlijk Agile', el: 'sui', time: 'any' },
   { q: 'Wat je probeert te zijn moet passen in je natuurlijke leefomgeving — anders schuurt het.', a: 'Natuurlijk Agile', el: 'sui', time: 'any' },
-  { q: 'Notice that the stiffest tree is most easily cracked, while the bamboo survives by bending.', a: 'Bruce Lee', el: 'sui', time: 'evening' },
-  { q: 'Be like water making its way through cracks. Be water, my friend.', a: 'Bruce Lee', el: 'sui', time: 'any' },
-  { q: 'Empty your mind, be formless, shapeless — like water.', a: 'Bruce Lee', el: 'sui', time: 'evening' },
+  { q: 'Notice that the stiffest tree is most easily cracked, while the bamboo survives by bending.', a: 'Bruce Lee', el: 'sui', time: 'evening', tone: 'herstel' },
+  { q: 'Be like water making its way through cracks. Be water, my friend.', a: 'Bruce Lee', el: 'sui', time: 'any', tone: 'herstel' },
+  { q: 'Empty your mind, be formless, shapeless — like water.', a: 'Bruce Lee', el: 'sui', time: 'evening', tone: 'herstel' },
+  { q: 'You must be shapeless, formless, like water. When you pour water in a cup, it becomes the cup.', a: 'Bruce Lee', el: 'sui', time: 'any', tone: 'stagnatie' },
 
   // === FŪ · WIND — veerkracht, paradigma-verandering, andere wind ===
   { q: 'Soms moet er gewoon een andere wind waaien.', a: 'Natuurlijk Agile', el: 'fu', time: 'morning' },
   { q: 'De bovenliggende stroom gaat in de juiste richting — ook als de wind nu guur is.', a: 'Natuurlijk Agile', el: 'fu', time: 'evening' },
   { q: 'Verandering komt in spiralen, niet in lijnen.', a: 'Natuurlijk Agile', el: 'fu', time: 'any' },
-  { q: 'Long-term consistency trumps short-term intensity.', a: 'Bruce Lee', el: 'fu', time: 'morning' },
+  { q: 'Long-term consistency trumps short-term intensity.', a: 'Bruce Lee', el: 'fu', time: 'morning', tone: 'voortgang' },
 
   // === KA · VUUR — energie, leiderschap, concrete daden ===
   { q: 'Elke dag is er een keuze: wakker je het vuur aan, of laat je het uitdoven?', a: 'Natuurlijk Agile', el: 'ka', time: 'morning' },
   { q: 'Een Agile transformatie begint met een overduidelijke heupzwaai.', a: 'Natuurlijk Agile', el: 'ka', time: 'morning' },
-  { q: 'Knowing is not enough, we must apply. Willing is not enough, we must do.', a: 'Bruce Lee', el: 'ka', time: 'morning' },
-  { q: 'I fear not the man who has practiced 10,000 kicks once, but the man who has practiced one kick 10,000 times.', a: 'Bruce Lee', el: 'ka', time: 'any' },
-  { q: 'The successful warrior is the average man, with laser-like focus.', a: 'Bruce Lee', el: 'ka', time: 'morning' },
+  { q: 'Knowing is not enough, we must apply. Willing is not enough, we must do.', a: 'Bruce Lee', el: 'ka', time: 'morning', tone: 'standaard' },
+  { q: 'I fear not the man who has practiced 10,000 kicks once, but the man who has practiced one kick 10,000 times.', a: 'Bruce Lee', el: 'ka', time: 'any', tone: 'voortgang' },
+  { q: 'The successful warrior is the average man, with laser-like focus.', a: 'Bruce Lee', el: 'ka', time: 'morning', tone: 'voortgang' },
+  { q: 'If you spend too much time thinking about a thing, you\'ll never get it done.', a: 'Bruce Lee', el: 'ka', time: 'morning', tone: 'stagnatie' },
 
   // === KŪ · LEEGTE — flow, slow down to speed up, intuïtie ===
   { q: 'Slow down to speed up.', a: 'Natuurlijk Agile', el: 'ku', time: 'morning' },
@@ -3082,18 +3090,26 @@ const REFLECTIONS = [
   { q: 'Flow is een state(less) of mind — geen afleidende gedachten meer.', a: 'Natuurlijk Agile', el: 'ku', time: 'any' },
   { q: 'Je gaat het pas zien als je het doorhebt.', a: 'Johan Cruijff', el: 'ku', time: 'any' },
   { q: 'We argue the need for wisdom — a higher form of tacit knowledge — to cope with a fast-changing world.', a: 'Prof. Ikujiro Nonaka', el: 'ku', time: 'any' },
-  { q: 'Almost everything will work again if you unplug it for a few minutes — including you.', a: 'Anne Lamott', el: 'ku', time: 'evening' },
+  { q: 'Almost everything will work again if you unplug it for a few minutes — including you.', a: 'Anne Lamott', el: 'ku', time: 'evening', tone: 'herstel' },
+  { q: 'In adversity, do not lose virtue.', a: 'Miyamoto Musashi', el: 'ku', time: 'evening', tone: 'herstel' },
 
   // === UNIVERSEEL / STANDAARD — geen element-tag ===
   { q: 'Vijf elementen, één beoefenaar. Vandaag draag jij de vorm.', a: 'Takumi', time: 'morning' },
   { q: 'Niet sneller. Scherper.', a: 'Takumi', time: 'morning' },
   { q: 'De vraag is niet wat je bereikt. De vraag is wat je waarneemt onderweg.', a: 'Takumi', time: 'any' },
   { q: 'Een dag van rust telt mee — als je hem bewust kiest.', a: 'Takumi', time: 'evening' },
-  { q: 'As you think, so shall you become.', a: 'Bruce Lee', time: 'any' },
-  { q: 'Think lightly of yourself and deeply of the world.', a: 'Miyamoto Musashi', time: 'evening' },
-  { q: 'We are what we repeatedly do. Excellence is not an act, but a habit.', a: 'Aristoteles', time: 'morning' },
-  { q: 'In adversity, do not lose virtue.', a: 'Miyamoto Musashi', time: 'evening' },
-  { q: 'Absorb what is useful, discard what is not, add what is uniquely your own.', a: 'Bruce Lee', time: 'any' }
+  { q: 'As you think, so shall you become.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
+  { q: 'Think lightly of yourself and deeply of the world.', a: 'Miyamoto Musashi', time: 'evening', tone: 'standaard' },
+  { q: 'We are what we repeatedly do. Excellence is not an act, but a habit.', a: 'Aristoteles', time: 'morning', tone: 'standaard' },
+  { q: 'Absorb what is useful, discard what is not, add what is uniquely your own.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
+  { q: 'Be happy, but never satisfied.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
+  { q: 'Mistakes are always forgivable, if one has the courage to admit them.', a: 'Bruce Lee', time: 'evening', tone: 'standaard' },
+  { q: 'If you love life, don\'t waste time, for time is what life is made up of.', a: 'Bruce Lee', time: 'morning', tone: 'standaard' },
+  { q: 'The possession of anything begins in the mind.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
+  { q: 'Defeat is a state of mind; no one is ever defeated until defeat has been accepted as a reality.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
+  { q: 'Do not pray for an easy life, pray for the strength to endure a difficult one.', a: 'Bruce Lee', time: 'morning', tone: 'stagnatie' },
+  { q: 'A goal is not always meant to be reached; it often serves simply as something to aim at.', a: 'Bruce Lee', time: 'any', tone: 'stagnatie' },
+  { q: 'Mastery is not a function of genius or talent. It is a function of time and intense focus.', a: 'Robert Greene', time: 'morning', tone: 'voortgang' }
 ];
 
 function pickReflection(period){
@@ -3138,42 +3154,40 @@ function pickReflection(period){
   return weighted[weighted.length - 1].r;
 }
 
-const QUOTES={
-  stagnatie:[
-    {q:"If you spend too much time thinking about a thing, you'll never get it done.",a:"Bruce Lee"},
-    {q:"Do not pray for an easy life, pray for the strength to endure a difficult one.",a:"Bruce Lee"},
-    {q:"A goal is not always meant to be reached; it often serves simply as something to aim at.",a:"Bruce Lee"},
-    {q:"You must be shapeless, formless, like water. When you pour water in a cup, it becomes the cup.",a:"Bruce Lee"},
-    {q:"Today is victory over yourself of yesterday; tomorrow is your victory over lesser men.",a:"Miyamoto Musashi"},
-    {q:"Determine that today you will overcome your self of the day before.",a:"Miyamoto Musashi"},
-  ],
-  herstel:[
-    {q:"Notice that the stiffest tree is most easily cracked, while the bamboo survives by bending with the wind.",a:"Bruce Lee"},
-    {q:"Be like water making its way through cracks. Be water, my friend.",a:"Bruce Lee"},
-    {q:"Empty your mind, be formless, shapeless — like water.",a:"Bruce Lee"},
-    {q:"In adversity, do not lose virtue.",a:"Miyamoto Musashi"},
-    {q:"Almost everything will work again if you unplug it for a few minutes — including you.",a:"Anne Lamott"},
-  ],
-  voortgang:[
-    {q:"I fear not the man who has practiced 10,000 kicks once, but I fear the man who has practiced one kick 10,000 times.",a:"Bruce Lee"},
-    {q:"Long-term consistency trumps short-term intensity.",a:"Bruce Lee"},
-    {q:"The successful warrior is the average man, with laser-like focus.",a:"Bruce Lee"},
-    {q:"Mastery is not a function of genius or talent. It is a function of time and intense focus.",a:"Robert Greene"},
-  ],
-  standaard:[
-    {q:"Knowing is not enough, we must apply. Willing is not enough, we must do.",a:"Bruce Lee"},
-    {q:"As you think, so shall you become.",a:"Bruce Lee"},
-    {q:"Be happy, but never satisfied.",a:"Bruce Lee"},
-    {q:"Mistakes are always forgivable, if one has the courage to admit them.",a:"Bruce Lee"},
-    {q:"If you love life, don't waste time, for time is what life is made up of.",a:"Bruce Lee"},
-    {q:"The possession of anything begins in the mind.",a:"Bruce Lee"},
-    {q:"Defeat is a state of mind; no one is ever defeated until defeat has been accepted as a reality.",a:"Bruce Lee"},
-    {q:"Absorb what is useful, discard what is not, add what is uniquely your own.",a:"Bruce Lee"},
-    {q:"Do not think dishonestly. The way is in training.",a:"Miyamoto Musashi"},
-    {q:"Think lightly of yourself and deeply of the world.",a:"Miyamoto Musashi"},
-    {q:"We are what we repeatedly do. Excellence, then, is not an act, but a habit.",a:"Aristoteles"},
-  ]
-};
+// ── Cockpit wisdom picker ──
+// Filtert REFLECTIONS op tone (gebaseerd op gebruiker-staat) en boost
+// quotes wiens element vandaag leidt. Eén unified source met pickReflection.
+function pickCockpitQuote(tone){
+  // Filter op tone: 'standaard' is altijd OK, andere alleen specifieke matches.
+  var pool = REFLECTIONS.filter(function(r){
+    if(!r.tone) return tone === 'standaard'; // entries zonder tone gelden als standaard
+    return r.tone === tone;
+  });
+  // Fallback als pool leeg: alle quotes
+  if(!pool.length) pool = REFLECTIONS;
+
+  // Boost element-match (subtieler dan popup picker — boost 1.5 ipv 3)
+  var leaderEl = null;
+  try {
+    if(typeof getDayLeader === 'function'){
+      var l = getDayLeader();
+      if(l && l.eid && l.eid !== 'board') leaderEl = l.eid;
+    }
+  } catch(e){}
+  var weighted = pool.map(function(r){
+    return { r: r, w: (r.el && r.el === leaderEl) ? 1.5 : 1 };
+  });
+  var total = weighted.reduce(function(s, x){ return s + x.w; }, 0);
+  var roll = Math.random() * total;
+  for(var i = 0; i < weighted.length; i++){
+    roll -= weighted[i].w;
+    if(roll <= 0) return weighted[i].r;
+  }
+  return weighted[weighted.length - 1].r;
+}
+
+// QUOTES const is samengevoegd in REFLECTIONS (één source of truth).
+// renderQuote en de welkomst-quote IIFE gebruiken nu pickCockpitQuote.
 
 function renderQuote(){
   try{
@@ -3181,8 +3195,9 @@ function renderQuote(){
     var hasStagnatie=goals.some(function(g){return g.pct<25&&g.status==='Actief';});
     var needsHerstel=S.hrv.recovery<=5||S.hrv.rmssd<45||S.hrv.sleep<6;
     var goedVoortgang=goals.length>0&&goals.some(function(g){return g.pct>60&&g.status==='Actief';});
-    var pool=needsHerstel?QUOTES.herstel:hasStagnatie?QUOTES.stagnatie:goedVoortgang?QUOTES.voortgang:QUOTES.standaard;
-    var q=pool[Math.floor(Math.random()*pool.length)];
+    var tone = needsHerstel ? 'herstel' : hasStagnatie ? 'stagnatie' : goedVoortgang ? 'voortgang' : 'standaard';
+    var q = pickCockpitQuote(tone);
+    if(!q) return;
     var qEl=document.getElementById('ck-quote');
     var aEl=document.getElementById('ck-quote-auth');
     if(qEl)qEl.textContent='\u201c'+q.q+'\u201d';
@@ -3192,8 +3207,7 @@ function renderQuote(){
 
 // Render quote of welkomst direct bij laden
 (function(){
-  var pool=QUOTES.standaard;
-  var q=pool[Math.floor(Math.random()*pool.length)];
+  var q = pickCockpitQuote('standaard');
   document.addEventListener('DOMContentLoaded',function(){
     var qEl=document.getElementById('ck-quote');
     var aEl=document.getElementById('ck-quote-auth');
@@ -3206,7 +3220,7 @@ function renderQuote(){
       // Begin-badge op Rituelen pill
       var badge=document.getElementById('onb-badge');
       if(badge)badge.style.display='block';
-    } else {
+    } else if(q) {
       qEl.textContent='\u201c'+q.q+'\u201d';
       if(aEl)aEl.textContent='\u2014 '+q.a;
     }
