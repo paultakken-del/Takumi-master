@@ -2145,7 +2145,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.410';
+const APP_VERSION = '0.420';
 
 const S={
   cur:'board',
@@ -7552,8 +7552,8 @@ function renderGoals(){
     return;
   }
   document.getElementById('gg').innerHTML=GOALS.map(g=>{
-    const vitaal=g.pct<25?'Zaad — pas geplant':g.pct<50?'Groeit — eerste wortels':g.pct<75?'Bloeit — zichtbare groei':'Rijpt — volle bloei';
-    const kleur=g.pct<25?'var(--m)':g.pct<50?'var(--teal)':g.pct<75?'var(--gold)':'var(--acc)';
+    var st = stageForPct(g.pct);
+    const kleur = g.pct<25 ? 'var(--m)' : g.pct<50 ? 'var(--teal)' : g.pct<75 ? 'var(--gold)' : 'var(--acc)';
     const pauzeer=g.status==='Gepauzeerd'?' style="opacity:.5"':'';
     var openActies = g.actions.filter(a=>!a.done && a.txt !== 'Eerste stap definiëren').length;
     return`<div class="gc reveal"${pauzeer} onclick="openGoal('${g.id}')">
@@ -7564,15 +7564,36 @@ function renderGoals(){
       </div>
       <div class="gd">${g.desc}</div>
       <!-- Geen progress-bar, geen %. Alleen groei-stadium als kwalitatieve hint.
-           Transformatie is niet 47% — het is een fase van groei. -->
+           Vakmeesterschap is geen rekensom — het is plant → groei → snoei → oogst. -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--b)">
-        <div style="font-size:12px;color:${kleur};font-family:var(--serif);font-style:italic;opacity:.88;letter-spacing:.005em">${vitaal}</div>
+        <div style="font-size:12px;color:${kleur};font-family:var(--serif);font-style:italic;opacity:.88;letter-spacing:.005em">${st.name} · ${st.desc}</div>
         ${openActies > 0 ? '<div style="font-size:11px;color:var(--m);opacity:.6">'+openActies+' open</div>' : ''}
       </div>
     </div>`;
   }).join('');
   // Re-scan reveal observer voor de net gerenderde cards
   if(typeof window.scrollRevealScan === 'function') setTimeout(window.scrollRevealScan, 0);
+}
+
+// Groei-stadia helper — vervangt percentages in de UI met Paul's verbs.
+// Vakmeesterschap is geen rekensom: een richting is plant → groei → snoei → oogst.
+// Het systeem gebruikt nog pct intern (wave-engine, voortgang, sortering),
+// maar gebruiker ziet de cyclus in plaats van een getal.
+function stageForPct(pct){
+  pct = pct || 0;
+  if(pct < 25)  return { key:'planten', name:'Planten',  desc:'de zaden zijn gezaaid' };
+  if(pct < 50)  return { key:'groeien', name:'Groeien',  desc:'de wortels nemen vat' };
+  if(pct < 75)  return { key:'snoeien', name:'Snoeien',  desc:'bijschaven en verfijnen' };
+  if(pct < 100) return { key:'oogsten', name:'Oogsten',  desc:'wat rijp is, wordt geplukt' };
+  return            { key:'volledig', name:'Volle oogst', desc:'voltooid' };
+}
+// Milestone-pct → stage-naam (de fase die je BETREEDT bij dat percentage)
+function stageForMilestone(pct){
+  if(pct === 25)  return 'Groeien';
+  if(pct === 50)  return 'Snoeien';
+  if(pct === 75)  return 'Oogsten';
+  if(pct === 100) return 'Volle oogst';
+  return pct + '%';
 }
 
 function openGoal(id){
@@ -7587,26 +7608,33 @@ function openGoal(id){
   if(_gsT){
     _gsT.innerHTML = goalIcoHtml(g, 18) + '<span style="margin-left:8px">' + esc(g.title) + '</span>';
   }
-  document.getElementById('gs-s').textContent=g.status+' · '+g.pct+'% voltooid';
-  document.getElementById('gs-b').style.width=g.pct+'%';
-  document.getElementById('gs-b').style.background=g.color;
-  document.getElementById('gs-p').textContent=g.pct+'% voltooid';
-  // Handmatige slider boven inhoud
-  var sliderHtml = '<div style="margin-bottom:20px;padding:14px 16px;background:var(--p2);border-radius:8px;border:1px solid var(--b)">'+
-    '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">'+
-      '<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);font-weight:500">Handmatig zetten</div>'+
-      '<div style="font-size:13px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums" id="manual-pct-display">'+g.pct+'%</div>'+
+  // Status-regel: 'Actief · Planten' ipv 'Actief · 0% voltooid'
+  var stage = stageForPct(g.pct);
+  document.getElementById('gs-s').textContent = g.status + ' · ' + stage.name;
+  // Progress-bar + percentage-tekst hard verbergen — Paul's request: geen
+  // getallen meer in de modal. Het bar-blok inclusief gs-p zit in dezelfde
+  // wrapper div. Hide via parentNode.parentNode (gs-b is .gf in .gp in wrapper).
+  var gsB = document.getElementById('gs-b');
+  if(gsB && gsB.parentNode && gsB.parentNode.parentNode){
+    gsB.parentNode.parentNode.style.display = 'none';
+  }
+  // Slider — toont nu stadium-naam ipv %. Onderschrift behouden ('gevoel
+  // dan rekensom') — sluit precies aan op de filosofie van deze wijziging.
+  var sliderHtml = '<div style="margin-bottom:20px;padding:16px 18px;background:var(--p2);border-radius:10px;border:1px solid var(--b)">'+
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">'+
+      '<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);font-weight:500">Stadium</div>'+
+      '<div id="manual-stage-display" style="font-size:13.5px;font-family:var(--serif);font-style:italic;color:var(--ink);letter-spacing:-.005em">'+stage.name+'</div>'+
     '</div>'+
     '<input type="range" min="0" max="100" step="5" value="'+g.pct+'" '+
-      'oninput="document.getElementById(\'manual-pct-display\').textContent=this.value+\'%\'" '+
+      'oninput="(function(v){var s=stageForPct(parseInt(v));document.getElementById(\'manual-stage-display\').textContent=s.name;})(this.value)" '+
       'onchange="setGoalPct(\''+id+'\',this.value)" '+
       'style="width:100%;accent-color:'+g.color+'">'+
-    '<div style="font-size:11px;color:var(--m);margin-top:4px;line-height:1.4">Vakmeesterschap is eerder gevoel dan rekensom.</div>'+
+    '<div style="font-size:11px;color:var(--m);margin-top:6px;line-height:1.5;font-style:italic">Vakmeesterschap is eerder gevoel dan rekensom.</div>'+
   '</div>';
   document.getElementById('gs-body').innerHTML= sliderHtml + `
     <div style="margin-bottom:20px">
-      <div class="ct">Milestones</div>
-      ${g.milestones.map(m=>`<div class="mi"><span style="font-size:15px">${m.s==='done'?'✓':m.s==='active'?'◎':'○'}</span><span style="flex:1;font-size:12px;${m.s==='done'?'text-decoration:line-through;color:var(--m)':''}">${m.name}</span><span style="font-size:11px;color:var(--m)">${m.pct}%</span></div>`).join('')}
+      <div class="ct">Cyclus</div>
+      ${g.milestones.map(m=>`<div class="mi"><span style="font-size:15px">${m.s==='done'?'✓':m.s==='active'?'◎':'○'}</span><span style="flex:1;font-size:13px;font-family:var(--serif);font-style:italic;${m.s==='done'?'text-decoration:line-through;color:var(--m)':'color:var(--ink)'}">${stageForMilestone(m.pct)}</span></div>`).join('')}
     </div>
     <div style="margin-bottom:20px">
       <div class="ct">Acties</div>
@@ -7623,16 +7651,16 @@ function openGoal(id){
 }
 function closeGoal(){document.getElementById('go').classList.remove('on');activeGId=null;}
 
-// Handmatige percentage override
+// Handmatige percentage override (interne data blijft 0-100; UI toont stadium)
 function setGoalPct(gid, val){
   const g=GOALS.find(x=>x.id===gid);if(!g)return;
   g.pct = Math.max(0, Math.min(100, parseInt(val)||0));
   g.manualPct = true; // markeer dat gebruiker handmatig heeft gezet
   saveGoals();
   // Update header van modal zonder te re-renderen (anders verlies je slider focus)
-  document.getElementById('gs-s').textContent=g.status+' · '+g.pct+'% voltooid';
-  document.getElementById('gs-b').style.width=g.pct+'%';
-  document.getElementById('gs-p').textContent=g.pct+'% voltooid';
+  var st = stageForPct(g.pct);
+  var gsS = document.getElementById('gs-s'); if(gsS) gsS.textContent = g.status + ' · ' + st.name;
+  // gs-b en gs-p zijn nu verborgen — niet meer updaten
   if(typeof renderGoals === 'function') renderGoals();
 }
 
