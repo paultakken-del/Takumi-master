@@ -2140,7 +2140,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.370';
+const APP_VERSION = '0.380';
 
 const S={
   cur:'board',
@@ -3056,32 +3056,32 @@ const REFLECTIONS = [
   { q: 'De rots in de branding houdt geen gevoel, maar kent het beste de zee.', a: 'Natuurlijk Agile', el: 'chi', time: 'morning' },
   { q: 'Creativiteit en vrijheid zijn waardevol — maar discipline redt soms je leven.', a: 'Natuurlijk Agile', el: 'chi', time: 'morning' },
   { q: 'Een goede uitvoering van de basis is nog steeds het grootste belang.', a: 'Natuurlijk Agile', el: 'chi', time: 'any' },
-  { q: 'Today is victory over yourself of yesterday.', a: 'Miyamoto Musashi', el: 'chi', time: 'morning', tone: 'stagnatie' },
-  { q: 'Determine that today you will overcome your self of the day before.', a: 'Miyamoto Musashi', el: 'chi', time: 'morning', tone: 'stagnatie' },
-  { q: 'Do not think dishonestly. The way is in training.', a: 'Miyamoto Musashi', el: 'chi', time: 'any', tone: 'standaard' },
+  { q: 'Vandaag is de overwinning op jezelf van gisteren.', q_en: 'Today is victory over yourself of yesterday.', a: 'Miyamoto Musashi', el: 'chi', time: 'morning', tone: 'stagnatie' },
+  { q: 'Besluit dat je vandaag jezelf van gisteren overwint.', q_en: 'Determine that today you will overcome your self of the day before.', a: 'Miyamoto Musashi', el: 'chi', time: 'morning', tone: 'stagnatie' },
+  { q: 'Denk niet oneerlijk. De weg ligt in de oefening.', q_en: 'Do not think dishonestly. The way is in training.', a: 'Miyamoto Musashi', el: 'chi', time: 'any', tone: 'standaard' },
 
   // === SUI · WATER — meebewegen, wendbaarheid, geen weerstand ===
   { q: 'Eerst meebewegen met wat is. Dan pas een nieuwe richting tonen.', a: 'Natuurlijk Agile', el: 'sui', time: 'morning' },
   { q: 'Verplaats jezelf in je tegenstander. Daar verdwijnt de weerstand.', a: 'Natuurlijk Agile', el: 'sui', time: 'any' },
   { q: 'Wat je probeert te zijn moet passen in je natuurlijke leefomgeving — anders schuurt het.', a: 'Natuurlijk Agile', el: 'sui', time: 'any' },
-  { q: 'Notice that the stiffest tree is most easily cracked, while the bamboo survives by bending.', a: 'Bruce Lee', el: 'sui', time: 'evening', tone: 'herstel' },
-  { q: 'Be like water making its way through cracks. Be water, my friend.', a: 'Bruce Lee', el: 'sui', time: 'any', tone: 'herstel' },
-  { q: 'Empty your mind, be formless, shapeless — like water.', a: 'Bruce Lee', el: 'sui', time: 'evening', tone: 'herstel' },
-  { q: 'You must be shapeless, formless, like water. When you pour water in a cup, it becomes the cup.', a: 'Bruce Lee', el: 'sui', time: 'any', tone: 'stagnatie' },
+  { q: 'De stijfste boom breekt het snelst. De bamboe overleeft door mee te buigen.', q_en: 'Notice that the stiffest tree is most easily cracked, while the bamboo survives by bending.', a: 'Bruce Lee', el: 'sui', time: 'evening', tone: 'herstel' },
+  { q: 'Wees als water dat zijn weg vindt door scheuren. Wees water, mijn vriend.', q_en: 'Be like water making its way through cracks. Be water, my friend.', a: 'Bruce Lee', el: 'sui', time: 'any', tone: 'herstel' },
+  { q: 'Maak je geest leeg, wees vormloos — als water.', q_en: 'Empty your mind, be formless, shapeless — like water.', a: 'Bruce Lee', el: 'sui', time: 'evening', tone: 'herstel' },
+  { q: 'Je moet vormloos zijn, als water. Giet water in een kop, en het wordt de kop.', q_en: 'You must be shapeless, formless, like water. When you pour water in a cup, it becomes the cup.', a: 'Bruce Lee', el: 'sui', time: 'any', tone: 'stagnatie' },
 
   // === FŪ · WIND — veerkracht, paradigma-verandering, andere wind ===
   { q: 'Soms moet er gewoon een andere wind waaien.', a: 'Natuurlijk Agile', el: 'fu', time: 'morning' },
   { q: 'De bovenliggende stroom gaat in de juiste richting — ook als de wind nu guur is.', a: 'Natuurlijk Agile', el: 'fu', time: 'evening' },
   { q: 'Verandering komt in spiralen, niet in lijnen.', a: 'Natuurlijk Agile', el: 'fu', time: 'any' },
-  { q: 'Long-term consistency trumps short-term intensity.', a: 'Bruce Lee', el: 'fu', time: 'morning', tone: 'voortgang' },
+  { q: 'Lange consistentie wint van korte intensiteit.', q_en: 'Long-term consistency trumps short-term intensity.', a: 'Bruce Lee', el: 'fu', time: 'morning', tone: 'voortgang' },
 
   // === KA · VUUR — energie, leiderschap, concrete daden ===
   { q: 'Elke dag is er een keuze: wakker je het vuur aan, of laat je het uitdoven?', a: 'Natuurlijk Agile', el: 'ka', time: 'morning' },
   { q: 'Een Agile transformatie begint met een overduidelijke heupzwaai.', a: 'Natuurlijk Agile', el: 'ka', time: 'morning' },
-  { q: 'Knowing is not enough, we must apply. Willing is not enough, we must do.', a: 'Bruce Lee', el: 'ka', time: 'morning', tone: 'standaard' },
-  { q: 'I fear not the man who has practiced 10,000 kicks once, but the man who has practiced one kick 10,000 times.', a: 'Bruce Lee', el: 'ka', time: 'any', tone: 'voortgang' },
-  { q: 'The successful warrior is the average man, with laser-like focus.', a: 'Bruce Lee', el: 'ka', time: 'morning', tone: 'voortgang' },
-  { q: 'If you spend too much time thinking about a thing, you\'ll never get it done.', a: 'Bruce Lee', el: 'ka', time: 'morning', tone: 'stagnatie' },
+  { q: 'Weten is niet genoeg, we moeten toepassen. Willen is niet genoeg, we moeten doen.', q_en: 'Knowing is not enough, we must apply. Willing is not enough, we must do.', a: 'Bruce Lee', el: 'ka', time: 'morning', tone: 'standaard' },
+  { q: 'Ik vrees niet de man die 10.000 trappen één keer oefende, maar de man die één trap 10.000 keer oefende.', q_en: 'I fear not the man who has practiced 10,000 kicks once, but the man who has practiced one kick 10,000 times.', a: 'Bruce Lee', el: 'ka', time: 'any', tone: 'voortgang' },
+  { q: 'De succesvolle krijger is de gewone mens, met laserscherpe focus.', q_en: 'The successful warrior is the average man, with laser-like focus.', a: 'Bruce Lee', el: 'ka', time: 'morning', tone: 'voortgang' },
+  { q: 'Wie te veel tijd verliest in denken, krijgt het nooit gedaan.', q_en: 'If you spend too much time thinking about a thing, you\'ll never get it done.', a: 'Bruce Lee', el: 'ka', time: 'morning', tone: 'stagnatie' },
 
   // === KŪ · LEEGTE — flow, slow down to speed up, intuïtie ===
   { q: 'Slow down to speed up.', a: 'Natuurlijk Agile', el: 'ku', time: 'morning' },
@@ -3089,27 +3089,27 @@ const REFLECTIONS = [
   { q: 'Echte innovatie ontstaat alleen in de leegte. Patronen breken, nieuwe wegen open.', a: 'Natuurlijk Agile', el: 'ku', time: 'evening' },
   { q: 'Flow is een state(less) of mind — geen afleidende gedachten meer.', a: 'Natuurlijk Agile', el: 'ku', time: 'any' },
   { q: 'Je gaat het pas zien als je het doorhebt.', a: 'Johan Cruijff', el: 'ku', time: 'any' },
-  { q: 'We argue the need for wisdom — a higher form of tacit knowledge — to cope with a fast-changing world.', a: 'Prof. Ikujiro Nonaka', el: 'ku', time: 'any' },
-  { q: 'Almost everything will work again if you unplug it for a few minutes — including you.', a: 'Anne Lamott', el: 'ku', time: 'evening', tone: 'herstel' },
-  { q: 'In adversity, do not lose virtue.', a: 'Miyamoto Musashi', el: 'ku', time: 'evening', tone: 'herstel' },
+  { q: 'Wij pleiten voor wijsheid — een hogere vorm van impliciete kennis — om mee te kunnen in een snel veranderende wereld.', q_en: 'We argue the need for wisdom — a higher form of tacit knowledge — to cope with a fast-changing world.', a: 'Prof. Ikujiro Nonaka', el: 'ku', time: 'any' },
+  { q: 'Bijna alles werkt weer als je het een paar minuten uitzet — jij ook.', q_en: 'Almost everything will work again if you unplug it for a few minutes — including you.', a: 'Anne Lamott', el: 'ku', time: 'evening', tone: 'herstel' },
+  { q: 'Verlies in tegenspoed je deugd niet.', q_en: 'In adversity, do not lose virtue.', a: 'Miyamoto Musashi', el: 'ku', time: 'evening', tone: 'herstel' },
 
   // === UNIVERSEEL / STANDAARD — geen element-tag ===
   { q: 'Vijf elementen, één beoefenaar. Vandaag draag jij de vorm.', a: 'Takumi', time: 'morning' },
   { q: 'Niet sneller. Scherper.', a: 'Takumi', time: 'morning' },
   { q: 'De vraag is niet wat je bereikt. De vraag is wat je waarneemt onderweg.', a: 'Takumi', time: 'any' },
   { q: 'Een dag van rust telt mee — als je hem bewust kiest.', a: 'Takumi', time: 'evening' },
-  { q: 'As you think, so shall you become.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
-  { q: 'Think lightly of yourself and deeply of the world.', a: 'Miyamoto Musashi', time: 'evening', tone: 'standaard' },
-  { q: 'We are what we repeatedly do. Excellence is not an act, but a habit.', a: 'Aristoteles', time: 'morning', tone: 'standaard' },
-  { q: 'Absorb what is useful, discard what is not, add what is uniquely your own.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
-  { q: 'Be happy, but never satisfied.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
-  { q: 'Mistakes are always forgivable, if one has the courage to admit them.', a: 'Bruce Lee', time: 'evening', tone: 'standaard' },
-  { q: 'If you love life, don\'t waste time, for time is what life is made up of.', a: 'Bruce Lee', time: 'morning', tone: 'standaard' },
-  { q: 'The possession of anything begins in the mind.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
-  { q: 'Defeat is a state of mind; no one is ever defeated until defeat has been accepted as a reality.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
-  { q: 'Do not pray for an easy life, pray for the strength to endure a difficult one.', a: 'Bruce Lee', time: 'morning', tone: 'stagnatie' },
-  { q: 'A goal is not always meant to be reached; it often serves simply as something to aim at.', a: 'Bruce Lee', time: 'any', tone: 'stagnatie' },
-  { q: 'Mastery is not a function of genius or talent. It is a function of time and intense focus.', a: 'Robert Greene', time: 'morning', tone: 'voortgang' }
+  { q: 'Zoals je denkt, zo zul je worden.', q_en: 'As you think, so shall you become.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
+  { q: 'Denk licht over jezelf, en diep over de wereld.', q_en: 'Think lightly of yourself and deeply of the world.', a: 'Miyamoto Musashi', time: 'evening', tone: 'standaard' },
+  { q: 'We zijn wat we herhaaldelijk doen. Uitmuntendheid is geen daad, maar een gewoonte.', q_en: 'We are what we repeatedly do. Excellence is not an act, but a habit.', a: 'Aristoteles', time: 'morning', tone: 'standaard' },
+  { q: 'Neem aan wat van waarde is, laat los wat niet werkt, voeg toe wat alleen van jou is.', q_en: 'Absorb what is useful, discard what is not, add what is uniquely your own.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
+  { q: 'Wees gelukkig, maar nooit tevreden.', q_en: 'Be happy, but never satisfied.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
+  { q: 'Fouten zijn altijd vergeeflijk — mits je de moed hebt ze toe te geven.', q_en: 'Mistakes are always forgivable, if one has the courage to admit them.', a: 'Bruce Lee', time: 'evening', tone: 'standaard' },
+  { q: 'Hou je van het leven, verspil geen tijd — want tijd is waarvan het leven is gemaakt.', q_en: 'If you love life, don\'t waste time, for time is what life is made up of.', a: 'Bruce Lee', time: 'morning', tone: 'standaard' },
+  { q: 'Het bezit van iets begint in de geest.', q_en: 'The possession of anything begins in the mind.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
+  { q: 'Verslagen zijn is een staat van geest; niemand is verslagen tot hij de nederlaag als waar accepteert.', q_en: 'Defeat is a state of mind; no one is ever defeated until defeat has been accepted as a reality.', a: 'Bruce Lee', time: 'any', tone: 'standaard' },
+  { q: 'Bid niet om een gemakkelijk leven, maar om de kracht om een moeilijk leven te dragen.', q_en: 'Do not pray for an easy life, pray for the strength to endure a difficult one.', a: 'Bruce Lee', time: 'morning', tone: 'stagnatie' },
+  { q: 'Een doel hoeft niet altijd bereikt te worden — vaak dient het simpelweg als richtpunt.', q_en: 'A goal is not always meant to be reached; it often serves simply as something to aim at.', a: 'Bruce Lee', time: 'any', tone: 'stagnatie' },
+  { q: 'Meesterschap is geen kwestie van genie of talent. Het is een kwestie van tijd en intense focus.', q_en: 'Mastery is not a function of genius or talent. It is a function of time and intense focus.', a: 'Robert Greene', time: 'morning', tone: 'voortgang' }
 ];
 
 function pickReflection(period){
@@ -3198,9 +3198,12 @@ function renderQuote(){
     var tone = needsHerstel ? 'herstel' : hasStagnatie ? 'stagnatie' : goedVoortgang ? 'voortgang' : 'standaard';
     var q = pickCockpitQuote(tone);
     if(!q) return;
+    // Taal-aware tekst: EN-gebruiker krijgt q_en als beschikbaar, anders q
+    var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
+    var text = (isEn && q.q_en) ? q.q_en : q.q;
     var qEl=document.getElementById('ck-quote');
     var aEl=document.getElementById('ck-quote-auth');
-    if(qEl)qEl.textContent='\u201c'+q.q+'\u201d';
+    if(qEl)qEl.textContent='\u201c'+text+'\u201d';
     if(aEl)aEl.textContent='\u2014 '+q.a;
   }catch(e){}
 }
@@ -3221,7 +3224,9 @@ function renderQuote(){
       var badge=document.getElementById('onb-badge');
       if(badge)badge.style.display='block';
     } else if(q) {
-      qEl.textContent='\u201c'+q.q+'\u201d';
+      var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
+      var text = (isEn && q.q_en) ? q.q_en : q.q;
+      qEl.textContent='\u201c'+text+'\u201d';
       if(aEl)aEl.textContent='\u2014 '+q.a;
     }
   });
