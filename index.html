@@ -2140,7 +2140,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.350';
+const APP_VERSION = '0.360';
 
 const S={
   cur:'board',
@@ -3032,6 +3032,112 @@ function markNietNieuw(){
   var badge=document.getElementById('onb-badge');
   if(badge)badge.style.opacity='0';
 }
+// ── DAGELIJKSE REFLECTIES ──
+// Quotes voor de pop-up bij begin & eind van de dag. Mix van bronnen:
+//  1. Boek "Natuurlijk Agile" (Paul Takken) — primaire bron
+//  2. Filosofen die de elementen raken (Musashi, Bruce Lee, Nonaka, ea)
+//  3. Element-stemmen — korte reflectieve regels per Godai-element
+//
+// Velden:
+//   q     - de quote (Nederlands)
+//   q_en  - optioneel Engels equivalent (anders fallback q)
+//   a     - auteur/bron
+//   el    - 'chi'|'sui'|'fu'|'ka'|'ku' (optioneel — boost als element vandaag leidt)
+//   time  - 'morning'|'evening'|'any' (default 'any')
+//
+// Paul levert nieuwe quotes via chat; ik integreer ze hier.
+const REFLECTIONS = [
+  // === CHI · AARDE — fundament, discipline, rots in de branding ===
+  { q: 'De rots in de branding houdt geen gevoel, maar kent het beste de zee.', a: 'Natuurlijk Agile', el: 'chi', time: 'morning' },
+  { q: 'Creativiteit en vrijheid zijn waardevol — maar discipline redt soms je leven.', a: 'Natuurlijk Agile', el: 'chi', time: 'morning' },
+  { q: 'Een goede uitvoering van de basis is nog steeds het grootste belang.', a: 'Natuurlijk Agile', el: 'chi', time: 'any' },
+  { q: 'Today is victory over yourself of yesterday.', a: 'Miyamoto Musashi', el: 'chi', time: 'morning' },
+  { q: 'Do not think dishonestly. The way is in training.', a: 'Miyamoto Musashi', el: 'chi', time: 'any' },
+
+  // === SUI · WATER — meebewegen, wendbaarheid, geen weerstand ===
+  { q: 'Eerst meebewegen met wat is. Dan pas een nieuwe richting tonen.', a: 'Natuurlijk Agile', el: 'sui', time: 'morning' },
+  { q: 'Verplaats jezelf in je tegenstander. Daar verdwijnt de weerstand.', a: 'Natuurlijk Agile', el: 'sui', time: 'any' },
+  { q: 'Wat je probeert te zijn moet passen in je natuurlijke leefomgeving — anders schuurt het.', a: 'Natuurlijk Agile', el: 'sui', time: 'any' },
+  { q: 'Notice that the stiffest tree is most easily cracked, while the bamboo survives by bending.', a: 'Bruce Lee', el: 'sui', time: 'evening' },
+  { q: 'Be like water making its way through cracks. Be water, my friend.', a: 'Bruce Lee', el: 'sui', time: 'any' },
+  { q: 'Empty your mind, be formless, shapeless — like water.', a: 'Bruce Lee', el: 'sui', time: 'evening' },
+
+  // === FŪ · WIND — veerkracht, paradigma-verandering, andere wind ===
+  { q: 'Soms moet er gewoon een andere wind waaien.', a: 'Natuurlijk Agile', el: 'fu', time: 'morning' },
+  { q: 'De bovenliggende stroom gaat in de juiste richting — ook als de wind nu guur is.', a: 'Natuurlijk Agile', el: 'fu', time: 'evening' },
+  { q: 'Verandering komt in spiralen, niet in lijnen.', a: 'Natuurlijk Agile', el: 'fu', time: 'any' },
+  { q: 'Long-term consistency trumps short-term intensity.', a: 'Bruce Lee', el: 'fu', time: 'morning' },
+
+  // === KA · VUUR — energie, leiderschap, concrete daden ===
+  { q: 'Elke dag is er een keuze: wakker je het vuur aan, of laat je het uitdoven?', a: 'Natuurlijk Agile', el: 'ka', time: 'morning' },
+  { q: 'Een Agile transformatie begint met een overduidelijke heupzwaai.', a: 'Natuurlijk Agile', el: 'ka', time: 'morning' },
+  { q: 'Knowing is not enough, we must apply. Willing is not enough, we must do.', a: 'Bruce Lee', el: 'ka', time: 'morning' },
+  { q: 'I fear not the man who has practiced 10,000 kicks once, but the man who has practiced one kick 10,000 times.', a: 'Bruce Lee', el: 'ka', time: 'any' },
+  { q: 'The successful warrior is the average man, with laser-like focus.', a: 'Bruce Lee', el: 'ka', time: 'morning' },
+
+  // === KŪ · LEEGTE — flow, slow down to speed up, intuïtie ===
+  { q: 'Slow down to speed up.', a: 'Natuurlijk Agile', el: 'ku', time: 'morning' },
+  { q: 'Leegte is waar alles samenkomt.', a: 'Natuurlijk Agile', el: 'ku', time: 'evening' },
+  { q: 'Echte innovatie ontstaat alleen in de leegte. Patronen breken, nieuwe wegen open.', a: 'Natuurlijk Agile', el: 'ku', time: 'evening' },
+  { q: 'Flow is een state(less) of mind — geen afleidende gedachten meer.', a: 'Natuurlijk Agile', el: 'ku', time: 'any' },
+  { q: 'Je gaat het pas zien als je het doorhebt.', a: 'Johan Cruijff', el: 'ku', time: 'any' },
+  { q: 'We argue the need for wisdom — a higher form of tacit knowledge — to cope with a fast-changing world.', a: 'Prof. Ikujiro Nonaka', el: 'ku', time: 'any' },
+  { q: 'Almost everything will work again if you unplug it for a few minutes — including you.', a: 'Anne Lamott', el: 'ku', time: 'evening' },
+
+  // === UNIVERSEEL / STANDAARD — geen element-tag ===
+  { q: 'Vijf elementen, één beoefenaar. Vandaag draag jij de vorm.', a: 'Takumi', time: 'morning' },
+  { q: 'Niet sneller. Scherper.', a: 'Takumi', time: 'morning' },
+  { q: 'De vraag is niet wat je bereikt. De vraag is wat je waarneemt onderweg.', a: 'Takumi', time: 'any' },
+  { q: 'Een dag van rust telt mee — als je hem bewust kiest.', a: 'Takumi', time: 'evening' },
+  { q: 'As you think, so shall you become.', a: 'Bruce Lee', time: 'any' },
+  { q: 'Think lightly of yourself and deeply of the world.', a: 'Miyamoto Musashi', time: 'evening' },
+  { q: 'We are what we repeatedly do. Excellence is not an act, but a habit.', a: 'Aristoteles', time: 'morning' },
+  { q: 'In adversity, do not lose virtue.', a: 'Miyamoto Musashi', time: 'evening' },
+  { q: 'Absorb what is useful, discard what is not, add what is uniquely your own.', a: 'Bruce Lee', time: 'any' }
+];
+
+function pickReflection(period){
+  // Filter quotes die passen bij de periode (morning/evening), of universeel.
+  var pool = REFLECTIONS.filter(function(r){
+    var t = r.time || 'any';
+    return t === 'any' || t === period;
+  });
+  if(!pool.length) return null;
+
+  // Boost quotes van het element dat vandaag leidt — koppelt reflectie aan dag-context.
+  var leaderEl = null;
+  try {
+    if(typeof getDayLeader === 'function'){
+      var l = getDayLeader();
+      if(l && l.eid && l.eid !== 'board') leaderEl = l.eid;
+    }
+  } catch(e){}
+
+  // Boost ook quotes van het element van het primaire doel — gebruiker-relevantie.
+  var goalEl = null;
+  try {
+    if(typeof GOALS !== 'undefined' && GOALS){
+      var primary = S.primaryGoalId ? GOALS.find(function(g){ return g.id === S.primaryGoalId; }) : null;
+      if(primary && primary.leadElement) goalEl = primary.leadElement;
+    }
+  } catch(e){}
+
+  // Probability buckets: matching element x3, related x1.5, universal x1
+  var weighted = pool.map(function(r){
+    var w = 1;
+    if(r.el && r.el === leaderEl) w *= 3;
+    if(r.el && r.el === goalEl) w *= 2;
+    return { r: r, w: w };
+  });
+  var total = weighted.reduce(function(s, x){ return s + x.w; }, 0);
+  var roll = Math.random() * total;
+  for(var i = 0; i < weighted.length; i++){
+    roll -= weighted[i].w;
+    if(roll <= 0) return weighted[i].r;
+  }
+  return weighted[weighted.length - 1].r;
+}
+
 const QUOTES={
   stagnatie:[
     {q:"If you spend too much time thinking about a thing, you'll never get it done.",a:"Bruce Lee"},
@@ -8635,6 +8741,144 @@ document.addEventListener('DOMContentLoaded', function() {
   } else {
     attachViewObservers();
   }
+})();
+
+// ── DAGELIJKSE REFLECTIE-POPUP ──
+// Pop-up bij eerste app-open van ochtend (5-12u) of avond (19u-3u) met
+// een quote uit het boek Natuurlijk Agile, filosofen, of element-stemmen.
+// Stoic-stijl: ademende kanji, één serif italic regel, tap-to-continue.
+// Eenmaal per periode per dag — geen sleur.
+(function(){
+  // Hero kanji per element (matched op leader of fallback 道)
+  var ELEMENT_KANJI = { chi:'地', sui:'水', fu:'風', ka:'火', ku:'空' };
+
+  function getCurrentPeriod(){
+    var h = new Date().getHours();
+    if(h >= 5 && h < 12) return 'morning';
+    if(h >= 19 || h < 3) return 'evening';
+    return null; // middag: geen reflectie
+  }
+
+  function alreadyShownToday(period){
+    var key = 'tm2_reflection_' + new Date().toISOString().slice(0,10) + '_' + period;
+    return !!localStorage.getItem(key);
+  }
+
+  function markShown(period){
+    var key = 'tm2_reflection_' + new Date().toISOString().slice(0,10) + '_' + period;
+    try { localStorage.setItem(key, '1'); } catch(e){}
+  }
+
+  function buildModal(){
+    var existing = document.getElementById('reflection-modal');
+    if(existing) return existing;
+
+    var m = document.createElement('div');
+    m.id = 'reflection-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(20,18,14,.62);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;opacity:0;transition:opacity .35s cubic-bezier(.16,1,.3,1)';
+    m.innerHTML =
+      '<div id="refl-card" style="background:var(--paper);border-radius:20px;padding:52px 30px 38px;max-width:380px;width:100%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.32);position:relative;transform:translateY(12px);transition:transform .45s cubic-bezier(.16,1,.3,1)">'+
+        '<div class="kanji-hero" style="margin-bottom:26px;display:inline-block"><div id="refl-kanji" class="kanji-hero-self" style="font-family:var(--FJ);font-size:74px;color:var(--acc);line-height:1;font-weight:300;opacity:.85">道</div></div>'+
+        '<div id="refl-period" style="font-size:10.5px;color:var(--m);letter-spacing:.18em;text-transform:uppercase;margin-bottom:20px;opacity:.65;font-weight:500">Ochtend reflectie</div>'+
+        '<div id="refl-quote" style="font-family:var(--serif);font-size:19px;line-height:1.65;font-style:italic;color:var(--ink);margin-bottom:28px;opacity:.92;letter-spacing:-.005em"></div>'+
+        '<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:32px;opacity:.55">'+
+          '<div style="height:1px;width:22px;background:var(--m)"></div>'+
+          '<div id="refl-author" style="font-size:10.5px;color:var(--ink);letter-spacing:.22em;text-transform:uppercase;font-weight:500"></div>'+
+          '<div style="height:1px;width:22px;background:var(--m)"></div>'+
+        '</div>'+
+        '<div style="font-size:10.5px;color:var(--m);opacity:.45;font-family:var(--F);letter-spacing:.08em">tik om verder te gaan</div>'+
+      '</div>';
+    document.body.appendChild(m);
+
+    // Klik/tik op modal of card → sluit
+    m.addEventListener('click', closeModal);
+    return m;
+  }
+
+  function closeModal(){
+    var m = document.getElementById('reflection-modal');
+    if(!m) return;
+    m.style.opacity = '0';
+    var card = document.getElementById('refl-card');
+    if(card) card.style.transform = 'translateY(12px)';
+    setTimeout(function(){ m.style.display = 'none'; }, 380);
+  }
+
+  function showDailyReflection(forced){
+    var period = getCurrentPeriod();
+    if(!period && !forced) return false;
+    if(!forced && alreadyShownToday(period)) return false;
+
+    // forced mode (handmatige aanroep): pak ochtend als geen periode actief
+    if(!period) period = 'morning';
+
+    var pick = (typeof pickReflection === 'function') ? pickReflection(period) : null;
+    if(!pick) return false;
+
+    var m = buildModal();
+    var card = document.getElementById('refl-card');
+    var kanjiEl = document.getElementById('refl-kanji');
+    var periodEl = document.getElementById('refl-period');
+    var quoteEl = document.getElementById('refl-quote');
+    var authorEl = document.getElementById('refl-author');
+
+    // Element-kanji als deze quote element-getagd is, anders 道 (dao = pad)
+    var kanji = (pick.el && ELEMENT_KANJI[pick.el]) ? ELEMENT_KANJI[pick.el] : '道';
+    if(kanjiEl) kanjiEl.textContent = kanji;
+
+    // Period-label
+    var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
+    if(periodEl){
+      periodEl.textContent = period === 'morning'
+        ? (isEn ? 'Morning reflection' : 'Ochtend reflectie')
+        : (isEn ? 'Evening reflection' : 'Avond reflectie');
+    }
+
+    // Quote — gebruik q_en als beschikbaar bij EN, anders altijd q
+    if(quoteEl) quoteEl.textContent = (isEn && pick.q_en) ? pick.q_en : pick.q;
+    if(authorEl) authorEl.textContent = pick.a || '';
+
+    // Toon met fade-in
+    m.style.display = 'flex';
+    requestAnimationFrame(function(){
+      m.style.opacity = '1';
+      if(card) card.style.transform = 'translateY(0)';
+    });
+
+    if(!forced) markShown(period);
+    return true;
+  }
+
+  // Public API — Paul kan hem handmatig triggeren via console of help-knop
+  window.showDailyReflection = showDailyReflection;
+
+  // Trigger bij app-open. Wacht tot tour/welcome geen voorrang heeft.
+  function maybeShowReflection(){
+    // Niet tonen tijdens login/auth scherm
+    if(typeof isSessionValid === 'function' && !isSessionValid()) return;
+
+    // Niet tonen als welcome modal of tour actief is — die hebben voorrang
+    if(document.getElementById('welcome-modal-overlay')) return;
+    if(document.getElementById('tour-overlay')){
+      var t = document.getElementById('tour-overlay');
+      if(t.style.display !== 'none' && t.offsetParent !== null) return;
+    }
+
+    // Welcome moet eerst zijn afgerond — eerste-keer-gebruiker krijgt niet
+    // direct beide modals over elkaar
+    try {
+      var welcomeSeen = localStorage.getItem('tm_welcome_seen_v1');
+      if(!welcomeSeen) return;
+    } catch(e){}
+
+    showDailyReflection(false);
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    // Wacht iets langer dan de tour-trigger zodat die voorrang krijgt bij
+    // first-time gebruikers. 2.5s = lang genoeg dat welcome zichtbaar is.
+    setTimeout(maybeShowReflection, 2500);
+  });
 })();
 
 </script>
