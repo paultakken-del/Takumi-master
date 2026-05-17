@@ -515,10 +515,16 @@ input[type=range]{width:100%;accent-color:var(--acc)}
   #v-bo .cia{flex-shrink:0;position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--b);padding-bottom:env(safe-area-inset-bottom,0px)}
   #sb{display:flex!important;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);position:fixed!important;top:0;bottom:0;left:0;z-index:100;width:280px;overflow-y:auto}
   #sb.sb-open{transform:translateX(0)!important}
-  #mob{display:block!important}
-  #ham-btn{display:flex!important}
+  #mob{display:block!important;z-index:330!important}
+  #ham-btn{display:flex!important;z-index:340!important}
   #mn{margin-left:0!important;padding-bottom:84px!important}
   .vs{padding-bottom:84px!important}
+  /* Goal-modal mag op mobile niet over bottom-tab vallen — anders is
+     navigatie weg zodra je een doel opent. Inset's bottom = 72px geeft
+     ruimte voor #mob (64-68px incl. safe-area). Backdrop blijft over
+     volle hoogte voor visuele consistentie van de dim. */
+  .go{bottom:72px}
+  .gs{padding-bottom:0}
   .card{padding:20px!important;border-radius:16px!important}
   .btn:not(.sm){min-height:48px!important;padding:12px 20px!important;font-size:15px!important}
   .btn.sm{min-height:44px!important;padding:10px 16px!important;font-size:13px!important}
@@ -1453,8 +1459,14 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 <div class="go" id="go" onclick="if(event.target===this)closeGoal()">
   <div class="gs">
     <div class="gsh">
-      <div style="display:flex;align-items:center;justify-content:space-between"><div class="gst" id="gs-t">Doel</div><button class="btn sm gh" onclick="closeGoal()">✕</button></div>
-      <div style="font-size:12px;color:var(--m);margin-top:4px" id="gs-s"></div>
+      <!-- Back-button LINKS (consistent met iOS navigatie + zo dekt het de
+           hamburger rechtsboven niet af). Titel-pattern matched .tb-t:
+           kanji prefix in serif + naam erachter. -->
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn sm gh" onclick="closeGoal()" style="flex-shrink:0;width:36px;height:36px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;background:transparent;border:1px solid var(--b)" aria-label="Terug">←</button>
+        <div class="gst" id="gs-t" style="font-family:var(--serif);font-weight:500;font-size:18px;letter-spacing:-.005em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Doel</div>
+      </div>
+      <div style="font-size:11.5px;color:var(--m);margin-top:8px;letter-spacing:.04em" id="gs-s"></div>
       <div style="margin-top:10px"><div class="gp"><div class="gf" id="gs-b" style="width:0%;background:var(--teal)"></div></div><div class="gpc" id="gs-p">0%</div></div>
     </div>
     <div class="gsb" id="gs-body"></div>
@@ -2145,7 +2157,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.420';
+const APP_VERSION = '0.430';
 
 const S={
   cur:'board',
@@ -2859,6 +2871,11 @@ function renderMaList(){
 
 // ── NAVIGATION ─────────────────────────────────────────────────────
 function go(id){
+  // Sluit doel-modal automatisch bij view-switch — anders zit gebruiker
+  // vast in modal terwijl onderliggende view verandert. Zelfde aanpak
+  // voor sidebar als die open is (mobile slide-in).
+  try { var gmod = document.getElementById('go'); if(gmod && gmod.classList.contains('on')) gmod.classList.remove('on'); } catch(e){}
+  try { var sb = document.getElementById('sb'); if(sb && sb.classList.contains('sb-open')) sb.classList.remove('sb-open'); } catch(e){}
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   document.querySelectorAll('[data-v]').forEach(el=>el.classList.toggle('on',el.dataset.v===id));
   const v=document.getElementById('v-'+id);if(v)v.classList.add('on');
