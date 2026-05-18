@@ -2158,7 +2158,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.440';
+const APP_VERSION = '0.450';
 
 const S={
   cur:'board',
@@ -7987,9 +7987,10 @@ if(S.port)renderPort();
 initCK();
 updateDagVoortgang();
 setTimeout(renderQuote, 0);
-// Auto-sync if cache is old
-const lf=localStorage.getItem('tm2_lf');
-if(!lf||Date.now()-new Date(lf).getTime()>5*60*1000){setTimeout(()=>syncPort().catch(()=>{}),2000);}
+// Auto-sync uitgezet — Paul wil geen 'Koersen ophalen...' popup bij
+// elke startup. Sync gebeurt alleen nog handmatig via de '↺ Live
+// koersen' knop op de cockpit-portfolio card. De last-fetch timestamp
+// blijft bijgewerkt zodat de cache-leeftijd zichtbaar blijft.
 localStorage.setItem('tm2_lf',new Date().toISOString());
 
 
