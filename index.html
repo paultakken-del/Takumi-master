@@ -37,12 +37,12 @@
 [data-theme="light"]{
   --ink:#12110e;--ink2:#ffffff;--ink3:#f5f2ed;
   --m:#302c28;--f:#4a4440;
-  --paper:#fafaf8;--pw:#f0ede8;--pc:#ffffff;
-  --p2:#f3f0ea;
+  --paper:#faf7f2;--pw:#ede9e0;--pc:#fefcf8;
+  --p2:#f0ebe0;
   --b:rgba(18,17,14,.05);--bm:rgba(18,17,14,.1);
   --sh:0 1px 3px rgba(18,17,14,.04),0 4px 16px rgba(18,17,14,.06);
 }
-[data-theme="light"] #sb{background:#ffffff;border-right:1px solid var(--b)}
+[data-theme="light"] #sb{background:var(--pc);border-right:1px solid var(--b)}
 [data-theme="light"] .sb-kanji{color:var(--acc)}
 [data-theme="light"] .sb-brand{color:var(--ink)}
 [data-theme="light"] .sb-sec{color:rgba(18,17,14,.5)}
@@ -2206,7 +2206,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.460';
+const APP_VERSION = '0.470';
 
 const S={
   cur:'board',
