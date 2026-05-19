@@ -715,6 +715,54 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 </style>
 </head>
 <body>
+<!-- ── WAVE INTRO — Hokusai's golf als 2-sec opener bij app-start.
+     Filosofie: rust rollend over chaos. Public domain print via Wikimedia.
+     Fade-out via CSS, dan removed uit DOM via JS. -->
+<div id="wave-intro" aria-hidden="true">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/The_Great_Wave_off_Kanagawa.jpg/1920px-The_Great_Wave_off_Kanagawa.jpg"
+       alt="" loading="eager">
+  <div class="wave-intro-glyph">匠</div>
+</div>
+<style>
+#wave-intro{
+  position:fixed; inset:0; z-index:99999;
+  background:#0e1928;
+  display:flex; align-items:center; justify-content:center;
+  animation: wave-intro-out 600ms ease-in 1700ms forwards;
+}
+#wave-intro img{
+  width:100%; height:100%; object-fit:cover; object-position:center 35%;
+  filter: brightness(.85);
+  animation: wave-intro-zoom 2300ms ease-out forwards;
+}
+#wave-intro .wave-intro-glyph{
+  position:absolute;
+  font-family: var(--FJ, 'Noto Serif JP', serif);
+  font-size: clamp(120px, 18vw, 220px);
+  color: rgba(247,241,230,.92);
+  text-shadow: 0 4px 32px rgba(0,0,0,.6);
+  animation: wave-intro-glyph 2300ms ease-out forwards;
+  font-weight: 300;
+}
+@keyframes wave-intro-zoom {
+  0%   { transform: scale(1.08); }
+  100% { transform: scale(1.0); }
+}
+@keyframes wave-intro-glyph {
+  0%   { opacity: 0; transform: translateY(20px) scale(.95); }
+  30%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes wave-intro-out {
+  to { opacity: 0; visibility: hidden; }
+}
+</style>
+<script>
+// Verwijder de Wave-intro uit DOM na de fade — voorkomt dat een
+// opgehangen overlay later interactie blokkeert.
+setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el.remove(); }, 2400);
+</script>
+
 <!-- ── ICON LIBRARY ── line icons, gebruikt via <svg class="ico"><use href="#i-name"/></svg> -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -2158,7 +2206,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.450';
+const APP_VERSION = '0.460';
 
 const S={
   cur:'board',
