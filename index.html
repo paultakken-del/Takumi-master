@@ -2207,7 +2207,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.493';
+const APP_VERSION = '0.494';
 
 const S={
   cur:'board',
@@ -8469,7 +8469,8 @@ function showWelcomeModal(opts){
   card.innerHTML = ''
     + '<div style="text-align:center;margin-bottom:22px">'
     + '  <div style="width:56px;height:56px;border-radius:50%;background:#c4532a;display:inline-flex;align-items:center;justify-content:center;font-family:\'Noto Serif JP\',serif;font-size:30px;color:#fff;margin-bottom:14px">匠</div>'
-    + '  <div style="font-family:\'Noto Serif Display\',\'Noto Serif\',serif;font-size:22px;font-weight:600;color:#1a1815;display:flex;align-items:center;justify-content:center;gap:10px">Welkom in Takumi<span style="font-size:9px;font-weight:700;letter-spacing:.16em;color:#c4532a;background:rgba(196,83,42,.12);border:1px solid rgba(196,83,42,.28);border-radius:10px;padding:3px 8px;text-transform:uppercase">Beta</span></div>'
+    + '  <div style="font-family:\'Noto Serif Display\',\'Noto Serif\',serif;font-size:22px;font-weight:600;color:#1a1815;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:10px">Welkom in Takumi<span style="font-size:9px;font-weight:700;letter-spacing:.16em;color:#c4532a;background:rgba(196,83,42,.12);border:1px solid rgba(196,83,42,.28);border-radius:10px;padding:3px 8px;text-transform:uppercase">Beta</span></div>'
+    + '  <div style="font-family:Georgia,serif;font-style:italic;font-size:14px;color:#7a7060;line-height:1.5">Een digitale dojo om te leren spelen met de elementen.</div>'
     + '</div>'
     + '<div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px">'
     + '  <div style="display:flex;gap:14px;align-items:flex-start">'
@@ -9013,9 +9014,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   document.addEventListener('DOMContentLoaded', function(){
-    // Wacht iets langer dan de tour-trigger zodat die voorrang krijgt bij
-    // first-time gebruikers. 2.5s = lang genoeg dat welcome zichtbaar is.
-    setTimeout(maybeShowReflection, 2500);
+    // Auto-show na login uitgezet — popup direct na inloggen voelde te druk
+    // bovenop wave-intro + welkomstmodal. Functie blijft bereikbaar via
+    // window.showDailyReflection(true) of vanuit de cockpit-quote-section.
+    // setTimeout(maybeShowReflection, 2500);
   });
 })();
 
