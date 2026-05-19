@@ -927,22 +927,24 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
          bij reflectie-ruimte dan dag-cockpit. Zie renderElementBalance()
          en go('dj') trigger. ── -->
 
-    <!-- COMPACTE DAG-METRICS — vervangt wave -->
-    <div id="ck-metrics-grid" style="margin-top:24px;padding:0;display:none;grid-template-columns:repeat(3,1fr);gap:10px;cursor:pointer" onclick="goToHealth()" title="Open Health & HRV in Data Hub">
-      <div style="text-align:center;padding:12px 8px;background:var(--p2);border:1px solid var(--b);border-radius:10px">
+    <!-- COMPACTE DAG-METRICS — vervangt wave. Drie cellen los klikbaar:
+         tik = handmatig invullen (editHrvField). "Details ↗" rechts gaat naar
+         Data Hub voor historie en koppeling. -->
+    <div id="ck-metrics-grid" style="margin-top:24px;padding:0;display:none;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div onclick="editHrvField('rmssd')" title="Tik om HRV in te vullen" style="text-align:center;padding:12px 8px;background:var(--p2);border:1px solid var(--b);border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s" onmouseover="this.style.background='rgba(196,83,42,.06)'" onmouseout="this.style.background='var(--p2)'">
         <div style="font-size:17px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums" id="ck-stat-hrv">–</div>
         <div style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-top:3px">HRV</div>
       </div>
-      <div style="text-align:center;padding:12px 8px;background:var(--p2);border:1px solid var(--b);border-radius:10px">
+      <div onclick="editHrvField('sleep')" title="Tik om slaap in te vullen" style="text-align:center;padding:12px 8px;background:var(--p2);border:1px solid var(--b);border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s" onmouseover="this.style.background='rgba(196,83,42,.06)'" onmouseout="this.style.background='var(--p2)'">
         <div style="font-size:17px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums" id="ck-stat-sleep">–</div>
         <div style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-top:3px">Slaap</div>
       </div>
-      <div style="text-align:center;padding:12px 8px;background:var(--p2);border:1px solid var(--b);border-radius:10px">
+      <div onclick="editHrvField('recovery')" title="Tik om herstel in te vullen" style="text-align:center;padding:12px 8px;background:var(--p2);border:1px solid var(--b);border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s" onmouseover="this.style.background='rgba(196,83,42,.06)'" onmouseout="this.style.background='var(--p2)'">
         <div style="font-size:17px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums" id="ck-stat-rec">–</div>
         <div style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-top:3px">Herstel</div>
       </div>
     </div>
-    <div id="ck-stat-hint" style="display:none;font-size:10.5px;color:var(--m);text-align:center;margin-top:10px;opacity:.7;cursor:pointer;-webkit-tap-highlight-color:transparent;letter-spacing:.02em" onclick="goToHealth()">Voorbeeldwaarden — tik om je HRV te koppelen</div>
+    <div id="ck-stat-hint" style="display:none;font-size:10.5px;color:var(--m);text-align:center;margin-top:10px;opacity:.7;letter-spacing:.02em">Tik op een waarde om handmatig in te vullen · <span onclick="goToHealth()" style="color:var(--acc);cursor:pointer">koppel HRV in Data Hub ↗</span></div>
     <!-- Hidden helpers for legacy code that may still reference these -->
     <div style="display:none">
       <span id="wave-phase-name"></span>
@@ -2207,7 +2209,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.495';
+const APP_VERSION = '0.496';
 
 const S={
   cur:'board',
@@ -3359,27 +3361,28 @@ function renderWave(moodOverride){
 
   var phaseData = WAVE_PHASES[w.phase];
 
-  // Update detail metrics (HRV/Slaap/Herstel) — werkt ook zonder wave-svg
-  var hrvVal = S.hrv.rmssd || 45;
-  var recVal = S.hrv.recovery || 7;
-  var slaapVal = S.hrv.sleep || 7;
+  // Update detail metrics (HRV/Slaap/Herstel) — werkt ook zonder wave-svg.
+  // Grid is altijd zichtbaar zodat gebruiker via tap-to-edit kan invullen
+  // (zie editHrvField). Lege waarden tonen als em-dash, geen fake defaults.
+  var hrvVal_   = (S.hrv && S.hrv.rmssd    != null && !isNaN(S.hrv.rmssd))    ? S.hrv.rmssd    : null;
+  var recVal_   = (S.hrv && S.hrv.recovery != null && !isNaN(S.hrv.recovery)) ? S.hrv.recovery : null;
+  var slaapVal_ = (S.hrv && S.hrv.sleep    != null && !isNaN(S.hrv.sleep))    ? S.hrv.sleep    : null;
   var hasReal = hasRealHrv();
   var hrvElEarly = document.getElementById('ck-stat-hrv');
   var sleepElEarly = document.getElementById('ck-stat-sleep');
   var recElEarly = document.getElementById('ck-stat-rec');
-  if (hrvElEarly) hrvElEarly.textContent = hrvVal + ' rMSSD';
-  if (sleepElEarly) sleepElEarly.textContent = slaapVal.toFixed(1) + 'u';
-  if (recElEarly) recElEarly.textContent = recVal + '/10';
-  // Stoic/Headspace-aanpak: toon harde biometrie ALLEEN bij echte data.
-  // Anders enkel een zachte hint — geen fake numbers op de cockpit.
+  if (hrvElEarly)   hrvElEarly.textContent   = (hrvVal_   == null) ? '\u2014' : (hrvVal_ + ' rMSSD');
+  if (sleepElEarly) sleepElEarly.textContent = (slaapVal_ == null) ? '\u2014' : (slaapVal_.toFixed(1) + 'u');
+  if (recElEarly)   recElEarly.textContent   = (recVal_   == null) ? '\u2014' : (recVal_ + '/10');
   var metricsGrid = document.getElementById('ck-metrics-grid');
-  if(metricsGrid) metricsGrid.style.display = hasReal ? 'grid' : 'none';
+  if(metricsGrid) metricsGrid.style.display = 'grid';
   var hintEl = document.getElementById('ck-stat-hint');
   if (hintEl){
     hintEl.style.display = hasReal ? 'none' : 'block';
-    hintEl.textContent = (typeof LANG !== 'undefined' && LANG === 'en')
-      ? 'Demo values — tap to connect your HRV'
-      : 'Voorbeeldwaarden — tik om je HRV te koppelen';
+    var enHint = (typeof LANG !== 'undefined' && LANG === 'en');
+    hintEl.innerHTML = enHint
+      ? 'Tap a value to fill manually · <span onclick="goToHealth()" style="color:var(--acc);cursor:pointer">connect HRV in Data Hub \u2197</span>'
+      : 'Tik op een waarde om handmatig in te vullen · <span onclick="goToHealth()" style="color:var(--acc);cursor:pointer">koppel HRV in Data Hub \u2197</span>';
   }
 
   // Store wave state globally for allCtx (gebruikt door agents)
@@ -3446,26 +3449,26 @@ function renderWave(moodOverride){
   }
   if (subEl) subEl.textContent = phaseData.sub;
 
-  // Detail metrics
-  var hrv = S.hrv.rmssd || 45;
-  var rec = S.hrv.recovery || 7;
-  var slaap = S.hrv.sleep || 7;
+  // Detail metrics — null-safe, geen fake defaults. Grid altijd zichtbaar.
+  var hrv_   = (S.hrv && S.hrv.rmssd    != null && !isNaN(S.hrv.rmssd))    ? S.hrv.rmssd    : null;
+  var rec_   = (S.hrv && S.hrv.recovery != null && !isNaN(S.hrv.recovery)) ? S.hrv.recovery : null;
+  var slaap_ = (S.hrv && S.hrv.sleep    != null && !isNaN(S.hrv.sleep))    ? S.hrv.sleep    : null;
   var hasReal = hasRealHrv();
   var hrvEl = document.getElementById('ck-stat-hrv');
   var sleepEl = document.getElementById('ck-stat-sleep');
   var recEl = document.getElementById('ck-stat-rec');
-  if (hrvEl) hrvEl.textContent = hrv + ' rMSSD';
-  if (sleepEl) sleepEl.textContent = slaap.toFixed(1) + 'u';
-  if (recEl) recEl.textContent = rec + '/10';
-  // Idem fix als hierboven — geen fake numbers tonen
+  if (hrvEl)   hrvEl.textContent   = (hrv_   == null) ? '\u2014' : (hrv_ + ' rMSSD');
+  if (sleepEl) sleepEl.textContent = (slaap_ == null) ? '\u2014' : (slaap_.toFixed(1) + 'u');
+  if (recEl)   recEl.textContent   = (rec_   == null) ? '\u2014' : (rec_ + '/10');
   var metricsGrid2 = document.getElementById('ck-metrics-grid');
-  if(metricsGrid2) metricsGrid2.style.display = hasReal ? 'grid' : 'none';
+  if(metricsGrid2) metricsGrid2.style.display = 'grid';
   var hintEl2 = document.getElementById('ck-stat-hint');
   if (hintEl2){
     hintEl2.style.display = hasReal ? 'none' : 'block';
-    hintEl2.textContent = (typeof LANG !== 'undefined' && LANG === 'en')
-      ? 'Demo values — tap to connect your HRV'
-      : 'Voorbeeldwaarden — tik om je HRV te koppelen';
+    var enHint2 = (typeof LANG !== 'undefined' && LANG === 'en');
+    hintEl2.innerHTML = enHint2
+      ? 'Tap a value to fill manually · <span onclick="goToHealth()" style="color:var(--acc);cursor:pointer">connect HRV in Data Hub \u2197</span>'
+      : 'Tik op een waarde om handmatig in te vullen · <span onclick="goToHealth()" style="color:var(--acc);cursor:pointer">koppel HRV in Data Hub \u2197</span>';
   }
 
   // Store wave state globally for allCtx
@@ -4167,14 +4170,14 @@ function renderChat(){
 // hrv.recovery/sleep kunnen null zijn als gebruiker ze nog niet invulde
 // (Oura levert alleen rmssd, sleep/recovery komen handmatig of via shortcut).
 // Toon dan een lege em-dash i.p.v. "null".
-function _fmtHrvVal(v){
+function _fmtHrvVal(v, suffix){
   if(v === null || v === undefined || v === '' || (typeof v === 'number' && isNaN(v))) return '—';
-  return v;
+  return v + (suffix || '');
 }
 
-// Inline edit voor S.hrv velden — tap op waarde in master-panel opent prompt.
-// Eenvoudig systeem ipv full modal; persisteert via saveHrvDay en re-rendert
-// chat-view zodat update meteen zichtbaar is.
+// Inline edit voor S.hrv velden — tap op waarde in master-panel of cockpit-strip
+// opent prompt. Eenvoudig systeem ipv full modal; persisteert via saveHrvDay
+// en re-rendert beide oppervlakken (Master Council chat + cockpit wave-zone).
 function editHrvField(field){
   var labels = {
     rmssd:    'HRV rMSSD (typisch 30–90)',
@@ -4205,7 +4208,9 @@ function editHrvField(field){
   try { lsSet(_ukey('tm2_hrv'), S.hrv); } catch(e){}
   try { saveHrvDay('handmatig'); } catch(e){}
   try { toast('Opgeslagen', 'ok'); } catch(e){}
+  // Re-render beide oppervlakken (alleen degene die actueel is doet zichtbaar werk)
   try { renderChat(); } catch(e){}
+  try { if(typeof renderWave === 'function') renderWave(); } catch(e){}
 }
 
 function buildDataBanner(masterId){
