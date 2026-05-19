@@ -2059,6 +2059,7 @@ function setLang(newLang){
       if(k.indexOf('tm2_leader_msg_') === 0) keysToFlush.push(k);
       else if(k.indexOf('tm2_balance_analysis_') === 0) keysToFlush.push(k);
       else if(k.indexOf('tm2_council_synthesis_') === 0) keysToFlush.push(k);
+      else if(k.indexOf('tm2_council_voice_') === 0) keysToFlush.push(k);
       else if(k.indexOf('tm2_observation_') === 0) keysToFlush.push(k);
     }
     keysToFlush.forEach(function(k){ localStorage.removeItem(k); });
@@ -2206,7 +2207,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.470';
+const APP_VERSION = '0.480';
 
 const S={
   cur:'board',
@@ -3644,9 +3645,9 @@ function initMusicSuggestie(){
 
 function initCK(){
   const now=new Date(),h=now.getHours();
-  const gr=h<5?'Goede nacht':h<12?'Goedemorgen':h<17?'Goedemiddag':'Goedenavond';
-  document.getElementById('ck-g').textContent=gr;
-  document.getElementById('ck-d').textContent=now.toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});
+  const grKey = h<5?'ck.night_greeting':h<12?'ck.morning_greeting':h<17?'ck.afternoon_greeting':'ck.evening_greeting';
+  document.getElementById('ck-g').textContent = (typeof t === 'function') ? t(grKey) : 'Goedemorgen';
+  document.getElementById('ck-d').textContent = now.toLocaleDateString((typeof locale === 'function') ? locale() : 'nl-NL',{weekday:'long',day:'numeric',month:'long'});
 
   // Dag-element card — toont welk Godai-element vandaag leidt
   try { renderDayLeader(); } catch(e){}
@@ -5020,6 +5021,7 @@ function renderCouncilToday(){
     var wname = leader.warrior.name || '';
     warriorShort = wname.split(' ')[1] || wname.split(' ')[0] || '';
     warriorDomain = wname.split('—')[1]?.trim() || '';
+    if(isEn && warriorDomain) warriorDomain = translateWarriorDomain(warriorDomain);
   }
   if(warriorLineEl){
     var leadtTxt = isEn ? 'leads today' : 'leidt vandaag';
@@ -5111,7 +5113,7 @@ async function loadCouncilTodayVoice(leader){
   var dayKey = new Date().toISOString().slice(0,10);
   var leaderKey = leader.warrior?.id || leader.eid;
   var goalKey = primary?.id || 'nogoal';
-  var cacheKey = 'tm2_council_voice_' + dayKey + '_' + goalKey + '_' + leaderKey;
+  var cacheKey = 'tm2_council_voice_' + dayKey + '_' + goalKey + '_' + leaderKey + '_' + LANG;
   var cached = ls(cacheKey, null);
   if(cached){ voiceEl.textContent = cached; return; }
   voiceEl.textContent = 'Een ogenblik...';
@@ -5779,6 +5781,31 @@ function translateDomein(domein){
     'Leegte · Synthese': 'Void · Synthesis'
   };
   return map[domein] || domein;
+}
+
+// Warrior domain mapping — gebruikt door council-today render om NL warrior
+// labels ("Gezondheid", "Reflectie") te vertalen wanneer LANG=='en'. Verder
+// gebruik later mogelijk als WARRIORS-object volledig i18n wordt; voor nu
+// is dit een snelle laag-bovenop voor de zichtbaarste plek.
+function translateWarriorDomain(d){
+  var map = {
+    'Strateeg':'Strategist',
+    'Gezondheid':'Health',
+    'Financieel':'Finance',
+    'Reflectie':'Reflection',
+    'Productiviteit':'Productivity',
+    'Beslissing':'Decision',
+    'Schrijven':'Writing',
+    'Relaties':'Relationships',
+    'Leren':'Learning',
+    'Routine':'Routine',
+    'Digitaal':'Digital',
+    'Engagement':'Engagement',
+    'Stilte':'Stillness',
+    'Loslaten':'Letting Go',
+    'Mysterie':'Mystery'
+  };
+  return map[d] || d;
 }
 
 // De vier vragenstellers — Kū (Leegte) is geen vragensteller maar
