@@ -2207,7 +2207,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.480';
+const APP_VERSION = '0.490';
 
 const S={
   cur:'board',
@@ -3675,7 +3675,8 @@ function initCK(){
     const goals=typeof GOALS!=='undefined'?GOALS:[];
     const actief=goals.filter(g=>g.status==='Actief').slice(0,3);
     if(actief.length===0){
-      strip.innerHTML='<div onclick="go(\'gl\')" style="padding:14px 16px;border:1.5px solid var(--acc);border-radius:var(--rs);text-align:center;cursor:pointer;color:var(--acc);font-size:13px;font-weight:500;transition:all .12s;-webkit-tap-highlight-color:transparent" onmouseenter="this.style.background=\'rgba(196,83,42,.08)\'" onmouseleave="this.style.background=\'\'">'+'+ Stel je eerste doel in</div>';
+      var emptyGoalLabel = (typeof LANG !== 'undefined' && LANG === 'en') ? '+ Set your first goal' : '+ Stel je eerste doel in';
+      strip.innerHTML='<div onclick="go(\'gl\')" style="padding:14px 16px;border:1.5px solid var(--acc);border-radius:var(--rs);text-align:center;cursor:pointer;color:var(--acc);font-size:13px;font-weight:500;transition:all .12s;-webkit-tap-highlight-color:transparent" onmouseenter="this.style.background=\'rgba(196,83,42,.08)\'" onmouseleave="this.style.background=\'\'">'+emptyGoalLabel+'</div>';
     } else {
       strip.innerHTML=actief.map(function(g){
         var pct=Math.max(0,Math.min(100,g.pct||0));
@@ -4895,7 +4896,7 @@ function renderCkActions(){
       var pd = new Date(a.plannedFor);
       var isPast = a.plannedFor < (Date.now() - 24*60*60*1000);
       if(isPast){
-        planLabel = '<span style="font-size:10px;color:var(--acc);font-weight:500;margin-right:6px">↶ uit '+pd.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})+'</span>';
+        var _isEn=(typeof LANG !== 'undefined' && LANG === 'en'); var fromLabel=_isEn?'↶ from ':'↶ uit '; planLabel = '<span style="font-size:10px;color:var(--acc);font-weight:500;margin-right:6px">'+fromLabel+pd.toLocaleDateString((typeof locale === 'function')?locale():(_isEn?'en-US':'nl-NL'),{day:'numeric',month:'short'})+'</span>';
       } else {
         planLabel = '<span style="display:inline-flex;align-items:center;color:var(--m);margin-right:6px"><svg class="ico ico-sm"><use href="#i-calendar"/></svg></span>';
       }
@@ -5087,7 +5088,7 @@ function renderCouncilTodayActions(){
       var pd = new Date(a.plannedFor);
       var isPast = a.plannedFor < (Date.now() - 24*60*60*1000);
       if(isPast){
-        planLabel = '<span style="font-size:10px;color:var(--acc);font-weight:500;margin-right:6px">↶ uit '+pd.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})+'</span>';
+        var _isEn=(typeof LANG !== 'undefined' && LANG === 'en'); var fromLabel=_isEn?'↶ from ':'↶ uit '; planLabel = '<span style="font-size:10px;color:var(--acc);font-weight:500;margin-right:6px">'+fromLabel+pd.toLocaleDateString((typeof locale === 'function')?locale():(_isEn?'en-US':'nl-NL'),{day:'numeric',month:'short'})+'</span>';
       } else {
         planLabel = '<span style="display:inline-flex;align-items:center;color:var(--m);margin-right:6px"><svg class="ico ico-sm"><use href="#i-calendar"/></svg></span>';
       }
@@ -5116,7 +5117,7 @@ async function loadCouncilTodayVoice(leader){
   var cacheKey = 'tm2_council_voice_' + dayKey + '_' + goalKey + '_' + leaderKey + '_' + LANG;
   var cached = ls(cacheKey, null);
   if(cached){ voiceEl.textContent = cached; return; }
-  voiceEl.textContent = 'Een ogenblik...';
+  voiceEl.textContent = (typeof LANG !== 'undefined' && LANG === 'en') ? 'One moment...' : 'Een ogenblik...';
   try {
     var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
     var weekday = new Date().toLocaleDateString(isEn?'en-US':'nl-NL',{weekday:'long'});
@@ -5173,7 +5174,8 @@ function renderPrimaryGoal(){
   // Render: zachte regel met richting-naam als lens op deze element-dag.
   // Geen %, geen progress-bar, geen status — alleen de naam als context.
   hint.style.display = 'block';
-  hint.innerHTML = 'Met aandacht voor <span style="color:var(--ink);font-style:normal;opacity:.85">'+esc(primary.title)+'</span>';
+  var hintLabel = (typeof LANG !== 'undefined' && LANG === 'en') ? 'With attention to ' : 'Met aandacht voor ';
+  hint.innerHTML = hintLabel + '<span style="color:var(--ink);font-style:normal;opacity:.85">'+esc(primary.title)+'</span>';
 }
 
 // Helper: status-synthese (was eerder ck-synthese filling code).
