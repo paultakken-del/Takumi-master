@@ -2209,7 +2209,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.496';
+const APP_VERSION = '0.497';
 
 const S={
   cur:'board',
@@ -4205,7 +4205,7 @@ function editHrvField(field){
       S.hrv.sleep = Math.round(num*10)/10;
     }
   }
-  try { lsSet(_ukey('tm2_hrv'), S.hrv); } catch(e){}
+  try { lsSet('tm2_hrv', S.hrv); } catch(e){}
   try { saveHrvDay('handmatig'); } catch(e){}
   try { toast('Opgeslagen', 'ok'); } catch(e){}
   // Re-render beide oppervlakken (alleen degene die actueel is doet zichtbaar werk)
