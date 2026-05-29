@@ -504,7 +504,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 [data-theme="dark"] #ham-btn{background:rgba(40,38,34,.6);border-color:rgba(255,255,255,.08)}
 .ham-line{width:14px;height:1.5px;background:var(--ink);border-radius:1px;transition:.2s;opacity:.7}
 [data-theme="dark"] .ham-line{background:rgba(255,255,255,.7)}
-#sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:95;backdrop-filter:blur(2px)}
+#sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:340;backdrop-filter:blur(2px)}
 #sb-overlay.on{display:block}
 @media(max-width:720px){
   /* Mobile scroll fix Master Council */
@@ -513,10 +513,10 @@ input[type=range]{width:100%;accent-color:var(--acc)}
   #v-bo .ca{overflow:hidden!important;display:flex;flex-direction:column;flex:1;min-height:0}
   #v-bo .cm{overflow-y:auto!important;-webkit-overflow-scrolling:touch;flex:1;min-height:0}
   #v-bo .cia{flex-shrink:0;position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--b);padding-bottom:env(safe-area-inset-bottom,0px)}
-  #sb{display:flex!important;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);position:fixed!important;top:0;bottom:0;left:0;z-index:100;width:280px;overflow-y:auto}
+  #sb{display:flex!important;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);position:fixed!important;top:0;bottom:0;left:0;z-index:350;width:280px;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom,0px)}
   #sb.sb-open{transform:translateX(0)!important}
   #mob{display:block!important;z-index:330!important}
-  #ham-btn{display:flex!important;z-index:340!important}
+  #ham-btn{display:flex!important;z-index:360!important}
   #mn{margin-left:0!important;padding-bottom:84px!important}
   .vs{padding-bottom:84px!important}
   /* Goal-modal mag op mobile niet over bottom-tab vallen — anders is
@@ -2209,7 +2209,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.499';
+const APP_VERSION = '0.500';
 
 const S={
   cur:'board',
