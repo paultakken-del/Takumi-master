@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect your agent — Takumi</title>
+<meta name="description" content="Takumi offers an MCP server: a compass that agents can read for orientation. Read-only — readable, never steerable.">
+<meta name="author" content="Paul Takken">
+<meta property="og:title" content="Connect your agent — Takumi">
+<meta property="og:description" content="The human north, readable by machines. Read-only resources, no tools. A compass, not a navigator.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:    #1a1815;
+  --paper:  #faf7f2;
+  --p2:     #f0ebe0;
+  --acc:    #c4532a;
+  --muted:  #7a7060;
+  --border: rgba(28,24,21,.09);
+  --serif:  'Cormorant Garamond', Georgia, serif;
+  --sans:   'Outfit', system-ui, sans-serif;
+  --mono:   'JetBrains Mono', ui-monospace, monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--sans); background: var(--paper); color: var(--ink); -webkit-font-smoothing: antialiased; line-height: 1.6; }
+a { color: inherit; }
+
+.top { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; background: rgba(250,247,242,.86); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+.top-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.top-k { width: 28px; height: 28px; border-radius: 6px; background: var(--acc); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.top-name { font-family: var(--serif); font-size: 17px; font-weight: 600; }
+.top-back { font-size: 13px; color: var(--muted); text-decoration: none; }
+.top-back:hover { color: var(--acc); }
+
+.hero { position: relative; padding: 84px 32px 56px; background: var(--p2); overflow: hidden; border-bottom: 1px solid var(--border); }
+.hero-kanji { position: absolute; top: 50%; right: 5%; transform: translateY(-50%); font-family: var(--serif); font-size: clamp(140px, 26vw, 300px); line-height: 1; color: rgba(28,24,21,.035); pointer-events: none; }
+.hero-inner { position: relative; max-width: 720px; margin: 0 auto; z-index: 1; }
+.hero-label { font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--acc); margin-bottom: 16px; }
+.hero h1 { font-family: var(--serif); font-weight: 300; font-size: clamp(34px, 5.5vw, 60px); line-height: 1.08; margin-bottom: 16px; }
+.hero h1 em { font-style: italic; color: var(--acc); }
+.hero-sub { font-size: 16px; color: var(--muted); max-width: 540px; line-height: 1.75; }
+
+.wrap { max-width: 720px; margin: 0 auto; padding: 64px 32px 24px; }
+.lede { font-size: 17px; color: #3a352e; line-height: 1.8; margin-bottom: 14px; }
+.lede em { font-style: italic; }
+h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(24px, 3vw, 32px); line-height: 1.2; margin: 52px 0 18px; }
+p { font-size: 16px; color: #3a352e; line-height: 1.8; margin-bottom: 16px; }
+strong { font-weight: 600; color: var(--ink); }
+em { font-style: italic; }
+
+.meta { display: grid; grid-template-columns: auto 1fr; gap: 6px 20px; font-size: 14px; margin: 0 0 8px; }
+.meta dt { color: var(--muted); }
+.meta dd { font-family: var(--mono); font-size: 13px; color: var(--ink); }
+
+.endpoint { display: inline-block; font-family: var(--mono); font-size: 14px; background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 8px; margin: 4px 0 8px; }
+
+table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 14px; }
+th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td code, .inline-code { font-family: var(--mono); font-size: 13px; color: var(--acc); }
+
+pre { background: var(--ink); color: #e8e2d6; border-radius: 10px; padding: 18px 20px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.6; margin: 8px 0 18px; }
+pre .c { color: #8a8472; }
+pre .s { color: #d99a6c; }
+
+.dont { border-left: 3px solid var(--acc); padding: 4px 0 4px 22px; margin: 8px 0 18px; }
+.dont p { font-size: 15px; color: var(--muted); margin-bottom: 10px; }
+.dont p:last-child { margin-bottom: 0; }
+.dont strong { color: var(--ink); }
+
+.pull { font-family: var(--serif); font-style: italic; font-size: clamp(20px, 2.6vw, 26px); line-height: 1.4; color: var(--ink); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 28px 0; margin: 40px 0; text-align: center; }
+
+footer { padding: 32px; text-align: center; font-size: 12px; color: var(--muted); }
+footer a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 600px) { .hero { padding: 56px 20px 40px; } .wrap { padding: 48px 20px 24px; } }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a class="top-brand" href="/"><span class="top-k">匠</span><span class="top-name">Takumi</span></a>
+  <a class="top-back" href="/">← Natuurlijk Agile</a>
+</div>
+
+<section class="hero">
+  <div class="hero-kanji" aria-hidden="true">北</div>
+  <div class="hero-inner">
+    <p class="hero-label">For agents &amp; builders</p>
+    <h1>Connect your agent<br>to the <em>north</em>.</h1>
+    <p class="hero-sub">Takumi offers an MCP server: a compass an agent can consult for orientation. Read-only — readable, never steerable. Takumi weighs; it does not act.</p>
+  </div>
+</section>
+
+<div class="wrap">
+
+  <p class="lede">An agent consults Takumi <em>before</em> it acts: it reads which element and which question lead the day, and lets that shape what it proposes. So you and your agent share the same north — and "less" becomes a valid answer when the season calls for it, not only "more".</p>
+
+  <h2>The endpoint</h2>
+  <span class="endpoint">https://app.takumi-master.com/mcp</span>
+  <dl class="meta">
+    <dt>Transport</dt><dd>Streamable HTTP (JSON-RPC 2.0)</dd>
+    <dt>Read-only</dt><dd>yes — resources only, no tools</dd>
+    <dt>Auth</dt><dd>none (public, non-personal data)</dd>
+    <dt>Cost</dt><dd>none — stateless, computed from the date</dd>
+  </dl>
+
+  <h2>What you get</h2>
+  <p>Four resources. All stateless: derived from the date and the source texts of <em>Natuurlijk Agile</em>. No accounts, no storage of your data.</p>
+  <table>
+    <thead><tr><th>Resource</th><th>Returns</th></tr></thead>
+    <tbody>
+      <tr><td><code>takumi://pulse/morning</code></td><td>The day-leader (a Godai element) plus an inviting morning question.</td></tr>
+      <tr><td><code>takumi://pulse/evening</code></td><td>The day-leader plus a reflective evening question.</td></tr>
+      <tr><td><code>takumi://reflectie</code></td><td>One reflection from <em>Natuurlijk Agile</em>, matched to the time of day.</td></tr>
+      <tr><td><code>takumi://noorden</code></td><td>The orienting line of the manifesto plus the day-leader as direction.</td></tr>
+    </tbody>
+  </table>
+  <p>The day-leader rotates daily through the five elements — Chi (Earth), Sui (Water), Fū (Wind), Ka (Fire), Kū (Emptiness) — with the Master Council as synthesis. The same day yields the same leader and question, so you and your agent sit on the same north.</p>
+
+  <h2>Try it (no client)</h2>
+  <p>Open the URL in a browser for the server info, or call a resource directly:</p>
+  <pre><span class="c"># server info</span>
+curl https://app.takumi-master.com/mcp
+
+<span class="c"># read a resource</span>
+curl -X POST https://app.takumi-master.com/mcp \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"jsonrpc":"2.0","id":1,"method":"resources/read","params":{"uri":"takumi://noorden"}}'</span></pre>
+
+  <h2>Connect from an MCP client</h2>
+  <p>The server speaks standard MCP, so any MCP-compatible agent or client can plug in. Add it as a <strong>remote (HTTP) MCP server</strong> with the endpoint URL. Since there is no auth, no key or token is needed.</p>
+  <pre><span class="c">// generic client config</span>
+{
+  <span class="s">"mcpServers"</span>: {
+    <span class="s">"takumi"</span>: {
+      <span class="s">"url"</span>: <span class="s">"https://app.takumi-master.com/mcp"</span>
+    }
+  }
+}</pre>
+  <p>In a client with a UI, look for where to add a custom or remote connector (often under settings → connectors), choose "remote" or "URL", and paste the endpoint. Exact steps vary per product and may change; the URL stays the same. Your agent will then see four readable resources. No tools — that is not an omission, it is the choice.</p>
+
+  <h2>How to use it</h2>
+  <p>The idea is that an executing agent consults Takumi <em>before</em> it acts, as orientation. For example, at the start of a working day:</p>
+  <pre><span class="c"># in an agent prompt</span>
+Read takumi://pulse/morning. Which element leads today,
+and which question does it ask? Keep that in mind when
+you propose how to plan my day.</pre>
+  <p>The agent navigates; Takumi holds the north. What the agent does with the orientation stays — as it should — a choice.</p>
+
+  <h2>What it deliberately does not do</h2>
+  <div class="dont">
+    <p><strong>No tools.</strong> The server executes nothing, changes nothing, buys nothing. Reading only.</p>
+    <p><strong>No personal data.</strong> The current resources are the same for everyone — the daily rotation and the reflections from the book. Your own direction (the season <em>you</em> are in) belongs to a later, authenticated version.</p>
+    <p><strong>No storage of your requests.</strong> The server is stateless and does not log your calls as part of its working.</p>
+  </div>
+
+  <p class="pull">A compass, not a navigator. Readable, never steerable.</p>
+
+</div>
+
+<footer>© 2026 Paul Takken · Natuurlijk Agile × Takumi · <a href="/">back to site</a></footer>
+
+</body>
+</html>
