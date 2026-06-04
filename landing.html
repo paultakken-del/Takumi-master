@@ -428,6 +428,8 @@ h1 em { font-style: italic; color: var(--acc); }
 .noorden-p em { font-style: italic; color: var(--ink); }
 .noorden-cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 20px; font-size: 14px; font-weight: 600; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--acc); padding-bottom: 2px; transition: gap .2s; }
 .noorden-cta:hover { gap: 14px; }
+.noorden-cta-sec { margin-left: 28px; color: var(--muted); border-bottom-color: var(--border); }
+.noorden-cta-sec:hover { color: var(--acc); }
 @media (max-width: 720px) { .noorden { padding: 56px 24px; } }
 
 /* FOOTER */
@@ -714,8 +716,9 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
   <div class="noorden-inner" data-r>
     <p class="noorden-label" data-i18n="noorden-label">Het Menselijke Noorden</p>
     <h2 class="noorden-kop" data-i18n="noorden-kop">Niet sneller.<br>Maar weten <em>waarheen</em>.</h2>
-    <p class="noorden-p" data-i18n="noorden-p">Hoe meer agents er aan je deur kloppen, hoe makkelijker je meegaat — in hun tempo, hun richting. Takumi is de rots in die branding. Niet door zich schrap te zetten, maar door de zee te kennen: jouw seizoen, jouw noorden. Planten, groeien, snoeien, oogsten. Geen instrument dat voor je stuurt, maar iets dat zegt: niet dit, niet nu — ook als alle agents het tegendeel adviseren.</p>
+    <p class="noorden-p" data-i18n="noorden-p">Hoe meer agents er aan je deur kloppen, hoe makkelijker je meegaat — in hun tempo, hun richting. Takumi is de rots in die branding. Niet door zich schrap te zetten, maar door de zee te kennen: jouw seizoen, jouw noorden. Geen instrument dat voor je stuurt, maar iets dat zegt: niet dit, niet nu — ook als alle agents het tegendeel adviseren.</p>
     <a class="noorden-cta" href="/manifest" data-i18n="noorden-cta">Lees het manifest →</a>
+    <a class="noorden-cta noorden-cta-sec" href="/agents" data-i18n="noorden-cta2">Voor agents →</a>
   </div>
 </section>
 
@@ -818,8 +821,9 @@ var NL = {
   'tak-btn':     'Begin met Takumi ↗',
   'noorden-label': 'Het Menselijke Noorden',
   'noorden-kop':   'Niet sneller.<br>Maar weten <em>waarheen</em>.',
-  'noorden-p':     'Hoe meer agents er aan je deur kloppen, hoe makkelijker je meegaat — in hun tempo, hun richting. Takumi is de rots in die branding. Niet door zich schrap te zetten, maar door de zee te kennen: jouw seizoen, jouw noorden. Planten, groeien, snoeien, oogsten. Geen instrument dat voor je stuurt, maar iets dat zegt: niet dit, niet nu — ook als alle agents het tegendeel adviseren.',
+  'noorden-p':     'Hoe meer agents er aan je deur kloppen, hoe makkelijker je meegaat — in hun tempo, hun richting. Takumi is de rots in die branding. Niet door zich schrap te zetten, maar door de zee te kennen: jouw seizoen, jouw noorden. Geen instrument dat voor je stuurt, maar iets dat zegt: niet dit, niet nu — ook als alle agents het tegendeel adviseren.',
   'noorden-cta':   'Lees het manifest →',
+  'noorden-cta2':  'Voor agents →',
   'v01-n':'Valkuil 01','v01-h':'De efficiëntieval','v01-p':'Agile als bezuinigingstool. Velocity als heilige metric. De waarde die er echt toe doet, wordt niet gemeten.',
   'v02-n':'Valkuil 02','v02-h':'Onvoldoende wortels','v02-p':'Agile ingevoerd zonder filosofisch fundament. Een boom zonder wortels staat, totdat de eerste storm komt.',
   'v03-n':'Valkuil 03','v03-h':'Agile hyperventilatie','v03-p':'Sprint na sprint, zonder ademruimte. Het ritme dat wendbaarheid kracht geeft, is verdwenen.',
@@ -880,8 +884,9 @@ var EN = {
   'tak-btn':     'Start with Takumi ↗',
   'noorden-label': 'Your True North',
   'noorden-kop':   'Not faster.<br>But knowing <em>where</em>.',
-  'noorden-p':     'The more agents knock at your door, the easier it is to be carried along — their pace, their direction. Takumi is the rock in that surf. Not by bracing against it, but by knowing the sea: your season, your north. Plant, grow, prune, harvest. Not an instrument that steers for you, but something that says: not this, not now — even when every agent advises the opposite.',
+  'noorden-p':     'The more agents knock at your door, the easier it is to be carried along — their pace, their direction. Takumi is the rock in that surf. Not by bracing against it, but by knowing the sea: your season, your north. Not an instrument that steers for you, but something that says: not this, not now — even when every agent advises the opposite.',
   'noorden-cta':   'Read the manifesto →',
+  'noorden-cta2':  'For agents →',
   'v01-n':'Pitfall 01','v01-h':'The efficiency trap','v01-p':'Agile as a cost-cutting tool. Velocity as the sacred metric. The value that truly matters goes unmeasured.',
   'v02-n':'Pitfall 02','v02-h':'Insufficient roots','v02-p':'Agile introduced without philosophical foundation. A tree without roots stands — until the first storm.',
   'v03-n':'Pitfall 03','v03-h':'Agile hyperventilation','v03-p':'Sprint after sprint, without breathing space. The rhythm that gives agility its power has disappeared.',
