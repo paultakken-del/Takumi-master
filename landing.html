@@ -417,6 +417,23 @@ h1 em { font-style: italic; color: var(--acc); }
 .tak-p { font-size: 14px; font-weight: 300; color: var(--muted); line-height: 1.8; max-width: 480px; }
 .tak-btn { flex-shrink: 0; }
 
+/* NOORDEN */
+.noorden { position: relative; padding: 96px 64px; background: var(--ink); color: var(--paper); overflow: hidden; border-bottom: 1px solid var(--ink); }
+.noorden-kanji { position: absolute; top: 50%; right: 4%; transform: translateY(-50%); font-family: var(--serif); font-size: clamp(160px, 30vw, 380px); line-height: 1; color: rgba(250,247,242,.04); pointer-events: none; user-select: none; }
+.noorden-inner { position: relative; max-width: 720px; margin: 0 auto; z-index: 1; }
+.noorden-label { font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--acc); margin-bottom: 18px; }
+.noorden-kop { font-family: var(--serif); font-size: clamp(28px, 4vw, 48px); font-weight: 300; line-height: 1.15; margin-bottom: 18px; color: var(--paper); }
+.noorden-kop em { font-style: italic; color: var(--acc); }
+.noorden-sub { font-family: var(--serif); font-style: italic; font-size: 17px; color: rgba(250,247,242,.7); margin-bottom: 28px; }
+.noorden-p { font-size: 15px; font-weight: 300; line-height: 1.85; color: rgba(250,247,242,.82); max-width: 560px; margin-bottom: 12px; }
+.noorden-p em { font-style: italic; color: var(--paper); }
+.noorden-cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 18px; font-size: 14px; font-weight: 600; color: var(--paper); text-decoration: none; border-bottom: 1px solid var(--acc); padding-bottom: 2px; transition: gap .2s; }
+.noorden-cta:hover { gap: 14px; }
+.noorden-agent { margin-top: 40px; padding-top: 22px; border-top: 1px solid rgba(250,247,242,.14); font-size: 12.5px; color: rgba(250,247,242,.5); line-height: 1.6; max-width: 520px; }
+.noorden-agent a { color: rgba(250,247,242,.72); text-decoration: underline; text-underline-offset: 3px; }
+.noorden-agent a:hover { color: var(--paper); }
+@media (max-width: 720px) { .noorden { padding: 64px 24px; } }
+
 /* FOOTER */
 .tak-breaker { background: var(--ink); padding: 56px 32px; border-top: 1px solid rgba(255,255,255,.06); }
 .tak-breaker-inner { max-width: 860px; margin: 0 auto; display: flex; align-items: center; gap: 32px; flex-wrap: wrap; justify-content: space-between; }
@@ -695,6 +712,19 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
   </div>
 </section>
 
+<!-- HET MENSELIJKE NOORDEN -->
+<section class="noorden" id="noorden">
+  <div class="noorden-kanji" aria-hidden="true">北</div>
+  <div class="noorden-inner" data-r>
+    <p class="noorden-label" data-i18n="noorden-label">Het Menselijke Noorden</p>
+    <h2 class="noorden-kop" data-i18n="noorden-kop">De agents navigeren.<br>Jij houdt het <em>noorden</em>.</h2>
+    <p class="noorden-sub" data-i18n="noorden-sub">Niet het magnetische noorden — het jouwe.</p>
+    <p class="noorden-p" data-i18n="noorden-p">Naarmate machines het doen overnemen, wordt de schaarse vraag niet langer <em>hoe</em> iets sneller kan, maar <em>waarheen</em> — en of het de juiste richting is. Takumi is geen navigator die voor je stuurt. Het is het kompas dat jouw seizoen vasthoudt: planten, groeien, snoeien, oogsten. De machines rekenen de route. Takumi houdt het noorden.</p>
+    <a class="noorden-cta" href="/manifest" data-i18n="noorden-cta">Lees het manifest →</a>
+    <p class="noorden-agent" data-i18n="noorden-agent">Takumi spreekt ook de taal van agents — leesbaar, nooit stuurbaar. <a href="https://app.takumi-master.com/mcp" target="_blank">Verbind je agent</a>.</p>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <div class="ft-left">
@@ -709,6 +739,7 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
     <a href="#boek">Het boek</a>
     <a href="#webinar">Webinar</a>
     <a href="#takumi">Takumi</a>
+    <a href="#noorden">Het Noorden</a>
     <a href="https://wesharetalent.com" target="_blank">WeShareTalent</a>
     <a href="https://www.linkedin.com/in/paultakken/" target="_blank">LinkedIn</a>
   </div>
@@ -790,6 +821,12 @@ var NL = {
   'tak-p':       'Waar platte AI één antwoord geeft, biedt Takumi een leesraster. 地 Aarde voor fundament. 水 Water voor herstel. 風 Wind voor scherpte. 火 Vuur voor actie. 空 Leegte voor wat ontbreekt. Geworteld in Musashi\'s Go Rin No Sho en het werk uit Natuurlijk Agile. Toepasbaar in jouw werk, jouw team, jouw leven. Niet één gesprek, maar een oefenruimte voor een rijkere manier van waarnemen.',
   'tak-beta-note': '<strong>Publieke beta.</strong> Takumi is in ontwikkeling — verwacht ruwe randjes, en feedback is welkom. Takumi slaat geen data op een server op; alles blijft lokaal op jouw apparaat, met backup naar je eigen Drive of iCloud.',
   'tak-btn':     'Begin met Takumi ↗',
+  'noorden-label': 'Het Menselijke Noorden',
+  'noorden-kop':   'De agents navigeren.<br>Jij houdt het <em>noorden</em>.',
+  'noorden-sub':   'Niet het magnetische noorden — het jouwe.',
+  'noorden-p':     'Naarmate machines het doen overnemen, wordt de schaarse vraag niet langer <em>hoe</em> iets sneller kan, maar <em>waarheen</em> — en of het de juiste richting is. Takumi is geen navigator die voor je stuurt. Het is het kompas dat jouw seizoen vasthoudt: planten, groeien, snoeien, oogsten. De machines rekenen de route. Takumi houdt het noorden.',
+  'noorden-cta':   'Lees het manifest →',
+  'noorden-agent': 'Takumi spreekt ook de taal van agents — leesbaar, nooit stuurbaar. <a href="https://app.takumi-master.com/mcp" target="_blank">Verbind je agent</a>.',
   'v01-n':'Valkuil 01','v01-h':'De efficiëntieval','v01-p':'Agile als bezuinigingstool. Velocity als heilige metric. De waarde die er echt toe doet, wordt niet gemeten.',
   'v02-n':'Valkuil 02','v02-h':'Onvoldoende wortels','v02-p':'Agile ingevoerd zonder filosofisch fundament. Een boom zonder wortels staat, totdat de eerste storm komt.',
   'v03-n':'Valkuil 03','v03-h':'Agile hyperventilatie','v03-p':'Sprint na sprint, zonder ademruimte. Het ritme dat wendbaarheid kracht geeft, is verdwenen.',
@@ -848,6 +885,12 @@ var EN = {
   'tak-p':       'Where flat AI gives one answer, Takumi offers a reading grid. 地 Earth for foundation. 水 Water for recovery. 風 Wind for sharpness. 火 Fire for action. 空 Void for what is missing. Rooted in Musashi\'s Go Rin No Sho and the work from Natural Agile. Applicable to your work, your team, your life. Not a single conversation, but a practice space for a richer way of perceiving.',
   'tak-beta-note': '<strong>Public beta.</strong> Takumi is under active development — expect rough edges, and feedback is welcome. Takumi stores no data on a server; everything stays local on your device, with backup to your own Drive or iCloud.',
   'tak-btn':     'Start with Takumi ↗',
+  'noorden-label': 'Your True North',
+  'noorden-kop':   'The agents navigate.<br>You hold the <em>north</em>.',
+  'noorden-sub':   'Not magnetic north — yours.',
+  'noorden-p':     'As machines take over the doing, the scarce question is no longer <em>how</em> to go faster, but <em>where</em> — and whether it is the right direction. Takumi is no navigator steering for you. It is the compass that holds your season: plant, grow, prune, harvest. The machines compute the route. Takumi keeps the north.',
+  'noorden-cta':   'Read the manifesto →',
+  'noorden-agent': 'Takumi also speaks the language of agents — readable, never steerable. <a href="https://app.takumi-master.com/mcp" target="_blank">Connect your agent</a>.',
   'v01-n':'Pitfall 01','v01-h':'The efficiency trap','v01-p':'Agile as a cost-cutting tool. Velocity as the sacred metric. The value that truly matters goes unmeasured.',
   'v02-n':'Pitfall 02','v02-h':'Insufficient roots','v02-p':'Agile introduced without philosophical foundation. A tree without roots stands — until the first storm.',
   'v03-n':'Pitfall 03','v03-h':'Agile hyperventilation','v03-p':'Sprint after sprint, without breathing space. The rhythm that gives agility its power has disappeared.',
