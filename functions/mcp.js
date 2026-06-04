@@ -14,7 +14,16 @@
 //   takumi://noorden         — het manifest-in-één-regel + de huidige dag-leider als oriëntatie
 
 const PROTOCOL_VERSION = '2024-11-05';
-const SERVER_INFO = { name: 'takumi-master', version: '0.1.0' };
+const SERVER_INFO = {
+  name: 'takumi-master',
+  version: '0.1.0',
+  title: 'Takumi — het menselijke noorden',
+  websiteUrl: 'https://app.takumi-master.com/agents',
+  icons: [
+    { src: 'https://app.takumi-master.com/takumi-mcp.svg', mimeType: 'image/svg+xml', sizes: ['any'] },
+    { src: 'https://app.takumi-master.com/takumi-mcp-512.png', mimeType: 'image/png', sizes: ['512x512'] }
+  ]
+};
 
 // — Dag-leider rotatie (spiegelt /api/pulse en getDayLeader() in index.html) —
 const DAY_LEADERS = {
@@ -185,6 +194,7 @@ export async function onRequest(context) {
   if (request.method === 'GET') {
     return new Response(JSON.stringify({
       server: SERVER_INFO,
+      iconUrl: 'https://app.takumi-master.com/takumi-mcp.svg',
       protocol: PROTOCOL_VERSION,
       transport: 'streamable-http',
       readonly: true,

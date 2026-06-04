@@ -37,6 +37,7 @@ a { color: inherit; }
 .hero { position: relative; padding: 84px 32px 56px; background: var(--p2); overflow: hidden; border-bottom: 1px solid var(--border); }
 .hero-kanji { position: absolute; top: 50%; right: 5%; transform: translateY(-50%); font-family: var(--serif); font-size: clamp(140px, 26vw, 300px); line-height: 1; color: rgba(28,24,21,.035); pointer-events: none; }
 .hero-inner { position: relative; max-width: 720px; margin: 0 auto; z-index: 1; }
+.hero-icon { width: 60px; height: 60px; display: block; margin-bottom: 22px; }
 .hero-label { font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--acc); margin-bottom: 16px; }
 .hero h1 { font-family: var(--serif); font-weight: 300; font-size: clamp(34px, 5.5vw, 60px); line-height: 1.08; margin-bottom: 16px; }
 .hero h1 em { font-style: italic; color: var(--acc); }
@@ -77,6 +78,9 @@ footer a { color: var(--muted); text-decoration: underline; text-underline-offse
 
 @media (max-width: 600px) { .hero { padding: 56px 20px 40px; } .wrap { padding: 48px 20px 24px; } }
 </style>
+<link rel="icon" type="image/svg+xml" href="/takumi-mcp.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/takumi-mcp-180.png">
 </head>
 <body>
 
@@ -88,6 +92,7 @@ footer a { color: var(--muted); text-decoration: underline; text-underline-offse
 <section class="hero">
   <div class="hero-kanji" aria-hidden="true">北</div>
   <div class="hero-inner">
+    <img class="hero-icon" src="/takumi-mcp.svg" alt="Takumi MCP" width="60" height="60">
     <p class="hero-label">For agents &amp; builders</p>
     <h1>Connect your agent<br>to the <em>north</em>.</h1>
     <p class="hero-sub">Takumi offers an MCP server: a compass an agent can consult for orientation. Read-only — readable, never steerable. Takumi weighs; it does not act.</p>

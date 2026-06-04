@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Takumi MCP">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c4532a"/>
+      <stop offset="1" stop-color="#a8461f"/>
+    </linearGradient>
+  </defs>
+  <!-- brand tile -->
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#tile)"/>
+  <!-- compass ring -->
+  <circle cx="256" cy="256" r="168" fill="none" stroke="#faf7f2" stroke-width="14" stroke-opacity="0.30"/>
+  <!-- north marker: filled needle pointing up -->
+  <path d="M256 60 L286 150 L256 132 L226 150 Z" fill="#faf7f2"/>
+  <!-- 匠 kanji, brand-white, centered -->
+  <text x="256" y="328" text-anchor="middle" font-family="'Cormorant Garamond', Georgia, serif" font-weight="600" font-size="300" fill="#faf7f2">匠</text>
+</svg>
