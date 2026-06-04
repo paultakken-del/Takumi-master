@@ -199,7 +199,7 @@ export async function onRequest(context) {
       transport: 'streamable-http',
       readonly: true,
       resources: RESOURCES.map(r => r.uri),
-      note: 'Takumi MCP — een kompas, geen navigator. Read-only resources, geen tools.'
+      note: 'Takumi MCP — een spiegel, geen stuurman. Read-only resources, geen tools.'
     }, null, 2), { headers: { 'Content-Type': 'application/json; charset=utf-8', ...CORS } });
   }
 
