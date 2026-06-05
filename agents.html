@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Connect your agent — Takumi</title>
-<meta name="description" content="Takumi offers an MCP server: a watchdog for the natural principles an agent's plan should respect. Read-only — it watches and warns, never steers.">
+<meta name="description" content="Takumi offers an MCP server: a balance layer between human and machine. Read-only — it measures and shows, it never acts.">
 <meta name="author" content="Paul Takken">
 <meta property="og:title" content="Connect your agent — Takumi">
-<meta property="og:description" content="A watchdog for natural principles — rhythm over pace, enough over more, ripening over forcing. Read-only resources, no tools.">
+<meta property="og:description" content="A balance layer between human and machine — a load balancer for human and machine work. Read-only resources, no tools.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -94,14 +94,14 @@ footer a { color: var(--muted); text-decoration: underline; text-underline-offse
   <div class="hero-inner">
     <img class="hero-icon" src="/takumi-mcp.svg" alt="Takumi MCP" width="60" height="60">
     <p class="hero-label">For agents &amp; builders</p>
-    <h1>Connect your agent<br>to the <em>north</em>.</h1>
-    <p class="hero-sub">Takumi offers an MCP server: a watchdog for the natural principles an agent's plan should respect. Read-only — it watches and warns, it never steers. Takumi flags; it does not act.</p>
+    <h1>Connect your agent<br>to the <em>balance</em>.</h1>
+    <p class="hero-sub">Takumi offers an MCP server: a balance layer between human and machine. It reads how the work is split — what the agent takes on, what should stay with the person — and signals when it tips too far to the machine. Read-only: it measures and shows, it never acts.</p>
   </div>
 </section>
 
 <div class="wrap">
 
-  <p class="lede">Takumi is a watchdog for natural principles — rhythm over pace, enough over more, ripening over forcing. Before an agent acts, it checks the plan against them and flags what goes against the grain. Not the human's preference, but how things actually hold. So the agent can attune, instead of overriding — and <em>less</em> becomes a valid answer when the season calls for it, not only <em>more</em>.</p>
+  <p class="lede">Think of Takumi as a load balancer — not for servers, but for human and machine work. Machines take execution, scale, speed; people keep judgment, direction, measure. Before an agent acts, it checks the split against the natural principles — rhythm over pace, enough over more, ripening over forcing — and signals what tips too far to the machine. Not the human's preference, but where a healthy balance holds. The person decides; Takumi only shows.</p>
 
   <h2>The endpoint</h2>
   <span class="endpoint">https://app.takumi-master.com/mcp</span>
@@ -153,7 +153,7 @@ curl -X POST https://app.takumi-master.com/mcp \
 Read takumi://pulse/morning. Which element leads today,
 and which question does it ask? Keep that in mind when
 you propose how to plan my day.</pre>
-  <p>The agent acts. Takumi only shows whether the plan respects the principles, or not — what the agent does with that stays a choice.</p>
+  <p>The agent acts. Takumi only shows whether the split stays balanced — what the agent does with that stays a choice.</p>
 
   <h2>What it deliberately does not do</h2>
   <div class="dont">
@@ -162,7 +162,7 @@ you propose how to plan my day.</pre>
     <p><strong>No storage of your requests.</strong> The server is stateless and does not log your calls as part of its working.</p>
   </div>
 
-  <p class="pull">It watches and warns. It never acts.</p>
+  <p class="pull">It measures and shows. It never acts.</p>
 
 </div>
 

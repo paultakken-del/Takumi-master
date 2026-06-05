@@ -17,7 +17,7 @@ const PROTOCOL_VERSION = '2024-11-05';
 const SERVER_INFO = {
   name: 'takumi-master',
   version: '0.1.0',
-  title: 'Takumi — het menselijke noorden',
+  title: 'Takumi — balans tussen mens en machine',
   websiteUrl: 'https://app.takumi-master.com/agents',
   icons: [
     { src: 'https://app.takumi-master.com/takumi-mcp.svg', mimeType: 'image/svg+xml', sizes: ['any'] },
@@ -199,7 +199,7 @@ export async function onRequest(context) {
       transport: 'streamable-http',
       readonly: true,
       resources: RESOURCES.map(r => r.uri),
-      note: 'Takumi MCP — een watchdog voor de natuurlijke principes, geen actor. Read-only resources, geen tools.'
+      note: 'Takumi MCP — een balanslaag tussen mens en machine, geen actor. Read-only resources, geen tools.'
     }, null, 2), { headers: { 'Content-Type': 'application/json; charset=utf-8', ...CORS } });
   }
 
