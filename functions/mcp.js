@@ -1,7 +1,9 @@
 // /mcp — Takumi Master MCP-server (Streamable HTTP, JSON-RPC 2.0)
 //
 // Het menselijke noorden, leesbaar voor agents.
-// READ-ONLY: alleen resources, geen tools. Takumi weegt, het handelt niet.
+// READ-ONLY: resources + één lees-tool. Geen handelingen. Takumi weegt, het handelt niet.
+// (De lees-tool bestaat puur omdat chat-clients resources niet tonen, alleen tools.
+//  Lezen is wegen — de filosofie blijft intact: Takumi voert nooit iets uit.)
 // Stateless: berekent alles uit de datum + statische arrays. Nul API-calls, nul kosten.
 //
 // Endpoint:  POST https://app.takumi-master.com/mcp   (JSON-RPC)
@@ -132,6 +134,42 @@ function readResource(uri) {
   }
 }
 
+// — Lees-tool: de enige tool, puur read-only —
+// Chat-clients tonen geen resources, alleen tools. Deze tool leest een oriëntatiepunt
+// en geeft de inhoud terug. Geen zij-effecten, geen handeling — alleen wegen.
+const ORIENTATIES = ['noorden', 'pulse/morning', 'pulse/evening', 'reflectie'];
+
+const TOOLS = [
+  {
+    name: 'lees_kompas',
+    title: 'Lees het kompas',
+    description: 'Lees een Takumi-oriëntatiepunt (read-only). Geeft de inhoud van een ' +
+      'takumi://-resource terug. Kies een oriëntatie: "noorden" (het manifest + dag-leider), ' +
+      '"pulse/morning", "pulse/evening" of "reflectie". Standaard "noorden". ' +
+      'Takumi weegt, het handelt niet — deze tool voert niets uit, het leest alleen.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        orientatie: {
+          type: 'string',
+          enum: ORIENTATIES,
+          description: 'Welk oriëntatiepunt je wilt lezen. Standaard "noorden".'
+        }
+      },
+      required: []
+    }
+  }
+];
+
+function callTool(name, args) {
+  if (name !== 'lees_kompas') return { error: `Onbekende tool: ${name}` };
+  const orient = (args && args.orientatie) || 'noorden';
+  if (!ORIENTATIES.includes(orient)) return { error: `Onbekende oriëntatie: ${orient}` };
+  const text = readResource(`takumi://${orient}`);
+  if (text === null) return { error: `Onbekende oriëntatie: ${orient}` };
+  return { text };
+}
+
 // — JSON-RPC helpers —
 function rpcResult(id, result) { return { jsonrpc: '2.0', id, result }; }
 function rpcError(id, code, message) { return { jsonrpc: '2.0', id, error: { code, message } }; }
@@ -146,7 +184,7 @@ function handleRpc(msg) {
     case 'initialize':
       return rpcResult(id, {
         protocolVersion: (params && params.protocolVersion) || PROTOCOL_VERSION,
-        capabilities: { resources: {} },
+        capabilities: { resources: {}, tools: {} },
         serverInfo: SERVER_INFO,
         instructions: 'Takumi is read-only: een kompas, geen navigator. Lees resources voor oriëntatie; Takumi voert nooit handelingen uit.'
       });
@@ -165,8 +203,14 @@ function handleRpc(msg) {
     }
 
     case 'tools/list':
-      // Bewust leeg. Takumi biedt geen tools — het weegt, het handelt niet.
-      return rpcResult(id, { tools: [] });
+      // Eén read-only lees-tool. Takumi handelt niet; het leest en weegt.
+      return rpcResult(id, { tools: TOOLS });
+
+    case 'tools/call': {
+      const r = callTool(params && params.name, params && params.arguments);
+      if (r.error) return rpcResult(id, { isError: true, content: [{ type: 'text', text: r.error }] });
+      return rpcResult(id, { content: [{ type: 'text', text: r.text }] });
+    }
 
     case 'prompts/list':
       return rpcResult(id, { prompts: [] });
@@ -199,7 +243,8 @@ export async function onRequest(context) {
       transport: 'streamable-http',
       readonly: true,
       resources: RESOURCES.map(r => r.uri),
-      note: 'Takumi MCP — een balanslaag tussen mens en machine, geen actor. Read-only resources, geen tools.'
+      tools: TOOLS.map(t => t.name),
+      note: 'Takumi MCP — een balanslaag tussen mens en machine, geen actor. Read-only resources plus één lees-tool (lees_kompas). Geen handelingen.'
     }, null, 2), { headers: { 'Content-Type': 'application/json; charset=utf-8', ...CORS } });
   }
 
