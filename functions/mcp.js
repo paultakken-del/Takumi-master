@@ -157,6 +157,13 @@ const TOOLS = [
         }
       },
       required: []
+    },
+    annotations: {
+      title: 'Lees het kompas',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false
     }
   }
 ];
