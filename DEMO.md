@@ -1,4 +1,6 @@
-# Demo-script webinar 19 juni — "De nieuwste AI-architectuur is 400 jaar oud"
+# Demo-script webinar september — "De nieuwste AI-architectuur is 400 jaar oud"
+
+> Webinar verplaatst naar september — extra tijd benut voor Fase 2 (auth, cross-client, registry). Zie ROADMAP-FASE2.md.
 
 ## Live flow (3 min)
 

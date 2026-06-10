@@ -7125,7 +7125,48 @@ function confRej(){
 
 // ── DAILY PULSE ────────────────────────────────────────────────────
 const MOODS=[{e:'🎯',l:'Gefocust'},{e:'🔥',l:'Gemotiveerd'},{e:'😌',l:'Rustig'},{e:'😴',l:'Moe'},{e:'😰',l:'Gestrest'},{e:'💡',l:'Creatief'},{e:'😟',l:'Onrustig'},{e:'🙏',l:'Dankbaar'}];
-const PSTEPS=['Energie','間 Loslaten','Master Council'];
+const PSTEPS=['衡 Weging','Energie','間 Loslaten','Master Council'];
+// ── Lokale weging: identiek aan de server (functions/mcp.js) en /weegschaal — 11 regels, deterministisch ──
+const WEEG_VRAGEN={
+  chi:['Welk fundament onder vandaag draagt nog steeds?','Wat is vandaag je anker als het zicht wegvalt?','Welke discipline geeft je vandaag juist vrijheid?','Wat verdient vandaag onderhoud in plaats van vernieuwing?'],
+  sui:['Waar kun je vandaag meebewegen in plaats van duwen?','Welk signaal van je lichaam neem je vandaag serieus?','Wat vraagt vandaag eerst luisteren, dan pas richting?','Waar heeft je herstel ruimte vandaag?'],
+  fu:['Welke verbinding vraagt vandaag jouw stem?','Waar breng jij vandaag lucht in een vastgelopen gesprek?','Welk idee wil vandaag hardop gezegd worden?','Waar mag vandaag een andere wind waaien?'],
+  ka:['Waar wil je vandaag je vuur leggen?','Welk vuur wakker je vandaag bewust aan?','Welke ene beslissing maakt de rest vandaag lichter?','Waar zegt je buik ja terwijl je hoofd nog twijfelt?'],
+  ku:['Wat mag vandaag onaangeroerd blijven?','Waar maak je vandaag ruimte door iets niet te doen?','Welke stilte plan je vandaag in voordat de dag het doet?','Wat zou er gebeuren als je vandaag niets toevoegt?']
+};
+const WEEG_EL={chi:{k:'地',n:'Chi'},sui:{k:'水',n:'Sui'},fu:{k:'風',n:'Fū'},ka:{k:'火',n:'Ka'},ku:{k:'空',n:'Kū'}};
+function weegLokaal(b,a){
+  if(!b&&!a)return null;
+  var el,reden;
+  if(b==='gereden'&&a==='vol'){el='ku';reden='Al gegeven én een volle dag — leegte: kies wat onaangeroerd blijft.';}
+  else if(b==='gereden'&&a==='ruim'){el='fu';reden='Lichaam in beweging, agenda met lucht — wind: ruimte voor geest en verbinding.';}
+  else if(b==='hersteld'&&a==='vol'){el='chi';reden='Uitgerust en een volle dag — aarde: laat structuur het werk dragen.';}
+  else if(b==='hersteld'&&a==='ruim'){el='ka';reden='Energie opgebouwd en ruimte — vuur: kies waar je het legt.';}
+  else if(b==='rust'&&a==='vol'){el='sui';reden='Lange stilstand in een volle agenda — water: meebewegen en herstel bewaken.';}
+  else if(b==='rust'&&a==='ruim'){el='ka';reden='Stilstand en ruimte — vuur: wakker het voorzichtig weer aan.';}
+  else if(b==='gereden'){el='chi';reden='De gewoonte droeg — aarde: fundament.';}
+  else if(b==='hersteld'){el='sui';reden='Hersteld — water: bouw de flow rustig op.';}
+  else if(b==='rust'){el='sui';reden='Lange rust — water: eerst voelen wat er stroomt.';}
+  else if(a==='vol'){el='ku';reden='Volle agenda — leegte: bewaak de stilte.';}
+  else {el='ka';reden='Ruime agenda — vuur: richting kiezen.';}
+  var doy=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000);
+  return {element:el,reden:reden,vraag:WEEG_VRAGEN[el][doy%WEEG_VRAGEN[el].length]};
+}
+function weegToggle(grp,val,btn){
+  S.pulse.data[grp]=S.pulse.data[grp]===val?null:val;
+  btn.parentElement.querySelectorAll('button').forEach(function(x){x.classList.remove('pri');x.classList.add('gh');});
+  if(S.pulse.data[grp]){btn.classList.add('pri');btn.classList.remove('gh');}
+  var w=weegLokaal(S.pulse.data.beweging,S.pulse.data.agenda);
+  S.pulse.data.weging=w;
+  var out=document.getElementById('weeg-out');
+  if(!out)return;
+  if(!w){out.style.display='none';return;}
+  out.style.display='block';
+  document.getElementById('weeg-k').textContent=WEEG_EL[w.element].k;
+  document.getElementById('weeg-n').textContent=WEEG_EL[w.element].n;
+  document.getElementById('weeg-r').textContent=w.reden;
+  document.getElementById('weeg-v').textContent=w.vraag;
+}
 
 function initPulse(){
   
@@ -7136,6 +7177,35 @@ function drawPulse(){
   document.getElementById('pst').innerHTML=PSTEPS.map((_,i)=>`<div class="ps${i<step?' done':i===step?' cur':''}"></div>`).join('');
   const B=document.getElementById('pb');
   if(step===0){
+    var wd=S.pulse.data, sel=function(g,v){return wd[g]===v?'pri':'gh';};
+    B.innerHTML=`<div class="pq">衡 Weging</div>
+      <div class="ph2">Twee coördinaten. Takumi weegt — dezelfde elf regels als <a href="/weegschaal" target="_blank" style="color:var(--m)">de weegschaal</a>.</div>
+      <div style="font-size:12px;color:var(--m);margin-bottom:6px">Beweging — wanneer was je laatst actief?</div>
+      <div style="display:flex;gap:8px;margin-bottom:var(--sp-md)">
+        <button class="btn sm ${sel('beweging','gereden')}" style="flex:1" onclick="weegToggle('beweging','gereden',this)">Gereden</button>
+        <button class="btn sm ${sel('beweging','hersteld')}" style="flex:1" onclick="weegToggle('beweging','hersteld',this)">Hersteld</button>
+        <button class="btn sm ${sel('beweging','rust')}" style="flex:1" onclick="weegToggle('beweging','rust',this)">Rust</button>
+      </div>
+      <div style="font-size:12px;color:var(--m);margin-bottom:6px">Agenda — hoe oogt vandaag?</div>
+      <div style="display:flex;gap:8px;margin-bottom:var(--sp-md)">
+        <button class="btn sm ${sel('agenda','vol')}" style="flex:1" onclick="weegToggle('agenda','vol',this)">Vol</button>
+        <button class="btn sm ${sel('agenda','ruim')}" style="flex:1" onclick="weegToggle('agenda','ruim',this)">Ruim</button>
+      </div>
+      <div id="weeg-out" class="card" style="display:${wd.weging?'block':'none'};margin-bottom:var(--sp-md)">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span id="weeg-k" style="font-family:var(--FJ);font-size:34px;line-height:1">${wd.weging?WEEG_EL[wd.weging.element].k:''}</span>
+          <div>
+            <div id="weeg-n" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--m)">${wd.weging?WEEG_EL[wd.weging.element].n:''}</div>
+            <div id="weeg-r" style="font-size:13px;color:var(--m)">${wd.weging?wd.weging.reden:''}</div>
+          </div>
+        </div>
+        <div id="weeg-v" style="margin-top:10px;font-size:15px;font-style:italic">${wd.weging?wd.weging.vraag:''}</div>
+      </div>
+      <div class="pn">
+        <button class="btn sm gh" onclick="S.pulse.data.beweging=null;S.pulse.data.agenda=null;S.pulse.data.weging=null;S.pulse.step++;drawPulse()">Overslaan</button>
+        <button class="btn pri" onclick="if(S.pulse.data.weging){var h=ls('tm2_ritme',{rustWeken:[],maList:[],pulseHistory:[]});h.pulseHistory.unshift({ts:new Date().toISOString(),weging:S.pulse.data.weging,beweging:S.pulse.data.beweging,agenda:S.pulse.data.agenda});h.pulseHistory=h.pulseHistory.slice(0,90);RitmeData=h;lsSet('tm2_ritme',h);}S.pulse.step++;drawPulse()">Verder →</button>
+      </div>`;
+  }else if(step===1){
     B.innerHTML=`<div class="pq">Energie</div>
       <div class="ph2">Hoe is je energieniveau op dit moment?</div>
       <div class="rw"><div class="rval" id="ev">${data.energy||6}</div><input type="range" min="1" max="10" value="${data.energy||6}" oninput="document.getElementById('ev').textContent=this.value;S.pulse.data.energy=+this.value"></div>
@@ -7144,7 +7214,7 @@ function drawPulse(){
         <button class="btn pri" onclick="S.pulse.step++;drawPulse()">Verder →</button>
       </div>`;
     S.pulse.data.energy=S.pulse.data.energy||6;
-  }else if(step===1){
+  }else if(step===2){
     var isFriday = new Date().getDay() === 5;
     var vrijdagExtra = isFriday ? `
       <div style="margin-top:16px;padding:14px;background:rgba(40,137,122,.08);border-radius:var(--rs);border-left:3px solid var(--teal)">
@@ -7175,13 +7245,13 @@ function drawPulse(){
           S.pulse.step++;drawPulse()
         ">Opslaan & Verder →</button>
       </div>`;
-  }else if(step===2){
+  }else if(step===3){
     const sum='energie '+(data.energy||6)+'/10, stemming '+(RituelenData&&RituelenData.binnenkomst||'–');
     B.innerHTML=`<div class="pq">Master Council</div>
       <div class="ph2">Je pulse van vandaag</div>
       <div class="card" style="margin-bottom:var(--sp-md)">
         <div style="font-size:13px;line-height:1.8">
-          Energie <strong>${data.energy||6}/10</strong>${data.ma1?'<br>Loslaten: <em>'+data.ma1+'</em>':''}
+          ${data.weging?'Weging: <strong>'+WEEG_EL[data.weging.element].k+' '+WEEG_EL[data.weging.element].n+'</strong> — '+data.weging.reden+'<br>':''}Energie <strong>${data.energy||6}/10</strong>${data.ma1?'<br>Loslaten: <em>'+data.ma1+'</em>':''}
         </div>
       </div>
       <div class="pn">
