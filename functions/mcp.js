@@ -18,7 +18,7 @@
 const PROTOCOL_VERSION = '2024-11-05';
 const SERVER_INFO = {
   name: 'takumi-master',
-  version: '0.1.0',
+  version: '0.2.0',
   title: 'Takumi — balans tussen mens en machine',
   websiteUrl: 'https://app.takumi-master.com/agents',
   icons: [
@@ -84,27 +84,67 @@ const REFLECTIONS = [
   { q: 'Een doel hoeft niet altijd bereikt te worden — vaak dient het simpelweg als richtpunt.', a: 'Bruce Lee', time: 'any' }
 ];
 
-function dayOfYear() { return Math.floor((Date.now() / 86400000) % 365); }
+// — Tijd: alles in Amsterdamse tijd (Cloudflare draait UTC; Intl regelt zomertijd) —
+function amsNow() {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Amsterdam' }));
+}
+function dayOfYear() {
+  const n = amsNow();
+  const start = new Date(n.getFullYear(), 0, 0);
+  return Math.floor((n - start) / 86400000);
+}
+function dagdeelNow() {
+  const h = amsNow().getHours();
+  return (h >= 17 || h < 5) ? 'evening' : 'morning'; // spiegelt tijdsbesef in index.html
+}
 function pick(arr) { return arr[dayOfYear() % arr.length]; }
-function leaderToday() { return DAY_LEADERS[new Date().getUTCDay()]; }
+function leaderToday() { return DAY_LEADERS[amsNow().getDay()]; }
 
-function pulsePayload(type) {
+// — Weging: de agent levert coördinaten uit de wereld, Takumi weegt ze tot een element —
+// Geen API-calls, geen handeling: de meting komt binnen, het kompas kiest de richting van de vraag.
+function weeg(co) {
+  if (!co || (!co.beweging && !co.agenda)) return null;
+  const b = co.beweging, a = co.agenda;
+  let el, reden;
+  if (b === 'rust' && a === 'vol')        { el = 'sui'; reden = 'Rustdag in een volle agenda — water: meebewegen en herstel bewaken.'; }
+  else if (b === 'rust' && a === 'ruim')  { el = 'ka';  reden = 'Energie beschikbaar en ruimte in de dag — vuur: kies waar je het legt.'; }
+  else if (b === 'gereden' && a === 'vol'){ el = 'ku';  reden = 'Al gegeven én een volle dag — leegte: kies wat onaangeroerd blijft.'; }
+  else if (b === 'gereden' && a === 'ruim'){ el = 'fu'; reden = 'Lichaam in beweging, agenda met lucht — wind: ruimte voor geest en verbinding.'; }
+  else if (b === 'rust')                  { el = 'sui'; reden = 'Rustdag — water: herstel en flow.'; }
+  else if (b === 'gereden')               { el = 'chi'; reden = 'De gewoonte droeg vandaag — aarde: fundament.'; }
+  else if (a === 'vol')                   { el = 'ku';  reden = 'Volle agenda — leegte: bewaak de stilte.'; }
+  else                                    { el = 'ka';  reden = 'Ruime agenda — vuur: richting kiezen.'; }
+  return { element: el, reden, coordinaten: co };
+}
+
+function pulsePayload(type, weging) {
   const leader = leaderToday();
-  const questions = type === 'morning' ? MORNING_QUESTIONS[leader.eid] : EVENING_QUESTIONS[leader.eid];
-  return {
+  const eid = (weging && MORNING_QUESTIONS[weging.element]) ? weging.element : leader.eid;
+  const questions = type === 'morning' ? MORNING_QUESTIONS[eid] : EVENING_QUESTIONS[eid];
+  const out = {
     type,
     timestamp: new Date().toISOString(),
     leader: { kanji: leader.kanji, name: leader.name, master: leader.master, element: leader.element },
     question: pick(questions)
   };
+  if (weging) out.weging = weging;
+  return out;
 }
 
-function reflectionPayload(period) {
+function reflectionPayload(period, weging) {
   const want = period === 'evening' ? 'evening' : 'morning';
   let pool = REFLECTIONS.filter(r => r.time === want || r.time === 'any');
+  if (weging) {
+    const elPool = pool.filter(r => r.el === weging.element);
+    const elAny = REFLECTIONS.filter(r => r.el === weging.element);
+    if (elPool.length) pool = elPool;
+    else if (elAny.length) pool = elAny;
+  }
   if (!pool.length) pool = REFLECTIONS;
   const r = pool[dayOfYear() % pool.length];
-  return { reflectie: r.q, bron: r.a, element: r.el || null, dagdeel: want };
+  const out = { reflectie: r.q, bron: r.a, element: r.el || null, dagdeel: want };
+  if (weging) out.weging = weging;
+  return out;
 }
 
 function noordenPayload() {
@@ -128,7 +168,7 @@ function readResource(uri) {
   switch (uri) {
     case 'takumi://pulse/morning': return JSON.stringify(pulsePayload('morning'), null, 2);
     case 'takumi://pulse/evening': return JSON.stringify(pulsePayload('evening'), null, 2);
-    case 'takumi://reflectie':     return JSON.stringify(reflectionPayload('morning'), null, 2);
+    case 'takumi://reflectie':     return JSON.stringify(reflectionPayload(dagdeelNow()), null, 2);
     case 'takumi://noorden':       return JSON.stringify(noordenPayload(), null, 2);
     default: return null;
   }
@@ -146,6 +186,9 @@ const TOOLS = [
     description: 'Lees een Takumi-oriëntatiepunt (read-only). Geeft de inhoud van een ' +
       'takumi://-resource terug. Kies een oriëntatie: "noorden" (het manifest + dag-leider), ' +
       '"pulse/morning", "pulse/evening" of "reflectie". Standaard "noorden". ' +
+      'Optioneel: geef coordinaten mee (meetpunten uit de wereld, bijv. uit Strava of de agenda) — ' +
+      'Takumi weegt ze tot een element en kiest daar de vraag of reflectie bij. De weging is ' +
+      'transparant en komt mee terug in het antwoord. ' +
       'Takumi weegt, het handelt niet — deze tool voert niets uit, het leest alleen.',
     inputSchema: {
       type: 'object',
@@ -154,6 +197,14 @@ const TOOLS = [
           type: 'string',
           enum: ORIENTATIES,
           description: 'Welk oriëntatiepunt je wilt lezen. Standaard "noorden".'
+        },
+        coordinaten: {
+          type: 'object',
+          description: 'Optionele meetpunten. De agent levert de coördinaten; Takumi weegt. Zonder coordinaten geldt de dag-rotatie.',
+          properties: {
+            beweging: { type: 'string', enum: ['gereden', 'rust'], description: 'Vandaag getraind/gefietst, of rustdag.' },
+            agenda:   { type: 'string', enum: ['vol', 'ruim'],     description: 'Hoe de agenda van vandaag oogt.' }
+          }
         }
       },
       required: []
@@ -172,9 +223,15 @@ function callTool(name, args) {
   if (name !== 'lees_kompas') return { error: `Onbekende tool: ${name}` };
   const orient = (args && args.orientatie) || 'noorden';
   if (!ORIENTATIES.includes(orient)) return { error: `Onbekende oriëntatie: ${orient}` };
-  const text = readResource(`takumi://${orient}`);
-  if (text === null) return { error: `Onbekende oriëntatie: ${orient}` };
-  return { text };
+  const weging = weeg(args && args.coordinaten);
+  let payload;
+  switch (orient) {
+    case 'pulse/morning': payload = pulsePayload('morning', weging); break;
+    case 'pulse/evening': payload = pulsePayload('evening', weging); break;
+    case 'reflectie':     payload = reflectionPayload(dagdeelNow(), weging); break;
+    default:              payload = noordenPayload();
+  }
+  return { text: JSON.stringify(payload, null, 2) };
 }
 
 // — JSON-RPC helpers —

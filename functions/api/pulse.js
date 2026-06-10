@@ -96,11 +96,6 @@ const EVENING_QUESTIONS = {
   ]
 };
 
-function pickQuestion(arr) {
-  // Roteer op basis van dag-van-jaar zodat dezelfde dag steeds dezelfde vraag geeft
-  const dayOfYear = Math.floor((Date.now() / 86400000) % 365);
-  return arr[dayOfYear % arr.length];
-}
 
 export async function onRequest(context) {
   const url = new URL(context.request.url);
@@ -115,16 +110,15 @@ export async function onRequest(context) {
     });
   }
 
-  // Bereken dag-leider voor lokale Nederlandse tijd
-  // Cloudflare draait UTC, dus we moeten +1 of +2 (Amsterdam)
-  // Voor eenvoud: gebruik UTC+1 (winter) — voor zomertijd 2026 (CEST) is dat +2, maar accept binnen 1 uur drift
+  // Dag-leider en rotatie in echte Amsterdamse tijd (Intl regelt zomertijd; Cloudflare draait UTC)
   const now = new Date();
-  const amsHour = (now.getUTCHours() + 2) % 24; // CEST default — fine grain niet kritiek
-  const amsDay = amsHour < (now.getUTCHours() + 2 >= 24 ? 1 : 0) ? (now.getUTCDay() + 1) % 7 : now.getUTCDay();
+  const ams = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Amsterdam' }));
+  const start = new Date(ams.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((ams - start) / 86400000);
 
-  const leader = DAY_LEADERS[now.getUTCDay()];
+  const leader = DAY_LEADERS[ams.getDay()];
   const questions = type === 'morning' ? MORNING_QUESTIONS[leader.eid] : EVENING_QUESTIONS[leader.eid];
-  const question = pickQuestion(questions);
+  const question = questions[dayOfYear % questions.length];
 
   const data = {
     type: type,
