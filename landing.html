@@ -662,6 +662,38 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
   </div>
 </section>
 
+
+<!-- UIT DE GRIJZE ZONE -->
+<section id="grijzezone" style="padding:100px 40px;background:#F4F0E7">
+  <style>
+    .gz-inner{max-width:1040px;margin:0 auto;display:grid;grid-template-columns:280px 1fr;gap:72px;align-items:center}
+    .gz-cover{width:100%;border-radius:6px;box-shadow:0 18px 50px rgba(28,24,21,.18)}
+    .gz-btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+    .gz-btn{display:inline-block;text-decoration:none;border-radius:999px;padding:13px 26px;font-size:14px;font-weight:600;letter-spacing:.02em;transition:all .2s}
+    .gz-btn.p{background:#165E83;color:#fff}
+    .gz-btn.p:hover{background:#1d6f99}
+    .gz-btn.s{border:1px solid #165E83;color:#165E83}
+    .gz-btn.s:hover{background:rgba(22,94,131,.08)}
+    @media(max-width:860px){.gz-inner{grid-template-columns:1fr;gap:36px}.gz-cover{max-width:240px;margin:0 auto;display:block}}
+  </style>
+  <div class="gz-inner">
+    <div data-r>
+      <a href="/uit-de-grijze-zone.pdf" target="_blank" rel="noopener"><img class="gz-cover" src="/uit-de-grijze-zone-cover.jpg" alt="Uit de grijze zone — werkboek"></a>
+    </div>
+    <div data-r data-d="1">
+      <p class="col-label" data-i18n="gz-label">Nieuw — gratis werkboek</p>
+      <h2 class="boek-titel" style="margin-bottom:6px" data-i18n="gz-kop">Uit de grijze zone</h2>
+      <p class="boek-sub" style="margin-bottom:16px" data-i18n="gz-sub">Over ritme, herstel en de kunst van duurzaam versnellen — thuis, op de fiets en in organisaties.</p>
+      <p style="font-size:15.5px;line-height:1.7;color:#3c362f;max-width:520px" data-i18n="gz-txt">Te zwaar om van te herstellen, te licht om van te groeien: dat is de grijze zone. Dit korte werkboek beschrijft de uitweg in drie stappen — erkennen, herstellen, versnellen — met per hoofdstuk één micropraktijk, één meting en een invulbaar werkblad.</p>
+      <p style="font-size:13.5px;line-height:1.6;color:#8a8175;max-width:520px;margin-top:12px" data-i18n="gz-note">Hoofdstuk 7 eindigt waar Takumi begint: de Spiegelweek — AI als hartslagmeter, niet als gaspedaal.</p>
+      <div class="gz-btns">
+        <a class="gz-btn p" href="/uit-de-grijze-zone.pdf" target="_blank" rel="noopener" data-i18n="gz-btn-pdf">Download het werkboek (pdf)</a>
+        <a class="gz-btn s" href="/spiegel" data-i18n="gz-btn-spiegel">Naar de Spiegelweek →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- WEBINAR -->
 <section class="webinar" id="webinar">
   <div class="webinar-inner">
@@ -676,8 +708,8 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
       <div class="web-card">
         <div class="web-bar"></div>
         <div class="web-body">
-          <div class="web-date" data-i18n="web-date">Vrijdag 19 juni 2026</div>
-          <div class="web-time" data-i18n="web-time">9:30 – 11:00 · Online via Zoom</div>
+          <div class="web-date" data-i18n="web-date">Vrijdag 18 september 2026</div>
+          <div class="web-time" data-i18n="web-time">10:30 – 12:00 · Online</div>
           <div class="web-takes">
             <div class="web-take" data-i18n="web-take-1">Waarom wendbaarheid een natuurverschijnsel is — en wat dat betekent in het tijdperk van AI</div>
             <div class="web-take" data-i18n="web-take-2">Welke van de 7 patronen jouw organisatie raakt</div>
@@ -688,7 +720,7 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
             <span>Gratis</span>
             <span data-i18n="web-gratis">Via WeShareTalent · Zoomlink per e-mail</span>
           </div>
-          <a class="btn-web" data-i18n="web-btn" href="https://wesharetalent.com/en/event/natuurlijk-agile-de-verborgen-wortels-van-wendbaarheid-9/" target="_blank" rel="noopener">Meld je aan ↗</a>
+          <a class="btn-web" data-i18n="web-btn" href="https://www.wesharetalent.com/training/natuurlijk-agile-de-verborgen-wortels-van-wendbaarheid-2/" target="_blank" rel="noopener">Meld je aan ↗</a>
         </div>
       </div>
     </div>
@@ -737,6 +769,7 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
   <div class="ft-links">
     <a href="#diagnose">De 7 patronen</a>
     <a href="#boek">Het boek</a>
+    <a href="#grijzezone">Uit de grijze zone</a>
     <a href="#webinar">Webinar</a>
     <a href="#takumi">Takumi</a>
     <a href="#noorden">Het Noorden</a>
@@ -802,12 +835,19 @@ var NL = {
   'boek-sub':    'De verborgen wortels van wendbaarheid',
   'boek-quote':     '"Paul is my own agile true north — the person I speak to to refocus my own work towards work worth doing. Thank you Paul for this book that is truly a gift to the world."',
   'boek-quote-bron': 'Auteur Scrum Master, oprichter WIKISPEED',
+  'gz-label':    'Nieuw — gratis werkboek',
+  'gz-kop':      'Uit de grijze zone',
+  'gz-sub':      'Over ritme, herstel en de kunst van duurzaam versnellen — thuis, op de fiets en in organisaties.',
+  'gz-txt':      'Te zwaar om van te herstellen, te licht om van te groeien: dat is de grijze zone. Dit korte werkboek beschrijft de uitweg in drie stappen — erkennen, herstellen, versnellen — met per hoofdstuk één micropraktijk, één meting en een invulbaar werkblad.',
+  'gz-note':     'Hoofdstuk 7 eindigt waar Takumi begint: de Spiegelweek — AI als hartslagmeter, niet als gaspedaal.',
+  'gz-btn-pdf':  'Download het werkboek (pdf)',
+  'gz-btn-spiegel': 'Naar de Spiegelweek →',
   'web-label':   'Live sessie — gratis',
   'web-kop':     'Gun jezelf<br><em>een andere lens op organisaties</em>',
   'web-txt':     'Geen verkooppraatje. Paul neemt je mee in zijn denken — concreet en herkenbaar. Je hoeft het boek niet gelezen te hebben.',
   'web-name':    'Natuurlijk Agile — De verborgen wortels van wendbaarheid',
-  'web-date':    'Vrijdag 19 juni 2026',
-  'web-time':    '9:30 – 11:00 · Online via Zoom · Gratis',
+  'web-date':    'Vrijdag 18 september 2026',
+  'web-time':    '10:30 – 12:00 · Online · Gratis',
   'web-take-1':  'Waarom wendbaarheid een natuurverschijnsel is — en wat dat betekent in het tijdperk van AI',
   'web-take-2':  'Welke van de 7 patronen jouw organisatie raakt',
   'web-take-3':  'Hoe slow down to speed up eruitziet in de praktijk',
@@ -865,12 +905,19 @@ var EN = {
   'boek-sub':    'The hidden roots of agility',
   'boek-quote':     '"Paul is my own agile true north — the person I speak to to refocus my own work towards work worth doing. Thank you Paul for this book that is truly a gift to the world."',
   'boek-quote-bron': 'Author of Scrum Master, founder WIKISPEED',
+  'gz-label':    'New — free workbook',
+  'gz-kop':      'Out of the grey zone',
+  'gz-sub':      'On rhythm, recovery and the art of sustainable acceleration — at home, on the bike and in organisations.',
+  'gz-txt':      'Too heavy to recover from, too light to grow from: that is the grey zone. This short workbook describes the way out in three steps — acknowledge, recover, accelerate — with one micro-practice, one measurement and a fillable worksheet per chapter.',
+  'gz-note':     'Chapter 7 ends where Takumi begins: the Mirror Week — AI as heart-rate monitor, not accelerator.',
+  'gz-btn-pdf':  'Download the workbook (pdf)',
+  'gz-btn-spiegel': 'To the Mirror Week →',
   'web-label':   'Live session — free',
   'web-kop':     'Give yourself<br><em>a new lens on organisations</em>',
   'web-txt':     'No sales pitch. Paul walks you through his thinking — concrete and recognisable. No need to have read the book.',
   'web-name':    'Natural Agile — The hidden roots of agility',
-  'web-date':    'Friday 19 June 2026',
-  'web-time':    '9:30 – 11:00 · Online via Zoom · Free',
+  'web-date':    'Friday 18 September 2026',
+  'web-time':    '10:30 – 12:00 · Online · Free',
   'web-take-1':  'Why agility is a natural phenomenon — and what that means in the age of AI',
   'web-take-2':  'Which of the 7 patterns affects your organisation',
   'web-take-3':  'What slow down to speed up looks like in practice',
