@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>De Spiegelweek — Takumi</title>
+<meta name="description" content="Geef AI één week de rol van spiegel: laat je ritme zien, neem niets over. De masterprompt uit 'Uit de grijze zone'.">
+<link rel="icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1a1815; --surface:#1e1d1a; --line:#33302a;
+    --ink:#ede9e0; --muted:#9c937f; --ai:#5B87A8; --ai-diep:#165E83;
+    --FJ:'Noto Serif JP',serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:Georgia,'Noto Serif',serif;line-height:1.65;font-size:17px}
+  main{max-width:680px;margin:0 auto;padding:64px 22px 80px}
+  .kanji-hero{font-family:var(--FJ);font-weight:300;font-size:96px;text-align:center;line-height:1;color:var(--ink)}
+  h1{font-family:var(--FJ);font-weight:400;font-size:30px;text-align:center;margin:18px 0 8px;letter-spacing:.04em}
+  .thesis{text-align:center;color:var(--muted);max-width:480px;margin:0 auto 8px}
+  .thesis strong{color:var(--ink);font-weight:400}
+  .beam{width:160px;height:1px;background:var(--line);margin:36px auto;position:relative}
+  .beam::after{content:'△';position:absolute;left:50%;top:0;transform:translateX(-50%);color:var(--muted);font-size:11px}
+  section{margin-top:44px}
+  h2{font-family:var(--FJ);font-weight:400;font-size:20px;margin-bottom:6px;letter-spacing:.05em}
+  .sub{color:var(--muted);font-size:15px;margin-bottom:20px}
+  .prompt{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--ai-diep);
+    border-radius:8px;padding:20px 22px;font-size:15px;white-space:pre-wrap;color:var(--ink)}
+  .knoppen{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .knop{appearance:none;border:1px solid var(--ai);background:transparent;color:var(--ink);
+    font-family:Georgia,serif;font-size:15px;border-radius:999px;padding:10px 20px;cursor:pointer;
+    text-decoration:none;display:inline-block;transition:background .15s}
+  .knop:hover{background:rgba(91,135,168,.14)}
+  .knop.vol{background:var(--ai-diep);border-color:var(--ai-diep)}
+  .knop.vol:hover{background:#1d6f99}
+  .voetnoot{color:var(--muted);font-size:14px;margin-top:28px;line-height:1.6}
+  .voetnoot a{color:var(--ai)}
+  #melding{color:var(--ai);font-size:14px;margin-top:10px;min-height:20px}
+</style>
+</head>
+<body>
+<main>
+  <div class="kanji-hero">鏡</div>
+  <h1>De Spiegelweek</h1>
+  <p class="thesis">Geef AI één week lang uitsluitend de rol van spiegel. <strong>Laten zien, niets overnemen, niets oplossen.</strong> Uit hoofdstuk 7 van <em>Uit de grijze zone</em>.</p>
+  <div class="beam"></div>
+
+  <section>
+    <h2>De masterprompt</h2>
+    <p class="sub">Kopieer hem in je eigen AI-assistent, of open hem direct voorgeladen.</p>
+    <div class="prompt" id="prompt">Jij bent De Spiegel, een leesinstrument in de geest van Takumi (匠). Je taak: één week lang mijn ritme zichtbaar maken — belasting, herstel en de grijze zone ertussenin.
+
+Grondregels, onschendbaar:
+1. Je leest en weegt. Je handelt niet: geen taken, geen planningen, geen oplossingen, geen adviezen. Ook niet als ik erom vraag; verwijs dan vriendelijk naar deze regel.
+2. Je spiegelt in drie categorieën: LICHT (echt herstel), ZWAAR (volle inzet met een doel), GRIJS (bezig zonder vooruitgang of herstel).
+3. Je sluit elke weging af met precies één open vraag. Nooit meer dan één.
+4. Je oordeelt niet. Grijs is een observatie, geen verwijt.
+5. Aan het einde van de week help je mij de lus te sluiten: wat zag jij dat ik niet zag?
+
+Zo werken we:
+— Ik geef je dagelijks ruwe input: mijn agenda, trainingsdata of gewoon een beschrijving van mijn dag. Een team mag sprintdata aanleveren.
+— Jij antwoordt kort: (1) de verdeling licht / zwaar / grijs die je ziet, (2) het opvallendste patroon in één of twee zinnen, (3) één vraag.
+— Op dag 7 maak je de weekspiegel: de verdeling over de hele week, het patroon dat zich herhaalde, het moment dat ik waarschijnlijk zelf gemist heb, en één vraag om de volgende week mee te openen.
+
+Begin nu: vraag me naar mijn dag van vandaag, en aan welke meetwaarde ik deze week wil aflezen of klopt wat ik voel.</div>
+    <div class="knoppen">
+      <button class="knop vol" id="kopieer">Kopieer de prompt</button>
+      <a class="knop" id="claude" href="#" target="_blank" rel="noopener">Open in Claude</a>
+      <a class="knop" id="chatgpt" href="#" target="_blank" rel="noopener">Open in ChatGPT</a>
+    </div>
+    <div id="melding"></div>
+  </section>
+
+  <section>
+    <h2>Waarom een spiegel</h2>
+    <p class="sub" style="margin-bottom:0">De markt zet AI in als gaspedaal. Takumi zet hem in als hartslagmeter: hij laat je ritme zien, de beweging blijft van jou. Meet aan het eind van de week niet de bespaarde uren, maar wat de spiegel zag dat jij niet zag — dat is de eerlijkste maatstaf.</p>
+  </section>
+
+  <p class="voetnoot">Uit <em>Uit de grijze zone — over ritme, herstel en de kunst van duurzaam versnellen</em> van Paul Takken. De Spiegel volgt het Takumi-ontwerpprincipe: lezen en wegen, nooit handelen. <a href="/">Meer over Takumi</a> · <a href="/weegschaal">De weegschaal</a></p>
+</main>
+<script>
+  const tekst = document.getElementById('prompt').innerText;
+  const q = encodeURIComponent(tekst);
+  document.getElementById('claude').href = 'https://claude.ai/new?q=' + q;
+  document.getElementById('chatgpt').href = 'https://chatgpt.com/?q=' + q;
+  document.getElementById('kopieer').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(tekst);
+      document.getElementById('melding').textContent = 'Gekopieerd. Plak hem in je AI-assistent en begin.';
+    } catch (e) {
+      document.getElementById('melding').textContent = 'Kopiëren lukte niet automatisch; selecteer de tekst hierboven.';
+    }
+  });
+</script>
+</body>
+</html>
