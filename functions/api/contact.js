@@ -14,9 +14,12 @@
 
 const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8' };
 
+// Turnstile sitekey is publiek (staat toch in elke pagebron); secret NOOIT hier.
+const TURNSTILE_SITE_KEY = '0x4AAAAAADwFjg1LPXR0xbd7';
+
 export async function onRequestGet(context) {
   return new Response(
-    JSON.stringify({ sitekey: context.env.TURNSTILE_SITE_KEY || null }),
+    JSON.stringify({ sitekey: context.env.TURNSTILE_SITE_KEY || TURNSTILE_SITE_KEY }),
     { headers: JSON_HEADERS }
   );
 }
