@@ -913,7 +913,10 @@ function toggleLang() { applyLang(LANG === 'nl' ? 'en' : 'nl'); }
     }).then(function(r){ return r.json().then(function(d){ return { ok: r.ok && d.ok, d: d }; }); })
       .then(function(res){
         if (res.ok) { setStatus('ok', 'ct-ok'); form.reset(); }
-        else { setStatus('err', 'ct-err'); }
+        else {
+          setStatus('err', 'ct-err');
+          if (res.d && res.d.error) status.textContent += ' [' + res.d.error + ']';
+        }
       })
       .catch(function(){ setStatus('err', 'ct-err'); })
       .finally(function(){
