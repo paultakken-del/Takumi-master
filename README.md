@@ -9,9 +9,7 @@ takumi-master/
 ├── index.html                        ← volledige app
 ├── functions/
 │   └── api/
-│       ├── claude.js                 ← Anthropic Claude proxy (SSE)
-│       ├── bitvavo-portfolio.js      ← echte Bitvavo posities
-│       └── bitvavo-prices.js         ← live EUR koersen
+│       └── claude.js                 ← Anthropic Claude proxy (SSE)
 ├── _headers                          ← security headers
 └── README.md
 ```
@@ -44,13 +42,11 @@ De `functions/api/` map wordt automatisch omgezet naar Workers op `/api/*`.
 ### 3. Environment Variables instellen
 
 1. Ga naar je Pages project → **Settings** → **Environment variables**
-2. Klik **Add variable** voor elk van deze drie:
+2. Klik **Add variable**:
 
 | Variable name | Value | Omgeving |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | `sk-ant-...` | Production + Preview |
-| `BITVAVO_API_KEY` | jouw Bitvavo key | Production + Preview |
-| `BITVAVO_API_SECRET` | jouw Bitvavo secret | Production + Preview |
 
 3. Klik **Save**
 4. Ga naar **Deployments** → klik **Retry deployment**
@@ -68,17 +64,6 @@ Na ~1 minuut is `https://takumi-master.com` live. ✓
 
 ---
 
-## Bitvavo API key aanmaken
-
-1. bitvavo.com → inloggen → rechtsboven **Account** → **API**
-2. Klik **Nieuw API sleutelpaar aanmaken**
-3. Permissies: alleen **Lezen** aanvinken (View balance, View orders)
-   — je hebt GEEN handelspermissies nodig
-4. Kopieer de **Key** en **Secret** → plak in Cloudflare environment variables
-
-> ⚠️ De Secret is maar één keer zichtbaar. Sla hem direct op.
-
----
 
 ## Lokaal testen
 
@@ -95,14 +80,6 @@ npx wrangler pages dev . --compatibility-date=2024-01-01
 Maak `.dev.vars` aan voor lokale environment variables:
 ```
 ANTHROPIC_API_KEY=sk-ant-...
-BITVAVO_API_KEY=...
-BITVAVO_API_SECRET=...
 ```
 
 ---
-
-## Zonder Bitvavo keys
-
-De app werkt ook zonder Bitvavo keys:
-- Koersen komen dan automatisch via CoinGecko (gratis)
-- Posities vul je handmatig in via **⚙ Holdings** in Data Hub

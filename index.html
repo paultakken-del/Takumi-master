@@ -1076,38 +1076,15 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
 <div class="view" id="v-da">
   <div class="tb">
     <div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">蔵</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Data Hub</span></div></div>
-    <div style="display:flex;gap:7px">
-      <button class="btn sm" onclick="syncPort()">↺ Live koersen</button>
-      <button class="btn sm" onclick="openHold()">⚙ Holdings</button>
-    </div>
   </div>
   <div class="tabs">
-    <div class="tab on" onclick="stab('portfolio',this)">📊 Portfolio</div>
-    <div class="tab" onclick="stab('health',this)">❤ Health</div>
+    <div class="tab on" onclick="stab('health',this)">❤ Health</div>
     <div class="tab" onclick="stab('backup',this)">💾 Backup</div>
   </div>
 
-  <!-- ─── PORTFOLIO TAB: overview + DeGiro import ─────────────────── -->
-  <div class="tp on" id="tp-portfolio">
-    <div class="ph"><div><div class="pt" id="p-tot">€ –</div><span id="p-ch" style="display:none"></span></div><div style="font-size:11px;color:var(--m)" id="p-sync">Nog niet gesynchroniseerd</div></div>
-    <table><thead><tr><th>Asset</th><th>Type</th><th style="text-align:right">Waarde</th><th style="text-align:right">P&L</th><th style="text-align:right">Alloc.</th><th style="text-align:right">Bron</th></tr></thead>
-    <tbody id="p-rows"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--m)">Klik "↺ Live koersen" om te laden</td></tr></tbody></table>
-
-    <div class="ct" style="margin-top:var(--sp-lg)">Import bron</div>
-    <div class="card" style="margin-bottom:var(--sp-md)">
-      <div class="ct">📊 DeGiro portfolio export</div>
-      <p style="font-size:12px;color:var(--m);margin-bottom:14px">Export via DeGiro → Portfolio → Export CSV</p>
-      <div class="dz" onclick="document.getElementById('dg-f').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');handleDG({target:{files:event.dataTransfer.files}})">
-        <input type="file" id="dg-f" accept=".csv,.CSV" style="display:none" onchange="handleDG(event)">
-        <div class="dz-ico">📊</div><div class="dz-t">Sleep DeGiro CSV of klik</div><div class="dz-s">Auto separator-detectie (; of ,)</div>
-      </div>
-      <button class="btn sm" style="margin-top:10px;width:100%" onclick="document.getElementById('dg-f').click()">↑ Selecteer CSV</button>
-    </div>
-    <div id="dg-r"></div>
-  </div>
 
   <!-- ─── HEALTH TAB: HRV-historie + 3 import-bronnen ─────────────── -->
-  <div class="tp" id="tp-health">
+  <div class="tp on" id="tp-health">
     <div id="hrv-r" style="margin-bottom:var(--sp-md)"></div>
 
     <div class="ct" style="margin-top:var(--sp-md)">Import bronnen</div>
@@ -1547,7 +1524,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
       <div class="csw" style="background:#384888" onclick="selCol('#384888',this)"></div>
       <div class="csw" style="background:#7a4a8a" onclick="selCol('#7a4a8a',this)"></div>
     </div><input type="hidden" id="ng-c" value="#28897a"></div>
-    <div class="field"><label>Titel *</label><input id="ng-t" type="text" placeholder="Bijv: Portfolio naar €200k"></div>
+    <div class="field"><label>Titel *</label><input id="ng-t" type="text" placeholder="Bijv: 50 km Z2 zonder drift"></div>
     <div class="field"><label>Omschrijving</label><textarea id="ng-desc" rows="3" placeholder="Wat wil je bereiken?"></textarea></div>
     <div class="df"><button class="btn sm gh" onclick="closeNG()">Annuleren</button><button class="btn sm acc" onclick="saveNG()">Aanmaken</button></div>
   </div>
@@ -1562,14 +1539,6 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
   </div>
 </div>
 
-<!-- HOLDINGS DIALOG -->
-<div class="do" id="hold-d" onclick="if(event.target===this)closeHold()">
-  <div class="db">
-    <div class="dt">⚙ Holdings</div><div class="ds">Bitvavo aantallen en aankoopprijzen</div>
-    <div id="hold-rows"></div>
-    <div class="df"><button class="btn sm gh" onclick="closeHold()">Sluiten</button><button class="btn sm acc" onclick="saveHold()">Opslaan & sync</button></div>
-  </div>
-</div>
 
 <!-- TOAST -->
 <div class="tw" id="tw"></div>
@@ -2222,9 +2191,6 @@ const S={
   weekCouncil:ls('tm2_week_council',null), // {weekKey, advice, leadElement, supportElement, restElement, generatedAt, dismissed}
   appointments:ls('tm2_appointments',[]), // [{id, master, dueDate, openingPhrase, sourceMsgId, createdAt, status:'open'|'kept'|'missed'}]
   goals:ls('tm2_goals',null),
-  holdings:ls('tm2_hold',{}),
-  degiro:ls('tm2_dg',{}),
-  port:ls('tm2_port',null),
   hrv:ls('tm2_hrv',{rmssd:null,hr:null,recovery:null,sleep:null}),
   pulse:{step:0,data:{}},
   rejIdx:null,
@@ -2245,16 +2211,10 @@ const S={
         S.hrv = {rmssd:null, hr:null, recovery:null, sleep:null};
       }
     }
-    var holdK = _ukey('tm2_hold');
-    var holdRaw = localStorage.getItem(holdK);
-    if(holdRaw){
-      var hd = JSON.parse(holdRaw);
-      if(hd && hd.BTC && hd.BTC.qty===0.62 && hd.BTC.avgBuy===28000
-         && hd.ETH && hd.ETH.qty===4.2 && hd.ETH.avgBuy===1800){
-        localStorage.removeItem(holdK);
-        S.holdings = {};
-      }
-    }
+    // Portfolio-functionaliteit is verwijderd: wis oude lokale data
+    ['tm2_hold','tm2_dg','tm2_port'].forEach(function(k){
+      localStorage.removeItem(_ukey(k));
+    });
   } catch(e){}
 })();
 
@@ -2314,10 +2274,6 @@ function updateDagVoortgang(){
 }
 
 // ── CONTEXT HELPERS ────────────────────────────────────────────────
-function portCtx(){
-  if(!S.port?.rows)return 'nog niet gekoppeld';
-  return'€'+Math.round(S.port.totalValue).toLocaleString('nl-NL')+' — '+S.port.rows.slice(0,3).map(r=>r.sym+(r.pnlPct>=0?' +':' ')+r.pnlPct.toFixed(1)+'%').join(', ');
-}
 function allCtx(){
   var lines=[];
   // Tijdsbesef — dagdeel + dag van de week
@@ -2353,7 +2309,6 @@ function allCtx(){
   }
   var phaseLabels={dal:'Herstel (dal)',stijgend:'Opbouw (stijgend)',vlak:'Normaal',top:'Actief (top)',dalend:'Afronden (dalend)'};
   if(window._wavePhase) lines.push('Wave: '+( phaseLabels[window._wavePhase]||window._wavePhase));
-  lines.push('Portfolio: '+portCtx());
   if(hasRealHrv()){
     lines.push('HRV: rMSSD '+S.hrv.rmssd+' (baseline 53, delta '+(S.hrv.rmssd-53>=0?'+':'')+(S.hrv.rmssd-53)+'), herstel '+S.hrv.recovery+'/10, slaap '+S.hrv.sleep+'u');
   } else {
@@ -2397,7 +2352,6 @@ function memoirCtx(id){
 
 // ── CLAUDE TOOL USE ────────────────────────────────────────────
 const TAKUMI_TOOLS = [
-  {name:"get_portfolio",description:"Haal actuele portfolio: posities, waarden, P&L. Gebruik bij financiële vragen.",input_schema:{type:"object",properties:{},required:[]}},
   {name:"get_hrv",description:"Haal biometrische data: rMSSD, herstel, slaap, hartslag, status vs baseline 53.",input_schema:{type:"object",properties:{},required:[]}},
   {name:"get_goals",description:"Haal strategische doelen: voortgang, open acties, milestones.",input_schema:{type:"object",properties:{},required:[]}},
   {name:"get_learning",description:"Haal learning context: wat werkte en wat werd afgewezen voor deze agent.",input_schema:{type:"object",properties:{agent_id:{type:"string"}},required:["agent_id"]}},
@@ -2406,9 +2360,6 @@ const TAKUMI_TOOLS = [
 
 function executeTool(name,input){
   switch(name){
-    case 'get_portfolio':
-      if(!S.port||!S.port.rows)return{status:'geen data',hint:'Klik Live koersen in Data Hub'};
-      return{totalValue:Math.round(S.port.totalValue),totalPnlPct:+S.port.totalPnlPct.toFixed(1),totalPnlEur:Math.round(S.port.totalPnlEur),positions:S.port.rows.map(r=>({symbol:r.sym,name:r.name,type:r.type,value:Math.round(r.value),pnlPct:+r.pnlPct.toFixed(1),allocation:+(r.value/S.port.totalValue*100).toFixed(1),change24h:r.change24h?+r.change24h.toFixed(1):null}))};
     case 'get_hrv':
       return{rmssd:S.hrv.rmssd,recovery:S.hrv.recovery,sleep:S.hrv.sleep,hr:S.hrv.hr,baseline:53,delta:S.hrv.rmssd-53,status:S.hrv.rmssd>=53?'goed':S.hrv.rmssd>=45?'matig':'laag'};
     case 'get_goals':
@@ -2453,11 +2404,11 @@ const AGENTS={
   board:{id:'board',name:'Master Council',ico:'匠',dom:'Master Council',col:'var(--acc)',sys(){
     var nieuw=typeof _isNieuwGebruiker!=='undefined'&&_isNieuwGebruiker;
     if(nieuw)return`Je bent 匠 — de meester die een nieuwe beoefenaar verwelkomt in de dojo van Takumi Master.\n\nStem: Kū (Leegte) — spreek zelden, laat ruimte. Eén zin volstaat.\nDeze persoon opent Takumi voor het eerst. Verwelkom hem warm maar beknopt. Leg in max 3 zinnen uit:\n1. Wat Takumi is (persoonlijk meesterschap platform, drie dagelijkse stappen)\n2. Wat de vijf Godai-meesters doen (elk spreekt vanuit zijn element)\n3. Stel één concrete vraag: wat is het belangrijkste dat hij dit jaar wil bereiken?\n\nSpreek als één stem — de Meester. Niet als vijf stemmen. Kort, uitnodigend, niet overweldigend.\nAanspreking: 'je'/'jij'. Geen 'leerling', 'student' of 'discipel' — spreek gelijkwaardig. Nederlands.`;
-    return`Je bent de 師匠会 — het Master Council van Takumi Master. Je spreekt als vijf Godai-stemmen die elk vanuit hun element influisteren. Gebruik tools voor actuele data.\n\nTOOLS:\n- get_portfolio() → vermogen, posities, P&L\n- get_hrv() → rMSSD, herstel, slaap, energie\n- get_goals() → doelen, voortgang, open acties\n- get_learning('board') → wat werkte eerder\n\nCONTEXT: ${allCtx()}\n\nANTWOORD ALTIJD in dit formaat — elke stem max 2 zinnen, scherp en direct:\n\n地 Chi — Fundament\n[Structuur, strategie, vermogen. Wat is de solide basis hier?]\n\n水 Sui — Flow\n[Energie, herstel, beweging. Hoe stroomt dit het beste?]\n\n風 Fū — Geest\n[Communicatie, relaties, creativiteit. Wat zegt de intuïtie?]\n\n火 Ka — Energie\n[Actie, focus, beslissing. Wat moet NU gebeuren?]\n\n空 Kū — Ruimte\n[Synthese, stilte, het grotere geheel. Wat is de werkelijke vraag?]\n\n匠 Advies\n[Eén concrete actie. Max 15 woorden.]\n\nREGELS:\n- Elke stem spreekt vanuit zijn element, niet generiek\n- Meesters mogen kort influisteren bijv: 略 Ryaku: tip of 気 Ki: tip\n- Als HRV < 45: Kū geeft stilte-advies\n- Geen opsommingstekens, geen herhaling\n- Nederlands, direct, meesterlijk kort`;
+    return`Je bent de 師匠会 — het Master Council van Takumi Master. Je spreekt als vijf Godai-stemmen die elk vanuit hun element influisteren. Gebruik tools voor actuele data.\n\nTOOLS:\n- get_hrv() → rMSSD, herstel, slaap, energie\n- get_goals() → doelen, voortgang, open acties\n- get_learning('board') → wat werkte eerder\n\nCONTEXT: ${allCtx()}\n\nANTWOORD ALTIJD in dit formaat — elke stem max 2 zinnen, scherp en direct:\n\n地 Chi — Fundament\n[Structuur, strategie, vermogen. Wat is de solide basis hier?]\n\n水 Sui — Flow\n[Energie, herstel, beweging. Hoe stroomt dit het beste?]\n\n風 Fū — Geest\n[Communicatie, relaties, creativiteit. Wat zegt de intuïtie?]\n\n火 Ka — Energie\n[Actie, focus, beslissing. Wat moet NU gebeuren?]\n\n空 Kū — Ruimte\n[Synthese, stilte, het grotere geheel. Wat is de werkelijke vraag?]\n\n匠 Advies\n[Eén concrete actie. Max 15 woorden.]\n\nREGELS:\n- Elke stem spreekt vanuit zijn element, niet generiek\n- Meesters mogen kort influisteren bijv: 略 Ryaku: tip of 気 Ki: tip\n- Als HRV < 45: Kū geeft stilte-advies\n- Geen opsommingstekens, geen herhaling\n- Nederlands, direct, meesterlijk kort`;
   }},
   strategic:{id:'strategic',name:'略 Ryaku — Strateeg',ico:'略',dom:'Work',col:'#384888',sys(){return`Strategic Advisor. Besluitvorming, prioriteiten, strategie.\n"Every decision has a cost. Strategy is choosing what not to do."\nStem: Chi (Aarde) — traag, met gewicht. Korte zekere zinnen. Geen vragen. Bouw fundament.\n${allCtx()}\n${learnCtx('strategic')}${memoirCtx('strategic')}\n1 insight + 1 actie. Max 30w. Nederlands.`;}},
   health:{id:'health',name:'気 Ki — Gezondheid',ico:'気',dom:'Health',col:'var(--teal)',sys(){return`Health & Energy Coach. HRV, herstel, energie.\n"Energy precedes performance."\nStem: Sui (Water) — vloeiend, schakel vragen in. Zacht maar vasthoudend. Vorm volgt.\n${allCtx()}\n${hasRealHrv() ? `HRV: rMSSD ${S.hrv.rmssd} (gem.53), herstel ${S.hrv.recovery}/10, HR ${S.hrv.hr}bpm, slaap ${S.hrv.sleep}u` : 'HRV: nog niet gekoppeld — vraag om biometrie voordat je over fysieke staat adviseert.'}\n${learnCtx('health')}${memoirCtx('health')}\n1 insight op ECHTE data + 1 actie passend bij dagdeel. Max 30w. Nederlands.`;}},
-  finance:{id:'finance',name:'財 Zai — Financieel',ico:'財',dom:'Finance',col:'var(--gold)',sys(){return`Financial Risk & Wealth Advisor. Portfolio, risico, vermogen.\n"Risk first, return second. Avoid irreversible loss."\nStem: Chi (Aarde) — traag, met gewicht. Korte zekere zinnen. Geen vragen. Bouw fundament.\n${allCtx()}\n${portCtx()}\nWorld: Crypto mixed, Finance negatief (ECB)\n${learnCtx('finance')}${memoirCtx('finance')}\n1 financieel insight + 1 actie passend bij dagdeel. Max 30w. Nederlands.`;}},
+  finance:{id:'finance',name:'財 Zai — Financieel',ico:'財',dom:'Finance',col:'var(--gold)',sys(){return`Financial Risk & Wealth Advisor. Risico, vermogen, keuzes.\n"Risk first, return second. Avoid irreversible loss."\nStem: Chi (Aarde) — traag, met gewicht. Korte zekere zinnen. Geen vragen. Bouw fundament.\n${allCtx()}\n${learnCtx('finance')}${memoirCtx('finance')}\n1 financieel insight + 1 actie passend bij dagdeel. Max 30w. Nederlands.`;}},
   reflection:{id:'reflection',name:'観 Kan — Reflectie',ico:'観',dom:'Reflection',col:'#7a4a8a',sys(){return`Reflective Sensemaker. Patronen, zelfinzicht.\n"Observe before intervening."\nStem: Sui (Water) — vloeiend, schakel vragen in. Zacht maar vasthoudend. Vorm volgt.\n${allCtx()}\n${learnCtx('reflection')}${memoirCtx('reflection')}\n1 observatie die aan het denken zet. Max 30w. Nederlands.`;}},
   productivity:{id:'productivity',name:'働 Hataraki — Productiviteit',ico:'働',dom:'Work',col:'#384888',sys(){return`Productiviteits & Focus Coach.\n"Deep work beats busy work."\nStem: Ka (Vuur) — urgent, dwingend, dichtbij. Eis actie nu, geen morgen.\n${allCtx()}\n${learnCtx('productivity')}${memoirCtx('productivity')}\n1 focus-protocol + 1 actie. Max 30w. Nederlands.`;}},
   decision:{id:'decision',name:'決 Ketsu — Beslissing',ico:'決',dom:'Meta',col:'var(--m)',sys(){return`Decision Accelerator. Besluiteloosheid doorbreken.\n"Good enough now beats perfect later."\nStem: Ka (Vuur) — urgent, dwingend, dichtbij. Eis actie nu, geen morgen.\n${allCtx()}\n${learnCtx('decision')}${memoirCtx('decision')}\n1 beslissing afdwingen + 1 directe actie. Max 30w. Nederlands.`;}},
@@ -4040,7 +3991,7 @@ function renderChat(){
   const a=AGENTS[S.cur];
   const shortName=a.id==='board'?'Master Council':(a.name.split('—')[1]?.trim()||a.name);
   if(!msgs.length){
-    // Data banner: portfolio voor financieel-warrior, HRV voor gezondheid-warrior
+    // Data banner: HRV voor gezondheid-warrior
     var dataBanner = buildDataBanner(a.id);
 
     // Observaties van deze meester (proactieve insights)
@@ -4218,44 +4169,6 @@ function editHrvField(field){
 }
 
 function buildDataBanner(masterId){
-  // Financieel-warrior (Zai) → portfolio
-  if(masterId === 'finance'){
-    if(!S.port || !S.port.rows || !S.port.rows.length){
-      return '<div style="width:100%;max-width:340px;margin:0 auto 20px;padding:14px 16px;background:var(--p2);border:1px dashed var(--b);border-radius:10px;text-align:center">'+
-        '<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:6px">Portfolio</div>'+
-        '<div style="font-size:13px;color:var(--m);margin-bottom:10px">Nog geen data geladen</div>'+
-        '<button onclick="syncPort()" style="background:var(--acc);color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer">↺ Live koersen</button>'+
-        '</div>';
-    }
-    var p = S.port;
-    var pnlPos = p.totalPnlPct >= 0;
-    var pnlColor = pnlPos ? 'var(--green,#3a8758)' : 'var(--red,#c4402a)';
-    var pnlSign = pnlPos ? '+' : '';
-    var topRows = p.rows.slice(0,3).map(function(r){
-      var rPos = r.pnlPct >= 0;
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--b);font-size:12px">'+
-        '<div style="font-weight:500;color:var(--ink)">'+esc(r.name||r.sym)+'</div>'+
-        '<div style="display:flex;gap:10px;align-items:baseline">'+
-          '<span style="color:var(--m);font-variant-numeric:tabular-nums">€'+Math.round(r.value).toLocaleString('nl-NL')+'</span>'+
-          '<span style="color:'+(rPos?'var(--green,#3a8758)':'var(--red,#c4402a)')+';font-weight:600;font-variant-numeric:tabular-nums;min-width:54px;text-align:right">'+(rPos?'+':'')+r.pnlPct.toFixed(1)+'%</span>'+
-        '</div>'+
-      '</div>';
-    }).join('');
-    var more = p.rows.length > 3 ? '<div style="padding-top:6px;text-align:center;font-size:11px;color:var(--m);border-top:1px solid var(--b)">+ '+(p.rows.length-3)+' meer · <span onclick="go(\'da\')" style="color:var(--acc);cursor:pointer">details ↗</span></div>' : '';
-    return '<div style="width:100%;max-width:340px;margin:0 auto 20px;padding:14px 16px;background:var(--p2);border:1px solid var(--b);border-radius:10px">'+
-      '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">'+
-        '<div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--m);font-weight:500">Portfolio</div>'+
-        '<button onclick="event.stopPropagation();syncPort()" style="background:none;border:none;font-size:11px;color:var(--acc);cursor:pointer;padding:0" title="Refresh">↺</button>'+
-      '</div>'+
-      '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">'+
-        '<div style="font-size:22px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums">€'+Math.round(p.totalValue).toLocaleString('nl-NL')+'</div>'+
-        '<div style="font-size:13px;font-weight:600;color:'+pnlColor+';font-variant-numeric:tabular-nums">'+pnlSign+p.totalPnlPct.toFixed(1)+'%</div>'+
-      '</div>'+
-      topRows+
-      more+
-    '</div>';
-  }
-
   // Gezondheid-warrior (Ki) → HRV
   if(masterId === 'health'){
     if(!S.hrv) S.hrv = {rmssd:null, hr:null, recovery:null, sleep:null};
@@ -4474,13 +4387,6 @@ async function detectObservations(){
       }
     }
 
-    // 2. Portfolio beweging >5% (Zai - financieel)
-    if(S.port && S.port.rows && !recentlyHas('finance')){
-      var bigMover = S.port.rows.find(function(r){ return Math.abs(r.change24h||0) >= 5; });
-      if(bigMover){
-        triggers.push({master:'finance', context:bigMover.name+' '+(bigMover.change24h>=0?'+':'')+bigMover.change24h.toFixed(1)+'% in 24u. Totale portfolio: €'+Math.round(S.port.totalValue).toLocaleString('nl-NL')+' ('+(S.port.totalPnlPct>=0?'+':'')+S.port.totalPnlPct.toFixed(1)+'%).', kind:'big-mover'});
-      }
-    }
 
     // 3. Doel-stagnatie (Ryaku - strateeg)
     if(typeof GOALS !== 'undefined' && GOALS && GOALS.length && !recentlyHas('strategic')){
@@ -6838,10 +6744,6 @@ async function generateWeekCouncil(){
   if(S.hrv){
     hrvCtx = 'HRV '+S.hrv.rmssd+' (baseline 53), recovery '+S.hrv.recovery+'/10, slaap '+S.hrv.sleep+'u. ';
   }
-  var portCtx = '';
-  if(S.port && S.port.totalValue){
-    portCtx = 'Portfolio €'+Math.round(S.port.totalValue).toLocaleString('nl-NL')+' ('+(S.port.totalPnlPct>=0?'+':'')+S.port.totalPnlPct.toFixed(1)+'%). ';
-  }
   // Recente memoirs over alle warriors
   var allMemoirs = [];
   Object.keys(S.memoirs||{}).forEach(function(mid){
@@ -6851,7 +6753,7 @@ async function generateWeekCouncil(){
   });
   var memCtx = allMemoirs.length ? 'Recente herinneringen: '+allMemoirs.slice(0,5).join(' | ')+'. ' : '';
 
-  var prompt = 'Je bent de Master Council — vijf Godai-meesters die wekelijks samenkomen voor een gebruiker. Schrijf een week-advies van max 60 woorden Nederlands voor deze week. Eerst noem je expliciet welk element LEIDT, welk ONDERSTEUNT, en welk RUST deze week (kies uit Chi/Sui/Fū/Ka/Kū). Dan één korte richting voor de week. Spreek vanuit collectieve wijsheid, niet als één meester.\n\nHet doel: "'+primary.title+'" (voortgang '+primary.pct+'%). '+hrvCtx+portCtx+memCtx+'\n\nFormat strikt:\nLEIDT: [element]\nONDERSTEUNT: [element]\nRUST: [element]\nADVIES: [één zin, max 30 woorden]';
+  var prompt = 'Je bent de Master Council — vijf Godai-meesters die wekelijks samenkomen voor een gebruiker. Schrijf een week-advies van max 60 woorden Nederlands voor deze week. Eerst noem je expliciet welk element LEIDT, welk ONDERSTEUNT, en welk RUST deze week (kies uit Chi/Sui/Fū/Ka/Kū). Dan één korte richting voor de week. Spreek vanuit collectieve wijsheid, niet als één meester.\n\nHet doel: "'+primary.title+'" (voortgang '+primary.pct+'%). '+hrvCtx+memCtx+'\n\nFormat strikt:\nLEIDT: [element]\nONDERSTEUNT: [element]\nRUST: [element]\nADVIES: [één zin, max 30 woorden]';
 
   try {
     var res = await fetch('/api/claude',{
@@ -7070,7 +6972,7 @@ function clearChat(){
 function ask(q){const inp=document.getElementById('ci');if(inp)inp.value=q;send();}
 
 function upCtx(){
-  var _cp=document.getElementById('ctx-p');if(_cp)_cp.textContent=portCtx();
+  
   var _ch=document.getElementById('ctx-h');if(_ch)_ch.textContent=S.hrv.rmssd;
 }
 
@@ -7495,101 +7397,6 @@ function renderBackupNudge(){
   el.style.display = 'flex';
 }
 
-async function syncPort(){
-  toast('Koersen ophalen...');
-  try{
-    const pr=await fetch('/api/bitvavo-portfolio');
-    if(pr.ok){
-      const{positions,fetchedAt}=await pr.json();
-      const cp=positions.filter(p=>p.symbol!=='EUR'&&p.total>1e-6);
-      if(cp.length){
-        const syms=cp.map(p=>p.symbol);
-        const qr=await fetch('/api/bitvavo-prices?symbols='+syms.join(','));
-        const{prices}=await qr.json();
-        buildPort(cp,prices,fetchedAt,'Bitvavo');return;
-      }
-    }
-    await cgSync();
-  }catch{await cgSync();}
-}
-
-async function cgSync(){
-  const MAP={BTC:'bitcoin',ETH:'ethereum',SOL:'solana',ADA:'cardano',DOT:'polkadot',XRP:'ripple',AVAX:'avalanche-2',MATIC:'matic-network'};
-  const syms=Object.keys(S.holdings);if(!syms.length){toast('Geen holdings geconfigureerd','err');return;}
-  const ids=syms.map(s=>MAP[s]||s.toLowerCase()).join(',');
-  const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids='+ids+'&vs_currencies=eur&include_24hr_change=true');
-  const prices=await r.json();
-  const pos=syms.map(s=>({symbol:s,total:S.holdings[s]?.qty||0}));
-  const pm={};syms.forEach(s=>{const cg=MAP[s]||s.toLowerCase();if(prices[cg])pm[s]={price:prices[cg].eur,change24h:prices[cg].eur_24h_change};});
-  buildPort(pos,pm,new Date().toISOString(),'CoinGecko');
-}
-
-function buildPort(positions,prices,fetchedAt,src){
-  let tv=0,tc=0;
-  const rows=positions.map(pos=>{
-    const sym=pos.symbol.toUpperCase();
-    const price=prices[sym]?.price||0;
-    const ch=prices[sym]?.change24h||0;
-    const value=price*pos.total;
-    const ab=S.holdings[sym]?.avgBuy||price;
-    const cost=ab*pos.total;
-    const pnl=cost>0?((value-cost)/cost)*100:0;
-    tv+=value;tc+=cost;
-    return{sym,name:S.holdings[sym]?.name||sym,type:'crypto',price,change24h:ch,value,pnlPct:pnl,qty:pos.total,source:src};
-  }).filter(r=>r.value>=5);
-  Object.entries(S.degiro).forEach(([sym,h])=>{
-    const price=h.currentPrice||h.avgBuy;
-    const value=price*h.qty;
-    const pnl=((price-h.avgBuy)/h.avgBuy)*100;
-    tv+=value;tc+=h.avgBuy*h.qty;
-    if(value>=5)rows.push({sym,name:h.name,type:'etf',price,change24h:null,value,pnlPct:pnl,qty:h.qty,source:'DeGiro'});
-  });
-  const tpe=tv-tc,tpp=tc>0?(tpe/tc)*100:0;
-  S.port={rows,totalValue:tv,totalPnlEur:tpe,totalPnlPct:tpp,updatedAt:fetchedAt};
-  lsSet('tm2_port',S.port);
-  renderPort();
-  toast('Gesynchroniseerd — €'+Math.round(tv).toLocaleString('nl-NL'),'ok');
-  document.getElementById('ck-port').textContent='€'+Math.round(tv/1000)+'k';
-  const d=document.getElementById('ck-pdelta');
-  d.textContent=(tpp>=0?'+':'')+tpp.toFixed(1)+'% totaal';
-  d.className='md '+(tpp>=0?'up':'dn');
-  upCtx();
-}
-
-function renderPort(){
-  if(!S.port)return;
-  const p=S.port;
-  document.getElementById('p-tot').textContent='€'+Math.round(p.totalValue).toLocaleString('nl-NL');
-  const ce=document.getElementById('p-ch');
-  const sg=p.totalPnlEur>=0?'+':'';
-  ce.textContent=sg+'€'+Math.abs(p.totalPnlEur).toFixed(0)+' ('+sg+p.totalPnlPct.toFixed(1)+'%)';
-  ce.className=p.totalPnlEur>=0?'pg':'pr';ce.style.display='inline-block';
-  document.getElementById('p-sync').textContent='Live: '+new Date(p.updatedAt).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
-  // Update cockpit metrics
-  const ckp=document.getElementById('ck-port');
-  if(ckp){ckp.textContent='€'+Math.round(p.totalValue/1000)+'k';}
-  const ckd=document.getElementById('ck-pdelta');
-  if(ckd){ckd.textContent=(p.totalPnlPct>=0?'+':'')+p.totalPnlPct.toFixed(1)+'% totaal';ckd.className='md '+(p.totalPnlPct>=0?'up':'dn');}
-  if(!p.rows.length){document.getElementById('p-rows').innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--m)">Geen posities</td></tr>';return;}
-  document.getElementById('p-rows').innerHTML=p.rows.map(r=>{
-    const al=p.totalValue>0?(r.value/p.totalValue*100).toFixed(1):'0';
-    const pc=r.pnlPct>=0?'var(--teal)':'var(--acc)';
-    const ch=r.change24h!==null?`<small style="color:${r.change24h>=0?'var(--teal)':'var(--acc)'}">${r.change24h>=0?'▲':'▼'}${Math.abs(r.change24h).toFixed(1)}%</small>`:'';
-    return`<tr><td><div class="an2">${r.name}</div><div class="at">${r.sym} ${ch}</div></td><td><span class="tb2 ${r.type==='crypto'?'tc':'te'}">${r.type==='crypto'?'Crypto':'ETF'}</span></td><td style="text-align:right">€${r.value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,'.')}</td><td style="text-align:right;color:${pc}">${r.pnlPct>=0?'+':''}${r.pnlPct.toFixed(1)}%</td><td style="text-align:right">${al}%</td><td style="text-align:right;font-size:11px;color:var(--m)">${r.source}</td></tr>`;
-  }).join('');
-}
-
-function openHold(){
-  document.getElementById('hold-rows').innerHTML=Object.entries(S.holdings).map(([sym,h])=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b)">
-      <span style="width:48px;font-weight:500;font-size:12px">${sym}</span>
-      <input type="number" step="any" value="${h.qty}" placeholder="Aantal" style="flex:1;border:1px solid var(--b);border-radius:var(--rs);padding:7px 9px;font-size:12px;background:var(--paper);color:var(--ink)" onchange="S.holdings['${sym}']={...S.holdings['${sym}'],qty:+this.value}">
-      <input type="number" step="any" value="${h.avgBuy}" placeholder="Gem. prijs €" style="flex:1;border:1px solid var(--b);border-radius:var(--rs);padding:7px 9px;font-size:12px;background:var(--paper);color:var(--ink)" onchange="S.holdings['${sym}']={...S.holdings['${sym}'],avgBuy:+this.value}">
-    </div>`).join('')||'<p style="color:var(--m);font-size:12px;padding:8px 0">Geen holdings. Sync voor live data.</p>';
-  document.getElementById('hold-d').classList.add('on');
-}
-function closeHold(){document.getElementById('hold-d').classList.remove('on');}
-function saveHold(){lsSet('tm2_hold',S.holdings);closeHold();syncPort();}
 
 function parseCSV(text){
   const lines=text.split('\n').filter(l=>l.trim());if(lines.length<2)return[];
@@ -7598,7 +7405,6 @@ function parseCSV(text){
   const hdr=spl(lines[0]).map(h=>h.replace(/"/g,'').trim().toLowerCase().replace(/\s+/g,'_').replace(/[()]/g,''));
   return lines.slice(1).map(l=>{const cols=spl(l);const row={};hdr.forEach((h,i)=>{row[h]=(cols[i]||'').replace(/"/g,'').trim();});return row;}).filter(r=>Object.values(r).some(v=>v));
 }
-function numEU(s){if(!s)return 0;s=s.replace(/[€$\s]/g,'').trim();if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');else if(s.includes(',')){const p=s.split(',');s=p[1]?.length<=2?s.replace(',','.'):s.replace(',','');}return parseFloat(s)||0;}
 
 function handleHRV(ev){
   const file=ev.target.files[0];if(!file)return;
@@ -7667,30 +7473,6 @@ async function syncOura(){
 // Auto-sync Oura bij laden als token aanwezig
 (function(){const t=ls('tm2_oura_token','');if(t)setTimeout(syncOura,3000);})();
 
-function handleDG(ev){
-  const file=ev.target.files[0];if(!file)return;
-  const rd=new FileReader();
-  rd.onload=e=>{
-    const rows=parseCSV(e.target.result.replace(/\r\n/g,'\n').replace(/\r/g,'\n'));
-    if(!rows.length){toast('CSV kon niet worden verwerkt','err');return;}
-    let n=0;
-    rows.forEach(r=>{
-      const name=r['product']||r['naam']||Object.values(r)[0]||'';
-      let sym=r['symbool']||r['symbol']||'';
-      if(!sym&&r['isin'])sym=r['isin'].slice(-4);
-      if(!sym)sym=name.replace(/[^A-Za-z]/g,'').toUpperCase().slice(0,5);
-      sym=sym.replace(/[^A-Z0-9]/gi,'').toUpperCase().slice(0,6);
-      const qty=numEU(r['aantal']||r['quantity']||'0');
-      const price=numEU(r['slotkoers']||r['koers']||r['close']||'0');
-      const value=numEU(r['waarde']||r['value']||'0')||(qty*price);
-      if(sym&&(qty>0||value>5)){S.degiro[sym]={qty:qty||(value/(price||1)),avgBuy:price||(value/(qty||1)),currentPrice:price,name:name.slice(0,40),type:'etf'};n++;}
-    });
-    lsSet('tm2_dg',S.degiro);
-    document.getElementById('dg-r').innerHTML=`<div class="card"><div class="ct">${n} posities geïmporteerd</div>${Object.entries(S.degiro).slice(0,10).map(([sym,h])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--b);font-size:12px"><span>${h.name}</span><span style="color:var(--m)">${h.qty.toFixed(2)} × €${h.avgBuy.toFixed(2)}</span></div>`).join('')}<button class="btn sm acc" style="margin-top:12px" onclick="syncPort()">↺ Samenvoegen</button></div>`;
-    toast(n+' DeGiro posities geïmporteerd','ok');
-  };
-  rd.readAsText(file,'UTF-8');
-}
 
 // ── 配 SNOEIEN — max 5 actieve doelen ─────────────────────────
 var MAX_GOALS = 5;
@@ -7961,7 +7743,7 @@ async function genReview(){
   const sc=Object.values(S.chat).reduce((s,m)=>s+m.filter(x=>x.role==='user').length,0);
   const lp=Object.values(S.learn).reduce((s,l)=>s+(l.pos?.length||0),0);
   try{
-    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:MODEL_FAST,max_tokens:1200,messages:[{role:'user',content:`Weekly review data: HRV rMSSD ${S.hrv.rmssd} (doel 53+), herstel ${S.hrv.recovery}/10, slaap ${S.hrv.sleep}u. ${portCtx()}. Council sessies: ${sc}. Learning positief: ${lp}.\nReturn ALLEEN valid JSON:\n{"weekHighlight":"max 80 chars","energyAvg":${S.hrv.recovery},"sessionsCount":${sc},"actionsCompleted":2,"insights":[{"ico":"❤","title":"string","body":"max 2 zinnen"},{"ico":"📊","title":"string","body":"max 2 zinnen"},{"ico":"🎯","title":"string","body":"max 2 zinnen"}],"nextWeekFocus":"max 80 chars","domainBreakdown":{"Gezondheid":30,"Finance":25,"Work":35,"Persoonlijk":10},"patternNote":"max 60 chars"}`}]})});
+    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:MODEL_FAST,max_tokens:1200,messages:[{role:'user',content:`Weekly review data: HRV rMSSD ${S.hrv.rmssd} (doel 53+), herstel ${S.hrv.recovery}/10, slaap ${S.hrv.sleep}u. Council sessies: ${sc}. Learning positief: ${lp}.\nReturn ALLEEN valid JSON:\n{"weekHighlight":"max 80 chars","energyAvg":${S.hrv.recovery},"sessionsCount":${sc},"actionsCompleted":2,"insights":[{"ico":"❤","title":"string","body":"max 2 zinnen"},{"ico":"📊","title":"string","body":"max 2 zinnen"},{"ico":"🎯","title":"string","body":"max 2 zinnen"}],"nextWeekFocus":"max 80 chars","domainBreakdown":{"Gezondheid":30,"Finance":25,"Work":35,"Persoonlijk":10},"patternNote":"max 60 chars"}`}]})});
     const data=await res.json();
     const raw=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
     let r;try{r=JSON.parse(raw);}catch{try{const m=raw.match(/\{[\s\S]*\}/);if(m)r=JSON.parse(m[0]);}catch{}}
@@ -8185,14 +7967,9 @@ if(!isSessionValid()){
   if(_app && _app.style.display==='none') _app.style.display='';
 }
 applyTheme(currentTheme);
-if(S.port)renderPort();
 initCK();
 updateDagVoortgang();
 setTimeout(renderQuote, 0);
-// Auto-sync uitgezet — Paul wil geen 'Koersen ophalen...' popup bij
-// elke startup. Sync gebeurt alleen nog handmatig via de '↺ Live
-// koersen' knop op de cockpit-portfolio card. De last-fetch timestamp
-// blijft bijgewerkt zodat de cache-leeftijd zichtbaar blijft.
 localStorage.setItem('tm2_lf',new Date().toISOString());
 
 
