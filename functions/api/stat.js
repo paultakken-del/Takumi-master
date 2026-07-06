@@ -30,9 +30,15 @@ export async function onRequestGet(context) {
     // Secret nog niet actief: waarschijnlijk geen redeploy gedaan na toevoegen
     return new Response(JSON.stringify({ error: 'no_key_configured' }), { status: 503, headers: JSON_HEADERS });
   }
-  const given = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
-  if (given !== String(env.STATS_KEY).trim()) {
-    return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: JSON_HEADERS });
+  const norm = (s) => String(s).trim().replace(/^["']|["']$/g, '').trim();
+  const given = norm((request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, ''));
+  const expected = norm(env.STATS_KEY);
+  if (given !== expected) {
+    // Alleen lengtes teruggeven — diagnostisch, verraadt de sleutel niet
+    return new Response(
+      JSON.stringify({ error: 'unauthorized', expectedLen: expected.length, givenLen: given.length }),
+      { status: 401, headers: JSON_HEADERS }
+    );
   }
   if (!env.TAKUMI_USERS) {
     return new Response(JSON.stringify({ error: 'no_kv' }), { status: 503, headers: JSON_HEADERS });

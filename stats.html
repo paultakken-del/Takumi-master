@@ -123,13 +123,21 @@ function boot(){
   if (!k) { show('gate'); return; }
   show('loading');
   fetch('/api/stat', { headers: { 'Authorization': 'Bearer ' + k } })
-    .then(function(r){ if (r.status===401) throw 'auth'; if (r.status===503) throw 'nokey'; return r.json(); })
+    .then(function(r){
+      if (r.status===401) return r.json().then(function(d){ throw {t:'auth', d:d}; });
+      if (r.status===503) throw {t:'nokey'};
+      return r.json();
+    })
     .then(render)
     .catch(function(err){
       show('gate');
       var ge = document.getElementById('gate-err');
-      if (err==='auth'){ localStorage.removeItem(KEY_LS); ge.textContent='Sleutel klopt niet.'; ge.style.display='block'; }
-      else if (err==='nokey'){ ge.textContent='Server kent nog geen STATS_KEY — voeg de secret toe in Cloudflare en doe een redeploy.'; ge.style.display='block'; }
+      if (err && err.t==='auth'){
+        localStorage.removeItem(KEY_LS);
+        ge.textContent = 'Sleutel klopt niet — server verwacht ' + (err.d && err.d.expectedLen) + ' tekens, jij gaf ' + (err.d && err.d.givenLen) + '.';
+        ge.style.display='block';
+      }
+      else if (err && err.t==='nokey'){ ge.textContent='Server kent nog geen STATS_KEY — voeg de secret toe in Cloudflare en doe een redeploy.'; ge.style.display='block'; }
     });
 }
 document.getElementById('key') && document.getElementById('key').addEventListener('keydown', function(e){ if(e.key==='Enter') login(); });
