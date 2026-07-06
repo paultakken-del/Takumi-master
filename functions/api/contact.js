@@ -12,6 +12,8 @@
  * Optioneel: env CONTACT_FROM (default: onboarding@resend.dev, werkt zonder domeinverificatie).
  */
 
+import { bump } from '../_lib/stats.js';
+
 const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8' };
 
 // Turnstile sitekey is publiek (staat toch in elke pagebron); secret NOOIT hier.
@@ -105,6 +107,7 @@ export async function onRequestPost(context) {
     return reply(502, { ok: false, error: 'send_failed' });
   }
 
+  context.waitUntil(bump(env, 'contact').catch(() => {}));
   return reply(200, { ok: true });
 }
 

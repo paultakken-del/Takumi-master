@@ -8,3 +8,9 @@
 # API routes: geen caching in browser
 /api/*
   Cache-Control: no-store
+
+# Verborgen statistiekpagina: niet indexeren
+/stats
+  X-Robots-Tag: noindex, nofollow
+/stats.html
+  X-Robots-Tag: noindex, nofollow

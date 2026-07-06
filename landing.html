@@ -561,13 +561,13 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
         <a class="store" href="https://www.amazon.nl/Natuurlijk-agile-geborgen-wortels-wendbaarheid-ebook/dp/B0BG64DPWF" target="_blank" rel="noopener">
           <span class="sn">Amazon.nl (Kindle)</span><span class="sp">€ 21,– ↗</span>
         </a>
-        <a class="store" href="https://www.thema.nl/boek-natuurlijk-agile/" target="_blank" rel="noopener">
+        <a class="store" data-stat="click_boek" href="https://www.thema.nl/boek-natuurlijk-agile/" target="_blank" rel="noopener">
           <span class="sn">Uitgeverij Thema</span><span class="sp">€ 27,– ↗</span>
         </a>
         <a class="store" href="https://www.bol.com/nl/nl/f/natuurlijk-agile/9300000074027566/" target="_blank" rel="noopener">
           <span class="sn">bol.com</span><span class="sp">€ 28,44 ↗</span>
         </a>
-        <a class="store" href="https://www.managementboek.nl/boek/9789462723283/natuurlijk-agile-paul-takken" target="_blank" rel="noopener">
+        <a class="store" data-stat="click_boek" href="https://www.managementboek.nl/boek/9789462723283/natuurlijk-agile-paul-takken" target="_blank" rel="noopener">
           <span class="sn">Managementboek.nl</span><span class="sp">€ 27,– ↗</span>
         </a>
       </div>
@@ -623,7 +623,7 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
       <p style="font-size:13.5px;line-height:1.6;color:#8a8175;max-width:520px;margin-top:12px" data-i18n="gz-note">Hoofdstuk 7 eindigt waar Takumi begint: de Spiegelweek. AI als hartslagmeter, niet als gaspedaal.</p>
       <div class="gz-btns">
         <a class="gz-btn p" href="/uit-de-grijze-zone.pdf" target="_blank" rel="noopener" data-i18n="gz-btn-pdf">Download het werkboek (pdf)</a>
-        <a class="gz-btn s" href="/spiegel" data-i18n="gz-btn-spiegel">Naar de Spiegelweek →</a>
+        <a class="gz-btn s" data-stat="click_spiegel" href="/spiegel" data-i18n="gz-btn-spiegel">Naar de Spiegelweek →</a>
       </div>
     </div>
   </div>
@@ -655,7 +655,7 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
             <span>Gratis</span>
             <span data-i18n="web-gratis">Via WeShareTalent · Zoomlink per e-mail</span>
           </div>
-          <a class="btn-web" data-i18n="web-btn" href="https://www.wesharetalent.com/training/natuurlijk-agile-de-verborgen-wortels-van-wendbaarheid-2/" target="_blank" rel="noopener">Meld je aan ↗</a>
+          <a class="btn-web" data-stat="click_webinar" data-i18n="web-btn" href="https://www.wesharetalent.com/training/natuurlijk-agile-de-verborgen-wortels-van-wendbaarheid-2/" target="_blank" rel="noopener">Meld je aan ↗</a>
         </div>
       </div>
     </div>
@@ -674,7 +674,7 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
     <div class="tak-visual-wrap" data-r data-d="1">
       <div class="tak-photo-wrap">
       <img src="/takumi-koffiebar.jpg" alt="Manager met Takumi app in koffiebar" class="tak-photo" loading="lazy" decoding="async">
-      <a class="btn-prim tak-photo-btn" href="https://app.takumi-master.com?from=landing" target="_blank" data-i18n="tak-btn">Begin met Takumi ↗</a>
+      <a class="btn-prim tak-photo-btn" data-stat="click_app" href="https://app.takumi-master.com?from=landing" target="_blank" data-i18n="tak-btn">Begin met Takumi ↗</a>
       </div>
     </div>
   </div>
@@ -940,6 +940,15 @@ function applyLang(lang) {
 }
 
 function toggleLang() { applyLang(LANG === 'nl' ? 'en' : 'nl'); }
+
+// ── KLIK-BEACONS (stats) ──────────────────────────────────────────
+document.addEventListener('click', function(e){
+  var a = e.target.closest('[data-stat]');
+  if (!a || !navigator.sendBeacon) return;
+  try {
+    navigator.sendBeacon('/api/stat', new Blob([JSON.stringify({e: a.getAttribute('data-stat')})], {type:'application/json'}));
+  } catch(_) {}
+});
 
 // ── CONTACTFORMULIER ──────────────────────────────────────────────
 (function(){

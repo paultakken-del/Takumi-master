@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Statistieken — takumi-master.com</title>
+<link rel="icon" type="image/svg+xml" href="/takumi-mcp.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root { --paper:#f6f2eb; --ink:#1c1815; --muted:#6f675e; --acc:#c4532a; --border:#e2dbd0; --serif:'Cormorant Garamond',serif; --sans:'Outfit',sans-serif; --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--paper); color:var(--ink); font-family:var(--sans); min-height:100vh; }
+.wrap { max-width:1080px; margin:0 auto; padding:48px 24px 80px; }
+header { display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:8px; flex-wrap:wrap; }
+h1 { font-family:var(--serif); font-weight:300; font-size:clamp(28px,4vw,40px); }
+h1 em { font-style:italic; color:var(--acc); }
+.sub { font-size:13px; color:var(--muted); margin-bottom:36px; }
+.sub b { color:var(--ink); font-weight:500; }
+.logout { font-size:12px; color:var(--muted); background:none; border:none; cursor:pointer; text-decoration:underline; font-family:var(--sans); }
+/* login */
+.gate { max-width:360px; margin:18vh auto 0; text-align:center; }
+.gate h1 { margin-bottom:20px; }
+.gate input { width:100%; font-family:var(--sans); font-size:15px; padding:13px 15px; border:1px solid var(--border); border-radius:8px; background:#fff; margin-bottom:12px; }
+.gate input:focus { outline:none; border-color:var(--acc); }
+.gate button { width:100%; padding:13px; background:var(--acc); color:#fff; border:none; border-radius:8px; font-family:var(--sans); font-size:14px; font-weight:600; cursor:pointer; }
+.gate .err { color:var(--acc); font-size:13px; margin-top:12px; display:none; }
+/* cards */
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:18px; }
+.card { background:#fff; border:1px solid var(--border); border-radius:12px; padding:22px 24px 18px; }
+.card.hero { grid-column:1/-1; border-color:var(--acc); background:linear-gradient(135deg,#fff 60%,#fdf3ee); }
+.c-label { font-size:11px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+.c-total { font-family:var(--serif); font-size:44px; font-weight:300; line-height:1.1; margin:6px 0 2px; }
+.card.hero .c-total { font-size:64px; color:var(--acc); }
+.c-sub { font-size:12px; color:var(--muted); margin-bottom:14px; font-family:var(--mono); }
+.bars { display:flex; align-items:flex-end; gap:2px; height:52px; }
+.bar { flex:1; background:var(--border); border-radius:2px 2px 0 0; min-height:2px; position:relative; }
+.bar.hit { background:var(--acc); opacity:.85; }
+.bar:hover::after { content:attr(data-t); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:var(--ink); color:var(--paper); font-size:10px; font-family:var(--mono); padding:3px 7px; border-radius:4px; white-space:nowrap; z-index:2; }
+.loading { text-align:center; color:var(--muted); padding:80px 0; font-size:14px; }
+footer { margin-top:44px; font-size:11.5px; color:var(--muted); line-height:1.7; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="gate" id="gate" style="display:none">
+    <h1>匠 <em>stats</em></h1>
+    <input type="password" id="key" placeholder="Sleutel" autocomplete="current-password">
+    <button onclick="login()">Binnen</button>
+    <p class="err" id="gate-err">Sleutel klopt niet.</p>
+  </div>
+
+  <div id="dash" style="display:none">
+    <header>
+      <h1>takumi-master.com — <em>de teller</em></h1>
+      <button class="logout" onclick="logout()">uitloggen</button>
+    </header>
+    <p class="sub">Laatste 30 dagen per kaart · vandaag = <b id="today"></b> · alle tijden Europe/Amsterdam</p>
+    <div class="grid" id="grid"></div>
+    <footer>
+      Server-side geteld: werkboek-downloads en paginabezoeken (bots gefilterd op user-agent). Client-side geteld: CTA-kliks en verstuurde contactberichten. Tellingen zijn indicatief — KV-schrijfacties zijn niet atomair en adblockers kunnen kliks missen. Downloads en bezoeken worden altijd geteld, ook met adblocker.
+    </footer>
+  </div>
+
+  <p class="loading" id="loading" style="display:none">De teller wordt opgehaald…</p>
+</div>
+<script>
+var METRICS = [
+  { ev:'pdf',            label:'Werkboek-downloads', sub:'uit-de-grijze-zone.pdf', hero:true },
+  { ev:'view_landing',   label:'Bezoeken landing',   sub:'www.takumi-master.com' },
+  { ev:'view_spiegel',   label:'Bezoeken Spiegelweek', sub:'/spiegel' },
+  { ev:'view_agents',    label:'Bezoeken agents-pagina', sub:'/agents' },
+  { ev:'view_weegschaal',label:'Bezoeken weegschaal', sub:'/weegschaal' },
+  { ev:'click_webinar',  label:'Kliks webinar-aanmelding', sub:'→ wesharetalent.com' },
+  { ev:'click_app',      label:'Kliks naar de app',  sub:'→ app.takumi-master.com' },
+  { ev:'click_boek',     label:'Kliks boek kopen',   sub:'→ thema.nl / managementboek.nl' },
+  { ev:'click_spiegel',  label:'Kliks Spiegelweek-CTA', sub:'landing → /spiegel' },
+  { ev:'contact',        label:'Contactberichten',   sub:'verstuurd via formulier' }
+];
+var KEY_LS = 'tm2_statskey';
+
+function login(){
+  var k = document.getElementById('key').value.trim();
+  if (!k) return;
+  localStorage.setItem(KEY_LS, k);
+  boot();
+}
+function logout(){ localStorage.removeItem(KEY_LS); location.reload(); }
+
+function show(id){
+  ['gate','dash','loading'].forEach(function(x){ document.getElementById(x).style.display = x===id ? '' : 'none'; });
+}
+
+function sum(byDay, days){ var t=0; days.forEach(function(d){ t += byDay[d]||0; }); return t; }
+
+function render(data){
+  document.getElementById('today').textContent = data.today;
+  var days = data.days, last7 = days.slice(-7);
+  var grid = document.getElementById('grid'); grid.innerHTML = '';
+  METRICS.forEach(function(m){
+    var e = data.events[m.ev] || { total:0, byDay:{} };
+    var d30 = sum(e.byDay, days), d7 = sum(e.byDay, last7), today = e.byDay[data.today]||0;
+    var max = 1; days.forEach(function(d){ max = Math.max(max, e.byDay[d]||0); });
+    var bars = days.map(function(d){
+      var v = e.byDay[d]||0;
+      return '<div class="bar'+(v?' hit':'')+'" style="height:'+Math.max(4, v/max*100)+'%" data-t="'+d.slice(5)+' · '+v+'"></div>';
+    }).join('');
+    var card = document.createElement('div');
+    card.className = 'card' + (m.hero ? ' hero' : '');
+    card.innerHTML = '<p class="c-label">'+m.label+'</p>'
+      + '<p class="c-total">'+e.total.toLocaleString('nl-NL')+'</p>'
+      + '<p class="c-sub">'+m.sub+' · vandaag '+today+' · 7d '+d7+' · 30d '+d30+'</p>'
+      + '<div class="bars">'+bars+'</div>';
+    grid.appendChild(card);
+  });
+  show('dash');
+}
+
+function boot(){
+  var k = localStorage.getItem(KEY_LS);
+  if (!k) { show('gate'); return; }
+  show('loading');
+  fetch('/api/stat', { headers: { 'Authorization': 'Bearer ' + k } })
+    .then(function(r){ if (r.status===401) throw 'auth'; return r.json(); })
+    .then(render)
+    .catch(function(err){
+      show('gate');
+      if (err==='auth'){ localStorage.removeItem(KEY_LS); document.getElementById('gate-err').style.display='block'; }
+    });
+}
+document.getElementById('key') && document.getElementById('key').addEventListener('keydown', function(e){ if(e.key==='Enter') login(); });
+boot();
+</script>
+</body>
+</html>
