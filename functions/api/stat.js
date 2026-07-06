@@ -26,8 +26,12 @@ export async function onRequestPost(context) {
 export async function onRequestGet(context) {
   const { request, env } = context;
 
-  const auth = request.headers.get('Authorization') || '';
-  if (!env.STATS_KEY || auth !== `Bearer ${env.STATS_KEY}`) {
+  if (!env.STATS_KEY) {
+    // Secret nog niet actief: waarschijnlijk geen redeploy gedaan na toevoegen
+    return new Response(JSON.stringify({ error: 'no_key_configured' }), { status: 503, headers: JSON_HEADERS });
+  }
+  const given = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
+  if (given !== String(env.STATS_KEY).trim()) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: JSON_HEADERS });
   }
   if (!env.TAKUMI_USERS) {
