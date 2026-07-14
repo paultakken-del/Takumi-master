@@ -1,0 +1,23 @@
+name: Cyclusradar maandagsignaal
+on:
+  schedule:
+    - cron: "30 5 * * 1"   # maandag 07:30 NL (zomertijd)
+  workflow_dispatch: {}
+jobs:
+  signalen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Macro-maandsignaal
+        run: |
+          curl -fsS -X POST https://takumi-master.com/api/radar \
+            -H "content-type: application/json" \
+            -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
+            -d '{"soort":"macro"}' | head -c 300
+      - name: Even ademen
+        run: sleep 20
+      - name: Crypto-weeksignaal
+        run: |
+          curl -fsS -X POST https://takumi-master.com/api/radar \
+            -H "content-type: application/json" \
+            -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
+            -d '{"soort":"crypto"}' | head -c 300

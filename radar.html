@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyclusradar · Takumi</title>
+<meta name="description" content="Maand- en weeksignaal met kansverdelingen, historie en een trackrecord dat zichzelf scoort.">
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#1a1815; --panel:#232019; --line:#37332a; --ink:#efeadf; --mut:#a89f8d; --faint:#6f695c; --up:#7fb59a; --down:#d08a7c; --brass:#c9a54a; --indigo:#7aa3bd; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--ink); font:16px/1.65 Georgia,'Times New Roman',serif; padding:0 20px 80px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  header { text-align:center; padding:56px 0 8px; }
+  .kanji { font-family:'Noto Serif JP',serif; font-size:64px; color:var(--brass); line-height:1; }
+  h1 { font-size:30px; font-weight:normal; margin:14px 0 6px; }
+  .sub { color:var(--mut); font-size:15px; }
+  .mono { font-family:'IBM Plex Mono',monospace; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:24px; margin-top:26px; }
+  .seclabel { font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:2.5px; color:var(--brass); margin-bottom:12px; }
+  .hoofd { font-size:22px; margin-bottom:4px; }
+  .samen { color:var(--mut); font-size:15px; margin-bottom:14px; }
+  .balken { margin:12px 0 16px; }
+  .balkrij { display:flex; align-items:center; gap:10px; margin:5px 0; font-family:'IBM Plex Mono',monospace; font-size:12px; }
+  .balknaam { width:100px; color:var(--mut); }
+  .balk { flex:1; height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
+  .balkvul { height:100%; background:var(--indigo); border-radius:4px; }
+  .balkpct { width:38px; text-align:right; color:var(--mut); }
+  .ind { font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--mut); padding:5px 0; border-top:1px solid var(--line); }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; }
+  .g{background:var(--up)} .y{background:var(--brass)} .r{background:var(--down)}
+  .call { font-family:'IBM Plex Mono',monospace; font-size:12.5px; padding:5px 0; border-top:1px solid var(--line); display:flex; justify-content:space-between; }
+  .up{color:var(--up)} .down{color:var(--down)} .neutraal{color:var(--brass)}
+  button { background:none; border:1px solid var(--brass); color:var(--brass); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:9px 18px; border-radius:8px; cursor:pointer; margin-top:14px; }
+  button:hover { background:var(--brass); color:var(--bg); }
+  button:disabled { opacity:.45; cursor:wait; }
+  .melding { font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--down); margin-top:10px; }
+  .rec { font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--mut); padding:5px 0; border-top:1px solid var(--line); }
+  .voet { color:var(--faint); font-size:13px; margin-top:26px; text-align:center; line-height:1.7; }
+  .stamp { color:var(--faint); font-size:12px; font-family:'IBM Plex Mono',monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kanji">環</div>
+    <h1>Cyclusradar</h1>
+    <p class="sub">Kansverdelingen, geen voorspellingen. Het instrument logt en scoort zichzelf.</p>
+  </header>
+
+  <section id="macro"><div class="seclabel">MAANDSIGNAAL · MACRO</div><div id="macro-inhoud">Laden…</div>
+    <button id="knop-macro">Ververs signaal</button><div class="melding" id="melding-macro"></div>
+  </section>
+
+  <section id="crypto"><div class="seclabel">WEEKSIGNAAL · CRYPTO</div><div id="crypto-inhoud">Laden…</div>
+    <button id="knop-crypto">Ververs signaal</button><div class="melding" id="melding-crypto"></div>
+  </section>
+
+  <section><div class="seclabel">TRACKRECORD · FORWARD TEST</div><div id="record-inhoud">Laden…</div></section>
+
+  <p class="voet">Educatief instrument, geen beleggingsadvies. Historische patronen zijn geen garantie; n is klein en dat blijft zo.<br>Takumi weegt, het handelt niet · <a href="/" style="color:var(--faint)">takumi-master.com</a></p>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const dtm = (t) => new Date(t).toLocaleDateString('nl-NL', { day:'numeric', month:'short' });
+const NEUTRAAL = 5, VENSTER = 28*24*3600*1000;
+
+function balken(verdeling) {
+  return '<div class="balken">' + Object.entries(verdeling || {}).map(([k,v]) =>
+    `<div class="balkrij"><span class="balknaam">${k}</span><span class="balk"><span class="balkvul" style="width:${v}%"></span></span><span class="balkpct">${v}%</span></div>`).join('') + '</div>';
+}
+
+function signaalHtml(d) {
+  if (!d) return '<p class="samen">Nog geen signaal. Druk op ververs; de server doet het werk (± 1 minuut).</p>';
+  const s = d.sig;
+  const hoofd = s.fase || s.regime;
+  const calls = (s.sectoren || s.assets || []).map((c) =>
+    `<div class="call"><span>${c.n}</span><span class="${c.r}">${c.r} · ${c.kMin}–${c.kMax}%</span></div>`).join('');
+  const ind = (s.indicatoren || []).map((i) =>
+    `<div class="ind"><span class="dot ${i.s==='groen'?'g':i.s==='rood'?'r':'y'}"></span>${i.n}: ${i.w} — ${i.d}</div>`).join('');
+  return `<div class="hoofd">${hoofd}</div><div class="samen">${s.samenvatting || ''}</div>` +
+    balken(s.faseVerdeling || s.regimeVerdeling) +
+    `<div class="samen" style="font-size:14px">${s.synthese || ''}</div>` + calls + ind +
+    `<div class="stamp" style="margin-top:10px">gegenereerd ${dtm(d.t)}${s.ref && s.ref.btc ? ' · BTC $'+Math.round(s.ref.btc).toLocaleString('nl-NL') : ''}${s.ref && s.ref.spx ? ' · S&P '+Math.round(s.ref.spx).toLocaleString('nl-NL') : ''}</div>`;
+}
+
+function scoreCrypto(log) {
+  const rijen = [];
+  const cl = log.filter((e) => e.soort === 'crypto');
+  for (const e of cl) {
+    if (!e.ref || !e.calls) continue;
+    const later = cl.find((f) => f.t - e.t >= VENSTER && f.ref);
+    if (!later) continue;
+    for (const c of e.calls) {
+      const veld = c.n === 'Bitcoin' ? 'btc' : c.n === 'Ethereum' ? 'eth' : null;
+      if (!veld || !e.ref[veld] || !later.ref[veld]) continue;
+      const delta = (later.ref[veld] - e.ref[veld]) / e.ref[veld] * 100;
+      const uit = Math.abs(delta) < NEUTRAAL ? 'neutraal' : delta > 0 ? 'up' : 'down';
+      const hit = uit === c.r, p = (c.kMin + c.kMax) / 200;
+      rijen.push({ e, c, delta, hit, brier: Math.pow(p - (hit?1:0), 2) });
+    }
+  }
+  return rijen;
+}
+
+function recordHtml(log) {
+  const r = scoreCrypto(log);
+  let kop = '';
+  if (r.length) {
+    const hits = r.filter((x) => x.hit).length;
+    const brier = (r.reduce((a,x)=>a+x.brier,0)/r.length).toFixed(3);
+    kop = `<div class="samen mono">n = ${r.length} · raak ${hits}/${r.length} · Brier ${brier} (0 = perfect, 0.25 = muntje)</div>` +
+      r.map((x)=>`<div class="rec">${dtm(x.e.t)} · ${x.c.n} ${x.c.r} ${x.c.kMin}–${x.c.kMax}% → ${x.delta>0?'+':''}${x.delta.toFixed(1)}% <span class="${x.hit?'up':'down'}">${x.hit?'✓':'✗'}</span></div>`).join('');
+  } else {
+    kop = '<div class="samen">De eerste zelfscore verschijnt zodra een cryptosignaal vier weken oud is en er een nieuwer signaal met referentieprijzen bestaat. Macro-scoring (zes maanden) volgt.</div>';
+  }
+  const lijst = [...log].reverse().slice(0, 15).map((e) =>
+    `<div class="rec">${dtm(e.t)} · ${e.soort} · ${e.regime || e.fase}${e.ref && e.ref.btc ? ' · BTC $'+Math.round(e.ref.btc).toLocaleString('nl-NL') : ''}${e.ref && e.ref.spx ? ' · S&P '+Math.round(e.ref.spx).toLocaleString('nl-NL') : ''}</div>`).join('');
+  return kop + (lijst || '<div class="samen">Nog geen signalen gelogd.</div>');
+}
+
+async function laad() {
+  try {
+    const d = await (await fetch('/api/radar')).json();
+    $('macro-inhoud').innerHTML = signaalHtml(d.macro);
+    $('crypto-inhoud').innerHTML = signaalHtml(d.crypto);
+    $('record-inhoud').innerHTML = recordHtml(d.log || []);
+  } catch (e) {
+    $('macro-inhoud').textContent = 'Radar niet bereikbaar: ' + e.message;
+  }
+}
+
+async function ververs(soort) {
+  const knop = $('knop-' + soort), meld = $('melding-' + soort);
+  knop.disabled = true; knop.textContent = 'Bezig… (± 1 minuut)'; meld.textContent = '';
+  try {
+    const r = await fetch('/api/radar', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ soort }) });
+    const d = await r.json();
+    if (!r.ok) { meld.textContent = d.fout || ('fout ' + r.status); }
+    await laad();
+  } catch (e) { meld.textContent = e.message; }
+  knop.disabled = false; knop.textContent = 'Ververs signaal';
+}
+
+$('knop-macro').onclick = () => ververs('macro');
+$('knop-crypto').onclick = () => ververs('crypto');
+laad();
+</script>
+</body>
+</html>
