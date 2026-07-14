@@ -137,8 +137,10 @@ async function ververs(soort) {
   knop.disabled = true; knop.textContent = 'Bezig… (± 1 minuut)'; meld.textContent = '';
   try {
     const r = await fetch('/api/radar', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ soort }) });
-    const d = await r.json();
-    if (!r.ok) { meld.textContent = d.fout || ('fout ' + r.status); }
+    const ruw = await r.text();
+    let d = {};
+    try { d = JSON.parse(ruw); } catch { d = { fout: 'status ' + r.status + ' · ' + (ruw ? ruw.slice(0, 120) : 'leeg antwoord (mogelijk timeout)') }; }
+    if (!r.ok || d.fout) { meld.textContent = d.fout || ('fout ' + r.status); }
     await laad();
   } catch (e) { meld.textContent = e.message; }
   knop.disabled = false; knop.textContent = 'Ververs signaal';
