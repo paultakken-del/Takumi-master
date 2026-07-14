@@ -68,38 +68,6 @@ const maandenSindsHalving = () =>
   Math.floor((Date.now() - new Date('2024-04-19').getTime()) / (30.44 * 24 * 3600 * 1000));
 
 /* ---------- generatie ---------- */
-async function genereer(env, soort) {
-  let research = '';
-  try {
-    research = await anthropic(env, {
-      model: MODEL,
-      max_tokens: 900,
-      messages: [{ role: 'user', content: soort === 'macro' ? MACRO_RESEARCH : CRYPTO_RESEARCH }],
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-    });
-  } catch (e) {
-    research = 'Live data niet beschikbaar; schat conservatief op basis van je kennis en zeg dat erbij.';
-  }
-
-  if (soort === 'macro') {
-    const sig = parseJson(await anthropic(env, {
-      model: MODEL, max_tokens: 1800,
-      messages: [{ role: 'user', content: MACRO_JSON(research) }],
-    }));
-    const spx = pakGetal(research, /S&P\s*500[^0-9]{0,25}([\d.,]{3,10})/i);
-    return { ...sig, ref: spx ? { spx } : null };
-  }
-
-  const mnd = maandenSindsHalving();
-  const sig = parseJson(await anthropic(env, {
-    model: MODEL, max_tokens: 1800,
-    messages: [{ role: 'user', content: CRYPTO_JSON(research, mnd) }],
-  }));
-  const btc = pakGetal(research, /Bitcoin[^0-9$]{0,35}\$?\s?([\d.,]{4,12})/i);
-  const eth = pakGetal(research, /(?:Ethereum|ETH)[^0-9$]{0,35}\$?\s?([\d.,]{3,12})/i);
-  return { ...sig, ref: btc || eth ? { btc, eth } : null };
-}
-
 /* ---------- handlers ---------- */
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
@@ -115,45 +83,60 @@ export async function onRequestGet({ env }) {
 
 export async function onRequestPost({ request, env }) {
   try {
-  let soort;
-  try {
-    soort = (await request.json()).soort;
-  } catch {
-    return json({ fout: 'body ontbreekt' }, 400);
-  }
-  if (soort !== 'macro' && soort !== 'crypto') return json({ fout: 'soort moet macro of crypto zijn' }, 400);
+    let body;
+    try { body = await request.json(); } catch { return json({ fout: 'body ontbreekt' }, 400); }
+    const { soort, stap, research } = body;
+    if (soort !== 'macro' && soort !== 'crypto') return json({ fout: 'soort moet macro of crypto zijn' }, 400);
 
-  const sleutelOk = env.RADAR_KEY && request.headers.get('x-radar-key') === env.RADAR_KEY;
-  if (env.RADAR_KEY && !sleutelOk && request.headers.get('x-radar-key')) {
-    return json({ fout: 'ongeldige sleutel' }, 403);
-  }
+    const sleutelOk = env.RADAR_KEY && request.headers.get('x-radar-key') === env.RADAR_KEY;
 
-  const laatste = await env.TAKUMI_USERS.get(`radar:latest:${soort}`, 'json');
-  if (!sleutelOk && laatste && Date.now() - laatste.t < THROTTLE_MS) {
-    const min = Math.ceil((THROTTLE_MS - (Date.now() - laatste.t)) / 60000);
-    return json({ fout: `signaal is vers; nieuw genereren kan over ${min} minuten`, laatste }, 429);
-  }
+    if (stap === 'research') {
+      try {
+        const tekst = await anthropic(env, {
+          model: MODEL,
+          max_tokens: 900,
+          messages: [{ role: 'user', content: soort === 'macro' ? MACRO_RESEARCH : CRYPTO_RESEARCH }],
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        });
+        return json({ research: tekst });
+      } catch (e) {
+        return json({ research: 'Live data niet beschikbaar; schat conservatief en zeg dat erbij.', nb: e.message });
+      }
+    }
 
-  try {
-    const sig = await genereer(env, soort);
-    const entry = {
-      t: Date.now(),
-      soort,
-      datum: sig.datum,
-      fase: sig.fase,
-      regime: sig.regime,
-      verdeling: sig.faseVerdeling || sig.regimeVerdeling,
-      calls: (sig.sectoren || sig.assets || []).map((x) => ({ n: x.n, r: x.r, kMin: x.kMin, kMax: x.kMax })),
-      ref: sig.ref,
-    };
-    const log = (await env.TAKUMI_USERS.get(LOG_KEY, 'json')) || [];
-    log.push(entry);
-    await env.TAKUMI_USERS.put(LOG_KEY, JSON.stringify(log.slice(-60)));
-    await env.TAKUMI_USERS.put(`radar:latest:${soort}`, JSON.stringify({ t: entry.t, sig }));
-    return json({ t: entry.t, sig });
-  } catch (e) {
-    return json({ fout: e.message || 'generatie mislukt' }, 502);
-  }
+    if (stap === 'signaal') {
+      const laatste = await env.TAKUMI_USERS.get('radar:latest:' + soort, 'json');
+      if (!sleutelOk && laatste && Date.now() - laatste.t < THROTTLE_MS) {
+        const min = Math.ceil((THROTTLE_MS - (Date.now() - laatste.t)) / 60000);
+        return json({ fout: 'signaal is vers; nieuw genereren kan over ' + min + ' minuten', laatste }, 429);
+      }
+      const bron = research || 'Geen live data; schat conservatief en zeg dat erbij.';
+      let sig;
+      if (soort === 'macro') {
+        sig = parseJson(await anthropic(env, { model: MODEL, max_tokens: 1800, messages: [{ role: 'user', content: MACRO_JSON(bron) }] }));
+        const spx = pakGetal(bron, /S&P\s*500[^0-9]{0,25}([\d.,]{3,10})/i);
+        sig.ref = spx ? { spx } : null;
+      } else {
+        const mnd = maandenSindsHalving();
+        sig = parseJson(await anthropic(env, { model: MODEL, max_tokens: 1800, messages: [{ role: 'user', content: CRYPTO_JSON(bron, mnd) }] }));
+        const btc = pakGetal(bron, /Bitcoin[^0-9$]{0,35}\$?\s?([\d.,]{4,12})/i);
+        const eth = pakGetal(bron, /(?:Ethereum|ETH)[^0-9$]{0,35}\$?\s?([\d.,]{3,12})/i);
+        sig.ref = btc || eth ? { btc, eth } : null;
+      }
+      const entry = {
+        t: Date.now(), soort, datum: sig.datum, fase: sig.fase, regime: sig.regime,
+        verdeling: sig.faseVerdeling || sig.regimeVerdeling,
+        calls: (sig.sectoren || sig.assets || []).map((x) => ({ n: x.n, r: x.r, kMin: x.kMin, kMax: x.kMax })),
+        ref: sig.ref,
+      };
+      const log = (await env.TAKUMI_USERS.get(LOG_KEY, 'json')) || [];
+      log.push(entry);
+      await env.TAKUMI_USERS.put(LOG_KEY, JSON.stringify(log.slice(-60)));
+      await env.TAKUMI_USERS.put('radar:latest:' + soort, JSON.stringify({ t: entry.t, sig }));
+      return json({ t: entry.t, sig });
+    }
+
+    return json({ fout: 'stap moet research of signaal zijn' }, 400);
   } catch (e) {
     return json({ fout: 'serverfout: ' + (e.message || e) }, 500);
   }

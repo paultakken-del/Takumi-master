@@ -7,17 +7,17 @@ jobs:
   signalen:
     runs-on: ubuntu-latest
     steps:
-      - name: Macro-maandsignaal
+      - name: Beide signalen (research -> signaal)
         run: |
-          curl -fsS -X POST https://takumi-master.com/api/radar \
-            -H "content-type: application/json" \
-            -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
-            -d '{"soort":"macro"}' | head -c 300
-      - name: Even ademen
-        run: sleep 20
-      - name: Crypto-weeksignaal
-        run: |
-          curl -fsS -X POST https://takumi-master.com/api/radar \
-            -H "content-type: application/json" \
-            -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
-            -d '{"soort":"crypto"}' | head -c 300
+          for soort in macro crypto; do
+            R=$(curl -fsS -X POST https://takumi-master.com/api/radar \
+              -H "content-type: application/json" \
+              -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
+              -d "{\"soort\":\"$soort\",\"stap\":\"research\"}" | jq -r '.research')
+            jq -n --arg s "$soort" --arg r "$R" '{soort:$s, stap:"signaal", research:$r}' | \
+            curl -fsS -X POST https://takumi-master.com/api/radar \
+              -H "content-type: application/json" \
+              -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
+              -d @- | head -c 200
+            echo; sleep 15
+          done

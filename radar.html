@@ -134,13 +134,20 @@ async function laad() {
 
 async function ververs(soort) {
   const knop = $('knop-' + soort), meld = $('melding-' + soort);
-  knop.disabled = true; knop.textContent = 'Bezig… (± 1 minuut)'; meld.textContent = '';
-  try {
-    const r = await fetch('/api/radar', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ soort }) });
+  knop.disabled = true; meld.textContent = '';
+  const post = async (b) => {
+    const r = await fetch('/api/radar', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(b) });
     const ruw = await r.text();
     let d = {};
-    try { d = JSON.parse(ruw); } catch { d = { fout: 'status ' + r.status + ' · ' + (ruw ? ruw.slice(0, 120) : 'leeg antwoord (mogelijk timeout)') }; }
-    if (!r.ok || d.fout) { meld.textContent = d.fout || ('fout ' + r.status); }
+    try { d = JSON.parse(ruw); } catch { d = { fout: 'status ' + r.status + ' · ' + (ruw ? ruw.slice(0, 120) : 'leeg antwoord') }; }
+    if (!r.ok || d.fout) throw new Error(d.fout || ('fout ' + r.status));
+    return d;
+  };
+  try {
+    knop.textContent = 'Data zoeken…';
+    const { research } = await post({ soort, stap: 'research' });
+    knop.textContent = 'Signaal wegen…';
+    await post({ soort, stap: 'signaal', research });
     await laad();
   } catch (e) { meld.textContent = e.message; }
   knop.disabled = false; knop.textContent = 'Ververs signaal';
