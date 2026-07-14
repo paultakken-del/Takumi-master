@@ -7,7 +7,7 @@
  * dan is een header x-radar-key vereist en geldt de throttle niet voor die aanroepen.
  */
 
-const MODEL = 'claude-sonnet-4-20250514';
+const MODEL = 'claude-sonnet-4-6';
 const LOG_KEY = 'radar:log';
 const THROTTLE_MS = 6 * 3600 * 1000;
 
