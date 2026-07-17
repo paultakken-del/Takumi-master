@@ -59,6 +59,14 @@
 
   <section><div class="seclabel">TRACKRECORD · FORWARD TEST</div><div id="record-inhoud">Laden…</div></section>
 
+  <section><div class="seclabel">EXPORT</div>
+    <div class="samen">Neem de radarstand mee: als rapport naar je klembord, als JSON, of direct een gesprek in.</div>
+    <button id="knop-kopieer">Kopieer rapport</button>
+    <button id="knop-json" style="margin-left:10px">Download JSON</button>
+    <button id="knop-claude" style="margin-left:10px">Bespreek in Claude</button>
+    <div class="melding" id="melding-export" style="color:var(--up)"></div>
+  </section>
+
   <p class="voet">Educatief instrument, geen beleggingsadvies. Historische patronen zijn geen garantie; n is klein en dat blijft zo.<br>Takumi weegt, het handelt niet · <a href="/" style="color:var(--faint)">takumi-master.com</a></p>
 </div>
 
@@ -124,6 +132,7 @@ function recordHtml(log) {
 async function laad() {
   try {
     const d = await (await fetch('/api/radar')).json();
+    LAATSTE = d;
     $('macro-inhoud').innerHTML = signaalHtml(d.macro);
     $('crypto-inhoud').innerHTML = signaalHtml(d.crypto);
     $('record-inhoud').innerHTML = recordHtml(d.log || []);
@@ -152,6 +161,50 @@ async function ververs(soort) {
   } catch (e) { meld.textContent = e.message; }
   knop.disabled = false; knop.textContent = 'Ververs signaal';
 }
+
+let LAATSTE = null;
+
+function tekstRapport(d) {
+  const r = [];
+  r.push('CYCLUSRADAR · takumi-master.com/radar · ' + new Date().toLocaleDateString('nl-NL'));
+  for (const [naam, x] of [['MAANDSIGNAAL MACRO', d.macro], ['WEEKSIGNAAL CRYPTO', d.crypto]]) {
+    if (!x) continue;
+    const s = x.sig;
+    r.push('');
+    r.push(naam + ' (' + dtm(x.t) + '): ' + (s.fase || s.regime));
+    r.push('Verdeling: ' + Object.entries(s.faseVerdeling || s.regimeVerdeling || {}).map(([k,v]) => k + ' ' + v + '%').join(', '));
+    r.push('Synthese: ' + (s.synthese || ''));
+    for (const c of (s.sectoren || s.assets || [])) r.push('- ' + c.n + ': ' + c.r + ' ' + c.kMin + '-' + c.kMax + '% (' + (c.reden || '') + ')');
+  }
+  const sc = scoreCrypto(d.log || []);
+  if (sc.length) {
+    const hits = sc.filter((x) => x.hit).length;
+    r.push('');
+    r.push('TRACKRECORD: n=' + sc.length + ', raak ' + hits + '/' + sc.length + ', Brier ' + (sc.reduce((a,x)=>a+x.brier,0)/sc.length).toFixed(3));
+  }
+  r.push('');
+  r.push('Kansverdelingen, geen voorspellingen. Takumi weegt, het handelt niet.');
+  return r.join('\n');
+}
+
+$('knop-kopieer').onclick = async () => {
+  if (!LAATSTE) return;
+  await navigator.clipboard.writeText(tekstRapport(LAATSTE));
+  $('melding-export').textContent = 'Rapport gekopieerd.';
+};
+$('knop-json').onclick = () => {
+  if (!LAATSTE) return;
+  const blob = new Blob([JSON.stringify(LAATSTE, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cyclusradar-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+};
+$('knop-claude').onclick = () => {
+  if (!LAATSTE) return;
+  const prompt = 'Hier is de actuele stand van mijn Cyclusradar (kansverdelingen, geen voorspellingen). Help me deze weging duiden: wat valt op, waar zit de grootste onzekerheid, en welke ene vraag zou ik deze week moeten volgen? Geen transactieadvies; Takumi weegt, het handelt niet.\n\n' + tekstRapport(LAATSTE);
+  window.open('https://claude.ai/new?q=' + encodeURIComponent(prompt), '_blank');
+};
 
 $('knop-macro').onclick = () => ververs('macro');
 $('knop-crypto').onclick = () => ververs('crypto');
