@@ -1,0 +1,9 @@
+# takumi-master.com
+# Site is indexeerbaar; machine-endpoints onder /api/ zijn expliciet
+# toegankelijk voor geautomatiseerde agents (rapport, ping, radar).
+
+User-agent: *
+Allow: /api/
+Disallow: /stats
+Disallow: /stats.html
+Allow: /
