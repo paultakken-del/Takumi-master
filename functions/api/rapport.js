@@ -50,7 +50,48 @@ function signaalBlok(x) {
     calls: (s.sectoren || s.assets || []).map((c) => ({ naam: c.n, richting: c.r, kMin: c.kMin, kMax: c.kMax, reden: c.reden || '' })),
     analogieen: s.analogieen || [],
     referentie: s.ref || null,
+    dominantie: dominantie(s.faseVerdeling || s.regimeVerdeling),
   };
+}
+
+function dominantie(verdeling) {
+  const w = Object.values(verdeling || {});
+  return w.length ? Math.round(Math.max(...w)) / 100 : null;
+}
+
+function wijzigingen(log) {
+  const leesbaar = [];
+  const detail = [];
+  for (const soort of ['macro', 'crypto']) {
+    const reeks = (log || []).filter((e) => e.soort === soort);
+    if (reeks.length < 2) continue;
+    const [vorig, nu] = reeks.slice(-2);
+    const label = soort === 'macro' ? 'Macro' : 'Crypto';
+    const standV = vorig.fase || vorig.regime, standN = nu.fase || nu.regime;
+    if (standV !== standN) {
+      leesbaar.push(label + ': stand ' + standV + ' \u2192 ' + standN);
+      detail.push({ soort, type: 'stand', van: standV, naar: standN });
+    }
+    for (const k of new Set([...Object.keys(vorig.verdeling || {}), ...Object.keys(nu.verdeling || {})])) {
+      const a = (vorig.verdeling || {})[k] || 0, b = (nu.verdeling || {})[k] || 0;
+      if (Math.abs(b - a) >= 3) {
+        leesbaar.push(label + ': kans op ' + k + ' ' + a + '% \u2192 ' + b + '%');
+        detail.push({ soort, type: 'verdeling', onderdeel: k, van: a, naar: b });
+      }
+    }
+    const oude = Object.fromEntries((vorig.calls || []).map((c) => [c.n, c]));
+    for (const c of nu.calls || []) {
+      const o = oude[c.n];
+      if (!o) {
+        leesbaar.push(label + ': nieuwe call ' + c.n + ' (' + c.r + ' ' + c.kMin + '\u2013' + c.kMax + '%)');
+        detail.push({ soort, type: 'nieuwe-call', naam: c.n, richting: c.r });
+      } else if (o.r !== c.r) {
+        leesbaar.push(label + ': ' + c.n + ' ' + o.r + ' \u2192 ' + c.r);
+        detail.push({ soort, type: 'richting', naam: c.n, van: o.r, naar: c.r });
+      }
+    }
+  }
+  return { leesbaar, detail };
 }
 
 function alsTekst(rapport, md) {
@@ -91,13 +132,20 @@ export async function onRequestGet({ request, env }) {
       env.TAKUMI_USERS.get('radar:latest:crypto', 'json'),
       env.TAKUMI_USERS.get('radar:log', 'json'),
     ]);
+    const w = wijzigingen(log);
+    const tijden = [macro && macro.t, crypto && crypto.t].filter(Boolean);
     const rapport = {
+      versie: '1.1',
       bron: 'takumi-master.com/radar',
       gegenereerd: new Date().toISOString(),
+      laatstBijgewerkt: tijden.length ? new Date(Math.max(...tijden)).toISOString() : null,
       disclaimer: 'Kansverdelingen, geen voorspellingen; educatief, geen beleggingsadvies.',
+      toelichting: 'dominantie = zwaarste gewicht in de verdeling (0-1); empirische kalibratie zit in trackrecord.brier.',
       macro: signaalBlok(macro),
       crypto: signaalBlok(crypto),
       trackrecord: scoreCrypto(log),
+      wijzigingSindsVorigeRun: w.leesbaar,
+      wijzigingenDetail: w.detail,
     };
     const vorm = new URL(request.url).searchParams.get('vorm');
     if (vorm === 'tekst' || vorm === 'md') {
