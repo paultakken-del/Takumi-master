@@ -38,6 +38,14 @@ function parseJson(raw) {
   return JSON.parse(clean.slice(a, b + 1));
 }
 
+function plausibel(v, min, max) {
+  return Number.isFinite(v) && v >= min && v <= max ? v : null;
+}
+
+function geldigeKans(c) {
+  return Number.isFinite(c.kMin) && Number.isFinite(c.kMax) && c.kMin >= 1 && c.kMax <= 99 && c.kMin <= c.kMax;
+}
+
 function pakGetal(tekst, patroon) {
   const m = tekst.match(patroon);
   if (!m) return null;
@@ -114,19 +122,19 @@ export async function onRequestPost({ request, env }) {
       let sig;
       if (soort === 'macro') {
         sig = parseJson(await anthropic(env, { model: MODEL, max_tokens: 1800, messages: [{ role: 'user', content: MACRO_JSON(bron) }] }));
-        const spx = pakGetal(bron, /S&P\s*500[^0-9]{0,25}([\d.,]{3,10})/i);
+        const spx = plausibel(pakGetal(bron, /S&P\s*500[^0-9]{0,25}([\d.,]{3,10})/i), 1000, 20000);
         sig.ref = spx ? { spx } : null;
       } else {
         const mnd = maandenSindsHalving();
         sig = parseJson(await anthropic(env, { model: MODEL, max_tokens: 1800, messages: [{ role: 'user', content: CRYPTO_JSON(bron, mnd) }] }));
-        const btc = pakGetal(bron, /Bitcoin[^0-9$]{0,35}\$?\s?([\d.,]{4,12})/i);
-        const eth = pakGetal(bron, /(?:Ethereum|ETH)[^0-9$]{0,35}\$?\s?([\d.,]{3,12})/i);
+        const btc = plausibel(pakGetal(bron, /Bitcoin[^\n]{0,30}?\$\s?([\d.,]{4,12})/i), 5000, 500000);
+        const eth = plausibel(pakGetal(bron, /(?:Ethereum|ETH)[^\n]{0,30}?\$\s?([\d.,]{3,12})/i), 100, 50000);
         sig.ref = btc || eth ? { btc, eth } : null;
       }
       const entry = {
         t: Date.now(), soort, datum: sig.datum, fase: sig.fase, regime: sig.regime,
         verdeling: sig.faseVerdeling || sig.regimeVerdeling,
-        calls: (sig.sectoren || sig.assets || []).map((x) => ({ n: x.n, r: x.r, kMin: x.kMin, kMax: x.kMax })),
+        calls: (sig.sectoren || sig.assets || []).filter(geldigeKans).map((x) => ({ n: x.n, r: x.r, kMin: x.kMin, kMax: x.kMax })),
         ref: sig.ref,
       };
       const log = (await env.TAKUMI_USERS.get(LOG_KEY, 'json')) || [];

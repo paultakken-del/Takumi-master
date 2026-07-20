@@ -104,6 +104,9 @@ function scoreCrypto(log) {
     for (const c of e.calls) {
       const veld = c.n === 'Bitcoin' ? 'btc' : c.n === 'Ethereum' ? 'eth' : null;
       if (!veld || !e.ref[veld] || !later.ref[veld]) continue;
+      const grens = veld === 'btc' ? [5000, 500000] : [100, 50000];
+      if (e.ref[veld] < grens[0] || e.ref[veld] > grens[1] || later.ref[veld] < grens[0] || later.ref[veld] > grens[1]) continue;
+      if (!(c.kMin >= 1 && c.kMax <= 99 && c.kMin <= c.kMax)) continue;
       const delta = (later.ref[veld] - e.ref[veld]) / e.ref[veld] * 100;
       const uit = Math.abs(delta) < NEUTRAAL ? 'neutraal' : delta > 0 ? 'up' : 'down';
       const hit = uit === c.r, p = (c.kMin + c.kMax) / 200;
