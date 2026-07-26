@@ -272,12 +272,15 @@ const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
 
 export async function onRequestGet({ env }) {
-  const [macro, crypto, log] = await Promise.all([
+  const [macro, crypto, log, reeks] = await Promise.all([
     env.TAKUMI_USERS.get('radar:latest:macro', 'json'),
     env.TAKUMI_USERS.get('radar:latest:crypto', 'json'),
     env.TAKUMI_USERS.get(LOG_KEY, 'json'),
+    env.TAKUMI_USERS.get(REEKS_KEY, 'json'),
   ]);
-  return json({ macro, crypto, log: log || [] });
+  const m = (reeks || [])[reeks ? reeks.length - 1 : 0] || null;
+  return json({ macro, crypto, log: log || [],
+    meting: m ? { t: m.t, fouten: m.fouten || null, sleutels: { fred: !!env.FRED_KEY, radar: !!env.RADAR_KEY } } : null });
 }
 
 export async function onRequestPost({ request, env }) {
