@@ -91,7 +91,7 @@ function signaalHtml(d) {
   return `<div class="hoofd">${hoofd}</div><div class="samen">${s.samenvatting || ''}</div>` +
     balken(s.faseVerdeling || s.regimeVerdeling) +
     `<div class="samen" style="font-size:14px">${s.synthese || ''}</div>` + calls + ind +
-    `<div class="stamp" style="margin-top:10px">gegenereerd ${dtm(d.t)}${s.ref && s.ref.btc ? ' · BTC $'+Math.round(s.ref.btc).toLocaleString('nl-NL') : ''}${s.ref && s.ref.spx ? ' · S&P '+Math.round(s.ref.spx).toLocaleString('nl-NL') : ''}</div>`;
+    `<div class="stamp" style="margin-top:10px">gegenereerd ${dtm(d.t)}${s.stabiliteit ? ' · ensemble ' + s.stabiliteit.runs + ' runs, spreiding ±' + s.stabiliteit.spreiding + 'pt' : ''}${s.dataOud ? ' · let op: meetdata ouder dan 3 dagen' : ''}${s.ref && s.ref.btc ? ' · BTC $'+Math.round(s.ref.btc).toLocaleString('nl-NL') : ''}${s.ref && s.ref.spx ? ' · S&P '+Math.round(s.ref.spx).toLocaleString('nl-NL') : ''}</div>`;
 }
 
 function scoreCrypto(log) {
@@ -156,10 +156,10 @@ async function ververs(soort) {
     return d;
   };
   try {
-    knop.textContent = 'Data zoeken…';
-    const { research } = await post({ soort, stap: 'research' });
-    knop.textContent = 'Signaal wegen…';
-    await post({ soort, stap: 'signaal', research });
+    knop.textContent = 'Meten (FRED/CoinGecko)…';
+    try { await post({ stap: 'meting' }); } catch (e) { if (!/vers/.test(e.message)) throw e; }
+    knop.textContent = 'Wegen (3 runs)…';
+    await post({ soort, stap: 'signaal' });
     await laad();
   } catch (e) { meld.textContent = e.message; }
   knop.disabled = false; knop.textContent = 'Ververs signaal';
