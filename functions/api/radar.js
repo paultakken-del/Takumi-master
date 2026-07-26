@@ -290,6 +290,12 @@ export async function onRequestPost({ request, env }) {
     const { stap, soort } = body;
     const sleutelOk = env.RADAR_KEY && request.headers.get('x-radar-key') === env.RADAR_KEY;
 
+    if (stap === 'test') {
+      const fouten = {};
+      const [macro, crypto, etf] = await Promise.all([metingMacro(env, fouten), metingCrypto(fouten), metingEtf(fouten)]);
+      return json({ macro, crypto, etfAantal: Object.keys(etf).length, fouten });
+    }
+
     if (stap === 'meting') {
       const reeks = (await env.TAKUMI_USERS.get(REEKS_KEY, 'json')) || [];
       const vorige = reeks[reeks.length - 1];
