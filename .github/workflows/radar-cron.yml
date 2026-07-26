@@ -10,17 +10,24 @@ jobs:
     steps:
       - name: Dagelijkse meting
         run: |
-          curl -fsS -X POST https://takumi-master.com/api/radar \
+          set -euo pipefail
+          curl -sS -o /tmp/uit.json -w "meting HTTP %{http_code}\n" \
+            -X POST https://takumi-master.com/api/radar \
             -H "content-type: application/json" \
             -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
-            -d '{"stap":"meting"}' | head -c 200; echo
+            -d '{"stap":"meting"}'
+          cut -c1-400 /tmp/uit.json; echo
       - name: Maandagsignalen
         if: github.event.schedule == '15 5 * * 1' || github.event_name == 'workflow_dispatch'
         run: |
+          set -euo pipefail
           for soort in macro crypto; do
-            curl -fsS -X POST https://takumi-master.com/api/radar \
+            code=$(curl -sS -o /tmp/uit.json -w "%{http_code}" \
+              -X POST https://takumi-master.com/api/radar \
               -H "content-type: application/json" \
               -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
-              -d "{\"stap\":\"signaal\",\"soort\":\"$soort\"}" | head -c 200
-            echo; sleep 10
+              -d "{\"stap\":\"signaal\",\"soort\":\"$soort\"}")
+            echo "signaal $soort HTTP $code"; cut -c1-400 /tmp/uit.json; echo
+            if [ "$code" != "200" ] && [ "$code" != "429" ]; then exit 1; fi
+            sleep 10
           done
