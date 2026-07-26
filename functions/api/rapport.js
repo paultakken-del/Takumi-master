@@ -10,6 +10,7 @@
 
 const NEUTRAAL = 5;
 const VENSTER = 28 * 24 * 3600 * 1000;
+const VENSTER_MACRO = 182 * 24 * 3600 * 1000;
 
 function scoreCrypto(log) {
   const rijen = [];
@@ -40,6 +41,27 @@ function scoreCrypto(log) {
   };
 }
 
+function scoreMacro(log) {
+  const rijen = [];
+  const ml = (log || []).filter((e) => e.soort === 'macro' && e.ref && e.ref.etf && e.calls);
+  for (const e of ml) {
+    const later = ml.find((f) => f.t - e.t >= VENSTER_MACRO && f.ref && f.ref.etf);
+    if (!later) continue;
+    for (const c of e.calls) {
+      const a = e.ref.etf[c.n], b = later.ref.etf[c.n];
+      if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
+      if (!(c.kMin >= 1 && c.kMax <= 99 && c.kMin <= c.kMax)) continue;
+      const delta = ((b - a) / a) * 100;
+      const uit = Math.abs(delta) < NEUTRAAL ? 'neutraal' : delta > 0 ? 'up' : 'down';
+      const hit = uit === c.r;
+      const p = (c.kMin + c.kMax) / 200;
+      rijen.push({ t: e.t, sector: c.n, call: c.r, kMin: c.kMin, kMax: c.kMax, delta: Math.round(delta * 10) / 10, hit, brier: Math.round(Math.pow(p - (hit ? 1 : 0), 2) * 1000) / 1000 });
+    }
+  }
+  const n = rijen.length;
+  return { n, raak: rijen.filter((r) => r.hit).length, brier: n ? Math.round((rijen.reduce((a, r) => a + r.brier, 0) / n) * 1000) / 1000 : null, metingen: rijen.slice(-40) };
+}
+
 function signaalBlok(x) {
   if (!x) return null;
   const s = x.sig;
@@ -54,6 +76,7 @@ function signaalBlok(x) {
     analogieen: s.analogieen || [],
     referentie: s.ref || null,
     dominantie: dominantie(s.faseVerdeling || s.regimeVerdeling),
+    stabiliteit: s.stabiliteit || null,
   };
 }
 
@@ -138,15 +161,16 @@ export async function onRequestGet({ request, env }) {
     const w = wijzigingen(log);
     const tijden = [macro && macro.t, crypto && crypto.t].filter(Boolean);
     const rapport = {
-      versie: '1.1',
+      versie: '1.2',
       bron: 'takumi-master.com/radar',
       gegenereerd: new Date().toISOString(),
       laatstBijgewerkt: tijden.length ? new Date(Math.max(...tijden)).toISOString() : null,
       disclaimer: 'Kansverdelingen, geen voorspellingen; educatief, geen beleggingsadvies.',
-      toelichting: 'dominantie = zwaarste gewicht in de verdeling (0-1); empirische kalibratie zit in trackrecord.brier.',
+      toelichting: 'dominantie = zwaarste gewicht in de verdeling (0-1); stabiliteit = spreiding tussen ensemble-runs in punten (lager is stabieler); empirische kalibratie in trackrecord.brier (crypto, 4 weken) en trackrecordMacro.brier (sectoren via ETF-koersen, 6 maanden).',
       macro: signaalBlok(macro),
       crypto: signaalBlok(crypto),
       trackrecord: scoreCrypto(log),
+      trackrecordMacro: scoreMacro(log),
       wijzigingSindsVorigeRun: w.leesbaar,
       wijzigingenDetail: w.detail,
     };

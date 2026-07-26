@@ -1,23 +1,26 @@
-name: Cyclusradar maandagsignaal
+name: Cyclusradar metingen en signalen
 on:
   schedule:
-    - cron: "30 5 * * 1"   # maandag 07:30 NL (zomertijd)
+    - cron: "45 4 * * *"   # dagelijks 06:45 NL (zomertijd): meting
+    - cron: "15 5 * * 1"   # maandag 07:15 NL: signalen
   workflow_dispatch: {}
 jobs:
-  signalen:
+  radar:
     runs-on: ubuntu-latest
     steps:
-      - name: Beide signalen (research -> signaal)
+      - name: Dagelijkse meting
+        run: |
+          curl -fsS -X POST https://takumi-master.com/api/radar \
+            -H "content-type: application/json" \
+            -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
+            -d '{"stap":"meting"}' | head -c 200; echo
+      - name: Maandagsignalen
+        if: github.event.schedule == '15 5 * * 1' || github.event_name == 'workflow_dispatch'
         run: |
           for soort in macro crypto; do
-            R=$(curl -fsS -X POST https://takumi-master.com/api/radar \
-              -H "content-type: application/json" \
-              -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
-              -d "{\"soort\":\"$soort\",\"stap\":\"research\"}" | jq -r '.research')
-            jq -n --arg s "$soort" --arg r "$R" '{soort:$s, stap:"signaal", research:$r}' | \
             curl -fsS -X POST https://takumi-master.com/api/radar \
               -H "content-type: application/json" \
               -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
-              -d @- | head -c 200
-            echo; sleep 15
+              -d "{\"stap\":\"signaal\",\"soort\":\"$soort\"}" | head -c 200
+            echo; sleep 10
           done
