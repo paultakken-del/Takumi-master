@@ -13,7 +13,7 @@ const MODEL = 'claude-sonnet-4-6';
 const LOG_KEY = 'radar:log';
 const REEKS_KEY = 'radar:reeks';
 const THROTTLE_MS = 6 * 3600 * 1000;
-const METING_MS = 12 * 3600 * 1000;
+const METING_MS = 30 * 60 * 1000;
 
 /* ---------------- databronnen (deterministisch) ---------------- */
 
