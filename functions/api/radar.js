@@ -17,18 +17,35 @@ const METING_MS = 12 * 3600 * 1000;
 
 /* ---------------- databronnen (deterministisch) ---------------- */
 
+const UA = 'Mozilla/5.0 (X11; Linux x86_64) TakumiRadar/2.1';
+
 async function csv(url) {
-  const r = await fetch(url, { headers: { 'user-agent': 'takumi-radar/2.0' } });
-  if (!r.ok) throw new Error('bron ' + r.status);
+  const r = await fetch(url, { headers: { 'user-agent': UA, accept: 'text/csv,*/*' } });
+  if (!r.ok) throw new Error('status ' + r.status);
   return (await r.text()).trim().split('\n').map((l) => l.split(','));
 }
 
-async function fred(serie, jarenTerug = 3) {
+async function haalJson(url, extra) {
+  const r = await fetch(url, { headers: { 'user-agent': UA, accept: 'application/json', ...(extra || {}) } });
+  if (!r.ok) throw new Error('status ' + r.status);
+  return r.json();
+}
+
+async function fred(env, serie, jarenTerug = 3) {
   const start = new Date(Date.now() - jarenTerug * 365 * 24 * 3600 * 1000).toISOString().slice(0, 10);
-  const rijen = await csv('https://fred.stlouisfed.org/graph/fredgraph.csv?id=' + serie + '&cosd=' + start);
-  const data = rijen.slice(1).filter((r) => r[1] && r[1] !== '.').map((r) => ({ d: r[0], v: parseFloat(r[1]) }));
-  if (!data.length) throw new Error('geen data ' + serie);
-  return data;
+  try {
+    const rijen = await csv('https://fred.stlouisfed.org/graph/fredgraph.csv?id=' + serie + '&cosd=' + start);
+    const data = rijen.slice(1).filter((r) => r[1] && r[1] !== '.').map((r) => ({ d: r[0], v: parseFloat(r[1]) }));
+    if (!data.length) throw new Error('leeg');
+    return data;
+  } catch (e) {
+    if (!env.FRED_KEY) throw e;
+    const j = await haalJson('https://api.stlouisfed.org/fred/series/observations?series_id=' + serie +
+      '&api_key=' + env.FRED_KEY + '&file_type=json&observation_start=' + start);
+    const data = (j.observations || []).filter((o) => o.value !== '.').map((o) => ({ d: o.date, v: parseFloat(o.value) }));
+    if (!data.length) throw new Error('leeg (api)');
+    return data;
+  }
 }
 
 const laatsteVan = (reeks) => reeks[reeks.length - 1];
@@ -53,57 +70,82 @@ const SECTOR_ETF = {
   'Cyclische consument': 'xly.us', 'Grondstoffen': 'xlb.us', 'Vastgoed': 'xlre.us', 'Nutsbedrijven': 'xlu.us',
 };
 
-async function veilig(fn) {
-  try { return await fn(); } catch { return null; }
+async function veilig(fouten, naam, fn) {
+  try { return await fn(); } catch (e) { fouten[naam] = String(e.message || e).slice(0, 60); return null; }
 }
 
-async function metingMacro() {
+async function metingMacro(env, fouten) {
+  const f = (naam, serie, bewerk, jr) => veilig(fouten, naam, async () => {
+    const reeks = await fred(env, serie, jr || 3);
+    return bewerk ? bewerk(reeks) : laatsteVan(reeks).v;
+  });
   const [spread, sahm, hy, cpi, unrate, dff, wti, vix, spx] = await Promise.all([
-    veilig(async () => laatsteVan(await fred('T10Y2Y', 1)).v),
-    veilig(async () => laatsteVan(await fred('SAHMREALTIME', 2)).v),
-    veilig(async () => laatsteVan(await fred('BAMLH0A0HYM2', 1)).v),
-    veilig(async () => yoy(await fred('CPIAUCSL', 3))),
-    veilig(async () => laatsteVan(await fred('UNRATE', 2)).v),
-    veilig(async () => laatsteVan(await fred('DFF', 1)).v),
-    veilig(async () => yoy(await fred('DCOILWTICO', 3))),
-    veilig(async () => laatsteVan(await fred('VIXCLS', 1)).v),
-    veilig(async () => laatsteVan(await fred('SP500', 1)).v),
+    f('spread', 'T10Y2Y', null, 1), f('sahm', 'SAHMREALTIME', null, 2), f('hy', 'BAMLH0A0HYM2', null, 1),
+    f('cpi', 'CPIAUCSL', yoy), f('unrate', 'UNRATE', null, 2), f('dff', 'DFF', null, 1),
+    f('wti', 'DCOILWTICO', yoy), f('vix', 'VIXCLS', null, 1), f('spx', 'SP500', null, 1),
   ]);
   return { spread, sahm, hy, cpi, unrate, dff, wti, vix, spx };
 }
 
-async function metingCrypto() {
-  const prijs = await veilig(async () => {
-    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd', { headers: { accept: 'application/json' } });
-    if (!r.ok) throw new Error('cg');
-    return r.json();
+async function prijzen(fouten) {
+  // keten: CoinGecko -> Coinbase -> CryptoCompare
+  let btc = null, eth = null;
+  const cg = await veilig(fouten, 'coingecko-prijs', () =>
+    haalJson('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd'));
+  if (cg && cg.bitcoin) { btc = cg.bitcoin.usd; eth = cg.ethereum && cg.ethereum.usd; }
+  if (!btc) {
+    const cb = await veilig(fouten, 'coinbase', async () => ({
+      b: (await haalJson('https://api.coinbase.com/v2/prices/BTC-USD/spot')).data.amount,
+      e: (await haalJson('https://api.coinbase.com/v2/prices/ETH-USD/spot')).data.amount,
+    }));
+    if (cb) { btc = parseFloat(cb.b); eth = parseFloat(cb.e); }
+  }
+  if (!btc) {
+    const cc = await veilig(fouten, 'cryptocompare', () =>
+      haalJson('https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH&tsyms=USD'));
+    if (cc && cc.BTC) { btc = cc.BTC.USD; eth = cc.ETH && cc.ETH.USD; }
+  }
+  return { btc: Number.isFinite(btc) ? btc : null, eth: Number.isFinite(eth) ? eth : null };
+}
+
+async function metingCrypto(fouten) {
+  const { btc, eth } = await prijzen(fouten);
+  // dominantie: CoinGecko -> Coinpaprika
+  let dominantie = await veilig(fouten, 'coingecko-globaal', async () => {
+    const d = (await haalJson('https://api.coingecko.com/api/v3/global')).data;
+    return Math.round(d.market_cap_percentage.btc * 10) / 10;
   });
-  const globaal = await veilig(async () => {
-    const r = await fetch('https://api.coingecko.com/api/v3/global', { headers: { accept: 'application/json' } });
-    if (!r.ok) throw new Error('cg');
-    return (await r.json()).data;
-  });
-  const fng = await veilig(async () => {
-    const r = await fetch('https://api.alternative.me/fng/');
-    if (!r.ok) throw new Error('fng');
-    return parseInt((await r.json()).data[0].value, 10);
-  });
-  const btc = prijs && prijs.bitcoin ? prijs.bitcoin.usd : null;
-  const eth = prijs && prijs.ethereum ? prijs.ethereum.usd : null;
+  if (dominantie === null) {
+    dominantie = await veilig(fouten, 'coinpaprika', async () => {
+      const d = await haalJson('https://api.coinpaprika.com/v1/global');
+      return Math.round(d.bitcoin_dominance_percentage * 10) / 10;
+    });
+  }
+  const fng = await veilig(fouten, 'fng', async () =>
+    parseInt((await haalJson('https://api.alternative.me/fng/')).data[0].value, 10));
   return {
     btc, eth,
     ethbtc: btc && eth ? Math.round((eth / btc) * 100000) / 100000 : null,
-    dominantie: globaal && globaal.market_cap_percentage ? Math.round(globaal.market_cap_percentage.btc * 10) / 10 : null,
+    dominantie,
     fng: Number.isFinite(fng) ? fng : null,
   };
 }
 
-async function metingEtf() {
+async function metingEtf(fouten) {
   const uit = {};
   await Promise.all(Object.entries(SECTOR_ETF).map(async ([naam, sym]) => {
-    const v = await veilig(() => stooq(sym));
-    if (Number.isFinite(v)) uit[naam] = v;
+    // keten: Stooq -> Yahoo
+    let v = await veilig({}, sym, () => stooq(sym));
+    if (!Number.isFinite(v)) {
+      const y = sym.replace('.us', '').toUpperCase();
+      v = await veilig({}, y, async () => {
+        const j = await haalJson('https://query1.finance.yahoo.com/v8/finance/chart/' + y + '?range=1d&interval=1d');
+        return j.chart.result[0].meta.regularMarketPrice;
+      });
+    }
+    if (Number.isFinite(v)) uit[naam] = Math.round(v * 100) / 100;
   }));
+  if (!Object.keys(uit).length) fouten.etf = 'stooq en yahoo beide onbereikbaar';
   return uit;
 }
 
@@ -251,8 +293,10 @@ export async function onRequestPost({ request, env }) {
       if (!sleutelOk && vorige && Date.now() - vorige.t < METING_MS) {
         return json({ fout: 'meting is vers', laatste: vorige.t }, 429);
       }
-      const [macro, crypto, etf] = await Promise.all([metingMacro(), metingCrypto(), metingEtf()]);
+      const fouten = {};
+      const [macro, crypto, etf] = await Promise.all([metingMacro(env, fouten), metingCrypto(fouten), metingEtf(fouten)]);
       const m = { t: Date.now(), macro, crypto, etf };
+      if (Object.keys(fouten).length) m.fouten = fouten;
       reeks.push(m);
       await env.TAKUMI_USERS.put(REEKS_KEY, JSON.stringify(reeks.slice(-400)));
       return json({ ok: true, meting: m });
