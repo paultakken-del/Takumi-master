@@ -620,7 +620,7 @@ T.check("drawPulse() stap 2: HRV invoer", "step===2" in draw_fn and "rmssd" in d
 T.check("drawPulse() stap 3: prioriteiten", "step===3" in draw_fn, critical=False)
 T.check("drawPulse() stap 4: slaat HRV op", "step===4" in draw_fn and "lsSet" in draw_fn, critical=False)
 T.check("drawPulse() stap 4: Board advies", "step===4" in draw_fn and "send();" in draw_fn, critical=False)
-T.check("drawPulse() sum string safe", ".replace(/'/g" in draw_fn or "onbekend" in draw_fn), critical=False)
+T.check("drawPulse() sum string safe", ".replace(/'/g" in draw_fn or "onbekend" in draw_fn, critical=False)
 
 # F6: Feedback loop
 fb_fn = fn_body('doFB')
