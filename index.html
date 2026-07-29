@@ -899,8 +899,12 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
       <!-- Wijzerplaat: hoek = drift (noord = ritme gezond), slingering =
            reeksdekking afgelopen week. De naald verdient zijn rust. -->
       <div id="kp-dial" style="display:flex;justify-content:center;margin-bottom:26px">
-        <svg width="180" height="180" viewBox="0 0 180 180" aria-hidden="true">
+        <svg width="180" height="200" viewBox="0 0 180 200" aria-hidden="true">
           <circle cx="90" cy="90" r="84" fill="none" stroke="var(--m)" stroke-opacity=".4" stroke-width="1.5"/>
+          <!-- Zones: de schaal die de ruststand leesbaar maakt.
+               Ritme-boog rond noord (-6..20 gr), grijze zone 30..46 gr. -->
+          <path d="M 82.7 20.4 A 70 70 0 0 1 113.9 24.2" fill="none" stroke="var(--m)" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>
+          <path d="M 125.0 29.4 A 70 70 0 0 1 140.4 41.4" fill="none" stroke="var(--acc)" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"/>
           <g id="kp-ticks"></g>
           <text x="90" y="14" text-anchor="middle" font-size="12" fill="var(--m)" style="font-family:var(--FJ)">北</text>
           <g id="kp-needle">
@@ -908,6 +912,8 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
             <line x1="90" y1="90" x2="90" y2="126" stroke="var(--m)" stroke-width="1.5" stroke-linecap="round" opacity=".4"/>
             <circle cx="90" cy="90" r="4" fill="var(--acc)"/>
           </g>
+          <!-- Het woord bij de ruststand: verschijnt zodra de naald valt. -->
+          <text id="kp-woord" x="90" y="194" text-anchor="middle" font-size="10.5" letter-spacing=".14em" fill="var(--m)" style="opacity:0;transition:opacity .6s ease"></text>
         </svg>
       </div>
       <div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);opacity:.8;margin-bottom:10px">Waar je staat</div>
@@ -7189,6 +7195,9 @@ function kpDial(hoek, rusteloos){
   if(!needle) return;
   kpDialTicks();
   if(_kpAnim) cancelAnimationFrame(_kpAnim);
+  // Het woord wacht tot de naald staat: eerst de meting, dan de duiding.
+  var woord = document.getElementById('kp-woord');
+  if(woord) woord.style.opacity = '0';
   var t0 = null;
   function stap(ts){
     if(t0 === null) t0 = ts;
@@ -7196,6 +7205,9 @@ function kpDial(hoek, rusteloos){
     var demping = Math.exp(-t / 1.3);
     var slinger = rusteloos * demping * Math.sin(t * 6.5);
     needle.setAttribute('transform', 'rotate(' + (hoek + slinger).toFixed(2) + ' 90 90)');
+    // Duiding zodra de uitslag onder een halve graad zakt: een rustige
+    // naald (volle dekking) krijgt zijn woord eerder dan een rusteloze.
+    if(woord && woord.textContent && rusteloos * demping < 0.5) woord.style.opacity = '1';
     if(demping > 0.015){ _kpAnim = requestAnimationFrame(stap); }
     else { needle.setAttribute('transform', 'rotate(' + hoek + ' 90 90)'); _kpAnim = null; }
   }
@@ -7245,6 +7257,16 @@ function renderKompas(){
   if(n && n.tone === 'signaal') hoek = 38;
   else if(n && n.tone === 'terugveer') hoek = 8;
   else if(n) hoek = 16;
+  // Woord bij de ruststand: de naald wijst, het woord bevestigt.
+  var woordEl = document.getElementById('kp-woord');
+  if(woordEl){
+    var wtxt = '';
+    if(n && n.tone === 'signaal') wtxt = isEn ? 'GREY ZONE' : 'GRIJZE ZONE';
+    else if(n && n.tone === 'terugveer') wtxt = isEn ? 'REBOUND' : 'TERUGVEER';
+    else if(n) wtxt = isEn ? 'ON COURSE' : 'OP KOERS';
+    woordEl.textContent = wtxt;
+    woordEl.setAttribute('fill', (n && n.tone === 'signaal') ? 'var(--acc)' : 'var(--m)');
+  }
   kpDial(hoek, Math.max(5, 26 - dekking * 3));
 
   // ── BELOFTE ── wat herhaling oplevert, in het instrument zelf.
