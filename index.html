@@ -2218,7 +2218,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.620';
+const APP_VERSION = '0.630';
 
 const S={
   cur:'board',
@@ -8371,12 +8371,10 @@ function toast(msg,type){
 
 
 // ── DARK/LIGHT MODE ───────────────────────────────────────────
-// Detecteer of gebruiker ooit handmatig een thema heeft gekozen
+// Donker is de standaard. Alleen een handmatige keuze (de knop in de
+// sidebar) wijkt daarvan af; het systeemthema wordt niet meer gevolgd.
 var _themeOverride = localStorage.getItem('tm2_theme_override');
-// Systeem voorkeur
-var _sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-// Gebruik override als die er is, anders volg het systeem
-var currentTheme = _themeOverride || (_sysDark ? 'dark' : 'light');
+var currentTheme = _themeOverride || 'dark';
 
 function applyTheme(theme){
   document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
@@ -8392,8 +8390,9 @@ function toggleTheme(){
   applyTheme(next);
 }
 
-// Luister naar systeemwijzigingen — alleen als geen handmatige override
-if(window.matchMedia){
+// Systeemwijzigingen worden genegeerd: donker is de standaard,
+// alleen de handmatige knop wisselt het thema.
+if(false && window.matchMedia){
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e){
     if(!localStorage.getItem('tm2_theme_override')){
       applyTheme(e.matches ? 'dark' : 'light');
