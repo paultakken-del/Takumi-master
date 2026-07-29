@@ -1384,20 +1384,34 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
   </div>
   <div class="vs" style="padding:0">
 
-    <!-- SNELLE INVOER + DAGKEUZE — alles in één kaart, tot 7 dagen terug -->
-    <div style="padding:14px 16px;border-bottom:1px solid var(--b)">
-      <div id="ri-dagen" style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px;margin-bottom:10px"></div>
-      <div class="ri-2col" style="margin-bottom:6px">
-        <input id="ri-sn-gever" type="text" class="ri-inp" placeholder="▲ Gaf energie">
-        <input id="ri-sn-nemer" type="text" class="ri-inp" placeholder="▼ Kostte energie">
+    <!-- DAGKEUZE — geldt voor snelle invoer én de ankers eronder -->
+    <div style="padding:12px 16px 8px;border-bottom:1px solid var(--b)">
+      <div id="ri-dagen" style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px"></div>
+    </div>
+
+    <!-- ANKER 0: 速 SNELLE INVOER — inklapbaar, standaard open -->
+    <div class="ri-anker" id="ri-a0">
+      <div class="ri-anker-hd" onclick="riToggle(0)" style="cursor:pointer">
+        <div class="ri-anker-ico" style="background:rgba(196,83,42,.1);color:var(--acc)">速</div>
+        <div class="ri-anker-info">
+          <div class="ri-anker-titel">Snelle invoer</div>
+          <div class="ri-anker-preview">Alles in één keer, één knop</div>
+        </div>
+        <div class="ri-anker-chev" id="ri-chev0">›</div>
       </div>
-      <div class="ri-2col" style="margin-bottom:6px">
-        <input id="ri-sn-fout" type="text" class="ri-inp" placeholder="✗ Fout of patroon">
-        <input id="ri-sn-les" type="text" class="ri-inp" placeholder="→ De les">
-      </div>
-      <div style="display:flex;gap:6px">
-        <input id="ri-sn-dank" type="text" class="ri-inp" style="flex:1" placeholder="✦ Dankbaar voor" onkeydown="if(event.key==='Enter')riSnelOpslaan()">
-        <button class="btn pri sm" onclick="riSnelOpslaan()" style="white-space:nowrap">Opslaan</button>
+      <div class="ri-anker-body" id="ri-body0">
+        <div class="ri-2col" style="margin-bottom:6px">
+          <input id="ri-sn-gever" type="text" class="ri-inp" placeholder="▲ Gaf energie" onclick="event.stopPropagation()">
+          <input id="ri-sn-nemer" type="text" class="ri-inp" placeholder="▼ Kostte energie" onclick="event.stopPropagation()">
+        </div>
+        <div class="ri-2col" style="margin-bottom:6px">
+          <input id="ri-sn-fout" type="text" class="ri-inp" placeholder="✗ Fout of patroon" onclick="event.stopPropagation()">
+          <input id="ri-sn-les" type="text" class="ri-inp" placeholder="→ De les" onclick="event.stopPropagation()">
+        </div>
+        <div style="display:flex;gap:6px">
+          <input id="ri-sn-dank" type="text" class="ri-inp" style="flex:1" placeholder="✦ Dankbaar voor" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter')riSnelOpslaan()">
+          <button class="btn pri sm" onclick="riSnelOpslaan()" style="white-space:nowrap">Opslaan</button>
+        </div>
       </div>
     </div>
 
@@ -2228,7 +2242,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.570';
+const APP_VERSION = '0.580';
 
 const S={
   cur:'board',
@@ -2522,12 +2536,12 @@ function go_ri(){
   renderFouten();
   renderDank();
   riUpdatePreviews();
-  var anyOpen = [1,2,3].some(function(i){ return document.getElementById('ri-a'+i) && document.getElementById('ri-a'+i).classList.contains('open'); });
-  if(!anyOpen) riToggle(1);
+  var anyOpen = [0,1,2,3].some(function(i){ return document.getElementById('ri-a'+i) && document.getElementById('ri-a'+i).classList.contains('open'); });
+  if(!anyOpen) riToggle(0);
 }
 
 function riToggle(n){
-  for(var i=1;i<=3;i++){
+  for(var i=0;i<=3;i++){
     var el=document.getElementById('ri-a'+i);
     if(!el)continue;
     if(i===n){ el.classList.toggle('open'); } else { el.classList.remove('open'); }
