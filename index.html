@@ -666,6 +666,9 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 .ri-volgende-btn:active{background:var(--pw)}
 .ri-stap{padding:18px 0;border-bottom:1px solid var(--b)}
 .ri-stap-hd{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px}
+.adem-cirkel{width:120px;height:120px;border-radius:50%;border:1.5px solid var(--acc);opacity:.85;margin:26px auto 18px;background:rgba(196,83,42,.05);animation:ademCyclus 10s ease-in-out infinite}
+@keyframes ademCyclus{0%{transform:scale(.68)}40%{transform:scale(1)}100%{transform:scale(.68)}}
+@media (prefers-reduced-motion: reduce){.adem-cirkel{animation:none;transform:scale(.85)}}
 .ri-stap-nr{width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
 .ri-stap-titel{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:3px}
 .ri-stap-sub{font-size:11px;color:var(--m);line-height:1.5}
@@ -2215,7 +2218,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.600';
+const APP_VERSION = '0.610';
 
 const S={
   cur:'board',
@@ -7608,6 +7611,47 @@ function dyBewaarWeging(){
   S.pulse.step++;drawPulse();
 }
 
+// ── KALIBRATIE — drie ademhalingen voor de weging ─────────────────
+var AdemVandaagGedaan = false;
+var AdemToken = 0;
+
+function renderAdem(){
+  var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
+  var B = document.getElementById('pb');
+  B.innerHTML = '<div class="pq">息 Kalibratie</div>'
+    + '<div class="ph2">' + (isEn ? 'Three breaths before the weighing. Four counts in, six out.' : 'Drie ademhalingen voor de weging. Vier tellen in, zes uit.') + '</div>'
+    + '<div class="adem-cirkel"></div>'
+    + '<div id="adem-label" style="text-align:center;font-size:13px;color:var(--ink);min-height:18px">' + (isEn ? 'Breathe in' : 'Adem in') + '</div>'
+    + '<div id="adem-teller" style="text-align:center;font-size:11px;color:var(--m);margin-top:6px">1 ' + (isEn ? 'of' : 'van') + ' 3</div>'
+    + '<button class="btn gh sm" style="display:block;margin:22px auto 0" onclick="ademKlaar()">' + (isEn ? 'Skip' : 'Sla over') + '</button>';
+  var token = ++AdemToken;
+  var cyclus = 0;
+  function fase(richting){
+    if(token !== AdemToken) return;
+    var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
+    var lbl = document.getElementById('adem-label');
+    var tel = document.getElementById('adem-teller');
+    if(!lbl || !tel) return; // view verlaten
+    if(richting === 'in'){
+      cyclus++;
+      if(cyclus > 3){ ademKlaar(); return; }
+      lbl.textContent = isEn ? 'Breathe in' : 'Adem in';
+      tel.textContent = cyclus + ' ' + (isEn ? 'of' : 'van') + ' 3';
+      setTimeout(function(){ fase('uit'); }, 4000);
+    } else {
+      lbl.textContent = isEn ? 'Breathe out' : 'Adem uit';
+      setTimeout(function(){ fase('in'); }, 6000);
+    }
+  }
+  fase('in');
+}
+
+function ademKlaar(){
+  AdemToken++; // lopende timers ongeldig
+  AdemVandaagGedaan = true;
+  drawPulse();
+}
+
 function initPulse(){
   DySelDag=0;
   S.pulse={step:0,data:{}};drawPulse();
@@ -7618,6 +7662,9 @@ function drawPulse(){
   document.getElementById('pst').innerHTML=PSTEPS.map((_,i)=>`<div class="ps${i<step?' done':i===step?' cur':''}"></div>`).join('');
   const B=document.getElementById('pb');
   if(step===0){
+    // Kalibratie: drie ademhalingen voor de weging. Alleen vandaag en
+    // een keer per sessie — een weegschaal kalibreer je voor je weegt.
+    if(DySelDag===0 && !AdemVandaagGedaan){ renderAdem(); return; }
     var wd=S.pulse.data, sel=function(g,v){return wd[g]===v?'pri':'gh';};
     B.innerHTML=`<div class="pq">衡 Weging${DySelDag>0?' · '+riDagLabel(DySelDag):''}</div>
       <div class="ph2">Twee coördinaten. Takumi weegt — dezelfde elf regels als <a href="/weegschaal" target="_blank" style="color:var(--m)">de weegschaal</a>.</div>
