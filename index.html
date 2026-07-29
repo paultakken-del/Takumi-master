@@ -1216,15 +1216,8 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
             <span style="color:var(--m);font-size:14px;flex-shrink:0;opacity:.5">→</span>
           </div>
 
-          <!-- Oefening 2: Element-portretten -->
-          <div class="reveal" onclick="openElementPortraits()" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:22px" onmouseover="this.style.background='rgba(196,83,42,.025)'" onmouseout="this.style.background=''">
-            <div style="font-family:var(--FJ);font-size:36px;color:var(--acc);line-height:1;flex-shrink:0;font-weight:300;width:46px;text-align:center;opacity:.85">五</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-family:var(--serif);font-size:17px;font-weight:500;color:var(--ink);margin-bottom:5px;line-height:1.3;letter-spacing:-.005em" data-i18n="dojo.element_portraits">Element-portretten</div>
-              <div style="font-size:12.5px;color:var(--m);line-height:1.55" data-i18n="dojo.element_portraits_sub">Wat heb jij geleerd over Chi, Sui, Fū, Ka en Kū door je gesprekken?</div>
-            </div>
-            <span style="color:var(--m);font-size:14px;flex-shrink:0;opacity:.5">→</span>
-          </div>
+          <!-- Element-portretten verwijderd (v0.590) — openElementPortraits
+               en de portret-view blijven bestaan als null-safe legacy. -->
 
           <!-- Oefening 3: Leesraster -->
           <div class="reveal" onclick="openLeesraster()" style="padding:30px 20px;cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:22px" onmouseover="this.style.background='rgba(196,83,42,.025)'" onmouseout="this.style.background=''">
@@ -2242,7 +2235,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.580';
+const APP_VERSION = '0.590';
 
 const S={
   cur:'board',
@@ -5361,6 +5354,20 @@ function calcElementBalance(){
   };
   var counts = {chi:0, sui:0, fu:0, ka:0, ku:0};
   var weekAgo = Date.now() - 7*24*60*60*1000;
+  // Primaire bron: de wegingen van deze week. Eén per dag, het element
+  // dat die dag voor je sprak. Dit is het instrument zelf — chats en
+  // acties tellen daarna mee als aanvulling.
+  var perDag = {};
+  (((typeof RitmeData!=='undefined'&&RitmeData)||{}).pulseHistory||[]).forEach(function(e){
+    if(!e || !e.ts || !e.weging || !e.weging.element) return;
+    if(new Date(e.ts).getTime() < weekAgo) return;
+    var dag = e.ts.slice(0,10);
+    if(!perDag[dag]) perDag[dag] = e.weging.element;
+  });
+  Object.keys(perDag).forEach(function(dag){
+    var el = perDag[dag];
+    if(counts[el] !== undefined) counts[el] += 2;
+  });
   (S.actions||[]).forEach(function(a){
     if(a.done && a.doneT && a.doneT > weekAgo){
       var el = w2e[a.master];
@@ -9000,7 +9007,7 @@ var STEPS_NL = [
   },
   {
     title: '道 Dojo — oefenruimte',
-    text: 'Het hart van Takumi. Hier oefen je transformatieve gesprekken: vier elementen stellen elk één doorvraag, Kū (Leegte) brengt de synthese. Of bekijk je element-portretten — wat jij hebt geleerd over elke kant van jezelf.',
+    text: 'Het hart van Takumi. Hier oefen je transformatieve gesprekken: vier elementen stellen elk één doorvraag, Kū (Leegte) brengt de synthese.',
     target: null,
     navItem: 'dj',
     pos: 'right'
