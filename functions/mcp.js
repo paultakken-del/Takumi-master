@@ -154,17 +154,17 @@ function weeg(co) {
   if (!co || (!co.beweging && !co.agenda)) return null;
   const b = co.beweging, a = co.agenda;
   let el, reden;
-  if (b === 'gereden' && a === 'vol')        { el = 'ku';  reden = 'Al gegeven én een volle dag — leegte: kies wat onaangeroerd blijft.'; }
-  else if (b === 'gereden' && a === 'ruim')  { el = 'fu';  reden = 'Lichaam in beweging, agenda met lucht — wind: ruimte voor geest en verbinding.'; }
-  else if (b === 'hersteld' && a === 'vol')  { el = 'chi'; reden = 'Uitgerust en een volle dag — aarde: laat structuur het werk dragen.'; }
-  else if (b === 'hersteld' && a === 'ruim') { el = 'ka';  reden = 'Energie opgebouwd en ruimte — vuur: kies waar je het legt.'; }
-  else if (b === 'rust' && a === 'vol')      { el = 'sui'; reden = 'Lange stilstand in een volle agenda — water: meebewegen en herstel bewaken.'; }
-  else if (b === 'rust' && a === 'ruim')     { el = 'ka';  reden = 'Stilstand en ruimte — vuur: wakker het voorzichtig weer aan.'; }
-  else if (b === 'gereden')                  { el = 'chi'; reden = 'De gewoonte droeg — aarde: fundament.'; }
-  else if (b === 'hersteld')                 { el = 'sui'; reden = 'Hersteld — water: bouw de flow rustig op.'; }
-  else if (b === 'rust')                     { el = 'sui'; reden = 'Lange rust — water: eerst voelen wat er stroomt.'; }
-  else if (a === 'vol')                      { el = 'ku';  reden = 'Volle agenda — leegte: bewaak de stilte.'; }
-  else                                       { el = 'ka';  reden = 'Ruime agenda — vuur: richting kiezen.'; }
+  if (b === 'gereden' && a === 'vol')        { el = 'ku';  reden = 'Je hebt al bewogen en de dag is vol. Leegte: kies wat vandaag onaangeroerd blijft.'; }
+  else if (b === 'gereden' && a === 'ruim')  { el = 'fu';  reden = 'Je hebt bewogen en de agenda heeft lucht. Wind: ruimte voor geest en verbinding.'; }
+  else if (b === 'hersteld' && a === 'vol')  { el = 'chi'; reden = 'Uitgerust aan het begin van een volle dag. Aarde: laat structuur het werk dragen.'; }
+  else if (b === 'hersteld' && a === 'ruim') { el = 'ka';  reden = 'Energie opgebouwd en ruimte in de dag. Vuur: kies waar je het legt.'; }
+  else if (b === 'rust' && a === 'vol')      { el = 'sui'; reden = 'Al een tijd geen beweging en een volle agenda. Water: beweeg mee en bewaak je herstel.'; }
+  else if (b === 'rust' && a === 'ruim')     { el = 'ka';  reden = 'Al een tijd geen beweging, wel ruimte. Vuur: wakker het voorzichtig weer aan.'; }
+  else if (b === 'gereden')                  { el = 'chi'; reden = 'Je hebt bewogen. Aarde: de gewoonte draagt je.'; }
+  else if (b === 'hersteld')                 { el = 'sui'; reden = 'Uitgerust. Water: bouw de flow rustig op.'; }
+  else if (b === 'rust')                     { el = 'sui'; reden = 'Al een tijd rust. Water: voel eerst wat er stroomt.'; }
+  else if (a === 'vol')                      { el = 'ku';  reden = 'Een volle agenda. Leegte: bewaak de stilte.'; }
+  else                                       { el = 'ka';  reden = 'Een ruime agenda. Vuur: kies je richting.'; }
   return { element: el, reden, coordinaten: co };
 }
 
