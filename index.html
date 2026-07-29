@@ -912,9 +912,11 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
       </div>
       <div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);opacity:.8;margin-bottom:10px">Waar je staat</div>
       <div id="kp-naald" style="padding:14px 18px;border:1px solid var(--b);border-radius:var(--rs);font-size:13.5px;line-height:1.65;color:var(--m)">De naald wacht op je eerste weging.</div>
+      <div id="kp-belofte" style="display:none;font-size:12px;color:var(--m);opacity:.75;line-height:1.6;margin-top:9px"></div>
       <div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);opacity:.8;margin:30px 0 10px">Waarheen vandaag</div>
       <div id="kp-richting" style="display:none;text-align:center;padding:16px 0 4px">
         <div id="kp-kanji" style="font-family:var(--FJ);font-size:64px;line-height:1;font-weight:300;color:var(--acc);margin-bottom:12px">衡</div>
+        <div id="kp-fase" style="font-family:var(--serif);font-size:19px;font-weight:500;color:var(--ink);letter-spacing:-.005em;margin-bottom:6px"></div>
         <div id="kp-element" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--m)"></div>
         <div id="kp-reden" style="font-size:13.5px;color:var(--m);line-height:1.6;margin:10px auto 0;max-width:360px"></div>
       </div>
@@ -7030,7 +7032,9 @@ const WEEG_VRAGEN={
   ka:['Waar wil je vandaag je vuur leggen?','Welk vuur wakker je vandaag bewust aan?','Welke ene beslissing maakt de rest vandaag lichter?','Waar zegt je buik ja terwijl je hoofd nog twijfelt?'],
   ku:['Wat mag vandaag onaangeroerd blijven?','Waar maak je vandaag ruimte door iets niet te doen?','Welke stilte plan je vandaag in voordat de dag het doet?','Wat zou er gebeuren als je vandaag niets toevoegt?']
 };
-const WEEG_EL={chi:{k:'地',n:'Chi'},sui:{k:'水',n:'Sui'},fu:{k:'風',n:'Fū'},ka:{k:'火',n:'Ka'},ku:{k:'空',n:'Kū'}};
+// Fase (f/fe): het element in gewoon Nederlands. Een nieuwe gebruiker
+// hoeft Godai niet te kennen om te lezen in welke fase hij staat.
+const WEEG_EL={chi:{k:'地',n:'Chi',f:'Fundament',fe:'Foundation'},sui:{k:'水',n:'Sui',f:'Aanpassing',fe:'Adaptation'},fu:{k:'風',n:'Fū',f:'Verbinding',fe:'Connection'},ka:{k:'火',n:'Ka',f:'Intensiteit',fe:'Intensity'},ku:{k:'空',n:'Kū',f:'Ruimte',fe:'Space'}};
 function weegLokaal(b,a){
   if(!b&&!a)return null;
   var el,reden;
@@ -7211,6 +7215,7 @@ function renderKompas(){
   var naaldEl = document.getElementById('kp-naald');
   var richtEl = document.getElementById('kp-richting');
   var kanjiEl = document.getElementById('kp-kanji');
+  var faseEl = document.getElementById('kp-fase');
   var elemEl = document.getElementById('kp-element');
   var redenEl = document.getElementById('kp-reden');
   var weegEl = document.getElementById('kp-weeg');
@@ -7242,13 +7247,28 @@ function renderKompas(){
   else if(n) hoek = 16;
   kpDial(hoek, Math.max(5, 26 - dekking * 3));
 
+  // ── BELOFTE ── wat herhaling oplevert, in het instrument zelf.
+  // Verdwijnt zodra de naald genoeg reeks heeft om te staan.
+  var totaalDagen = Object.keys(dagSet).length;
+  var belofteEl = document.getElementById('kp-belofte');
+  if(belofteEl){
+    var bt = '';
+    if(totaalDagen > 0 && totaalDagen < 3){
+      bt = isEn ? 'From three weighings the needle starts to settle.'
+                : 'Vanaf drie metingen begint de naald te staan.';
+    }
+    belofteEl.textContent = bt;
+    belofteEl.style.display = bt ? 'block' : 'none';
+  }
+
   // ── RICHTING: element, reden, vraag ──
   function toonRichting(w, af){
     if(!richtEl) return;
     if(!w){ richtEl.style.display = 'none'; return; }
     richtEl.style.display = 'block';
-    var info = WEEG_EL[w.element] || { k: '衡', n: '' };
+    var info = WEEG_EL[w.element] || { k: '衡', n: '', f: '', fe: '' };
     if(kanjiEl) kanjiEl.textContent = info.k;
+    if(faseEl) faseEl.textContent = (isEn ? info.fe : info.f) || '';
     if(elemEl) elemEl.textContent = info.n + (af ? (isEn ? ' · weighed today' : ' · vandaag gewogen') : '');
     if(redenEl) redenEl.textContent = w.reden || '';
   }
@@ -7270,7 +7290,16 @@ function renderKompas(){
       var on = d[grp] === val;
       return '<button class="btn sm '+(on?'pri':'gh')+'" style="flex:1" onclick="kpToggle(\''+grp+'\',\''+val+'\')">'+lbl+'</button>';
     }
+    // Eerste bezoek: de belofte staat vóór de handeling, en is meteen de
+    // instructie. Verdwijnt na de eerste weging.
+    var intro = totaalDagen === 0
+      ? '<div style="font-size:13px;color:var(--m);line-height:1.65;margin-bottom:14px">'
+        + (isEn ? 'Weigh two things. Takumi names the element that speaks for you today, and asks one question.'
+                : 'Weeg twee dingen. Takumi wijst het element dat vandaag voor je spreekt, en stelt één vraag.')
+        + '</div>'
+      : '';
     var html = '<div class="card" style="padding:18px;margin-top:'+(w?'18px':'6px')+'">'
+      + intro
       + '<div style="font-size:12px;color:var(--m);margin-bottom:6px">'+(isEn?'Movement':'Beweging')+'</div>'
       + '<div style="display:flex;gap:8px;margin-bottom:14px">'+b('beweging','gereden',isEn?'Moved':'Bewogen')+b('beweging','hersteld',isEn?'Recovered':'Hersteld')+b('beweging','rust',isEn?'Rest':'Rust')+'</div>'
       + '<div style="font-size:12px;color:var(--m);margin-bottom:6px">Agenda</div>'
@@ -7326,7 +7355,7 @@ function weegToggle(grp,val,btn){
   if(!w){out.style.display='none';return;}
   out.style.display='block';
   document.getElementById('weeg-k').textContent=WEEG_EL[w.element].k;
-  document.getElementById('weeg-n').textContent=WEEG_EL[w.element].n;
+  document.getElementById('weeg-n').textContent=WEEG_EL[w.element].n+' · '+(LANG==='en'?WEEG_EL[w.element].fe:WEEG_EL[w.element].f);
   document.getElementById('weeg-r').textContent=w.reden;
   document.getElementById('weeg-v').textContent=w.vraag;
   renderNaald();
@@ -7359,7 +7388,7 @@ function drawPulse(){
         <div style="display:flex;align-items:center;gap:12px">
           <span id="weeg-k" style="font-family:var(--FJ);font-size:34px;line-height:1">${wd.weging?WEEG_EL[wd.weging.element].k:''}</span>
           <div>
-            <div id="weeg-n" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--m)">${wd.weging?WEEG_EL[wd.weging.element].n:''}</div>
+            <div id="weeg-n" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--m)">${wd.weging?WEEG_EL[wd.weging.element].n+' · '+(LANG==='en'?WEEG_EL[wd.weging.element].fe:WEEG_EL[wd.weging.element].f):''}</div>
             <div id="weeg-r" style="font-size:13px;color:var(--m)">${wd.weging?wd.weging.reden:''}</div>
           </div>
         </div>
