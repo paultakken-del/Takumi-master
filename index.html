@@ -2225,7 +2225,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.540';
+const APP_VERSION = '0.550';
 
 const S={
   cur:'board',
@@ -7245,7 +7245,7 @@ function leesNaald(hist, huidig){
       var key = dagen[i]; if(key === vandaag) continue;
       var e = perDag[key];
       if(e.beweging === huidig.beweging && e.agenda === huidig.agenda){
-        return { txt: 'De naald: vorige keer dit patroon was ' + fmtDag(key) + '.', tone: 'neutraal' };
+        return { txt: 'De naald: dit patroon zag je eerder, op ' + fmtDag(key) + '.', tone: 'neutraal' };
       }
     }
   }
