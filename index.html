@@ -895,6 +895,20 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
          aanwijst. -->
     <div id="ck-week-council" style="display:none;margin-top:16px"></div>
     <div id="ck-kompas" class="reveal" style="padding:28px 0 24px;max-width:440px;margin:0 auto">
+      <!-- Wijzerplaat: hoek = drift (noord = ritme gezond), slingering =
+           reeksdekking afgelopen week. De naald verdient zijn rust. -->
+      <div id="kp-dial" style="display:flex;justify-content:center;margin-bottom:26px">
+        <svg width="180" height="180" viewBox="0 0 180 180" aria-hidden="true">
+          <circle cx="90" cy="90" r="84" fill="none" stroke="var(--b)" stroke-width="1.5"/>
+          <g id="kp-ticks"></g>
+          <text x="90" y="14" text-anchor="middle" font-size="12" fill="var(--m)" style="font-family:var(--FJ)">北</text>
+          <g id="kp-needle">
+            <line x1="90" y1="90" x2="90" y2="30" stroke="var(--acc)" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="90" y1="90" x2="90" y2="126" stroke="var(--m)" stroke-width="1.5" stroke-linecap="round" opacity=".4"/>
+            <circle cx="90" cy="90" r="4" fill="var(--acc)"/>
+          </g>
+        </svg>
+      </div>
       <div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);opacity:.8;margin-bottom:10px">Waar je staat</div>
       <div id="kp-naald" style="padding:14px 18px;border:1px solid var(--b);border-radius:var(--rs);font-size:13.5px;line-height:1.65;color:var(--m)">De naald wacht op je eerste weging.</div>
       <div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);opacity:.8;margin:30px 0 10px">Waarheen vandaag</div>
@@ -7147,6 +7161,42 @@ function kpVastleggen(){
   renderKompas();
   if(typeof toast === 'function') toast('Gewogen ✓','ok');
 }
+// ── WIJZERPLAAT ── de naald slaat uit en komt al slingerend tot rust.
+// Hoek: afwijking van noord door driftsignalen. Slingering: dunne reeks
+// slingert onrustig, een volle weekdekking valt vrijwel direct stil.
+var _kpAnim = null;
+function kpDialTicks(){
+  var g = document.getElementById('kp-ticks');
+  if(!g || g.childNodes.length) return;
+  var ns = 'http://www.w3.org/2000/svg';
+  for(var i = 0; i < 24; i++){
+    var a = i * 15 * Math.PI / 180, groot = (i % 6 === 0);
+    var r1 = 84, r0 = groot ? 75 : 79;
+    var l = document.createElementNS(ns, 'line');
+    l.setAttribute('x1', (90 + r0 * Math.sin(a)).toFixed(1)); l.setAttribute('y1', (90 - r0 * Math.cos(a)).toFixed(1));
+    l.setAttribute('x2', (90 + r1 * Math.sin(a)).toFixed(1)); l.setAttribute('y2', (90 - r1 * Math.cos(a)).toFixed(1));
+    l.setAttribute('stroke', 'var(--b)'); l.setAttribute('stroke-width', groot ? '1.5' : '1');
+    g.appendChild(l);
+  }
+}
+function kpDial(hoek, rusteloos){
+  var needle = document.getElementById('kp-needle');
+  if(!needle) return;
+  kpDialTicks();
+  if(_kpAnim) cancelAnimationFrame(_kpAnim);
+  var t0 = null;
+  function stap(ts){
+    if(t0 === null) t0 = ts;
+    var t = (ts - t0) / 1000;
+    var demping = Math.exp(-t / 1.3);
+    var slinger = rusteloos * demping * Math.sin(t * 6.5);
+    needle.setAttribute('transform', 'rotate(' + (hoek + slinger).toFixed(2) + ' 90 90)');
+    if(demping > 0.015){ _kpAnim = requestAnimationFrame(stap); }
+    else { needle.setAttribute('transform', 'rotate(' + hoek + ' 90 90)'); _kpAnim = null; }
+  }
+  _kpAnim = requestAnimationFrame(stap);
+}
+
 function renderKompas(){
   var sec = document.getElementById('ck-kompas');
   if(!sec) return;
@@ -7176,6 +7226,20 @@ function renderKompas(){
     naaldEl.style.color = (n && n.tone === 'signaal') ? 'var(--acc)' : 'var(--m)';
     naaldEl.style.borderColor = (n && n.tone === 'signaal') ? 'rgba(196,83,42,.35)' : 'var(--b)';
   }
+
+  // Wijzerplaat: hoek uit signaaltoon, rusteloosheid uit weekdekking.
+  var dagSet = {};
+  for(var j = 0; j < hist.length; j++){ dagSet[_naaldDag(hist[j].ts)] = 1; }
+  var dekking = 0;
+  for(var k7 = 0; k7 < 7; k7++){
+    var dd = new Date(); dd.setDate(dd.getDate() - k7);
+    if(dagSet[dd.toISOString().slice(0,10)]) dekking++;
+  }
+  var hoek = 4;
+  if(n && n.tone === 'signaal') hoek = 38;
+  else if(n && n.tone === 'terugveer') hoek = 8;
+  else if(n) hoek = 16;
+  kpDial(hoek, Math.max(5, 26 - dekking * 3));
 
   // ── RICHTING: element, reden, vraag ──
   function toonRichting(w, af){
