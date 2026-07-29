@@ -814,9 +814,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
   <div class="sb-nav">
     <div class="ni on" data-v="ck"><span class="ico">⬡</span><span data-i18n="nav.cockpit">Kompas</span></div>
     <div class="ni" data-v="dj"><span class="ico" style="font-family:var(--FJ)">道</span><span data-i18n="nav.dojo">Dojo</span></div>
-    <div class="ni" data-v="gl"><span class="ico">◇</span><span data-i18n="nav.goals">Richting</span></div>
     <div class="ni" data-v="rh"><span class="ico">習</span><span data-i18n="nav.rituals">Rituelen</span></div>
-    <div class="ni" data-v="da"><span class="ico">▤</span><span data-i18n="nav.data_hub">Metingen</span></div>
     <a id="admin-link" href="/admin/users" target="_blank" style="display:none;align-items:center;gap:10px;padding:8px 16px;font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:8px" onmouseover="this.style.background='rgba(255,255,255,.07)'" onmouseout="this.style.background='none'"><span style="font-size:14px">👥</span><span data-i18n="nav.users">Gebruikers</span></a>
   </div>
   <div class="sb-foot" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
@@ -901,6 +899,11 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
       <div id="kp-dial" style="display:flex;justify-content:center;margin-bottom:26px">
         <svg width="180" height="200" viewBox="0 0 180 200" aria-hidden="true">
           <circle cx="90" cy="90" r="84" fill="none" stroke="var(--m)" stroke-opacity=".4" stroke-width="1.5"/>
+          <!-- Yin-yang golf: de S-lijn deelt de cirkel in doen en zijn.
+               Schuift licht mee met de weekbalans (renderKompas). -->
+          <g id="kp-yy" opacity=".14" style="transition:transform .8s ease">
+            <path d="M 90 6 A 42 42 0 0 1 90 90 A 42 42 0 0 0 90 174" fill="none" stroke="var(--m)" stroke-width="1.5"/>
+          </g>
           <!-- Zones: de schaal die de ruststand leesbaar maakt.
                Ritme-boog rond noord (-6..20 gr), grijze zone 30..46 gr. -->
           <path d="M 82.7 20.4 A 70 70 0 0 1 113.9 24.2" fill="none" stroke="var(--m)" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>
@@ -916,6 +919,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
           <text id="kp-woord" x="90" y="194" text-anchor="middle" font-size="10.5" letter-spacing=".14em" fill="var(--m)" style="opacity:0;transition:opacity .6s ease"></text>
         </svg>
       </div>
+      <div id="kp-balans" style="display:none;text-align:center;font-size:12px;color:var(--m);opacity:.85;margin:-14px 0 18px"></div>
       <div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);opacity:.8;margin-bottom:10px">Waar je staat</div>
       <div id="kp-naald" style="padding:14px 18px;border:1px solid var(--b);border-radius:var(--rs);font-size:13.5px;line-height:1.65;color:var(--m)">De naald wacht op je eerste weging.</div>
       <div id="kp-belofte" style="display:none;font-size:12px;color:var(--m);opacity:.75;line-height:1.6;margin-top:9px"></div>
@@ -1490,7 +1494,6 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
 <nav id="mob"><div class="mn2">
   <div class="mi2 on" data-v="ck"><div class="mico">⬡</div><div class="mlb" data-i18n="mob.cockpit">Kompas</div></div>
   <div class="mi2" data-v="dj"><div class="mico" style="font-family:var(--FJ)">道</div><div class="mlb" data-i18n="mob.dojo">Dojo</div></div>
-  <div class="mi2" data-v="gl"><div class="mico">◇</div><div class="mlb" data-i18n="mob.goals">Richting</div></div>
   <div class="mi2" data-v="rh"><div class="mico">習</div><div class="mlb" data-i18n="mob.rituals">Rituelen</div></div>
 </div></nav>
 
@@ -2225,7 +2228,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.560';
+const APP_VERSION = '0.570';
 
 const S={
   cur:'board',
@@ -7398,6 +7401,35 @@ function renderKompas(){
     woordEl.setAttribute('fill', (n && n.tone === 'signaal') ? 'var(--acc)' : 'var(--m)');
   }
   kpDial(hoek, Math.max(5, 26 - dekking * 3));
+
+  // ── BALANS: de yin-yang golf in de wijzerplaat ──
+  // Zelfde doen/zijn-rekensom als de Dojo. De S-lijn schuift licht mee:
+  // in evenwicht staat hij midden, bij een doen-week naar rechts, bij
+  // een zijn-week naar links. Eén regel eronder benoemt het.
+  var yyEl = document.getElementById('kp-yy');
+  var balEl = document.getElementById('kp-balans');
+  try {
+    var bal = (typeof calcElementBalance === 'function') ? calcElementBalance() : null;
+    if(bal && bal.total >= 1){
+      var doen = bal.counts.chi + bal.counts.ka + bal.counts.fu * 0.5;
+      var zijn = bal.counts.sui + bal.counts.ku + bal.counts.fu * 0.5;
+      var som = doen + zijn;
+      var ratio = som > 0 ? doen / som : 0.5;
+      var gedempt = Math.max(0.38, Math.min(0.62, 0.5 + (ratio - 0.5) * 0.32));
+      if(yyEl) yyEl.style.transform = 'translate(' + ((gedempt - 0.5) * 44).toFixed(1) + 'px,0)';
+      if(balEl){
+        var btxt;
+        if(ratio > 0.55)      btxt = isEn ? 'Balance: the week leans toward doing.' : 'Balans: de week leunt naar doen.';
+        else if(ratio < 0.45) btxt = isEn ? 'Balance: the week leans toward being.' : 'Balans: de week leunt naar zijn.';
+        else                  btxt = isEn ? 'Balance: doing and being in equilibrium.' : 'Balans: doen en zijn in evenwicht.';
+        balEl.textContent = btxt;
+        balEl.style.display = 'block';
+      }
+    } else {
+      if(yyEl) yyEl.style.transform = 'translate(0,0)';
+      if(balEl) balEl.style.display = 'none';
+    }
+  } catch(e){ if(balEl) balEl.style.display = 'none'; }
 
   // ── BELOFTE ── wat herhaling oplevert, in het instrument zelf.
   // Verdwijnt zodra de naald genoeg reeks heeft om te staan.
