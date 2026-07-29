@@ -7061,6 +7061,112 @@ function weegLokaal(b,a){
   var doy=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000);
   return {element:el,reden:reden,vraag:WEEG_VRAGEN[el][doy%WEEG_VRAGEN[el].length]};
 }
+// ── DE NAALD — terugveren boven toestand ───────────────────────────
+// Leest de weeggeschiedenis en geeft één regel terug: niet hoe vandaag
+// is, maar of het terugveert. Deterministisch en transparant, net als
+// de elf weegregels. Geen AI-call.
+function _naaldDag(ts){ return (ts||'').slice(0,10); }
+function leesNaald(hist, huidig){
+  if(!huidig || (!huidig.beweging && !huidig.agenda)) return null;
+  var perDag = {};
+  (hist||[]).forEach(function(h){
+    var d = _naaldDag(h.ts); if(!d) return;
+    if(!perDag[d]) perDag[d] = { beweging: h.beweging, agenda: h.agenda };
+  });
+  var vandaag = _naaldDag(new Date().toISOString());
+  perDag[vandaag] = { beweging: huidig.beweging || null, agenda: huidig.agenda || null };
+  var dagen = Object.keys(perDag).sort().reverse();
+  if(dagen.length < 2) return null; // geen reeks, geen naald
+
+  function streak(test, vanafGisteren){
+    var n = 0, d = new Date(vandaag + 'T12:00:00');
+    if(vanafGisteren) d.setDate(d.getDate()-1);
+    for(;;){
+      var key = d.toISOString().slice(0,10), e = perDag[key];
+      if(!e || !test(e)) break;
+      n++; d.setDate(d.getDate()-1);
+      if(n > 60) break;
+    }
+    return n;
+  }
+  function fmtDag(key){
+    try { return new Date(key+'T12:00:00').toLocaleDateString('nl-NL',{day:'numeric',month:'long'}); }
+    catch { return key; }
+  }
+
+  var volStreak = streak(function(e){ return e.agenda === 'vol'; });
+  var gevenStreak = streak(function(e){ return e.beweging === 'gereden'; });
+
+  // 1. Grijze-zone-signaal: aanhoudend vol zonder ruimte.
+  if(huidig.agenda === 'vol' && volStreak >= 3){
+    return { txt: 'De naald: je ' + volStreak + 'e volle dag op rij. Wanneer komt de ruimte?', tone: 'signaal' };
+  }
+  // 2. Aanhoudend geven zonder hersteldag ertussen.
+  if(huidig.beweging === 'gereden' && gevenStreak >= 4){
+    return { txt: 'De naald: ' + gevenStreak + ' dagen op rij gegeven, zonder hersteldag ertussen.', tone: 'signaal' };
+  }
+  // 3. Terugveer zichtbaar: na een volle reeks weer ruimte.
+  if(huidig.agenda === 'ruim'){
+    var volDaarvoor = streak(function(e){ return e.agenda === 'vol'; }, true);
+    if(volDaarvoor >= 2){
+      return { txt: 'De naald: terugveer. Na ' + volDaarvoor + ' volle dagen vandaag weer ruimte.', tone: 'terugveer' };
+    }
+  }
+  // 4. Patroonherinnering: vorige dag met exact dit patroon.
+  if(huidig.beweging && huidig.agenda){
+    for(var i = 0; i < dagen.length; i++){
+      var key = dagen[i]; if(key === vandaag) continue;
+      var e = perDag[key];
+      if(e.beweging === huidig.beweging && e.agenda === huidig.agenda){
+        return { txt: 'De naald: vorige keer dit patroon was ' + fmtDag(key) + '.', tone: 'neutraal' };
+      }
+    }
+  }
+  return null;
+}
+function renderNaald(){
+  var nd = document.getElementById('weeg-naald'); if(!nd) return;
+  var d = S.pulse && S.pulse.data || {};
+  var n = (d.beweging || d.agenda)
+    ? leesNaald(RitmeData && RitmeData.pulseHistory || [], { beweging: d.beweging, agenda: d.agenda })
+    : null;
+  nd.style.display = n ? 'block' : 'none';
+  nd.textContent = n ? n.txt : '';
+  nd.style.color = (n && n.tone === 'signaal') ? 'var(--acc)' : 'var(--m)';
+}
+
+// ── SYNC — weeggeheugen apparaat-overstijgend (/api/weging, KV) ────
+function pushWegingServer(entry){
+  if(!entry) return;
+  try {
+    fetch('/api/weging', { method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ ts: entry.ts, element: entry.weging && entry.weging.element || null,
+        beweging: entry.beweging || null, agenda: entry.agenda || null }) }).catch(function(){});
+  } catch {}
+}
+async function syncWegingServer(){
+  try {
+    var res = await fetch('/api/weging');
+    if(!res.ok) return;
+    var data = await res.json();
+    if(!data || !Array.isArray(data.history) || !data.history.length) return;
+    var h = ls('tm2_ritme', {rustWeken:[], maList:[], pulseHistory:[]});
+    h.pulseHistory = h.pulseHistory || [];
+    var seen = {};
+    h.pulseHistory.forEach(function(e){ if(e && e.ts) seen[e.ts] = true; });
+    data.history.forEach(function(e){
+      if(!e || !e.ts || seen[e.ts]) return;
+      h.pulseHistory.push({ ts: e.ts, weging: e.element ? { element: e.element } : null,
+        beweging: e.beweging || null, agenda: e.agenda || null });
+      seen[e.ts] = true;
+    });
+    h.pulseHistory.sort(function(a,b){ return (b.ts||'').localeCompare(a.ts||''); });
+    h.pulseHistory = h.pulseHistory.slice(0, 365);
+    RitmeData = h; lsSet('tm2_ritme', h);
+  } catch {}
+}
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(syncWegingServer, 800); });
+
 function weegToggle(grp,val,btn){
   S.pulse.data[grp]=S.pulse.data[grp]===val?null:val;
   btn.parentElement.querySelectorAll('button').forEach(function(x){x.classList.remove('pri');x.classList.add('gh');});
@@ -7075,6 +7181,7 @@ function weegToggle(grp,val,btn){
   document.getElementById('weeg-n').textContent=WEEG_EL[w.element].n;
   document.getElementById('weeg-r').textContent=w.reden;
   document.getElementById('weeg-v').textContent=w.vraag;
+  renderNaald();
 }
 
 function initPulse(){
@@ -7109,11 +7216,13 @@ function drawPulse(){
           </div>
         </div>
         <div id="weeg-v" style="margin-top:10px;font-size:15px;font-style:italic">${wd.weging?wd.weging.vraag:''}</div>
+        <div id="weeg-naald" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--b);font-size:12px;color:var(--m)"></div>
       </div>
       <div class="pn">
         <button class="btn sm gh" onclick="S.pulse.data.beweging=null;S.pulse.data.agenda=null;S.pulse.data.weging=null;S.pulse.step++;drawPulse()">Overslaan</button>
-        <button class="btn pri" onclick="if(S.pulse.data.weging){var h=ls('tm2_ritme',{rustWeken:[],maList:[],pulseHistory:[]});h.pulseHistory.unshift({ts:new Date().toISOString(),weging:S.pulse.data.weging,beweging:S.pulse.data.beweging,agenda:S.pulse.data.agenda});h.pulseHistory=h.pulseHistory.slice(0,90);RitmeData=h;lsSet('tm2_ritme',h);}S.pulse.step++;drawPulse()">Verder →</button>
+        <button class="btn pri" onclick="if(S.pulse.data.weging){var h=ls('tm2_ritme',{rustWeken:[],maList:[],pulseHistory:[]});h.pulseHistory.unshift({ts:new Date().toISOString(),weging:S.pulse.data.weging,beweging:S.pulse.data.beweging,agenda:S.pulse.data.agenda});h.pulseHistory=h.pulseHistory.slice(0,365);RitmeData=h;lsSet('tm2_ritme',h);pushWegingServer(h.pulseHistory[0]);}S.pulse.step++;drawPulse()">Verder →</button>
       </div>`;
+    renderNaald();
   }else if(step===1){
     B.innerHTML=`<div class="pq">Energie</div>
       <div class="ph2">Hoe is je energieniveau op dit moment?</div>
