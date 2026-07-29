@@ -173,6 +173,7 @@ button,input,textarea,select{font-family:var(--F);font-size:13px;font-weight:400
 .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:var(--rs);border:1px solid var(--bm);background:transparent;color:var(--ink);cursor:pointer;font-size:var(--text-sm);transition:all .12s;-webkit-tap-highlight-color:transparent;min-height:44px}
 .btn:hover{background:var(--pw)}.btn:active{transform:scale(.97)}
 .btn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}.btn.pri:hover{background:var(--ink3)}
+.btn.sm.pri{background:var(--acc);color:#fff;border-color:var(--acc)}.btn.sm.pri:hover{background:#a84b28}
 .btn.acc{background:var(--acc);color:#fff;border-color:var(--acc)}.btn.acc:hover{background:#b04727}
 .btn.sm{padding:6px 11px;font-size:11px;min-height:30px}
 .btn.gh{border-color:transparent;color:var(--m)}.btn.gh:hover{color:var(--ink);background:var(--pw)}
@@ -899,7 +900,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
            reeksdekking afgelopen week. De naald verdient zijn rust. -->
       <div id="kp-dial" style="display:flex;justify-content:center;margin-bottom:26px">
         <svg width="180" height="180" viewBox="0 0 180 180" aria-hidden="true">
-          <circle cx="90" cy="90" r="84" fill="none" stroke="var(--b)" stroke-width="1.5"/>
+          <circle cx="90" cy="90" r="84" fill="none" stroke="var(--m)" stroke-opacity=".4" stroke-width="1.5"/>
           <g id="kp-ticks"></g>
           <text x="90" y="14" text-anchor="middle" font-size="12" fill="var(--m)" style="font-family:var(--FJ)">北</text>
           <g id="kp-needle">
@@ -7175,7 +7176,7 @@ function kpDialTicks(){
     var l = document.createElementNS(ns, 'line');
     l.setAttribute('x1', (90 + r0 * Math.sin(a)).toFixed(1)); l.setAttribute('y1', (90 - r0 * Math.cos(a)).toFixed(1));
     l.setAttribute('x2', (90 + r1 * Math.sin(a)).toFixed(1)); l.setAttribute('y2', (90 - r1 * Math.cos(a)).toFixed(1));
-    l.setAttribute('stroke', 'var(--b)'); l.setAttribute('stroke-width', groot ? '1.5' : '1');
+    l.setAttribute('stroke', 'var(--m)'); l.setAttribute('stroke-opacity', '.32'); l.setAttribute('stroke-width', groot ? '1.5' : '1');
     g.appendChild(l);
   }
 }
@@ -7271,7 +7272,7 @@ function renderKompas(){
     }
     var html = '<div class="card" style="padding:18px;margin-top:'+(w?'18px':'6px')+'">'
       + '<div style="font-size:12px;color:var(--m);margin-bottom:6px">'+(isEn?'Movement':'Beweging')+'</div>'
-      + '<div style="display:flex;gap:8px;margin-bottom:14px">'+b('beweging','gereden',isEn?'Ridden':'Gereden')+b('beweging','hersteld',isEn?'Recovered':'Hersteld')+b('beweging','rust',isEn?'Rest':'Rust')+'</div>'
+      + '<div style="display:flex;gap:8px;margin-bottom:14px">'+b('beweging','gereden',isEn?'Moved':'Bewogen')+b('beweging','hersteld',isEn?'Recovered':'Hersteld')+b('beweging','rust',isEn?'Rest':'Rust')+'</div>'
       + '<div style="font-size:12px;color:var(--m);margin-bottom:6px">Agenda</div>'
       + '<div style="display:flex;gap:8px">'+b('agenda','vol',isEn?'Full':'Vol')+b('agenda','ruim',isEn?'Open':'Ruim')+'</div>'
       + (w ? '<button class="btn pri" style="width:100%;margin-top:16px" onclick="kpVastleggen()">'+(isEn?'Set bearing':'Leg vast')+'</button>' : '')
@@ -7345,7 +7346,7 @@ function drawPulse(){
       <div class="ph2">Twee coördinaten. Takumi weegt — dezelfde elf regels als <a href="/weegschaal" target="_blank" style="color:var(--m)">de weegschaal</a>.</div>
       <div style="font-size:12px;color:var(--m);margin-bottom:6px">Beweging — wanneer was je laatst actief?</div>
       <div style="display:flex;gap:8px;margin-bottom:var(--sp-md)">
-        <button class="btn sm ${sel('beweging','gereden')}" style="flex:1" onclick="weegToggle('beweging','gereden',this)">Gereden</button>
+        <button class="btn sm ${sel('beweging','gereden')}" style="flex:1" onclick="weegToggle('beweging','gereden',this)">Bewogen</button>
         <button class="btn sm ${sel('beweging','hersteld')}" style="flex:1" onclick="weegToggle('beweging','hersteld',this)">Hersteld</button>
         <button class="btn sm ${sel('beweging','rust')}" style="flex:1" onclick="weegToggle('beweging','rust',this)">Rust</button>
       </div>
