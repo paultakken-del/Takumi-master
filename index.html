@@ -2225,7 +2225,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.530';
+const APP_VERSION = '0.540';
 
 const S={
   cur:'board',
@@ -7529,7 +7529,14 @@ function dyDagHeeft(off){
   });
 }
 
-function dySelDagSet(off){ DySelDag=off; renderDyDagen(); }
+function dySelDagSet(off){
+  DySelDag=off;
+  // Dagwissel reset de flow naar de weging — anders blijf je op een
+  // latere stap (bv. afronding) staan en is er niets in te vullen.
+  S.pulse={step:0,data:{}};
+  drawPulse();
+  renderDyDagen();
+}
 
 function renderDyDagen(){
   var el=document.getElementById('dy-dagen');
@@ -7556,8 +7563,13 @@ function dyBewaarWeging(){
     lsSet('tm2_ritme',h);
     pushWegingServer(entry);
     if(DySelDag>0){
+      // Eerdere dag: energie en loslaten zijn momentgebonden — sla ze
+      // over. Terug naar de weging zodat de volgende dag direct kan.
       toast(riDagDatum(DySelDag).toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'})+' gewogen ✓','ok');
+      S.pulse={step:0,data:{}};
+      drawPulse();
       renderDyDagen();
+      return;
     }
   }
   S.pulse.step++;drawPulse();
@@ -7574,7 +7586,7 @@ function drawPulse(){
   const B=document.getElementById('pb');
   if(step===0){
     var wd=S.pulse.data, sel=function(g,v){return wd[g]===v?'pri':'gh';};
-    B.innerHTML=`<div class="pq">衡 Weging</div>
+    B.innerHTML=`<div class="pq">衡 Weging${DySelDag>0?' · '+riDagLabel(DySelDag):''}</div>
       <div class="ph2">Twee coördinaten. Takumi weegt — dezelfde elf regels als <a href="/weegschaal" target="_blank" style="color:var(--m)">de weegschaal</a>.</div>
       <div style="font-size:12px;color:var(--m);margin-bottom:6px">Beweging — wanneer was je laatst actief?</div>
       <div style="display:flex;gap:8px;margin-bottom:var(--sp-md)">
