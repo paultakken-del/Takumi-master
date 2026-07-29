@@ -1177,29 +1177,9 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
              niet bij cockpit (dag-actie). IDs behouden hun ck- prefix
              zodat renderElementBalance() en updateBalansWithEmotie() niet
              aangepast hoeven worden.  -->
-        <div class="dash-section" id="ck-balance-section" style="margin-bottom:32px">
-          <div class="dash-label"><svg class="ico ico-sm"><use href="#i-compass"/></svg> <span data-i18n="ck.balance_week">Balans deze week</span></div>
-          <div id="ck-balance-content" style="display:flex;flex-direction:column;align-items:center;padding:8px 0">
-            <svg id="ck-balance-svg" viewBox="0 0 240 240" width="220" height="220" style="max-width:100%">
-              <defs>
-                <clipPath id="bal-circle">
-                  <circle cx="120" cy="120" r="100"/>
-                </clipPath>
-              </defs>
-              <circle cx="120" cy="120" r="100" fill="none" stroke="var(--b)" stroke-width="1.2"/>
-              <g clip-path="url(#bal-circle)">
-                <rect id="bal-doen-bg" x="20" y="20" width="100" height="200" fill="#f0ece4"/>
-                <rect id="bal-zijn-bg" x="120" y="20" width="100" height="200" fill="#c4532a"/>
-                <path id="bal-wave-fill" d="" fill="#c4532a"/>
-                <g id="bal-doen-kanjis"></g>
-                <g id="bal-zijn-kanjis"></g>
-                <text id="bal-fu-kanji" font-family="var(--FJ)" font-size="14" text-anchor="middle"></text>
-                <text id="bal-fu-label" font-family="inherit" font-size="9" text-anchor="middle" fill="#a8a39a" opacity=".75" letter-spacing=".5"></text>
-              </g>
-            </svg>
-            <div id="ck-balance-summary" style="font-size:13.5px;color:var(--ink);text-align:center;margin-top:14px;line-height:1.5;font-style:italic;font-family:var(--serif);max-width:280px"></div>
-          </div>
-        </div>
+        <!-- Balans-sectie verwijderd uit Dojo (v0.600) — de yin-yang golf
+             op het Kompas toont de weekbalans; renderElementBalance blijft
+             als null-safe no-op, calcElementBalance voedt de golf. -->
 
         <!-- ── DRIE OEFENINGEN ── airy stacked choices ──
              Stoic-stijl: geen p2-cards meer, maar luchtige keuzes met
@@ -2235,7 +2215,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.590';
+const APP_VERSION = '0.600';
 
 const S={
   cur:'board',
