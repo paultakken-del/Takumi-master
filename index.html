@@ -809,14 +809,13 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
 <div id="app">
 <!-- SIDEBAR -->
 <nav id="sb">
-  <div class="sb-logo" onclick="go('ck');if(window.innerWidth<=720)closeSidebar();" style="cursor:pointer;-webkit-tap-highlight-color:transparent" title="Naar Cockpit"><span class="sb-kanji">匠</span><div><div class="sb-brand">Takumi<span class="sb-beta">Beta</span></div></div></div>
+  <div class="sb-logo" onclick="go('ck');if(window.innerWidth<=720)closeSidebar();" style="cursor:pointer;-webkit-tap-highlight-color:transparent" title="Naar Kompas"><span class="sb-kanji">匠</span><div><div class="sb-brand">Takumi<span class="sb-beta">Beta</span></div></div></div>
   <div class="sb-nav">
-    <div class="ni on" data-v="ck"><span class="ico">⬡</span><span data-i18n="nav.cockpit">Cockpit</span></div>
-    <div class="ni" data-v="bo"><span class="ico">◈</span><span data-i18n="nav.board">Master Council</span></div>
+    <div class="ni on" data-v="ck"><span class="ico">⬡</span><span data-i18n="nav.cockpit">Kompas</span></div>
     <div class="ni" data-v="dj"><span class="ico" style="font-family:var(--FJ)">道</span><span data-i18n="nav.dojo">Dojo</span></div>
     <div class="ni" data-v="gl"><span class="ico">◇</span><span data-i18n="nav.goals">Richting</span></div>
     <div class="ni" data-v="rh"><span class="ico">習</span><span data-i18n="nav.rituals">Rituelen</span></div>
-    <div class="ni" data-v="da"><span class="ico">▤</span><span data-i18n="nav.data_hub">Data Hub</span></div>
+    <div class="ni" data-v="da"><span class="ico">▤</span><span data-i18n="nav.data_hub">Metingen</span></div>
     <a id="admin-link" href="/admin/users" target="_blank" style="display:none;align-items:center;gap:10px;padding:8px 16px;font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;border-radius:8px" onmouseover="this.style.background='rgba(255,255,255,.07)'" onmouseout="this.style.background='none'"><span style="font-size:14px">👥</span><span data-i18n="nav.users">Gebruikers</span></a>
   </div>
   <div class="sb-foot" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
@@ -888,31 +887,22 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
     <!-- ── PRIMAIR DOEL ── gecentreerd, anker van de cockpit ── -->
     <div id="ck-primary-goal" class="reveal" style="display:none"></div>
 
-    <!-- ── COUNCIL VANDAAG ── hero-blok ──
-         Kanji als visuele held, generous spacing, één primaire CTA. -->
-    <div id="ck-council-today" class="reveal" style="padding:32px 0 40px">
-      <!-- Element + meester — gecentreerd, ruim -->
-      <div id="ct-header" onclick="raadpleegCouncil()" style="text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:8px 0">
-        <div class="kanji-hero" style="margin-bottom:18px"><div id="ct-kanji" class="kanji-hero-self" style="font-family:var(--FJ);font-size:76px;line-height:1;font-weight:300;color:var(--acc);transition:transform .3s">空</div></div>
-        <div id="ct-element-name" style="font-family:var(--serif,inherit);font-size:18px;font-weight:500;color:var(--ink);line-height:1.3;letter-spacing:-.005em;margin-bottom:6px">Kū · Leegte</div>
-        <div id="ct-warrior-line" style="font-size:11.5px;color:var(--m);line-height:1.5;letter-spacing:.04em">leidt vandaag</div>
+    <!-- ── HET KOMPAS ── sanering: één scherm, één naald, één vraag ──
+         Vervangt het council-today hero-blok. De cockpit is een
+         instrument: reeks-stand (naald), de weging van vandaag als die
+         er nog niet is, en één vraag. renderCouncilToday en
+         loadCouncilTodayVoice blijven bestaan als null-safe no-ops.
+         Week-council krijgt hier zijn mount terug: de raad spreekt
+         één keer per week, gevoed door de reeks. -->
+    <div id="ck-week-council" style="display:none;margin-top:16px"></div>
+    <div id="ck-kompas" class="reveal" style="padding:32px 0 24px">
+      <div style="text-align:center;padding:8px 0 4px">
+        <div class="kanji-hero" style="margin-bottom:14px"><div id="kp-kanji" class="kanji-hero-self" style="font-family:var(--FJ);font-size:64px;line-height:1;font-weight:300;color:var(--acc)">空</div></div>
+        <div id="kp-element" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--m)">Kū leidt vandaag</div>
       </div>
-
-      <!-- AI-stem van vandaag — serif italic, generous breathing room -->
-      <div id="ct-voice" style="font-family:var(--serif,inherit);font-size:14px;font-style:italic;color:var(--ink);line-height:1.7;margin:32px auto 32px;opacity:.88;text-align:center;max-width:320px;min-height:20px"></div>
-
-      <!-- Zachte richting-context — vervangt voormalige goal-hero.
-           Toont primary richting ALS context op deze element-dag,
-           niet als achievement-anker. Klik gaat naar Doelen-view. -->
-      <div id="ct-richting-hint" style="text-align:center;margin:-12px auto 22px;display:none;font-family:var(--serif,inherit);font-size:13px;color:var(--m);line-height:1.55;font-style:italic;max-width:340px;opacity:.78;cursor:pointer;-webkit-tap-highlight-color:transparent" onclick="event.stopPropagation();go('gl')"></div>
-
-      <!-- Single primary CTA -->
-      <div id="ct-ctas" style="text-align:center"></div>
-
-      <!-- Acties — alleen tonen als er zijn, anders helemaal weg -->
-      <div id="ct-actions-wrap" style="margin-top:32px;display:none">
-        <div id="ct-actions"></div>
-      </div>
+      <div id="kp-naald" style="display:none;margin:24px auto 0;max-width:420px;padding:13px 18px;border:1px solid var(--b);border-radius:var(--rs);font-size:13px;line-height:1.6;color:var(--m);text-align:center"></div>
+      <div id="kp-weeg" style="margin:24px auto 0;max-width:420px"></div>
+      <div id="kp-vraag" style="display:none;margin:28px auto 0;max-width:380px;text-align:center;font-family:var(--serif,inherit);font-size:15px;font-style:italic;line-height:1.7;color:var(--ink)"></div>
     </div>
 
     <!-- ── MUZIEK + 'Meer voor vandaag' toggle verwijderd (v0.230) ──
@@ -959,11 +949,6 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
           <span id="pill-dy-lbl" style="font-size:9px;color:var(--acc);letter-spacing:.03em;font-weight:600">Ochtend</span>
         </button>
         <div style="flex:.6;height:1.5px;background:var(--b);position:relative"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:9px;color:var(--m)">→</div></div>
-        <button id="pill-bo" onclick="raadpleegCouncil()" style="flex:1;background:none;border:1.5px solid;border-color:var(--b);border-radius:var(--r);padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .3s,color .3s">
-          <div id="pill-bo-ico" style="width:32px;height:32px;border-radius:50%;border:1.5px solid;border-color:var(--b);display:flex;align-items:center;justify-content:center;font-family:var(--FJ);font-size:16px;color:var(--ink);transition:border-color .3s,color .3s">匠</div>
-          <span id="pill-bo-lbl" style="font-size:9px;color:var(--m);letter-spacing:.03em">Council</span>
-        </button>
-        <div style="flex:.6;height:1.5px;background:var(--b);position:relative"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:9px;color:var(--m)">→</div></div>
         <button id="pill-ri" onclick="go('ri')" style="flex:1;background:none;border:1.5px solid;border-color:var(--b);border-radius:var(--r);padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .3s,color .3s">
           <div id="pill-ri-ico" style="width:32px;height:32px;border-radius:50%;border:1.5px solid;border-color:var(--b);display:flex;align-items:center;justify-content:center;font-family:var(--FJ);font-size:16px;color:var(--ink);transition:border-color .3s,color .3s">習</div>
           <span id="pill-ri-lbl" style="font-size:9px;color:var(--m);letter-spacing:.03em">Avond</span>
@@ -1004,7 +989,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
 <div class="view" id="v-bo">
   <div class="tb">
     <div>
-      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--acc);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">師匠会</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Master Council</span></div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--acc);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Kompas">師匠会</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Master Council</span></div>
     </div>
   </div>
   <div class="bl">
@@ -1068,14 +1053,14 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
 
 <!-- DAILY PULSE -->
 <div class="view" id="v-dy">
-  <div class="tb"><div><div class="tb-t" id="pulse-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">脈</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Ochtend Start</span></div></div></div>
+  <div class="tb"><div><div class="tb-t" id="pulse-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Kompas">脈</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Ochtend Start</span></div></div></div>
   <div class="vs"><div class="pw2"><div class="pst" id="pst"></div><div id="pb"></div></div></div>
 </div>
 
 <!-- DATA HUB -->
 <div class="view" id="v-da">
   <div class="tb">
-    <div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">蔵</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Data Hub</span></div></div>
+    <div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Kompas">蔵</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Data Hub</span></div></div>
   </div>
   <div class="tabs">
     <div class="tab on" onclick="stab('health',this)">❤ Health</div>
@@ -1149,7 +1134,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
 
 <!-- DOELEN -->
 <div class="view" id="v-gl">
-  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--gold);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">配</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Richting</span></div></div><div style="display:flex;align-items:center;gap:10px"><div id="snoei-indicator" style="font-size:11px;color:var(--m)"></div><button class="btn sm pri" onclick="checkSnoei()">+ Richting toevoegen</button></div></div>
+  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--gold);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Kompas">配</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Richting</span></div></div><div style="display:flex;align-items:center;gap:10px"><div id="snoei-indicator" style="font-size:11px;color:var(--m)"></div><button class="btn sm pri" onclick="checkSnoei()">+ Richting toevoegen</button></div></div>
   <div class="vs"><div class="gg" id="gg"></div></div>
 </div>
 
@@ -1157,7 +1142,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
 <div class="view" id="v-dj">
   <div class="tb">
     <div>
-      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">道</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em" data-i18n="dojo.title">Dojo</span></div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Kompas">道</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em" data-i18n="dojo.title">Dojo</span></div>
     </div>
   </div>
   <div class="vs">
@@ -1252,7 +1237,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
 <div class="view" id="v-rh">
   <div class="tb">
     <div>
-      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">習</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em" data-i18n="rh.title">Rituelen</span></div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Kompas">習</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em" data-i18n="rh.title">Rituelen</span></div>
     </div>
   </div>
   <div class="vs">
@@ -1309,7 +1294,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
 
 <!-- WEEKLY REVIEW -->
 <div class="view" id="v-wr">
-  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">律</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Week Reflectie</span><span id="wr-vrijdag-badge" style="display:none;font-size:10px;background:var(--acc);color:#fff;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle">Vandaag</span></div></div><button class="btn sm pri" onclick="genReview()">⚡ Genereer</button></div>
+  <div class="tb"><div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Kompas">律</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Week Reflectie</span><span id="wr-vrijdag-badge" style="display:none;font-size:10px;background:var(--acc);color:#fff;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle">Vandaag</span></div></div><button class="btn sm pri" onclick="genReview()">⚡ Genereer</button></div>
   <div class="vs" id="wr-body"><div style="text-align:center;padding:60px;color:var(--m)">Klik "⚡ Genereer" voor je wekelijkse AI review</div><div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--b);margin-top:var(--sp-xs)"><span style="font-size:11px;color:var(--m)">週 Week cyclus · volgende laag</span><button onclick="go('rt')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--acc);display:flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent">律 Ritme & Herstel <span style="font-size:14px">→</span></button></div></div>
 </div>
 
@@ -1317,7 +1302,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
 <!-- RITME & SEIZOEN -->
 <div class="view" id="v-rt">
   <div class="tb">
-    <div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">律</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Ritme & Herstel</span></div></div>
+    <div><div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Kompas">律</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Ritme & Herstel</span></div></div>
   </div>
   <div class="vs">
 
@@ -1379,7 +1364,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
 <div class="view" id="v-ri">
   <div class="tb">
     <div>
-      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Cockpit">習</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Avond Check-out</span></div>
+      <div class="tb-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Kompas">習</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Avond Check-out</span></div>
     </div>
     <button class="btn sm pri" onclick="raadpleegVanuitRituelen()">匠 Council</button>
   </div>
@@ -1476,8 +1461,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
 
 <!-- MOBILE NAV -->
 <nav id="mob"><div class="mn2">
-  <div class="mi2 on" data-v="ck"><div class="mico">⬡</div><div class="mlb" data-i18n="mob.cockpit">Cockpit</div></div>
-  <div class="mi2" data-v="bo"><div class="mico">◈</div><div class="mlb" data-i18n="mob.board">Raad</div></div>
+  <div class="mi2 on" data-v="ck"><div class="mico">⬡</div><div class="mlb" data-i18n="mob.cockpit">Kompas</div></div>
   <div class="mi2" data-v="dj"><div class="mico" style="font-family:var(--FJ)">道</div><div class="mlb" data-i18n="mob.dojo">Dojo</div></div>
   <div class="mi2" data-v="gl"><div class="mico">◇</div><div class="mlb" data-i18n="mob.goals">Richting</div></div>
   <div class="mi2" data-v="rh"><div class="mico">習</div><div class="mlb" data-i18n="mob.rituals">Rituelen</div></div>
@@ -1553,7 +1537,7 @@ var LANG = (function(){
 var I18N = {
   nl: {
     // Sidebar nav
-    'nav.cockpit': 'Cockpit',
+    'nav.cockpit': 'Kompas',
     'nav.daily': 'Ochtend Start',
     'nav.board': 'Master Council',
     'nav.section_day': 'Dag',
@@ -1567,7 +1551,7 @@ var I18N = {
     'nav.rhythm_recovery': 'Ritme & Herstel',
     'nav.goals': 'Richting',
     'nav.dojo': 'Dojo',
-    'nav.data_hub': 'Data Hub',
+    'nav.data_hub': 'Metingen',
     'nav.users': 'Gebruikers',
     'nav.subtitle': 'persoonlijk adviesplatform',
     'nav.tour': '◎ Rondleiding',
@@ -1592,7 +1576,7 @@ var I18N = {
     'rh.rhythm_desc': 'Cycli van werk en rust — zie hoe je week-ritme zich ontvouwt.',
     'rh.rhythm_desc_short': 'Cycli van werk en rust.',
     // Mobile bottom nav
-    'mob.cockpit': 'Cockpit',
+    'mob.cockpit': 'Kompas',
     'mob.board': 'Council',
     'mob.dojo': 'Dojo',
     'mob.goals': 'Richting',
@@ -1781,7 +1765,7 @@ var I18N = {
     'settings.language_en': 'English',
   },
   en: {
-    'nav.cockpit': 'Cockpit',
+    'nav.cockpit': 'Kompas',
     'nav.daily': 'Morning Start',
     'nav.board': 'Master Council',
     'nav.section_day': 'Day',
@@ -1795,7 +1779,7 @@ var I18N = {
     'nav.rhythm_recovery': 'Rhythm & Recovery',
     'nav.goals': 'Direction',
     'nav.dojo': 'Dojo',
-    'nav.data_hub': 'Data Hub',
+    'nav.data_hub': 'Measurements',
     'nav.users': 'Users',
     'nav.subtitle': 'personal advisory platform',
     'nav.tour': '◎ Tour',
@@ -1819,7 +1803,7 @@ var I18N = {
     'rh.rhythm_title': 'Rhythm & Recovery',
     'rh.rhythm_desc': 'Cycles of work and rest — see how your week-rhythm unfolds.',
     'rh.rhythm_desc_short': 'Cycles of work and rest.',
-    'mob.cockpit': 'Cockpit',
+    'mob.cockpit': 'Kompas',
     'mob.board': 'Council',
     'mob.dojo': 'Dojo',
     'mob.goals': 'Direction',
@@ -3618,6 +3602,7 @@ function initCK(){
   try { renderDayLeader(); } catch(e){}
   // Council vandaag & acties — geïntegreerd blok (v0.270)
   try { renderCouncilToday(); } catch(e){}
+  try { renderKompas(); } catch(e){}
   // Acties-sectie direct renderen zodat placeholder of items meteen
   // zichtbaar zijn (zonder de 1000ms setTimeout-wachttijd in
   // DOMContentLoaded hieronder). Null-safe; oude #ck-actions-section
@@ -6898,7 +6883,7 @@ function maybeGenerateCouncil(){
 
 // Run cleanup at startup
 document.addEventListener('DOMContentLoaded', function(){
-  setTimeout(function(){ cleanupActions(); renderCkActions(); renderPrimaryGoal(); renderWeekCouncil(); maybeGenerateCouncil(); applyMoreVisibility(); renderElementBalance(); renderAppointments(); }, 1000);
+  setTimeout(function(){ cleanupActions(); renderCkActions(); renderPrimaryGoal(); renderWeekCouncil(); maybeGenerateCouncil(); applyMoreVisibility(); renderElementBalance(); renderAppointments(); try{ renderKompas(); }catch(e){} }, 1000);
 });
 
 // ── MEMOIR VIEWER ──────────────────────────────────────────────────
@@ -7034,7 +7019,7 @@ function confRej(){
 
 // ── DAILY PULSE ────────────────────────────────────────────────────
 const MOODS=[{e:'🎯',l:'Gefocust'},{e:'🔥',l:'Gemotiveerd'},{e:'😌',l:'Rustig'},{e:'😴',l:'Moe'},{e:'😰',l:'Gestrest'},{e:'💡',l:'Creatief'},{e:'😟',l:'Onrustig'},{e:'🙏',l:'Dankbaar'}];
-const PSTEPS=['衡 Weging','Energie','間 Loslaten','Master Council'];
+const PSTEPS=['衡 Weging','Energie','間 Loslaten','結 Afronding'];
 // ── Lokale weging: identiek aan de server (functions/mcp.js) en /weegschaal — 11 regels, deterministisch ──
 const WEEG_VRAGEN={
   chi:['Welk fundament onder vandaag draagt nog steeds?','Wat is vandaag je anker als het zicht wegvalt?','Welke discipline geeft je vandaag juist vrijheid?','Wat verdient vandaag onderhoud in plaats van vernieuwing?','Wat is vandaag jouw berg, het punt dat niet beweegt?'],
@@ -7135,6 +7120,118 @@ function renderNaald(){
   nd.style.color = (n && n.tone === 'signaal') ? 'var(--acc)' : 'var(--m)';
 }
 
+// ── HET KOMPAS ── het cockpit-instrument: naald, weging, één vraag ──
+// Sanering: de cockpit toont niet langer toestand plus AI-stem, maar
+// het instrument zelf. Deterministisch, geen AI-call bij openen.
+function leesNaaldStand(hist){
+  if(!hist || !hist.length) return null;
+  var laatste = hist[0];
+  var dagKey = _naaldDag(laatste.ts);
+  var vandaag = _naaldDag(new Date().toISOString());
+  if(dagKey === vandaag) return null;
+  var dagen = Math.round((new Date(vandaag+'T12:00:00') - new Date(dagKey+'T12:00:00'))/86400000);
+  var fmt; try { fmt = new Date(dagKey+'T12:00:00').toLocaleDateString('nl-NL',{day:'numeric',month:'long'}); } catch { fmt = dagKey; }
+  if(dagen <= 1) return { txt: 'De naald: laatst gewogen gisteren. De reeks loopt.', tone: 'neutraal' };
+  return { txt: 'De naald: laatst gewogen op ' + fmt + '. Een reeks ontstaat door terug te keren.', tone: 'neutraal' };
+}
+function kpVraagVanDaag(elId){
+  var pool = (typeof WEEG_VRAGEN !== 'undefined' && WEEG_VRAGEN[elId]) || null;
+  if(!pool || !pool.length) return '';
+  var now = new Date();
+  var start = new Date(now.getFullYear(), 0, 0);
+  var dag = Math.floor((now - start) / 86400000);
+  return pool[dag % pool.length];
+}
+function kpToggle(grp, val){
+  S.kp = S.kp || {};
+  S.kp[grp] = S.kp[grp] === val ? null : val;
+  renderKompas();
+}
+function kpVastleggen(){
+  var w = weegLokaal(S.kp && S.kp.beweging, S.kp && S.kp.agenda);
+  if(!w) return;
+  var h = ls('tm2_ritme', {rustWeken:[], maList:[], pulseHistory:[]});
+  h.pulseHistory = h.pulseHistory || [];
+  h.pulseHistory.unshift({ ts: new Date().toISOString(), weging: w, beweging: S.kp.beweging || null, agenda: S.kp.agenda || null });
+  h.pulseHistory = h.pulseHistory.slice(0, 365);
+  RitmeData = h; lsSet('tm2_ritme', h);
+  pushWegingServer(h.pulseHistory[0]);
+  S.kp = {};
+  renderKompas();
+  if(typeof toast === 'function') toast('Gewogen ✓','ok');
+}
+function renderKompas(){
+  var sec = document.getElementById('ck-kompas');
+  if(!sec) return;
+  try {
+    var leader = getDayLeader();
+    if(leader && leader.element){
+      var k = document.getElementById('kp-kanji');
+      var e = document.getElementById('kp-element');
+      if(k){ k.textContent = leader.element.kanji; k.style.color = leader.element.col || 'var(--acc)'; }
+      var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
+      if(e) e.textContent = leader.element.name + (isEn ? ' leads today' : ' leidt vandaag');
+    }
+  } catch {}
+
+  var hist = (RitmeData && RitmeData.pulseHistory) || [];
+  var vandaag = _naaldDag(new Date().toISOString());
+  var wv = null;
+  for(var i = 0; i < hist.length; i++){ if(_naaldDag(hist[i].ts) === vandaag){ wv = hist[i]; break; } }
+
+  var weegEl = document.getElementById('kp-weeg');
+  var naaldEl = document.getElementById('kp-naald');
+  var vraagEl = document.getElementById('kp-vraag');
+  function toonNaald(n){
+    if(!naaldEl) return;
+    naaldEl.style.display = n ? 'block' : 'none';
+    naaldEl.textContent = n ? n.txt : '';
+    naaldEl.style.color = (n && n.tone === 'signaal') ? 'var(--acc)' : 'var(--m)';
+  }
+  function toonVraag(elId){
+    if(!vraagEl) return;
+    var q = elId ? kpVraagVanDaag(elId) : '';
+    vraagEl.style.display = q ? 'block' : 'none';
+    vraagEl.textContent = q;
+  }
+
+  if(wv){
+    var elId = wv.weging && wv.weging.element;
+    var info = elId && WEEG_EL[elId];
+    if(weegEl){
+      weegEl.innerHTML = info
+        ? '<div class="card" style="text-align:center;padding:18px"><span style="font-family:var(--FJ);font-size:30px;line-height:1;color:var(--acc)">'+info.k+'</span><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--m);margin-top:6px">Vandaag gewogen · '+info.n+'</div>'+(wv.weging.reden ? '<div style="font-size:13px;color:var(--m);margin-top:8px;line-height:1.5">'+wv.weging.reden+'</div>' : '')+'</div>'
+        : '';
+    }
+    toonNaald(leesNaald(hist, { beweging: wv.beweging, agenda: wv.agenda }));
+    toonVraag(elId);
+  } else {
+    var d = S.kp || {};
+    function b(grp, val, lbl){
+      var on = d[grp] === val;
+      return '<button class="btn sm '+(on?'pri':'gh')+'" style="flex:1" onclick="kpToggle(\''+grp+'\',\''+val+'\')">'+lbl+'</button>';
+    }
+    var w = weegLokaal(d.beweging, d.agenda);
+    var html = '<div class="card" style="padding:18px">'
+      + '<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);text-align:center;margin-bottom:14px">衡 Weeg vandaag</div>'
+      + '<div style="font-size:12px;color:var(--m);margin-bottom:6px">Beweging</div>'
+      + '<div style="display:flex;gap:8px;margin-bottom:14px">'+b('beweging','gereden','Gereden')+b('beweging','hersteld','Hersteld')+b('beweging','rust','Rust')+'</div>'
+      + '<div style="font-size:12px;color:var(--m);margin-bottom:6px">Agenda</div>'
+      + '<div style="display:flex;gap:8px">'+b('agenda','vol','Vol')+b('agenda','ruim','Ruim')+'</div>';
+    if(w){
+      html += '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--b);display:flex;align-items:center;gap:12px">'
+        + '<span style="font-family:var(--FJ);font-size:30px;line-height:1;color:var(--acc)">'+WEEG_EL[w.element].k+'</span>'
+        + '<div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--m)">'+WEEG_EL[w.element].n+'</div>'
+        + '<div style="font-size:13px;color:var(--m);line-height:1.5">'+w.reden+'</div></div></div>'
+        + '<button class="btn pri" style="width:100%;margin-top:14px" onclick="kpVastleggen()">Leg vast</button>';
+    }
+    html += '</div>';
+    if(weegEl) weegEl.innerHTML = html;
+    toonNaald((d.beweging || d.agenda) ? leesNaald(hist, { beweging: d.beweging, agenda: d.agenda }) : leesNaaldStand(hist));
+    toonVraag(w ? w.element : null);
+  }
+}
+
 // ── SYNC — weeggeheugen apparaat-overstijgend (/api/weging, KV) ────
 function pushWegingServer(entry){
   if(!entry) return;
@@ -7163,6 +7260,7 @@ async function syncWegingServer(){
     h.pulseHistory.sort(function(a,b){ return (b.ts||'').localeCompare(a.ts||''); });
     h.pulseHistory = h.pulseHistory.slice(0, 365);
     RitmeData = h; lsSet('tm2_ritme', h);
+    try { renderKompas(); } catch {}
   } catch {}
 }
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(syncWegingServer, 800); });
@@ -7264,8 +7362,8 @@ function drawPulse(){
         ">Opslaan & Verder →</button>
       </div>`;
   }else if(step===3){
-    const sum='energie '+(data.energy||6)+'/10, stemming '+(RituelenData&&RituelenData.binnenkomst||'–');
-    B.innerHTML=`<div class="pq">Master Council</div>
+    const sum='energie '+(data.energy||6)+'/10';
+    B.innerHTML=`<div class="pq">結 Afronding</div>
       <div class="ph2">Je pulse van vandaag</div>
       <div class="card" style="margin-bottom:var(--sp-md)">
         <div style="font-size:13px;line-height:1.8">
@@ -7273,14 +7371,7 @@ function drawPulse(){
         </div>
       </div>
       <div class="pn">
-        <button class="btn gh sm" onclick="go('ck')">Naar Cockpit</button>
-        <button class="btn pri" onclick="
-          document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
-          document.querySelectorAll('[data-v]').forEach(el=>el.classList.toggle('on',el.dataset.v==='bo'));
-          var vbo=document.getElementById('v-bo');if(vbo){vbo.classList.add('on');vbo.classList.remove('grid-mode');}
-          renderGrid();renderChat();upCtx();upLearn();markVandaag('bo');
-          setTimeout(function(){selAg('board');var ci=document.getElementById('ci');if(ci){ci.value='Dag pulse: ${sum}. Losgelaten: '+(S.pulse.data.ma1||'niets')+'. Wat zie jij?';ci.style.height='auto';ci.style.height=Math.min(ci.scrollHeight,120)+'px';}var cm=document.getElementById('cm');if(cm)setTimeout(function(){cm.scrollTop=cm.scrollHeight;},200);},200)
-        ">Master Council →</button>
+        <button class="btn pri" style="width:100%" onclick="go('ck')">Naar het Kompas →</button>
       </div>`;
   }
 }
