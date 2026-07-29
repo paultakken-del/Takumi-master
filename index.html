@@ -2159,7 +2159,43 @@ function showAuthGate(){
 
 function _ukey(k){return k.startsWith('tm2_user')||k.startsWith('tm2_lf')?k:k+'__'+_uid;}
 function ls(k,d){try{var v=localStorage.getItem(_ukey(k));return v?JSON.parse(v):d}catch{return d}}
-function lsSet(k,v){try{localStorage.setItem(_ukey(k),JSON.stringify(v))}catch{}}
+function lsSet(k,v){
+  // Chatgeschiedenis begrensd houden: laatste 120 berichten per meester.
+  // Zonder cap groeit tm2_chat onbeperkt tot de opslag vol zit.
+  if(k==='tm2_chat'&&v&&typeof v==='object'){
+    Object.keys(v).forEach(function(id){
+      if(Array.isArray(v[id])&&v[id].length>120) v[id]=v[id].slice(-120);
+    });
+  }
+  try{ localStorage.setItem(_ukey(k),JSON.stringify(v)); }
+  catch(e){
+    // Opslag vol (iOS quota ~5MB): voorheen werd dit stil ingeslikt,
+    // waardoor bv. de dagafsluiting leek te lukken maar na herladen
+    // weg was. Nu: chatgeschiedenis inkorten, opnieuw proberen, en
+    // anders een zichtbare foutmelding.
+    try{
+      _lsRuimOp();
+      localStorage.setItem(_ukey(k),JSON.stringify(v));
+      try{ toast('Opslag was vol. Oude chatberichten ingekort.','ok'); }catch(_){}
+    }catch(e2){
+      console.error('[lsSet] opslag vol voor', k, e2);
+      try{ toast('Opslaan mislukt: opslag vol. Ruim op via Data Hub.','err'); }catch(_){}
+    }
+  }
+}
+function _lsRuimOp(){
+  // Kort de grootste post in: chatgeschiedenis tot laatste 40 berichten per meester
+  var ck=_ukey('tm2_chat');
+  var raw=localStorage.getItem(ck);
+  if(raw){
+    var chat=JSON.parse(raw);
+    Object.keys(chat).forEach(function(id){
+      if(Array.isArray(chat[id])&&chat[id].length>40) chat[id]=chat[id].slice(-40);
+    });
+    localStorage.setItem(ck,JSON.stringify(chat));
+    if(typeof S!=='undefined'&&S&&S.chat) S.chat=chat;
+  }
+}
 
 // ── MODELS — kosten-bewuste routering ──────────────────────────────
 // MODEL_HEAVY: Master Council + individuele meester-chat (multi-perspectief, conversationeel)
@@ -2172,7 +2208,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.500';
+const APP_VERSION = '0.510';
 
 const S={
   cur:'board',
