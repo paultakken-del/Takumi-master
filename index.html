@@ -1064,7 +1064,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
 <!-- DAILY PULSE -->
 <div class="view" id="v-dy">
   <div class="tb"><div><div class="tb-t" id="pulse-t" style="display:flex;align-items:baseline;gap:8px"><span onclick="go('ck')" style="font-family:var(--FJ);font-weight:300;color:var(--ink);cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'" title="Naar Kompas">脈</span><span style="font-family:var(--serif);font-weight:500;letter-spacing:-.005em">Ochtend Start</span></div></div></div>
-  <div class="vs"><div class="pw2"><div class="pst" id="pst"></div><div id="pb"></div></div></div>
+  <div class="vs"><div id="dy-dagen" style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:12px"></div><div class="pw2"><div class="pst" id="pst"></div><div id="pb"></div></div></div>
 </div>
 
 <!-- DATA HUB -->
@@ -2225,7 +2225,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.520';
+const APP_VERSION = '0.530';
 
 const S={
   cur:'board',
@@ -7513,9 +7513,60 @@ function weegToggle(grp,val,btn){
   renderNaald();
 }
 
+// ── DAGKEUZE OCHTEND START — weging alsnog invullen tot 7 dagen terug ──
+var DySelDag = 0;
+
+function dyTs(){
+  if(DySelDag===0) return new Date().toISOString();
+  var d=riDagDatum(DySelDag); d.setHours(8,0,0,0); return d.toISOString();
+}
+
+function dyDagHeeft(off){
+  var d0=riDagDatum(off); d0.setHours(0,0,0,0);
+  var d1=new Date(d0); d1.setDate(d1.getDate()+1);
+  return ((RitmeData&&RitmeData.pulseHistory)||[]).some(function(e){
+    if(!e||!e.ts) return false; var t=new Date(e.ts); return t>=d0&&t<d1;
+  });
+}
+
+function dySelDagSet(off){ DySelDag=off; renderDyDagen(); }
+
+function renderDyDagen(){
+  var el=document.getElementById('dy-dagen');
+  if(!el) return;
+  var html='';
+  for(var off=0; off<7; off++){
+    var sel=(off===DySelDag);
+    var dot=dyDagHeeft(off)?'<span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:'+(sel?'#fff':'var(--teal)')+';margin-left:5px;vertical-align:middle"></span>':'';
+    html+='<button onclick="dySelDagSet('+off+')" style="flex-shrink:0;padding:6px 12px;border-radius:14px;font-size:12px;font-family:var(--F);cursor:pointer;-webkit-tap-highlight-color:transparent;border:1px solid '+(sel?'var(--acc)':'var(--b)')+';background:'+(sel?'var(--acc)':'none')+';color:'+(sel?'#fff':'var(--m)')+'">'+riDagLabel(off)+dot+'</button>';
+  }
+  el.innerHTML=html;
+}
+
+// Weging opslaan op de gekozen dag — voedt de naald (weekdekking)
+function dyBewaarWeging(){
+  if(S.pulse.data.weging){
+    var h=ls('tm2_ritme',{rustWeken:[],maList:[],pulseHistory:[]});
+    h.pulseHistory=h.pulseHistory||[];
+    var entry={ts:dyTs(),weging:S.pulse.data.weging,beweging:S.pulse.data.beweging,agenda:S.pulse.data.agenda};
+    h.pulseHistory.unshift(entry);
+    h.pulseHistory.sort(function(a,b){return (b.ts||'').localeCompare(a.ts||'');});
+    h.pulseHistory=h.pulseHistory.slice(0,365);
+    RitmeData=h;
+    lsSet('tm2_ritme',h);
+    pushWegingServer(entry);
+    if(DySelDag>0){
+      toast(riDagDatum(DySelDag).toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'})+' gewogen ✓','ok');
+      renderDyDagen();
+    }
+  }
+  S.pulse.step++;drawPulse();
+}
+
 function initPulse(){
-  
+  DySelDag=0;
   S.pulse={step:0,data:{}};drawPulse();
+  renderDyDagen();
 }
 function drawPulse(){
   const{step,data}=S.pulse;
@@ -7549,7 +7600,7 @@ function drawPulse(){
       </div>
       <div class="pn">
         <button class="btn sm gh" onclick="S.pulse.data.beweging=null;S.pulse.data.agenda=null;S.pulse.data.weging=null;S.pulse.step++;drawPulse()">Overslaan</button>
-        <button class="btn pri" onclick="if(S.pulse.data.weging){var h=ls('tm2_ritme',{rustWeken:[],maList:[],pulseHistory:[]});h.pulseHistory.unshift({ts:new Date().toISOString(),weging:S.pulse.data.weging,beweging:S.pulse.data.beweging,agenda:S.pulse.data.agenda});h.pulseHistory=h.pulseHistory.slice(0,365);RitmeData=h;lsSet('tm2_ritme',h);pushWegingServer(h.pulseHistory[0]);}S.pulse.step++;drawPulse()">Verder →</button>
+        <button class="btn pri" onclick="dyBewaarWeging()">Verder →</button>
       </div>`;
     renderNaald();
   }else if(step===1){
