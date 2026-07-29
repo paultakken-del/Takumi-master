@@ -667,7 +667,7 @@ input[type=range]{width:100%;accent-color:var(--acc)}
 .ri-stap{padding:18px 0;border-bottom:1px solid var(--b)}
 .ri-stap-hd{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px}
 .adem-cirkel{width:120px;height:120px;border-radius:50%;border:1.5px solid var(--acc);opacity:.85;margin:26px auto 18px;background:rgba(196,83,42,.05);animation:ademCyclus 10s ease-in-out infinite}
-@keyframes ademCyclus{0%{transform:scale(.68)}40%{transform:scale(1)}100%{transform:scale(.68)}}
+@keyframes ademCyclus{0%{transform:scale(.68)}20%{transform:scale(.92)}23%{transform:scale(.89)}30%{transform:scale(1)}100%{transform:scale(.68)}}
 @media (prefers-reduced-motion: reduce){.adem-cirkel{animation:none;transform:scale(.85)}}
 .ri-stap-nr{width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
 .ri-stap-titel{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:3px}
@@ -2218,7 +2218,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.610';
+const APP_VERSION = '0.620';
 
 const S={
   cur:'board',
@@ -7619,7 +7619,12 @@ function renderAdem(){
   var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
   var B = document.getElementById('pb');
   B.innerHTML = '<div class="pq">息 Kalibratie</div>'
-    + '<div class="ph2">' + (isEn ? 'Three breaths before the weighing. Four counts in, six out.' : 'Drie ademhalingen voor de weging. Vier tellen in, zes uit.') + '</div>'
+    + '<div class="ph2">' + (isEn
+        ? 'Three <span onclick="ademInfoToggle()" title="Two inhales through the nose, then one long exhale through the mouth. One of the fastest ways to calm the nervous system." style="border-bottom:1px dotted var(--m);cursor:help">physiological sighs</span> before the weighing.'
+        : 'Drie <span onclick="ademInfoToggle()" title="Twee keer inademen door de neus, dan lang uitademen door de mond. Een van de snelste manieren om je zenuwstelsel te kalmeren." style="border-bottom:1px dotted var(--m);cursor:help">fysiologische zuchten</span> voor de weging.') + '</div>'
+    + '<div id="adem-info" style="display:none;font-size:11.5px;color:var(--m);line-height:1.5;text-align:center;margin:-4px auto 4px;max-width:280px">' + (isEn
+        ? 'Two inhales through the nose, then one long exhale through the mouth. One of the fastest ways to calm the nervous system.'
+        : 'Twee keer inademen door de neus, dan lang uitademen door de mond. Een van de snelste manieren om je zenuwstelsel te kalmeren.') + '</div>'
     + '<div class="adem-cirkel"></div>'
     + '<div id="adem-label" style="text-align:center;font-size:13px;color:var(--ink);min-height:18px">' + (isEn ? 'Breathe in' : 'Adem in') + '</div>'
     + '<div id="adem-teller" style="text-align:center;font-size:11px;color:var(--m);margin-top:6px">1 ' + (isEn ? 'of' : 'van') + ' 3</div>'
@@ -7637,13 +7642,21 @@ function renderAdem(){
       if(cyclus > 3){ ademKlaar(); return; }
       lbl.textContent = isEn ? 'Breathe in' : 'Adem in';
       tel.textContent = cyclus + ' ' + (isEn ? 'of' : 'van') + ' 3';
-      setTimeout(function(){ fase('uit'); }, 4000);
+      setTimeout(function(){ fase('hap'); }, 2000);
+    } else if(richting === 'hap'){
+      lbl.textContent = isEn ? 'One more sip' : 'Nog een hap';
+      setTimeout(function(){ fase('uit'); }, 1000);
     } else {
-      lbl.textContent = isEn ? 'Breathe out' : 'Adem uit';
-      setTimeout(function(){ fase('in'); }, 6000);
+      lbl.textContent = isEn ? 'Long exhale' : 'Lang uit';
+      setTimeout(function(){ fase('in'); }, 7000);
     }
   }
   fase('in');
+}
+
+function ademInfoToggle(){
+  var el = document.getElementById('adem-info');
+  if(el) el.style.display = (el.style.display === 'none') ? 'block' : 'none';
 }
 
 function ademKlaar(){
