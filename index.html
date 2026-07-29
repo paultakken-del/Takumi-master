@@ -887,22 +887,24 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
     <!-- ── PRIMAIR DOEL ── gecentreerd, anker van de cockpit ── -->
     <div id="ck-primary-goal" class="reveal" style="display:none"></div>
 
-    <!-- ── HET KOMPAS ── sanering: één scherm, één naald, één vraag ──
-         Vervangt het council-today hero-blok. De cockpit is een
-         instrument: reeks-stand (naald), de weging van vandaag als die
-         er nog niet is, en één vraag. renderCouncilToday en
-         loadCouncilTodayVoice blijven bestaan als null-safe no-ops.
-         Week-council krijgt hier zijn mount terug: de raad spreekt
-         één keer per week, gevoed door de reeks. -->
+    <!-- ── HET KOMPAS ── twee aflezingen, zoals een kompas ──
+         STAND: de naald, gelezen uit de reeks. RICHTING: de weging van
+         vandaag als element, reden en één vraag. Geen dagleider-hero
+         (rotatie is geen richting) en geen HRV-cellen (die wonen in
+         Metingen). Eén kanji op dit scherm: de richting die de weging
+         aanwijst. -->
     <div id="ck-week-council" style="display:none;margin-top:16px"></div>
-    <div id="ck-kompas" class="reveal" style="padding:32px 0 24px">
-      <div style="text-align:center;padding:8px 0 4px">
-        <div class="kanji-hero" style="margin-bottom:14px"><div id="kp-kanji" class="kanji-hero-self" style="font-family:var(--FJ);font-size:64px;line-height:1;font-weight:300;color:var(--acc)">空</div></div>
-        <div id="kp-element" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--m)">Kū leidt vandaag</div>
+    <div id="ck-kompas" class="reveal" style="padding:28px 0 24px;max-width:440px;margin:0 auto">
+      <div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);opacity:.8;margin-bottom:10px">Waar je staat</div>
+      <div id="kp-naald" style="padding:14px 18px;border:1px solid var(--b);border-radius:var(--rs);font-size:13.5px;line-height:1.65;color:var(--m)">De naald wacht op je eerste weging.</div>
+      <div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--m);opacity:.8;margin:30px 0 10px">Waarheen vandaag</div>
+      <div id="kp-richting" style="display:none;text-align:center;padding:16px 0 4px">
+        <div id="kp-kanji" style="font-family:var(--FJ);font-size:64px;line-height:1;font-weight:300;color:var(--acc);margin-bottom:12px">衡</div>
+        <div id="kp-element" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--m)"></div>
+        <div id="kp-reden" style="font-size:13.5px;color:var(--m);line-height:1.6;margin:10px auto 0;max-width:360px"></div>
       </div>
-      <div id="kp-naald" style="display:none;margin:24px auto 0;max-width:420px;padding:13px 18px;border:1px solid var(--b);border-radius:var(--rs);font-size:13px;line-height:1.6;color:var(--m);text-align:center"></div>
-      <div id="kp-weeg" style="margin:24px auto 0;max-width:420px"></div>
-      <div id="kp-vraag" style="display:none;margin:28px auto 0;max-width:380px;text-align:center;font-family:var(--serif,inherit);font-size:15px;font-style:italic;line-height:1.7;color:var(--ink)"></div>
+      <div id="kp-weeg"></div>
+      <div id="kp-vraag" style="display:none;margin:26px auto 0;max-width:380px;text-align:center;font-family:var(--serif,inherit);font-size:15px;font-style:italic;line-height:1.7;color:var(--ink)"></div>
     </div>
 
     <!-- ── MUZIEK + 'Meer voor vandaag' toggle verwijderd (v0.230) ──
@@ -917,24 +919,9 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
          bij reflectie-ruimte dan dag-cockpit. Zie renderElementBalance()
          en go('dj') trigger. ── -->
 
-    <!-- COMPACTE DAG-METRICS — vervangt wave. Drie cellen los klikbaar:
-         tik = handmatig invullen (editHrvField). "Details ↗" rechts gaat naar
-         Data Hub voor historie en koppeling. -->
-    <div id="ck-metrics-grid" style="margin-top:24px;padding:0;display:none;grid-template-columns:repeat(3,1fr);gap:10px">
-      <div onclick="editHrvField('rmssd')" title="Tik om HRV in te vullen" style="text-align:center;padding:12px 8px;background:var(--p2);border:1px solid var(--b);border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s" onmouseover="this.style.background='rgba(196,83,42,.06)'" onmouseout="this.style.background='var(--p2)'">
-        <div style="font-size:17px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums" id="ck-stat-hrv">–</div>
-        <div style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-top:3px">HRV</div>
-      </div>
-      <div onclick="editHrvField('sleep')" title="Tik om slaap in te vullen" style="text-align:center;padding:12px 8px;background:var(--p2);border:1px solid var(--b);border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s" onmouseover="this.style.background='rgba(196,83,42,.06)'" onmouseout="this.style.background='var(--p2)'">
-        <div style="font-size:17px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums" id="ck-stat-sleep">–</div>
-        <div style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-top:3px">Slaap</div>
-      </div>
-      <div onclick="editHrvField('recovery')" title="Tik om herstel in te vullen" style="text-align:center;padding:12px 8px;background:var(--p2);border:1px solid var(--b);border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s" onmouseover="this.style.background='rgba(196,83,42,.06)'" onmouseout="this.style.background='var(--p2)'">
-        <div style="font-size:17px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums" id="ck-stat-rec">–</div>
-        <div style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-top:3px">Herstel</div>
-      </div>
-    </div>
-    <div id="ck-stat-hint" style="display:none;font-size:10.5px;color:var(--m);text-align:center;margin-top:10px;opacity:.7;letter-spacing:.02em">Tik op een waarde om handmatig in te vullen · <span onclick="goToHealth()" style="color:var(--acc);cursor:pointer">koppel HRV in Data Hub ↗</span></div>
+    <!-- ── DAG-METRICS verwijderd van het Kompas (sanering) ──
+         HRV, slaap en herstel wonen in Metingen. De renderfuncties
+         (ck-stat-*) blijven bestaan als null-safe no-ops. ── -->
     <!-- Hidden helpers for legacy code that may still reference these -->
     <div style="display:none">
       <span id="wave-phase-name"></span>
@@ -7163,30 +7150,42 @@ function kpVastleggen(){
 function renderKompas(){
   var sec = document.getElementById('ck-kompas');
   if(!sec) return;
-  try {
-    var leader = getDayLeader();
-    if(leader && leader.element){
-      var k = document.getElementById('kp-kanji');
-      var e = document.getElementById('kp-element');
-      if(k){ k.textContent = leader.element.kanji; k.style.color = leader.element.col || 'var(--acc)'; }
-      var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
-      if(e) e.textContent = leader.element.name + (isEn ? ' leads today' : ' leidt vandaag');
-    }
-  } catch {}
-
   var hist = (RitmeData && RitmeData.pulseHistory) || [];
   var vandaag = _naaldDag(new Date().toISOString());
   var wv = null;
-  for(var i = 0; i < hist.length; i++){ if(_naaldDag(hist[i].ts) === vandaag){ wv = hist[i]; break; } }
+  for(var i = 0; i < hist.length; i++){
+    if(_naaldDag(hist[i].ts) === vandaag && hist[i].weging && hist[i].weging.element){ wv = hist[i]; break; }
+  }
 
-  var weegEl = document.getElementById('kp-weeg');
   var naaldEl = document.getElementById('kp-naald');
+  var richtEl = document.getElementById('kp-richting');
+  var kanjiEl = document.getElementById('kp-kanji');
+  var elemEl = document.getElementById('kp-element');
+  var redenEl = document.getElementById('kp-reden');
+  var weegEl = document.getElementById('kp-weeg');
   var vraagEl = document.getElementById('kp-vraag');
-  function toonNaald(n){
-    if(!naaldEl) return;
-    naaldEl.style.display = n ? 'block' : 'none';
-    naaldEl.textContent = n ? n.txt : '';
+  var isEn = (typeof LANG !== 'undefined' && LANG === 'en');
+  var d = S.kp || {};
+
+  // ── STAND: de naald, altijd afleesbaar ──
+  var n = wv ? leesNaald(hist, { beweging: wv.beweging, agenda: wv.agenda })
+        : (d.beweging || d.agenda) ? leesNaald(hist, { beweging: d.beweging, agenda: d.agenda })
+        : leesNaaldStand(hist);
+  if(naaldEl){
+    naaldEl.textContent = n ? n.txt : (isEn ? 'The needle awaits your first weighing.' : 'De naald wacht op je eerste weging.');
     naaldEl.style.color = (n && n.tone === 'signaal') ? 'var(--acc)' : 'var(--m)';
+    naaldEl.style.borderColor = (n && n.tone === 'signaal') ? 'rgba(196,83,42,.35)' : 'var(--b)';
+  }
+
+  // ── RICHTING: element, reden, vraag ──
+  function toonRichting(w, af){
+    if(!richtEl) return;
+    if(!w){ richtEl.style.display = 'none'; return; }
+    richtEl.style.display = 'block';
+    var info = WEEG_EL[w.element] || { k: '衡', n: '' };
+    if(kanjiEl) kanjiEl.textContent = info.k;
+    if(elemEl) elemEl.textContent = info.n + (af ? (isEn ? ' · weighed today' : ' · vandaag gewogen') : '');
+    if(redenEl) redenEl.textContent = w.reden || '';
   }
   function toonVraag(elId){
     if(!vraagEl) return;
@@ -7196,38 +7195,24 @@ function renderKompas(){
   }
 
   if(wv){
-    var elId = wv.weging && wv.weging.element;
-    var info = elId && WEEG_EL[elId];
-    if(weegEl){
-      weegEl.innerHTML = info
-        ? '<div class="card" style="text-align:center;padding:18px"><span style="font-family:var(--FJ);font-size:30px;line-height:1;color:var(--acc)">'+info.k+'</span><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--m);margin-top:6px">Vandaag gewogen · '+info.n+'</div>'+(wv.weging.reden ? '<div style="font-size:13px;color:var(--m);margin-top:8px;line-height:1.5">'+wv.weging.reden+'</div>' : '')+'</div>'
-        : '';
-    }
-    toonNaald(leesNaald(hist, { beweging: wv.beweging, agenda: wv.agenda }));
-    toonVraag(elId);
+    toonRichting(wv.weging, true);
+    if(weegEl) weegEl.innerHTML = '';
+    toonVraag(wv.weging.element);
   } else {
-    var d = S.kp || {};
+    var w = weegLokaal(d.beweging, d.agenda);
+    toonRichting(w, false);
     function b(grp, val, lbl){
       var on = d[grp] === val;
       return '<button class="btn sm '+(on?'pri':'gh')+'" style="flex:1" onclick="kpToggle(\''+grp+'\',\''+val+'\')">'+lbl+'</button>';
     }
-    var w = weegLokaal(d.beweging, d.agenda);
-    var html = '<div class="card" style="padding:18px">'
-      + '<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);text-align:center;margin-bottom:14px">衡 Weeg vandaag</div>'
-      + '<div style="font-size:12px;color:var(--m);margin-bottom:6px">Beweging</div>'
-      + '<div style="display:flex;gap:8px;margin-bottom:14px">'+b('beweging','gereden','Gereden')+b('beweging','hersteld','Hersteld')+b('beweging','rust','Rust')+'</div>'
+    var html = '<div class="card" style="padding:18px;margin-top:'+(w?'18px':'6px')+'">'
+      + '<div style="font-size:12px;color:var(--m);margin-bottom:6px">'+(isEn?'Movement':'Beweging')+'</div>'
+      + '<div style="display:flex;gap:8px;margin-bottom:14px">'+b('beweging','gereden',isEn?'Ridden':'Gereden')+b('beweging','hersteld',isEn?'Recovered':'Hersteld')+b('beweging','rust',isEn?'Rest':'Rust')+'</div>'
       + '<div style="font-size:12px;color:var(--m);margin-bottom:6px">Agenda</div>'
-      + '<div style="display:flex;gap:8px">'+b('agenda','vol','Vol')+b('agenda','ruim','Ruim')+'</div>';
-    if(w){
-      html += '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--b);display:flex;align-items:center;gap:12px">'
-        + '<span style="font-family:var(--FJ);font-size:30px;line-height:1;color:var(--acc)">'+WEEG_EL[w.element].k+'</span>'
-        + '<div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--m)">'+WEEG_EL[w.element].n+'</div>'
-        + '<div style="font-size:13px;color:var(--m);line-height:1.5">'+w.reden+'</div></div></div>'
-        + '<button class="btn pri" style="width:100%;margin-top:14px" onclick="kpVastleggen()">Leg vast</button>';
-    }
-    html += '</div>';
+      + '<div style="display:flex;gap:8px">'+b('agenda','vol',isEn?'Full':'Vol')+b('agenda','ruim',isEn?'Open':'Ruim')+'</div>'
+      + (w ? '<button class="btn pri" style="width:100%;margin-top:16px" onclick="kpVastleggen()">'+(isEn?'Set bearing':'Leg vast')+'</button>' : '')
+      + '</div>';
     if(weegEl) weegEl.innerHTML = html;
-    toonNaald((d.beweging || d.agenda) ? leesNaald(hist, { beweging: d.beweging, agenda: d.agenda }) : leesNaaldStand(hist));
     toonVraag(w ? w.element : null);
   }
 }
