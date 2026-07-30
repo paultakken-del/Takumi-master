@@ -51,6 +51,7 @@
 [data-theme="light"] .ni.on{color:var(--ink);background:rgba(196,83,42,.06);border-left-color:var(--acc)}
 [data-theme="light"] .sb-foot{color:var(--f)}
 [data-theme="light"] #theme-btn{color:var(--m)!important;border-color:var(--bm)!important}
+[data-theme="light"] #text-btn{color:var(--m)!important;border-color:var(--bm)!important}
 [data-theme="light"] #lang-btn{color:var(--m)!important;border-color:var(--bm)!important}
 [data-theme="light"] #lang-btn:hover{color:var(--ink)!important;border-color:var(--ink)!important}
 [data-theme="light"] .sb-logout{color:var(--m)!important;border-color:var(--bm)!important}
@@ -100,6 +101,7 @@
 [data-theme="dark"] .dr-mood{border-color:rgba(255,255,255,.1);color:#ede9e0}
 [data-theme="dark"] .dr-mood.on{background:#ede9e0;color:#181714;border-color:#ede9e0}
 [data-theme="dark"] #theme-btn{color:rgba(255,255,255,.4)!important;border-color:rgba(255,255,255,.15)!important}
+[data-theme="dark"] #text-btn{color:rgba(255,255,255,.4)!important;border-color:rgba(255,255,255,.15)!important}
 [data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select{background:#1e1d1a;color:#ede9e0;border-color:rgba(255,255,255,.1)}
 [data-theme="dark"] .aai{background:#1e1d1a;border-color:rgba(255,255,255,.15);color:#ede9e0}
 [data-theme="dark"] .tb{border-bottom-color:rgba(255,255,255,.07)}
@@ -823,6 +825,7 @@ setTimeout(function(){ var el = document.getElementById('wave-intro'); if(el) el
   <div class="sb-foot" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
       <span data-i18n="nav.subtitle">persoonlijk adviesplatform</span>
       <div style="display:flex;align-items:center;gap:6px">
+        <button onclick="cycleTextScale()" id="text-btn" style="background:none;border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:3px 10px;cursor:pointer;font-size:11px;color:rgba(255,255,255,.4);font-family:var(--F);transition:all .2s" title="Tekstgrootte">A</button>
         <button onclick="setLang(LANG === 'nl' ? 'en' : 'nl')" id="lang-btn" style="background:none;border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:3px 10px;cursor:pointer;font-size:10.5px;color:rgba(255,255,255,.55);font-family:var(--F);transition:all .2s;letter-spacing:.05em;font-weight:500" title="Switch language"></button>
         <button onclick="toggleTheme()" id="theme-btn" style="background:none;border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:3px 10px;cursor:pointer;font-size:11px;color:rgba(255,255,255,.4);font-family:var(--F);transition:all .2s" title="Dag/nacht">☀</button>
       </div>
@@ -2218,7 +2221,7 @@ var MODEL_FAST  = 'claude-haiku-4-5-20251001';
 // App-versie — wordt onderaan de sidebar getoond.
 // Bump regel: bij elke push naar main +0.01. Drie decimalen voor
 // consistente weergave (0.100, 0.110, 0.120, ...).
-const APP_VERSION = '0.640';
+const APP_VERSION = '0.650';
 
 const S={
   cur:'board',
@@ -8369,6 +8372,25 @@ function toast(msg,type){
   setTimeout(()=>el.remove(),3500);
 }
 
+
+// ── TEKSTGROOTTE — drie standen voor vermoeide ogen ──────────────
+var TEXT_SCALES = [1, 1.15, 1.3];
+var _textScale = parseFloat(localStorage.getItem('tm2_textscale')) || 1;
+
+function applyTextScale(s){
+  _textScale = s;
+  document.body.style.zoom = (s === 1 ? '' : String(s));
+  var b = document.getElementById('text-btn');
+  if(b) b.textContent = (s === 1 ? 'A' : (s === 1.15 ? 'A+' : 'A++'));
+  localStorage.setItem('tm2_textscale', String(s));
+}
+
+function cycleTextScale(){
+  var i = TEXT_SCALES.indexOf(_textScale);
+  if(i < 0) i = 0;
+  applyTextScale(TEXT_SCALES[(i + 1) % TEXT_SCALES.length]);
+}
+applyTextScale(_textScale);
 
 // ── DARK/LIGHT MODE ───────────────────────────────────────────
 // Volgt het systeemthema (beter contrast bij dag en nacht). Alleen een
