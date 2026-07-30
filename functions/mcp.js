@@ -162,7 +162,7 @@ function weeg(co) {
   else if (b === 'rust' && a === 'ruim')     { el = 'ka';  reden = 'Al een tijd geen beweging, wel ruimte. Vuur: wakker het voorzichtig weer aan.'; }
   else if (b === 'gereden')                  { el = 'chi'; reden = 'Je hebt bewogen. Aarde: de gewoonte draagt je.'; }
   else if (b === 'hersteld')                 { el = 'sui'; reden = 'Uitgerust. Water: bouw de flow rustig op.'; }
-  else if (b === 'rust')                     { el = 'sui'; reden = 'Al een tijd rust. Water: voel eerst wat er stroomt.'; }
+  else if (b === 'rust')                     { el = 'sui'; reden = 'Winterslaap. Water: voel eerst wat er stroomt.'; }
   else if (a === 'vol')                      { el = 'ku';  reden = 'Een volle agenda. Leegte: bewaak de stilte.'; }
   else                                       { el = 'ka';  reden = 'Een ruime agenda. Vuur: kies je richting.'; }
   return { element: el, reden, coordinaten: co };
