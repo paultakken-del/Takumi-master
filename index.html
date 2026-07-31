@@ -7192,7 +7192,7 @@ function weegLokaal(b,a){
   else if(b==='rust'&&a==='ruim'){el='ka';reden='Al een tijd geen beweging, wel ruimte. Vuur: wakker het voorzichtig weer aan.';}
   else if(b==='gereden'){el='chi';reden='Je hebt bewogen. Aarde: de gewoonte draagt je.';}
   else if(b==='hersteld'){el='sui';reden='Uitgerust. Water: bouw de flow rustig op.';}
-  else if(b==='rust'){el='sui';reden='Winterslaap. Water: voel eerst wat er stroomt.';}
+  else if(b==='rust'){el='sui';reden='Gevlucht. Water: voel eerst wat er stroomt.';}
   else if(a==='vol'){el='ku';reden='Een volle agenda. Leegte: bewaak de stilte.';}
   else {el='ka';reden='Een ruime agenda. Vuur: kies je richting.';}
   var doy=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000);
@@ -7492,7 +7492,7 @@ function renderKompas(){
     var html = '<div class="card" style="padding:18px;margin-top:'+(w?'18px':'6px')+'">'
       + intro
       + '<div style="font-size:12px;color:var(--m);margin-bottom:6px">'+(isEn?'Movement':'Beweging')+'</div>'
-      + '<div style="display:flex;gap:8px;margin-bottom:14px">'+b('beweging','gereden',isEn?'Active':'Bewogen')+b('beweging','hersteld',isEn?'Recovery':'Herstel')+b('beweging','rust',isEn?'Hibernating':'Winterslaap')+'</div>'
+      + '<div style="display:flex;gap:8px;margin-bottom:14px">'+b('beweging','gereden',isEn?'Active':'Bewogen')+b('beweging','hersteld',isEn?'Recovery':'Herstel')+b('beweging','rust',isEn?'Fled':'Gevlucht')+'</div>'
       + '<div style="font-size:12px;color:var(--m);margin-bottom:6px">Agenda</div>'
       + '<div style="display:flex;gap:8px">'+b('agenda','vol',isEn?'Full':'Vol')+b('agenda','ruim',isEn?'Open':'Ruimte')+'</div>'
       + (w ? '<button class="btn pri" style="width:100%;margin-top:16px" onclick="kpVastleggen()">'+(isEn?'Set bearing':'Leg vast')+'</button>' : '')
@@ -7688,7 +7688,7 @@ function drawPulse(){
       <div style="display:flex;gap:8px;margin-bottom:var(--sp-md)">
         <button class="btn sm ${sel('beweging','gereden')}" style="flex:1" onclick="weegToggle('beweging','gereden',this)">Bewogen</button>
         <button class="btn sm ${sel('beweging','hersteld')}" style="flex:1" onclick="weegToggle('beweging','hersteld',this)">Herstel</button>
-        <button class="btn sm ${sel('beweging','rust')}" style="flex:1" onclick="weegToggle('beweging','rust',this)">Winterslaap</button>
+        <button class="btn sm ${sel('beweging','rust')}" style="flex:1" onclick="weegToggle('beweging','rust',this)">Gevlucht</button>
       </div>
       <div style="font-size:12px;color:var(--m);margin-bottom:6px">Agenda: hoe oogt vandaag?</div>
       <div style="display:flex;gap:8px;margin-bottom:var(--sp-md)">
