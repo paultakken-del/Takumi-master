@@ -309,7 +309,9 @@ export async function onRequestGet({ env }) {
   ]);
   const m = (reeks || [])[reeks ? reeks.length - 1 : 0] || null;
   return json({ macro, crypto, log: log || [],
-    meting: m ? { t: m.t, fouten: m.fouten || null, sleutels: { fred: !!env.FRED_KEY, radar: !!env.RADAR_KEY } } : null });
+    meting: m ? { t: m.t, macro: m.macro, crypto: m.crypto, etfAantal: Object.keys(m.etf || {}).length,
+      fouten: m.fouten || null, reeksLengte: (reeks || []).length,
+      sleutels: { fred: !!env.FRED_KEY, radar: !!env.RADAR_KEY } } : null });
 }
 
 export async function onRequestPost({ request, env }) {

@@ -3,7 +3,12 @@ on:
   schedule:
     - cron: "23 3 * * *"   # dagelijks ~05:23 NL: meting (oneven minuut tegen GitHub-drukte)
     - cron: "37 18 * * 0"  # zondag ~20:37 NL: weeksignalen, ruim voor de maandagbriefing
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      signalen:
+        description: "Ook signalen genereren (kost AI-aanroepen)"
+        type: boolean
+        default: false
 jobs:
   radar:
     runs-on: ubuntu-latest
@@ -18,7 +23,7 @@ jobs:
             -d '{"stap":"meting"}'
           cut -c1-400 /tmp/uit.json; echo
       - name: Maandagsignalen
-        if: github.event.schedule == '37 18 * * 0' || github.event_name == 'workflow_dispatch'
+        if: github.event.schedule == '37 18 * * 0' || inputs.signalen
         run: |
           set -euo pipefail
           for soort in macro crypto; do
