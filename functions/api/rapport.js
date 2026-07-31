@@ -62,6 +62,29 @@ function scoreMacro(log) {
   return { n, raak: rijen.filter((r) => r.hit).length, brier: n ? Math.round((rijen.reduce((a, r) => a + r.brier, 0) / n) * 1000) / 1000 : null, metingen: rijen.slice(-40) };
 }
 
+function liquiditeitBlok(reeks) {
+  if (!reeks || !reeks.length) return null;
+  const nu = reeks[reeks.length - 1];
+  const doel = Date.now() - 30 * 24 * 3600 * 1000;
+  let oud = null;
+  for (const m of reeks) if (!oud || Math.abs(m.t - doel) < Math.abs(oud.t - doel)) oud = m;
+  const bruikbaar = reeks.length > 3;
+  const veld = (groep, naam) => {
+    const w = (nu[groep] || {})[naam];
+    if (!Number.isFinite(w)) return null;
+    const v = bruikbaar ? (oud[groep] || {})[naam] : null;
+    return { waarde: w, delta30d: Number.isFinite(v) ? Math.round((w - v) * 100) / 100 : null };
+  };
+  return {
+    gemetenOp: new Date(nu.t).toISOString(),
+    nettoLiquiditeitMrdUSD: veld('macro', 'netliq'),
+    financieleCondities: veld('macro', 'nfci'),
+    dollarindex: veld('macro', 'dxy'),
+    stablecoinAanbodMrdUSD: veld('crypto', 'stables'),
+    toelichting: 'Gemeten kapitaalstroom-indicatoren. Bewust NIET verwerkt in de kansverdelingen hierboven; die weging wordt herzien bij de kwartaalreview van oktober 2026. NFCI: negatief = ruime condities.',
+  };
+}
+
 function signaalBlok(x) {
   if (!x) return null;
   const s = x.sig;
@@ -132,6 +155,25 @@ function alsTekst(rapport, md) {
     if (blok.synthese) r.push(blok.synthese);
     for (const c of blok.calls) r.push(`- ${c.naam}: ${c.richting} ${c.kMin}\u2013${c.kMax}%${c.reden ? ' (' + c.reden + ')' : ''}`);
   }
+  const L = rapport.liquiditeit;
+  if (L) {
+    const lijn = (naam, x, eenheid) => {
+      if (!x) return null;
+      const d = x.delta30d === null ? '' : ' (' + (x.delta30d > 0 ? '+' : '') + x.delta30d + ' ov. 30d)';
+      return '- ' + naam + ': ' + x.waarde + (eenheid || '') + d;
+    };
+    const regels = [
+      lijn('Netto liquiditeit', L.nettoLiquiditeitMrdUSD, ' mrd'),
+      lijn('Financiele condities (NFCI)', L.financieleCondities, ''),
+      lijn('Dollarindex', L.dollarindex, ''),
+      lijn('Stablecoin-aanbod', L.stablecoinAanbodMrdUSD, ' mrd'),
+    ].filter(Boolean);
+    if (regels.length) {
+      r.push('');
+      r.push((md ? '## ' : '') + 'KAPITAALSTROMEN (gemeten, nog niet gewogen)');
+      r.push(...regels);
+    }
+  }
   if (rapport.trackrecord && rapport.trackrecord.n) {
     r.push('');
     r.push(`${md ? '## ' : ''}TRACKRECORD: n=${rapport.trackrecord.n}, raak ${rapport.trackrecord.raak}/${rapport.trackrecord.n}, Brier ${rapport.trackrecord.brier}`);
@@ -153,15 +195,16 @@ export async function onRequestOptions() {
 
 export async function onRequestGet({ request, env }) {
   try {
-    const [macro, crypto, log] = await Promise.all([
+    const [macro, crypto, log, reeks] = await Promise.all([
       env.TAKUMI_USERS.get('radar:latest:macro', 'json'),
       env.TAKUMI_USERS.get('radar:latest:crypto', 'json'),
       env.TAKUMI_USERS.get('radar:log', 'json'),
+      env.TAKUMI_USERS.get('radar:reeks', 'json'),
     ]);
     const w = wijzigingen(log);
     const tijden = [macro && macro.t, crypto && crypto.t].filter(Boolean);
     const rapport = {
-      versie: '1.2',
+      versie: '1.3',
       bron: 'takumi-master.com/radar',
       gegenereerd: new Date().toISOString(),
       laatstBijgewerkt: tijden.length ? new Date(Math.max(...tijden)).toISOString() : null,
@@ -171,6 +214,7 @@ export async function onRequestGet({ request, env }) {
       crypto: signaalBlok(crypto),
       trackrecord: scoreCrypto(log),
       trackrecordMacro: scoreMacro(log),
+      liquiditeit: liquiditeitBlok(reeks),
       wijzigingSindsVorigeRun: w.leesbaar,
       wijzigingenDetail: w.detail,
     };
