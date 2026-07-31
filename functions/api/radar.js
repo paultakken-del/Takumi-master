@@ -6,6 +6,10 @@
  * POST /api/radar {"stap":"signaal","soort":..}  -> ensemble-weging (3 runs, mediaan)
  *
  * Bronnen: FRED (fredgraph.csv), CoinGecko, Stooq, alternative.me - allemaal zonder sleutel.
+ *
+ * Liquiditeitsmeters (netliq, nfci, dxy, stables) worden sinds 29-7-2026 WEL gemeten
+ * maar bewust NIET gewogen: de weegprompt blijft ongewijzigd tot de kwartaalreview van
+ * oktober 2026, zodat de lopende forward test zuiver blijft.
  * Bescherming: meting max 1x/12u, signaal max 1x/6u per soort; env RADAR_KEY omzeilt.
  */
 
@@ -79,12 +83,18 @@ async function metingMacro(env, fouten) {
     const reeks = await fred(env, serie, jr || 3);
     return bewerk ? bewerk(reeks) : laatsteVan(reeks).v;
   });
-  const [spread, sahm, hy, cpi, unrate, dff, wti, vix, spx] = await Promise.all([
+  const [spread, sahm, hy, cpi, unrate, dff, wti, vix, spx, walcl, rrp, tga, nfci, dxy] = await Promise.all([
     f('spread', 'T10Y2Y', null, 1), f('sahm', 'SAHMREALTIME', null, 2), f('hy', 'BAMLH0A0HYM2', null, 1),
     f('cpi', 'CPIAUCSL', yoy), f('unrate', 'UNRATE', null, 2), f('dff', 'DFF', null, 1),
     f('wti', 'DCOILWTICO', yoy), f('vix', 'VIXCLS', null, 1), f('spx', 'SP500', null, 1),
+    f('walcl', 'WALCL', null, 1), f('rrp', 'RRPONTSYD', null, 1), f('tga', 'WTREGEN', null, 1),
+    f('nfci', 'NFCI', null, 1), f('dxy', 'DTWEXBGS', null, 1),
   ]);
-  return { spread, sahm, hy, cpi, unrate, dff, wti, vix, spx };
+  // netto liquiditeit in miljarden dollar: Fed-balans (mln) / 1000 - reverse repo (mrd) - schatkistrekening (mrd)
+  const netliq = [walcl, rrp, tga].every((x) => Number.isFinite(x))
+    ? Math.round(walcl / 1000 - rrp - tga)
+    : null;
+  return { spread, sahm, hy, cpi, unrate, dff, wti, vix, spx, netliq, nfci, dxy };
 }
 
 async function prijzen(fouten) {
@@ -108,6 +118,23 @@ async function prijzen(fouten) {
   return { btc: Number.isFinite(btc) ? btc : null, eth: Number.isFinite(eth) ? eth : null };
 }
 
+async function stablecoins(fouten) {
+  // aanbod USDT+USDC in miljarden: instroommeter voor crypto
+  const cg = await veilig(fouten, 'stables-coingecko', async () => {
+    const j = await haalJson('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=tether,usd-coin');
+    return j.reduce((a, c) => a + (c.market_cap || 0), 0);
+  });
+  if (Number.isFinite(cg) && cg > 0) return Math.round(cg / 1e9);
+  const cp = await veilig(fouten, 'stables-coinpaprika', async () => {
+    const [t, u] = await Promise.all([
+      haalJson('https://api.coinpaprika.com/v1/tickers/usdt-tether'),
+      haalJson('https://api.coinpaprika.com/v1/tickers/usdc-usd-coin'),
+    ]);
+    return t.quotes.USD.market_cap + u.quotes.USD.market_cap;
+  });
+  return Number.isFinite(cp) && cp > 0 ? Math.round(cp / 1e9) : null;
+}
+
 async function metingCrypto(fouten) {
   const { btc, eth } = await prijzen(fouten);
   // dominantie: CoinGecko -> Coinpaprika
@@ -123,11 +150,13 @@ async function metingCrypto(fouten) {
   }
   const fng = await veilig(fouten, 'fng', async () =>
     parseInt((await haalJson('https://api.alternative.me/fng/')).data[0].value, 10));
+  const stables = await stablecoins(fouten);
   return {
     btc, eth,
     ethbtc: btc && eth ? Math.round((eth / btc) * 100000) / 100000 : null,
     dominantie,
     fng: Number.isFinite(fng) ? fng : null,
+    stables,
   };
 }
 
