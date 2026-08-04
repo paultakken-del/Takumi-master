@@ -33,4 +33,5 @@ Content-Signal: search=yes, ai-train=no, ai-input=yes
 Allow: /api/
 Disallow: /stats
 Disallow: /stats.html
+Disallow: /utreg84-k7m2.html
 Allow: /

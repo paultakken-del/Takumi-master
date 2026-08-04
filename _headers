@@ -14,3 +14,7 @@
   X-Robots-Tag: noindex, nofollow
 /stats.html
   X-Robots-Tag: noindex, nofollow
+
+# Verborgen spelpagina: niet indexeren
+/utreg84-k7m2.html
+  X-Robots-Tag: noindex, nofollow

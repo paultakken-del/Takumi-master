@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Utreg 84">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex, nofollow">
+<title>UTREG 84</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:#000;overscroll-behavior:none}
+  body{font-family:monospace;touch-action:none;user-select:none;-webkit-user-select:none}
+
+  /* het speelveld vult het scherm en houdt de verhouding 8 op 5 */
+  canvas{position:fixed;inset:0;margin:auto;display:block;background:#000;
+         image-rendering:pixelated;image-rendering:crisp-edges;
+         width:100%;height:auto;max-width:100%;max-height:100%;aspect-ratio:8/5}
+
+  /* bediening ligt over het beeld, met ruimte voor de ronde schermhoeken */
+  #pad{position:fixed;inset:0;pointer-events:none;z-index:10}
+  #stick,#fire{position:fixed;pointer-events:auto;opacity:.42;transition:opacity .15s}
+  #stick:active,#fire:active,#pad.actief #stick,#pad.actief #fire{opacity:.75}
+  #stick{width:134px;height:134px;border-radius:50%;background:#141414;border:3px solid #8a8a8a;
+         left:calc(env(safe-area-inset-left,0px) + 14px);bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
+  #knob{position:absolute;width:56px;height:56px;border-radius:50%;background:#9a9a9a;
+        left:35px;top:35px;pointer-events:none}
+  #fire{width:112px;height:112px;border-radius:50%;background:#C03028;border:4px solid #FF6050;
+        color:#fff;font:bold 15px monospace;line-height:1.2;
+        right:calc(env(safe-area-inset-right,0px) + 16px);bottom:calc(env(safe-area-inset-bottom,0px) + 22px)}
+
+  /* knop voor schermvullend, verdwijnt als de app al schermvullend draait */
+  #vol{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);
+       right:calc(env(safe-area-inset-right,0px) + 10px);z-index:11;pointer-events:auto;
+       background:rgba(0,0,0,.5);color:#ddd;border:1px solid #666;border-radius:6px;
+       font:11px monospace;padding:6px 9px;opacity:.6}
+  body.staat #vol{display:none}
+
+  /* staand vasthouden: vraag om te draaien */
+  #draai{position:fixed;inset:0;z-index:20;display:none;background:#0C400C;color:#fff;
+         flex-direction:column;align-items:center;justify-content:center;gap:14px;
+         font:14px monospace;text-align:center;padding:24px}
+  #draai b{font-size:20px;color:#FF8878}
+  @media (orientation:portrait) and (pointer:coarse){ #draai{display:flex} }
+
+  /* op een computer geen aanraakbediening */
+  @media (hover:hover) and (pointer:fine){
+    #pad,#vol{display:none}
+    canvas{width:auto;height:100%;max-width:100%}
+  }
+</style>
+</head>
+<body>
+  <canvas id="c" width="320" height="200"></canvas>
+  <div id="pad">
+    <div id="stick"><div id="knob"></div></div>
+    <button id="fire">KICK</button>
+  </div>
+  <button id="vol">SCHERMVULLEND</button>
+  <div id="draai">
+    <b>DRAAI JE TOESTEL</b>
+    <div>Utreg 84 speelt liggend.</div>
+    <div style="opacity:.7">Tip: zet hem via Deel op je beginscherm,<br>dan speelt hij zonder adresbalk.</div>
+  </div>
+<script>
+(function(){
+  const doc=document.documentElement, knop=document.getElementById("vol");
+  const staand=window.matchMedia("(display-mode: standalone)");
+  const alVol=()=>document.fullscreenElement||document.webkitFullscreenElement
+    ||navigator.standalone||staand.matches;
+  const merk=()=>document.body.classList.toggle("staat",!!alVol());
+  merk();
+  document.addEventListener("fullscreenchange",merk);
+  knop.addEventListener("click",async()=>{
+    try{
+      if(doc.requestFullscreen)await doc.requestFullscreen({navigationUI:"hide"});
+      else if(doc.webkitRequestFullscreen)doc.webkitRequestFullscreen();
+      else knop.textContent="ZET OP BEGINSCHERM";
+      if(screen.orientation&&screen.orientation.lock)
+        screen.orientation.lock("landscape").catch(()=>{});
+    }catch(e){knop.textContent="ZET OP BEGINSCHERM"}
+    merk();
+  });
+  // bediening lichter maken zodra je hem aanraakt
+  const pad=document.getElementById("pad");
+  const aan=()=>pad.classList.add("actief");
+  const uit=()=>setTimeout(()=>pad.classList.remove("actief"),1200);
+  for(const el of [document.getElementById("stick"),document.getElementById("fire")]){
+    el.addEventListener("touchstart",aan,{passive:true});
+    el.addEventListener("touchend",uit,{passive:true});
+  }
+  // dubbeltik zoomt niet
+  document.addEventListener("gesturestart",e=>e.preventDefault());
+})();
+</script>
+<script>
+"use strict";
+const cv=document.getElementById("c"),ctx=cv.getContext("2d");
+ctx.imageSmoothingEnabled=false;
+
+/* ===== palet ===== */
+const C={blk:"#000000",wht:"#FFFFFF",grass:"#00A000",
+  red:"#C83028",blue:"#4850D8",purple:"#A030A8",grey:"#909090",dgrey:"#606060",
+  skin:"#F09070",skin2:"#B06048",yel:"#F0E060",lgrey:"#D0D0D0",tan:"#B8A080"};
+
+/* ===== tenues: FC Utrecht 1984 tegen de gasten ===== */
+const KITS=[
+ {naam:"UTRECHT",  shirt:"#D82820",light:"#FF8878",sleeve:"#D82820",shorts:"#FFFFFF",sock:"#D82820",sock2:"#FFFFFF",badge:"#FFFFFF"},
+ {naam:"WIT",      shirt:"#F0F0F0",light:"#FFFFFF",sleeve:"#F0F0F0",shorts:"#202020",sock:"#F0F0F0",sock2:"#202020",badge:"#202020"},
+ {naam:"BLAUW",    shirt:"#2038B8",light:"#7890FF",sleeve:"#2038B8",shorts:"#FFFFFF",sock:"#2038B8",sock2:"#FFFFFF",badge:"#FFFFFF"},
+ {naam:"GEEL",     shirt:"#E0C830",light:"#FFF090",sleeve:"#E0C830",shorts:"#202048",sock:"#E0C830",sock2:"#202048",badge:"#202048"},
+ {naam:"GROEN",    shirt:"#188838",light:"#60D080",sleeve:"#188838",shorts:"#FFFFFF",sock:"#188838",sock2:"#FFFFFF",badge:"#FFFFFF"},
+ {naam:"ORANJE",   shirt:"#E07018",light:"#FFA860",sleeve:"#E07018",shorts:"#202020",sock:"#E07018",sock2:"#FFFFFF",badge:"#202020"},
+ {naam:"PAARS",    shirt:"#8828A0",light:"#C878E0",sleeve:"#8828A0",shorts:"#F0F0F0",sock:"#8828A0",sock2:"#F0F0F0",badge:"#F0F0F0"}];
+let kitA=0, kitB=2;
+let KIT=[KITS[kitA],KITS[kitB]];
+const zetTenues=()=>{KIT[0]=KITS[kitA];KIT[1]=KITS[kitB]};
+const KEEP=[
+ {shirt:"#309030",sleeve:"#309030",shorts:"#202020",sock:"#202020",sock2:"#B0B0B0",badge:"#309030"},
+ {shirt:"#A030A8",sleeve:"#A030A8",shorts:"#202020",sock:"#202020",sock2:"#B0B0B0",badge:"#A030A8"}];
+
+/* ===== veld ===== */
+const W={w:940,top:40,bot:193,gy1:97,gy2:135,gx0:22,gx1:918};
+const midX=W.w/2, midY=(W.top+W.bot)/2;
+const SHEAR=1.0;
+const projX=(wx,wy)=>wx+(W.bot-wy)*SHEAR;
+const CAMMAX=projX(W.w,W.top)-320+24;
+let cam=0;
+const SX=(wx,wy)=>Math.round(projX(wx,wy)-cam);
+
+/* ===== geluid ===== */
+let AC=null,snd=true;
+const ac=()=>AC||(AC=new (window.AudioContext||window.webkitAudioContext)());
+function beep(f,d,t,v){if(!snd)return;try{const a=ac(),o=a.createOscillator(),g=a.createGain();
+  o.type=t||"square";o.frequency.value=f;g.gain.value=v||.05;o.connect(g);g.connect(a.destination);
+  o.start();o.frequency.exponentialRampToValueAtTime(Math.max(40,f*.5),a.currentTime+d);
+  g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.stop(a.currentTime+d)}catch(e){}}
+function whistle(){if(!snd)return;try{const a=ac(),t=a.currentTime,dur=.55;
+  const n=(a.sampleRate*dur)|0,b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+  const s=a.createBufferSource();s.buffer=b;
+  const f1=a.createBiquadFilter();f1.type="bandpass";f1.frequency.value=3250;f1.Q.value=16;
+  const f2=a.createBiquadFilter();f2.type="bandpass";f2.frequency.value=3250;f2.Q.value=16;
+  const lfo=a.createOscillator();lfo.frequency.value=26;      // het erwtje in de fluit
+  const lg=a.createGain();lg.gain.value=380;
+  lfo.connect(lg);lg.connect(f1.frequency);lg.connect(f2.frequency);
+  const g=a.createGain();
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(.16,t+.02);g.gain.setValueAtTime(.16,t+.15);
+  g.gain.linearRampToValueAtTime(0,t+.19);
+  g.gain.linearRampToValueAtTime(.16,t+.25);g.gain.setValueAtTime(.16,t+.48);
+  g.gain.linearRampToValueAtTime(0,t+.53);
+  s.connect(f1);f1.connect(f2);f2.connect(g);g.connect(a.destination);
+  lfo.start(t);s.start(t);s.stop(t+dur);lfo.stop(t+dur)}catch(e){}}
+function cheer(){if(!snd)return;try{const a=ac(),n=a.sampleRate*1.6,b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.min(1,i/2500)*(1-i/n);
+  const s=a.createBufferSource();s.buffer=b;const f=a.createBiquadFilter();f.type="bandpass";f.frequency.value=950;
+  const g=a.createGain();g.gain.value=.11;s.connect(f);f.connect(g);g.connect(a.destination);s.start()}catch(e){}}
+
+/* ===== staat ===== */
+let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
+let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
+const HALFREAL=200, MPS=200/HALFREAL;
+let attack=[1,-1];
+/* de bal plakt nooit aan een speler; alleen de keeper kan hem vasthouden */
+const ball={x:midX,y:midY,z:0,vx:0,vy:0,vz:0,held:null,last:null,touch:0};
+
+const FORM=[[0.04,0.50,"K"],[0.20,0.30,"D"],[0.20,0.70,"D"],
+            [0.44,0.24,"M"],[0.44,0.76,"M"],
+            [0.68,0.36,"F"],[0.68,0.64,"F"]];
+let P=[],ctrl=[null,null];
+const homeX=p=>attack[p.team]>0?p.fx*W.w:(1-p.fx)*W.w;
+const homeY=p=>W.top+p.fy*(W.bot-W.top);
+const foeGoal=t=>attack[t]>0?W.gx1:W.gx0;
+const ownGoal=t=>attack[t]>0?W.gx0:W.gx1;
+const humans=()=>players2===2?[0,1]:[0];
+
+function build(){P=[];
+  for(const t of [0,1])for(const f of FORM)
+    P.push({team:t,role:f[2],fx:f[0],fy:f[1],x:0,y:0,z:0,vz:0,dir:t===0?0:4,
+      anim:0,cool:0,dive:0,cel:0,charge:0,moving:false,hold:0})}
+function reset(kt){
+  for(const p of P){p.x=homeX(p);p.y=homeY(p);p.z=0;p.vz=0;p.cool=0;p.dive=0;p.cel=0;
+    p.charge=0;p.anim=0;p.hold=0;p.dir=attack[p.team]>0?0:4;
+    if(p.team!==kt){const d=attack[p.team];
+      if(d>0&&p.x>midX-30)p.x=midX-30; if(d<0&&p.x<midX+30)p.x=midX+30}}
+  const t=P.filter(p=>p.team===kt&&p.role==="F")
+    .sort((a,b)=>Math.abs(a.y-midY)-Math.abs(b.y-midY))[0];
+  t.x=midX-attack[kt]*9;t.y=midY;
+  ball.x=midX;ball.y=midY;ball.z=0;ball.vx=ball.vy=ball.vz=0;
+  ball.held=null;ball.last=null;ball.touch=0;
+  ctrl[0]=nearest(0);ctrl[1]=nearest(1);taker=null;msg="";
+  cam=Math.max(0,Math.min(CAMMAX,projX(midX,midY)-160))}
+
+/* ===== invoer ===== */
+const K={};
+const MAP={ArrowUp:"u0",ArrowDown:"d0",ArrowLeft:"l0",ArrowRight:"r0"," ":"f0",
+           w:"u1",s:"d1",a:"l1",d:"r1",shift:"f1"};
+let fireEdge=[false,false];
+addEventListener("keydown",e=>{const k=MAP[e.key]||MAP[e.key.toLowerCase()];
+  if(k){e.preventDefault();if(!K[k]&&k[0]==="f")fireEdge[+k[1]]=true;K[k]=true}
+  if(!AC)ac();
+  if(state==="menu")menuKey(e.key);
+  else if((e.key===" "||e.key==="Enter")&&(state==="halftime"||state==="fulltime"))advance();
+  if(e.key==="m"||e.key==="M")snd=!snd});
+addEventListener("keyup",e=>{const k=MAP[e.key]||MAP[e.key.toLowerCase()];if(k){e.preventDefault();K[k]=false}});
+const stick=document.getElementById("stick"),knob=document.getElementById("knob");
+let sid=null;
+function stickAt(t){const r=stick.getBoundingClientRect();
+  let dx=(t.clientX-r.left-r.width/2)/(r.width/2),dy=(t.clientY-r.top-r.height/2)/(r.height/2);
+  const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l}
+  knob.style.left=(35+dx*34)+"px";knob.style.top=(35+dy*34)+"px";
+  const dz=.32;K.l0=dx<-dz;K.r0=dx>dz;K.u0=dy<-dz;K.d0=dy>dz;return{dx,dy}}
+stick.addEventListener("touchstart",e=>{e.preventDefault();if(!AC)ac();
+  sid=e.changedTouches[0].identifier;const v=stickAt(e.changedTouches[0]);
+  if(state==="menu")menuKey(Math.abs(v.dx)>Math.abs(v.dy)?(v.dx>0?"ArrowRight":"ArrowLeft"):(v.dy>0?"ArrowDown":"ArrowUp"))});
+stick.addEventListener("touchmove",e=>{e.preventDefault();
+  const t=[...e.touches].find(t=>t.identifier===sid);if(t)stickAt(t)});
+stick.addEventListener("touchend",e=>{e.preventDefault();sid=null;
+  knob.style.left="35px";knob.style.top="35px";K.l0=K.r0=K.u0=K.d0=false});
+const fb=document.getElementById("fire");
+fb.addEventListener("touchstart",e=>{e.preventDefault();if(!AC)ac();
+  if(!K.f0)fireEdge[0]=true;K.f0=true;
+  if(state==="menu")menuFire();else if(state==="halftime"||state==="fulltime")advance()});
+fb.addEventListener("touchend",e=>{e.preventDefault();K.f0=false});
+cv.addEventListener("pointerdown",()=>{if(!AC)ac()});
+function menuFire(){
+  if(menuPage===0){menuPage=1;menuSel=0;beep(700,.06)}
+  else start()}
+function menuKey(k){
+  if(menuPage===0){
+    if(k===" "||k==="Enter"||k==="ArrowRight"||k==="ArrowDown")menuFire();
+    return}
+  const stap=d=>{
+    if(menuSel===0)level=((level-1+d+9)%9)+1;
+    else if(menuSel===1)players2=players2===1?2:1;
+    else if(menuSel===2){kitA=(kitA+d+KITS.length)%KITS.length;if(kitA===kitB)kitA=(kitA+d+KITS.length)%KITS.length}
+    else {kitB=(kitB+d+KITS.length)%KITS.length;if(kitB===kitA)kitB=(kitB+d+KITS.length)%KITS.length}
+    zetTenues();beep(560,.05)};
+  if(k==="ArrowLeft")stap(-1);
+  else if(k==="ArrowRight")stap(1);
+  else if(k==="ArrowUp"){menuSel=(menuSel+3)%4;beep(400,.04)}
+  else if(k==="ArrowDown"){menuSel=(menuSel+1)%4;beep(400,.04)}
+  else if(k===" "||k==="Enter")start()}
+function start(){score=[0,0];clock=0;half=1;attack=[1,-1];build();reset(0);
+  P.forEach((p,i)=>{                            // opkomen vanaf de zijlijn
+    p.spotX=p.x;p.spotY=p.y;
+    p.x=midX-135+i*20;p.y=W.bot+4;p.dir=6;p.anim=i*.7});
+  state="entry";stateT=0;msg=""}
+function advance(){
+  if(state==="halftime"){half=2;attack=[-1,1];reset(1);state="kickoff";stateT=0;whistle()}
+  else if(state==="fulltime")state="menu"}
+
+/* ===== hulp ===== */
+const D8=[[1,0],[.707,.707],[0,1],[-.707,.707],[-1,0],[-.707,-.707],[0,-1],[.707,-.707]];
+const dirOf=(dx,dy)=>((Math.round(Math.atan2(dy,dx)/(Math.PI/4))%8)+8)%8;
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+function inOwnBox(t){const gx=ownGoal(t);
+  return Math.abs(ball.x-gx)<74&&ball.y>W.gy1-36&&ball.y<W.gy2+36}
+const lockT=[0,0];
+function ctrlFor(t){
+  if(inOwnBox(t))return P.find(p=>p.team===t&&p.role==="K");
+  if(lockT[t]>0&&ctrl[t]&&ctrl[t].role!=="K")return ctrl[t];
+  return nearest(t)||ctrl[t]}
+function wissel(t){                       // korte klik zonder bal: volgende speler pakken
+  const veld=P.filter(p=>p.team===t&&p.role!=="K")
+    .sort((a,b)=>Math.hypot(a.x-ball.x,a.y-ball.y)-Math.hypot(b.x-ball.x,b.y-ball.y));
+  if(veld.length<2)return;
+  const i=veld.indexOf(ctrl[t]);
+  ctrl[t]=veld[(i+1)%veld.length];
+  lockT[t]=2;beep(660,.05,"square",.05)}
+function nearest(t){let b=null,d=1e9;for(const p of P){if(p.team!==t||p.role==="K")continue;
+  const dd=Math.hypot(p.x-ball.x,p.y-ball.y);if(dd<d){d=dd;b=p}}return b}
+function turn(p,dx,dy,dt){          // niet elke frame een andere kant op kijken
+  p.dirT=(p.dirT||0)-dt;
+  const nd=dirOf(dx,dy);
+  if(nd===p.dir){p.dirT=0;return}
+  if(p.dirT<=0){p.dir=nd;p.dirT=.18}}
+const clampP=p=>{p.x=Math.max(W.gx0+5,Math.min(W.gx1-5,p.x));
+  p.y=Math.max(W.top-4,Math.min(W.bot+4,p.y))};
+
+/* ===== balacties ===== */
+const isHuman=p=>humans().includes(p.team)&&p===ctrl[p.team];
+function inward(p,vy){        // computerspelers spelen de bal niet zomaar de zijlijn over
+  if(isHuman(p))return vy;
+  if(ball.y<W.top+16&&vy<0)return -vy;
+  if(ball.y>W.bot-16&&vy>0)return -vy;
+  return vy}
+let aiPace=34;
+function dribble(p,dt){         // bal blijft voor de voet en volgt jouw eigen snelheid
+  const d=D8[p.dir];
+  const tx=p.x+d[0]*10, ty=p.y+d[1]*7+2;
+  const k=Math.min(1,12*dt);
+  ball.x+=(tx-ball.x)*k;ball.y+=(ty-ball.y)*k;
+  ball.z=0;ball.vz=0;
+  ball.vx=p.mvx||0;ball.vy=p.mvy||0;      // sta je stil, dan ligt de bal stil
+  ball.last=p;ball.touch=0;
+  if(!p.tick||p.tick<=0){p.tick=.28;beep(520,.035,"square",.025)}
+  p.tick-=dt}
+function nudge(p,speed){
+  const d=D8[p.dir];
+  ball.vx=d[0]*speed;ball.vy=inward(p,d[1]*speed*.55);ball.vz=0;
+  ball.last=p;ball.touch=.1;beep(520,.04,"square",.03)}
+function kick(p,power,loft){        // korte druk is vlak, lang vasthouden geeft een hoge bal
+  const centraal=Math.abs(p.y-midY)<34;              // vanaf de flank een voorzet, centraal een schot
+  const dichtbij=Math.abs(foeGoal(p.team)-p.x)<230&&centraal;
+  const d=D8[p.dir];
+  const sp=(power||1)*(loft?(dichtbij?205:150):200);
+  ball.vx=d[0]*sp;ball.vy=inward(p,d[1]*sp*.55);
+  ball.vz=loft?(dichtbij?108:92):0;
+  ball.last=p;ball.touch=.25;p.cool=.28;beep(loft?260:400,.1,"square",.07)}
+function headShot(p){               // lange klik bij een hoge bal: kopstoot op doel
+  const d=D8[p.dir];
+  ball.z=Math.min(ball.z,22);
+  ball.vx=d[0]*195;ball.vy=inward(p,d[1]*195*.5);ball.vz=8;
+  ball.last=p;ball.touch=.25;p.cool=.26;beep(560,.09,"square",.07)}
+function head(p){                   // korte klik: gecontroleerde kopbal
+  const d=D8[p.dir], near=Math.abs(foeGoal(p.team)-p.x)<150;
+  const sp=near?185:58;
+  ball.z=Math.min(ball.z,20);
+  ball.vx=d[0]*sp;ball.vy=inward(p,d[1]*sp*.5);ball.vz=near?14:90;
+  ball.last=p;ball.touch=.2;p.cool=.16;beep(760,.07,"triangle",.06)}
+function goal(team){scorer=team;score[team]++;state="goal";stateT=0;msg="GOAL!";
+  ball.held=null;whistle();cheer();for(const p of P)if(p.team===team)p.cel=1}
+function setPiece(type,team,x,y){
+  setType=type;ball.x=x;ball.y=y;ball.z=0;ball.vx=ball.vy=ball.vz=0;ball.held=null;ball.touch=0;
+  let t=null;
+  if(type==="goalkick")t=P.find(p=>p.team===team&&p.role==="K");
+  else{let bd=1e9;for(const p of P){if(p.team!==team||p.role==="K")continue;
+    const d=Math.hypot(p.x-x,p.y-y);if(d<bd){bd=d;t=p}}}
+  t.x=x-(type==="throwin"?0:9*attack[team]);
+  t.y=y+(type==="throwin"?6*(y<midY?1:-1):0);
+  t.cool=0;t.charge=0;t.dir=dirOf(foeGoal(team)-t.x,midY-t.y);
+  taker=t;takerT=0;ctrl[team]=t;
+  state="setpiece";stateT=0;
+  msg=type==="throwin"?"INWORP":type==="corner"?"CORNER":"DOELTRAP";whistle()}
+/* Afstanden bij hervattingen. Het veld is 940 bij 153, dus ongeveer 9 pixels
+   per meter in de breedte en 2,2 in de diepte. Daarom telt diepte vier keer zwaarder. */
+const AFSTAND={corner:82,throwin:32,goalkick:0};
+function boxUit(t){                      // grenzen van het strafschopgebied van ploeg t
+  const gx=ownGoal(t), d=attack[t]>0?1:-1;
+  return {gx,d,rand:gx+d*66,y1:W.gy1-32,y2:W.gy2+32}}
+function teDichtbij(p){
+  if(!taker)return false;
+  if(p.team===taker.team||p.role==="K")return false;
+  if(setType==="goalkick"){
+    const b=boxUit(taker.team);
+    return (p.x-b.gx)*b.d>=-2&&(p.x-b.rand)*b.d<=0&&p.y>b.y1&&p.y<b.y2}
+  const need=AFSTAND[setType]||32;
+  return Math.hypot(p.x-ball.x,(p.y-ball.y)*4)<need}
+function keeperRuimte(dt){               // bal in de handen van de keeper: zestien vrijmaken
+  const gk=ball.held;
+  if(!gk||gk.role!=="K")return;
+  const b=boxUit(gk.team);
+  for(const p of P){
+    if(p.team===gk.team||p.role==="K")continue;
+    const inBox=(p.x-b.gx)*b.d>=-2&&(p.x-b.rand)*b.d<=0&&p.y>b.y1&&p.y<b.y2;
+    if(!inBox)continue;
+    p.x+=b.d*80*dt;
+    p.moving=true;p.anim+=dt*6;p.walkT=.18;clampP(p)}}
+function houdAfstand(dt){                // tegenstanders wijken tot ze ver genoeg staan
+  if(state!=="setpiece"||!taker)return true;
+  let vrij=true;
+  for(const p of P){
+    if(!teDichtbij(p))continue;
+    vrij=false;
+    if(setType==="goalkick"){
+      const b=boxUit(taker.team);
+      p.x+=b.d*58*dt;
+    }else{
+      let dx=p.x-ball.x, dy=p.y-ball.y;
+      let n=Math.hypot(dx,dy);
+      if(n<7){                                   // pal op de nemer: vaste uitwijkrichting
+        dx=(p.x<=ball.x?-1:1);
+        dy=(ball.y<midY?1:-1)*.6;
+        n=Math.hypot(dx,dy);
+      }
+      p.x+=dx/n*95*dt;p.y+=dy/n*95*dt*.35;
+    }
+    p.moving=true;p.anim+=dt*6;p.walkT=.18;
+    clampP(p);
+  }
+  return vrij}
+function release(p){
+  // de bal komt automatisch in het spel, naar de best geplaatste medespeler
+  let mate=null,md=1e9;
+  for(const q of P){if(q.team!==p.team||q===p||q.role==="K")continue;
+    if((q.x-p.x)*attack[p.team]<-30)continue;
+    const d=dist(p,q);if(d<md&&d>25){md=d;mate=q}}
+  const tx=setType==="corner"?foeGoal(p.team):(mate?mate.x:p.x+attack[p.team]*120);
+  const ty=setType==="corner"?midY:(mate?mate.y:midY);
+  p.dir=dirOf(tx-p.x,ty-p.y);
+  if(setType==="throwin"){
+    const d=D8[p.dir], inw=p.y<midY?1:-1;
+    let dy=d[1];if(dy*inw<.2)dy=inw*.5;
+    const l=Math.hypot(d[0],dy)||1;
+    ball.x=p.x;ball.y=p.y;ball.z=32;
+    ball.vx=d[0]/l*95;ball.vy=dy/l*95;ball.vz=46;
+    ball.last=p;ball.touch=.4;p.cool=.7;beep(300,.1,"triangle",.05)}
+  else kick(p,setType==="corner"?.85:.9,true);
+  taker=null;state="play";msg=""}
+
+/* ===== update ===== */
+function update(dt){
+  stateT+=dt;
+  if(state==="menu"||state==="halftime"||state==="fulltime"){fireEdge[0]=fireEdge[1]=false;return}
+  if(state==="goal"){
+    for(const p of P)if(p.cel){p.anim+=dt*10;p.moving=true;p.x+=attack[p.team]*24*dt;
+      p.dir=attack[p.team]>0?0:4;clampP(p)}
+    ballPhysics(dt);
+    if(stateT>2.8){reset(scorer===0?1:0);state="kickoff";stateT=0;whistle()}
+    fireEdge[0]=fireEdge[1]=false;return}
+  if((state==="entry"||state==="kickoff")&&fireEdge[0]){    // snelstart
+    if(state==="entry")for(const p of P){p.x=p.spotX;p.y=p.spotY;p.moving=false;p.walkT=0}
+    state="play";msg="";stateT=0;whistle();
+    fireEdge[0]=fireEdge[1]=false}
+  if(state==="ceremonie"){                      // huldiging in de middencirkel
+    for(const p of P){
+      p.moving=false;
+      if(p.team!==winnaar){p.walkT=0;continue}
+      const dx=p.spotX-p.x, dy=p.spotY-p.y, l=Math.hypot(dx,dy);
+      if(l>3){p.x+=dx/l*52*dt;p.y+=dy/l*52*dt*.72;turn(p,dx,dy,dt);
+        p.anim+=dt*6;p.moving=true;p.cel=0}
+      else{p.dir=2;p.cel=1}
+      p.walkT=p.moving?.18:Math.max(0,(p.walkT||0)-dt);
+      clampP(p)}
+    const wc=Math.max(0,Math.min(CAMMAX,projX(midX,midY)-160));
+    cam+=(wc-cam)*Math.min(1,3*dt);
+    msg=stateT>3?"HULDIGING":"";
+    if(stateT>9||fireEdge[0]){state="fulltime";msg=""}
+    fireEdge[0]=fireEdge[1]=false;return}
+  if(state==="entry"){                          // de ploegen lopen het veld op
+    let klaar=true;
+    for(const p of P){
+      p.moving=false;
+      const dx=p.spotX-p.x, dy=p.spotY-p.y, l=Math.hypot(dx,dy);
+      if(l>3){klaar=false;
+        p.x+=dx/l*46*dt;p.y+=dy/l*46*dt*.72;
+        turn(p,dx,dy,dt);p.anim+=dt*5;p.moving=true}
+      p.walkT=p.moving?.18:Math.max(0,(p.walkT||0)-dt)}
+    msg=stateT<3?"DE PLOEGEN KOMEN OP":"";
+    const w=Math.max(0,Math.min(CAMMAX,projX(midX,midY)-160));
+    cam+=(w-cam)*Math.min(1,3*dt);
+    if((klaar&&stateT>2.5)||stateT>9){state="kickoff";stateT=0;whistle()}
+    fireEdge[0]=fireEdge[1]=false;return}
+  if(state==="kickoff"){msg="AFTRAP";if(stateT>.7){state="play";msg=""}}
+  if(state==="play"){clock+=dt*MPS;
+    if(half===1&&clock>=200){state="halftime";whistle();fireEdge[0]=fireEdge[1]=false;return}
+    if(half===2&&clock>=400){whistle();cheer();
+      if(score[0]===score[1]){state="fulltime";fireEdge[0]=fireEdge[1]=false;return}
+      winnaar=score[0]>score[1]?0:1;
+      P.filter(p=>p.team===winnaar).forEach((p,i)=>{p.spotX=midX-58+i*20;p.spotY=midY+10});
+      state="ceremonie";stateT=0;msg="";
+      fireEdge[0]=fireEdge[1]=false;return}}
+
+  const hum=humans();
+  for(const t of [0,1])lockT[t]=Math.max(0,lockT[t]-dt);
+  for(const t of hum)if(state!=="setpiece")ctrl[t]=ctrlFor(t);
+  const aiSpd=37+level*1.9, kpSpd=19+level*2.7, spread=48-level*4.4;
+  aiPace=aiSpd*.72;
+
+  for(const p of P){
+    p.cool-=dt;p.dive=Math.max(0,p.dive-dt);p.moving=false;
+    const ox0=p.x, oy0=p.y;
+
+    if(hum.includes(p.team)&&p===ctrl[p.team])human(p,dt);
+    else if(p.role==="K")keeper(p,dt,kpSpd);
+    else ai(p,dt,aiSpd,spread);
+    p.mvx=(p.x-ox0)/dt;p.mvy=(p.y-oy0)/dt;   // werkelijke snelheid, voor de bal aan de voet
+    p.walkT=p.moving?.18:Math.max(0,(p.walkT||0)-dt);
+    clampP(p)}
+
+  /* lichamen botsen, keeper staat vast */
+  for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){
+    const a=P[i],b=P[j];
+    const dx=b.x-a.x,dy=(b.y-a.y)*1.7,dd=Math.hypot(dx,dy);
+    if(dd>=16||dd<.01)continue;
+    const push=(16-dd)/2,ux=dx/dd,uy=dy/dd/1.7;
+    const ak=a.role==="K",bk=b.role==="K";
+    if(ak&&bk)continue;
+    if(ak){b.x+=ux*push*2;b.y+=uy*push*2;clampP(b)}
+    else if(bk){a.x-=ux*push*2;a.y-=uy*push*2;clampP(a)}
+    else{a.x-=ux*push;a.y-=uy*push;b.x+=ux*push;b.y+=uy*push;clampP(a);clampP(b)}}
+
+  keeperRuimte(dt);
+  if(state==="setpiece"&&taker){takerT+=dt;
+    const vrij=houdAfstand(dt);
+    const zelf=humans().includes(taker.team);      // ruimte om zelf te kiezen
+    const wacht=zelf?3:2.2, uiterste=zelf?9:5;
+    if((vrij&&takerT>wacht)||takerT>uiterste)release(taker)}
+
+  ballPhysics(dt);
+  if(state==="play")contacts(dt);
+  if(state==="play")outOfPlay();
+
+  const want=Math.max(0,Math.min(CAMMAX,projX(ball.x,ball.y)-160));
+  cam+=(want-cam)*Math.min(1,5*dt);
+  fireEdge[0]=fireEdge[1]=false;
+}
+
+function hasBall(p){return !ball.held&&ball.z<11&&dist(p,ball)<13}
+function human(p,dt){
+  const i=p.team;
+  const gk=P.find(q=>q.team===p.team&&q.role==="K");
+  if(p.role==="K"){                            // keeper: lopen binnen de zestien plus de vuurknop
+    const kx=(K["r"+i]?1:0)-(K["l"+i]?1:0), ky=(K["d"+i]?1:0)-(K["u"+i]?1:0);
+    if(kx||ky){const l=Math.hypot(kx,ky);p.dir=dirOf(kx/l,ky/l);
+      const sp=ball.held===p?48:60;
+      p.anim+=dt*(sp/8);p.moving=true;
+      p.x+=kx/l*sp*dt;p.y+=ky/l*sp*dt*.72;
+      const b=boxUit(p.team);
+      p.x=Math.max(Math.min(b.gx+2,b.rand),Math.min(Math.max(b.gx+2,b.rand),p.x));
+      p.y=Math.max(b.y1,Math.min(b.y2,p.y))}
+    if(fireEdge[i]){if(ball.held===p)punt(p);else save(p)}
+    return}
+  const mx=(K["r"+i]?1:0)-(K["l"+i]?1:0), my=(K["d"+i]?1:0)-(K["u"+i]?1:0);
+  const rooted=(state==="setpiece"&&taker===p);
+  if(mx||my){const l=Math.hypot(mx,my);p.dir=dirOf(mx/l,my/l);
+    if(!rooted){const sp=hasBall(p)?42:58;
+      p.anim+=dt*(sp/8);p.moving=true;p.x+=mx/l*sp*dt;p.y+=my/l*sp*dt*.72}}
+  if(fireEdge[i]){
+    p.fireT=0;p.fireUsed=false;
+    if(state==="setpiece"){if(taker&&taker.team===p.team)release(taker);p.fireUsed=true}
+    else if(gk&&inOwnBox(p.team)&&dist(gk,ball)<40&&!ball.held){save(gk);p.fireUsed=true}
+    else if(ball.held===gk){punt(gk);p.fireUsed=true}
+  }
+  if(K["f"+i]){if(p.fireT!=null)p.fireT+=dt}
+  else if(p.fireT!=null){
+    const hold=p.fireT;p.fireT=null;
+    if(p.fireUsed)return;
+    const d=dist(p,ball);
+    if(d<19&&ball.z>12&&ball.z<36&&p.cool<=0){        // bal op kophoogte
+      if(hold<.25)head(p); else headShot(p);return}
+    if(d<18&&ball.z<14&&p.cool<=0){
+      if(hold<.2)kick(p,.6,false);                    // korte pass of vooruit tikken
+      else if(hold<.5)kick(p,1,true);                 // lange bal of voorzet
+      else kick(p,1.3,false);                         // hard schot
+      return}
+    wissel(i)}                                        // geen bal bij de voet: van speler wisselen
+}
+function save(gk){                              // keeper: alleen de vuurknop
+  gk.dive=.5;
+  const d=dist(gk,ball);
+  if(d<28&&ball.z<34){gk.hold=1.4;ball.held=gk;beep(220,.1,"triangle",.06)}
+  else if(d<40){const s=Math.sign(ball.x-ownGoal(gk.team))||1;   // gestompt
+    ball.vx=s*110;ball.vy=(ball.y-gk.y)*3;ball.vz=30;ball.touch=.3;
+    beep(240,.07,"square",.05)}}
+function punt(gk){gk.hold=0;ball.held=null;
+  gk.dir=attack[gk.team]>0?0:4;kick(gk,.8,true)}
+function keeper(p,dt,kpSpd){
+  const gx=ownGoal(p.team)+(attack[p.team]>0?7:-7);
+  p.x+=(gx-p.x)*4*dt;
+  if(p.hold>0){p.hold-=dt;
+    ball.held=p;ball.x=p.x+attack[p.team]*7;ball.y=p.y+3;ball.z=10;
+    ball.vx=ball.vy=ball.vz=0;
+    if(p.hold<=0){ball.held=null;p.dir=attack[p.team]>0?0:4;kick(p,1,true)}
+    return}
+  const inBox=Math.abs(ball.x-ownGoal(p.team))<80;
+  p.aimT=(p.aimT||0)-dt;
+  if(p.aimT<=0){p.aimT=.45;                       // hij leest de bal niet perfect
+    p.aimY=ball.y+(Math.random()-.5)*(11-level)*11}
+  const ty=Math.max(W.gy1+4,Math.min(W.gy2-4,inBox?(p.aimY||ball.y):midY));
+  const dy=ty-p.y;
+  if(Math.abs(dy)>4){p.moving=true;p.anim+=dt*5;
+    p.y+=Math.sign(dy)*Math.min(Math.abs(dy),kpSpd*dt)}
+  p.dir=attack[p.team]>0?0:4;
+  const mine=humans().includes(p.team);
+  if(state==="play"&&inBox&&Math.abs(ball.x-p.x)<16&&Math.abs(ball.y-p.y)<10&&ball.z<30&&p.cool<=0&&!ball.held){
+    const s=Math.sign(ball.x-ownGoal(p.team))||1;
+    p.cool=.7;                                   // niet elke frame opnieuw
+    if(mine){                                    // jouw keeper blokt met het lichaam
+      ball.vx=s*120;ball.vy=(ball.y-p.y)*3+(Math.random()-.5)*70;ball.vz=22;ball.touch=.35;
+      beep(240,.06,"square",.05)}
+    else{p.dive=.5;
+      if(Math.random()*12<level+2){p.hold=1.1;ball.held=p;beep(200,.1,"triangle",.05)}
+      else{ball.vx=s*130;ball.vy=(ball.y-p.y)*3+(Math.random()-.5)*80;ball.vz=28;ball.touch=.35;
+        beep(240,.07,"square",.05)}}}
+}
+function ai(p,dt,spd,spread){
+  const chaser=(p===nearest(p.team)), bd=dist(p,ball);
+  let tx,ty;
+  if(ball.held&&ball.held.role==="K"&&ball.held.team!==p.team){
+    tx=homeX(p);ty=homeY(p)}                       // keeper heeft hem vast: terug naar je plek
+  else if(chaser){tx=ball.x;ty=ball.y}
+  else{const push=Math.max(-100,Math.min(100,(ball.x-midX)*.45*attack[p.team]));
+    tx=homeX(p)+attack[p.team]*push;ty=homeY(p)+(ball.y-midY)*.3}
+  if(state==="setpiece"&&teDichtbij(p)){        // uit de buurt blijven bij een hervatting
+    tx=p.x+(p.x-ball.x);ty=p.y+(p.y-ball.y)*.3}
+  const dx=tx-p.x,dy=ty-p.y,l=Math.hypot(dx,dy);
+  const sp=hasBall(p)?spd*.72:spd;             // met bal aan de voet trager
+  if(l>7){p.x+=dx/l*sp*dt;p.y+=dy/l*sp*.72*dt;
+    turn(p,dx,dy,dt);p.anim+=dt*(sp/8);p.moving=true}
+}
+
+function ballPhysics(dt){
+  if(ball.held)return;
+  if(state==="setpiece"&&taker){
+    if(setType==="throwin"){ball.x=taker.x;ball.y=taker.y-1;ball.z=36}
+    ball.vx=ball.vy=ball.vz=0;return}
+  ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;
+  ball.z+=ball.vz*dt;ball.vz-=210*dt;
+  if(ball.z<=0){ball.z=0;
+    if(ball.vz<-6){ball.vz*=-.82;beep(180,.04,"triangle",.03)}else ball.vz=0;
+    const sp=Math.hypot(ball.vx,ball.vy);
+    const f=Math.pow(sp>110?.62:.13,dt);ball.vx*=f;ball.vy*=f}
+  else{const f=Math.pow(.94,dt);ball.vx*=f;ball.vy*=f}
+  // netten: een bal die erin gaat blijft erin liggen
+  for(const side of [0,1]){
+    const gx=side===0?W.gx0:W.gx1, d=side===0?-1:1, back=gx+d*17;
+    if(side===0?ball.x>gx:ball.x<gx)continue;
+    if(ball.y<W.gy1-3||ball.y>W.gy2+3)break;
+    if(side===0?ball.x<back:ball.x>back){ball.x=back;ball.vx*=-.2}
+    if(ball.y<W.gy1){ball.y=W.gy1;ball.vy*=-.3}
+    if(ball.y>W.gy2){ball.y=W.gy2;ball.vy*=-.3}
+    const nf=Math.pow(.03,dt);ball.vx*=nf;ball.vy*=nf;
+    if(ball.z>40){ball.z=40;ball.vz=Math.min(0,ball.vz)}}
+  ball.touch-=dt}
+
+function contacts(dt){
+  if(ball.held||ball.touch>0)return;
+  let p=null,bd=1e9;
+  for(const t of humans()){                       // jouw speler heeft voorrang
+    const q=ctrl[t];if(!q||q.cool>0)continue;
+    const d=Math.hypot(q.x-ball.x,q.y-ball.y);
+    if(d<16&&d<bd){bd=d;p=q}}
+  if(!p){for(const q of P){if(q.cool>0)continue;
+    const d=Math.hypot(q.x-ball.x,q.y-ball.y);if(d<bd){bd=d;p=q}}}
+  if(!p)return;
+  const jij=p===ctrl[p.team]&&humans().includes(p.team);
+  if(bd<15&&ball.z>13&&ball.z<34&&p.role!=="K"&&!jij){   // kophoogte: alleen de computer kopt vanzelf
+    if(!(p===ctrl[p.team]&&humans().includes(p.team)))
+      p.dir=dirOf(foeGoal(p.team)-p.x,midY-p.y);
+    head(p);return}
+  if(p.role==="K"){                             // bal stuit alleen op zijn lichaam
+    if(Math.abs(ball.x-p.x)<11&&Math.abs(ball.y-p.y)<7&&ball.z<30){
+      const s=Math.sign(ball.x-ownGoal(p.team))||1;
+      ball.vx=s*Math.max(80,Math.abs(ball.vx));
+      ball.vy=(ball.y-p.y)*4;ball.vz=26;ball.touch=.3;
+      beep(240,.06,"square",.05)}
+    return}
+  if(bd>14||ball.z>13)return;
+  const bs=Math.hypot(ball.vx,ball.vy);
+  if(p===ctrl[p.team]&&humans().includes(p.team)){
+    if(bs>110||ball.z>4){                       // aanname: bal dood voor je voeten
+      ball.vx*=.10;ball.vy*=.10;ball.vz*=.12;ball.z=Math.min(ball.z,3);ball.touch=.12;return}
+    dribble(p,dt);return}
+  if(bs>150&&Math.abs(foeGoal(p.team)-p.x)>200){ // computer neemt ook eerst aan
+    ball.vx*=.16;ball.vy*=.16;ball.vz*=.15;ball.z=Math.min(ball.z,4);ball.touch=.16;
+    ball.last=p;return}
+  // computerspeler beslist bij aanraking
+  const gx=foeGoal(p.team), far=Math.abs(gx-p.x);
+  const wide=Math.abs(p.y-midY)>26;
+  if(far<190&&!wide){p.dir=dirOf(gx-p.x,midY+(Math.random()-.5)*spreadFor()-p.y);
+    kick(p,.75,false);return}
+  if(far<300&&wide&&Math.random()<.5){          // voorzet de zestien in
+    p.dir=dirOf(gx-p.x,midY-p.y);kick(p,.9,true);return}
+  let mate=null,md=1e9;
+  for(const q of P){if(q.team!==p.team||q===p||q.role==="K")continue;
+    if((q.x-p.x)*attack[p.team]<20)continue;
+    const d=dist(p,q);if(d<md){md=d;mate=q}}
+  if(mate&&md<190&&Math.random()<.3+level*.05){   // hoger niveau speelt vaker af
+    p.dir=dirOf(mate.x-p.x,mate.y-p.y);kick(p,Math.min(.7,.2+md/260),false);return}
+  p.dir=dirOf(attack[p.team],(midY-p.y)*.02);
+  dribble(p,dt)}
+const spreadFor=()=>48-level*4.4;
+
+function outOfPlay(){
+  if(ball.held)return;
+  if(ball.y<W.top-2||ball.y>W.bot+2){
+    const team=ball.last?1-ball.last.team:0;
+    setPiece("throwin",team,Math.max(50,Math.min(W.w-50,ball.x)),ball.y<midY?W.top-2:W.bot+2);return}
+  for(const side of [0,1]){
+    const gx=side===0?W.gx0:W.gx1;
+    if(side===0?ball.x>gx:ball.x<gx)continue;
+    if(ball.y>W.gy1&&ball.y<W.gy2&&ball.z<42){goal(ownGoal(0)===gx?1:0);return}
+    const def=(ownGoal(0)===gx)?0:1;
+    if(ball.last&&ball.last.team===def)setPiece("corner",1-def,gx,ball.y<midY?W.top+4:W.bot-4);
+    else setPiece("goalkick",def,gx+(side===0?36:-36),midY+(ball.y<midY?-22:22));
+    return}}
+
+/* ===== tekenen ===== */
+const px=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x|0,y|0,w,h)};
+function line(x1,y1,x2,y2,c){
+  x1|=0;y1|=0;x2|=0;y2|=0;
+  const dx=Math.abs(x2-x1),sx=x1<x2?1:-1,dy=-Math.abs(y2-y1),sy=y1<y2?1:-1;
+  let err=dx+dy;ctx.fillStyle=c;
+  for(let n=0;n<1600;n++){
+    if(x1>=0&&x1<320&&y1>=0&&y1<200)ctx.fillRect(x1,y1,1,1);
+    if(x1===x2&&y1===y2)break;
+    const e2=2*err;
+    if(e2>=dy){err+=dy;x1+=sx}
+    if(e2<=dx){err+=dx;y1+=sy}}}
+const wline=(x1,y1,h1,x2,y2,h2,c)=>line(SX(x1,y1),y1-h1,SX(x2,y2),y2-h2,c);
+const snap=v=>Math.round(v/2)*2;
+
+function crowd(){
+  px(0,0,320,24,"#202020");
+  const off=(cam*.3)%6;
+  for(let row=0;row<4;row++){const y=row*6;
+    for(let i=-1;i<56;i++){const x=Math.round(i*6-off);
+      const k=Math.abs((i*5+row*3+((cam*.3/6)|0))%4);
+      const col=[C.wht,C.blue,C.grey,C.blk][k];
+      px(x+1,y,4,3,col);px(x,y+3,5,4,col===C.blk?C.dgrey:C.blk)}}
+  px(0,24,320,8,C.blk);
+  const bo=(cam*.7)%100;
+  for(let i=-1;i<6;i++){const x=Math.round(i*100-bo);
+    const j=Math.abs(i)%3;
+    const col=["#4830B0","#D82820","#C8C020"][j];
+    px(x,24,98,8,col);
+    ctx.font="8px monospace";ctx.textAlign="left";ctx.textBaseline="top";
+    ctx.fillStyle=j===2?C.blk:C.wht;ctx.fillText(["NISSAN","UTREG 84","NISSAN"][j],x+12,25)}
+  px(0,31,320,1,"#004000")}
+
+function pitch(){
+  px(0,32,320,168,C.grass);
+  const L=C.wht;
+  line(SX(W.gx0,W.top),W.top,SX(W.gx1,W.top),W.top,L);
+  line(SX(W.gx0,W.bot),W.bot,SX(W.gx1,W.bot),W.bot,L);
+  for(const wx of [W.gx0,W.gx1,midX])wline(wx,W.top,0,wx,W.bot,0,L);
+  ctx.fillStyle=L;                              // middencirkel: nette ovaal
+  {const cx=SX(midX,midY);
+   for(let a=0;a<Math.PI*2;a+=.015){
+     const sx=Math.round(cx+Math.cos(a)*42), sy=Math.round(midY+Math.sin(a)*23);
+     if(sx>=0&&sx<320)ctx.fillRect(sx,sy,1,1)}}
+  px(SX(midX,midY)-1,midY-1,2,2,L);
+  for(const gx of [W.gx0,W.gx1]){const d=gx===W.gx0?1:-1;
+    for(const [dep,sp] of [[66,32],[26,13]]){
+      const y1=W.gy1-sp,y2=W.gy2+sp,x2=gx+d*dep;
+      line(SX(gx,y1),y1,SX(x2,y1),y1,L);
+      line(SX(gx,y2),y2,SX(x2,y2),y2,L);
+      wline(x2,y1,0,x2,y2,0,L)}
+    px(SX(gx+d*46,midY)-1,midY-1,2,2,L)}
+  for(const gx of [W.gx0,W.gx1])for(const gy of [W.top,W.bot]){
+    const s=SX(gx,gy);if(s<-4||s>324)continue;
+    px(s,gy-10,2,10,C.lgrey);px(s+2,gy-10,4,3,C.yel)}}
+
+function goalpost(side,layer){
+  const gx=side===0?W.gx0:W.gx1, d=side===0?-1:1;
+  const H=42, DEP=18, HB=24, bx=gx+d*DEP;      // gemeten: paalhoogte 42, mond 38 diep
+  if(SX(gx,W.gy1)<-100||SX(gx,W.gy2)>420)return;
+  if(layer==="net"){                            // achterkant, achter de spelers
+    px(SX(bx,W.gy1),W.gy1-HB,2,HB,C.lgrey);
+    px(SX(bx,W.gy2),W.gy2-HB,2,HB,C.lgrey);
+    wline(bx,W.gy1,HB,bx,W.gy2,HB,C.lgrey);
+    wline(bx,W.gy1,0,bx,W.gy2,0,C.lgrey);
+  }else{                                        // voorkant, voor de spelers
+    px(SX(gx,W.gy1),W.gy1-H,2,H+1,C.wht);
+    px(SX(gx,W.gy2),W.gy2-H,2,H+1,C.wht);
+    wline(gx,W.gy1,H,gx,W.gy2,H,C.wht);
+    wline(gx,W.gy1,H-1,gx,W.gy2,H-1,C.wht);
+    wline(gx,W.gy1,H,bx,W.gy1,HB,C.wht);        // schuine bovenrand van het zijnet
+    wline(gx,W.gy2,H,bx,W.gy2,HB,C.wht);
+    wline(gx,W.gy1,0,bx,W.gy1,0,C.lgrey);       // grondlijn van de zijkant
+    wline(gx,W.gy2,0,bx,W.gy2,0,C.lgrey)}}
+function limb(x0,y0,x1,y1,col,w){
+  const n=Math.max(1,Math.round(Math.max(Math.abs(x1-x0),Math.abs(y1-y0))));
+  for(let i=0;i<=n;i++)
+    px(snap(x0+(x1-x0)*i/n)-(w>>1)+1,Math.round(y0+(y1-y0)*i/n),w,2,col)}
+
+function drawPlayer(p){
+  const X=snap(SX(p.x,p.y)), gy=Math.round(p.y), y=gy-Math.round(p.z);
+  if(X<-26||X>346)return;
+  const gk=p.role==="K";
+  const kit=gk?KEEP[p.team]:KIT[p.team];
+  const mine=humans().includes(p.team)&&p===ctrl[p.team];
+  const shirt=mine?kit.light:kit.shirt;
+  const d=p.dir, front=(d>=1&&d<=3), back=(d>=5&&d<=7);
+  const sideV=(d!==2&&d!==6), face=(d>=3&&d<=5)?-1:1;
+  px(X-7,gy,16,2,"rgba(0,0,0,.25)");
+  if(p.dive){const dy=y-10;
+    px(X-12,dy-6,24,9,shirt);px(X-6,dy+3,14,6,C.blk);
+    px(X+10,dy-13,10,9,C.skin);px(X+10,dy-14,10,4,C.blk);
+    limb(X-12,dy-4,X-24,dy-9,C.skin,4);px(X-28,dy-12,7,6,C.yel);
+    limb(X-2,dy+9,X-14,dy+13,C.skin,4);px(X-18,dy+12,7,3,C.blk);
+    return}
+  const air=false;
+  const STEP=Math.PI/6;
+  const walk=p.walkT>0&&!air;
+  const ph=walk?Math.floor(p.anim/STEP)*STEP:0;
+  const s=Math.sin(ph), co=Math.cos(ph);
+  const ty=y+(walk&&Math.abs(co)>.85?-1:0);
+  const hipY=ty-15, shY=ty-29;
+  const AL=air?2:(sideV?9:4);                    // gemeten uit het origineel: pas van negen
+  const AA=(sideV?7:3)*(sideV?face:1);           // armen zwaaien bijna even ver mee
+  const leg=(base,a,skin)=>{
+    const sw=Math.sin(a);
+    const back=air?.4:Math.max(0,-sw);           // achterste been buigt scherp, hiel komt hoog
+    const lift=back*4.2;
+    const kx=base+sw*AL*.45+back*2, ky=ty-8-back*2;
+    const fx=base+sw*AL-back*3,     fy=ty-2-lift;
+    limb(base,hipY,kx,ky,skin,6);                // bovenbeen
+    limb(kx,ky,fx,fy,skin,4);                    // onderbeen, wijst naar achteren omhoog
+    limb(kx+(fx-kx)*.4,ky+(fy-ky)*.4,fx,fy,kit.sock,4);
+    limb(kx+(fx-kx)*.58,ky+(fy-ky)*.58,kx+(fx-kx)*.74,ky+(fy-ky)*.74,kit.sock2,4);
+    px(snap(fx)-2,Math.round(fy)-1,6,3,C.blk)};
+  const armsUp=air||p.cel||(state==="setpiece"&&setType==="throwin"&&taker===p);
+  const arm=(base,a,skin)=>{
+    if(armsUp){limb(base,shY+5,base+(base<X?-3:3),shY-10,skin,3);return}
+    const sw=Math.sin(a), bend=Math.max(0,-Math.cos(a))*1.8;   // elleboog buigt naar voren
+    const ey=shY+9-bend, hy=shY+15-bend*1.6;                   // korter: hand net onder de heup
+    const ex=base+sw*AA*.45+bend*.7, hx=base+sw*AA+bend*1.3;
+    limb(base,shY+5,ex,ey,skin,3);                             // dunner dan de benen
+    limb(ex,ey,hx,hy,skin,3);
+    if(gk)px(snap(hx)-2,Math.round(hy)-1,6,4,C.yel)};
+  // silhouet verschilt per richting: smal van opzij, breed van voren en achteren
+  const schuin=(d===1||d===3||d===5||d===7);
+  const bw=sideV?(schuin?9:7):11;                 // rompbreedte
+  const bx=X-(bw>>1)+(sideV?face*1:0);            // van opzij iets in de kijkrichting
+  const hx=X-4+(sideV?face*2:0)+(schuin?face:0);  // hoofd draait mee
+  const lb=sideV?(schuin?[X-2,X+2]:[X-1,X+1]):[X-3,X+3];
+  const aw=sideV?(schuin?6:5):8;
+  const armNaar=X+face*aw, armVan=X-face*aw;      // arm aan de kijkzijde is de zichtbare
+  leg(lb[0],ph+Math.PI,"#C87850");
+  if(!sideV||schuin)arm(armVan,ph,C.skin);        // van opzij valt de verre arm weg
+  leg(lb[1],ph,C.skin);
+  px(bx,ty-30,bw,12,shirt);                                     // romp
+  px(bx,ty-19,bw,5,kit.shorts);                                 // broek
+  if(gk)px(bx,ty-30,bw,3,C.yel);
+  const sl=mine?kit.light:kit.sleeve;
+  if(sideV){px(X+face*((bw>>1)-1)-1,ty-30,3,8,sl)}              // van opzij één mouw, aan de kijkzijde
+  else{px(bx-3,ty-30,3,8,sl);px(bx+bw,ty-30,3,8,sl)}
+  if(!gk&&front)px(X-3,ty-26,7,3,kit.badge);                     // sponsor alleen op de borst
+  px(X-2+(sideV?face:0),ty-32,5,3,C.skin);                      // nek
+  px(hx,ty-40,9,8,C.skin);                                      // hoofd
+  px(hx,ty-41,9,4,C.blk);
+  if(back){px(hx,ty-40,9,6,C.blk)}
+  else if(front){px(hx+1,ty-36,2,2,C.blk);px(hx+6,ty-36,2,2,C.blk);px(hx+3,ty-34,3,1,C.skin2)}
+  else{px(hx+(face>0?5:2),ty-36,2,2,C.blk);                     // profiel: oog naar voren
+       px(hx+(face>0?0:7),ty-39,2,6,C.blk);                     // haar aan de achterkant
+       px(hx+(face>0?9:-2),ty-36,2,2,C.skin)}                   // neus steekt uit
+  arm(armNaar,ph+Math.PI,C.skin);
+}
+
+function drawBall(){
+  const x=SX(ball.x,ball.y),y=Math.round(ball.y),z=Math.round(ball.z);
+  px(x-3,y-1,9,3,"rgba(0,0,0,.28)");
+  const b=y-8-z;
+  px(x-2,b,7,1,C.wht);
+  px(x-3,b+1,9,5,C.wht);
+  px(x-2,b+6,7,1,C.wht)}
+
+function txt(s,x,y,c,sz,al){ctx.font=(sz||8)+"px monospace";ctx.textAlign=al||"center";
+  ctx.textBaseline="top";ctx.fillStyle=C.blk;ctx.fillText(s,x+1,y+1);
+  ctx.fillStyle=c;ctx.fillText(s,x,y)}
+const DIG=["11111 10001 10001 10001 10001 10001 11111",
+ "00100 01100 00100 00100 00100 00100 01110",
+ "11111 00001 00001 11111 10000 10000 11111",
+ "11111 00001 00001 11111 00001 00001 11111",
+ "10001 10001 10001 11111 00001 00001 00001",
+ "11111 10000 10000 11111 00001 00001 11111",
+ "11111 10000 10000 11111 10001 10001 11111",
+ "11111 00001 00010 00100 01000 01000 01000",
+ "11111 10001 10001 11111 10001 10001 11111",
+ "11111 10001 10001 11111 00001 00001 11111"];
+function bigDigit(n,x,y,sx,sy,c){const r=DIG[n].split(" ");
+  for(let a=0;a<7;a++)for(let i=0;i<5;i++)if(r[a][i]==="1")px(x+i*sx,y+a*sy,sx,sy,c)}
+
+/* ===== startscherm ===== */
+const MAN=[
+".........KKKKKKK......",
+"........KKKKKKKKK.....",
+"........KKKKKKKKK.....",
+"........KSSSSSSSK.....",
+"........KSSKSSKSS.....",
+"........KSSSSSSSS.....",
+"........KSSSSSSSS.....",
+"........KSSDDDSSS.....",
+".........SSSSSSS......",
+".........SSSSSS.......",
+"..........SSSS........",
+"..........SSSS........",
+".........RRRRRRR......",
+"......RRRRRRRRRRRR....",
+"....RRRRRRRRRRRRRRR...",
+"...SRRRRRRRRRRRRRRRS..",
+"..SSRRRRRRRRRRRRRRRSS.",
+".SSSRRRRRRRRRRRRRRRSS.",
+".SSS.RRRRRRRRRRRRRRSS.",
+"SSSS.RRRRRRRRRRRRRRSS.",
+"SSSS.RRRRRRRRRRRRRRSS.",
+"SSSS.RRRRRRRRRRRRRRSS.",
+"SSSS.RRRRRRRRRRRRRRSS.",
+".SSSSRRRRRRRRRRRRRRSS.",
+"..SSSSRRRRRRRRRRRRRSS.",
+"...SSSRRRRRRRRRRRRRSS.",
+"....SSSRRRRRRRRRRRRSS.",
+".....SSSRRRRRRRRRRRSS.",
+"......SSRRRRRRRRRRRSS.",
+".......SWWWWWWWWWWWSS.",
+"........WWWWWWWWWWWSS.",
+"........WWWWWWWWWWWSS.",
+"........WWWWWWWWWWWSS.",
+"........WWWWWWWWWWWWS.",
+"........WWWWWWWWWWWW..",
+"........WWWWWWWWWWWW..",
+".......SSSSSS.SSSSSSS.",
+".......SSSSSS..SSSSSS.",
+".......SSSSSS..SSSSSS.",
+".......SSSSS....SSSSSS",
+".......SSSSS....SSSSSS",
+"......SSSSS......SSSSS",
+"......SSSSS......SSSSS",
+"......SSSSS.......SSSS",
+"......SSSSS.......SSSS",
+"......SSSSS.......SSSS",
+"......RRRRR.......RRRR",
+"......WWWWW.......WWWW",
+"......RRRRR.......WWWW",
+"......WWWWW.......RRRR",
+"......WWWWW.......WWWW",
+"......WWWWW.......WWWW",
+"......WWWWW........WWW",
+".......WWWW........WWW",
+".......WWWW........WWW",
+".......WWWW........WWW",
+".......WWWW........WWW",
+".......WWWW........KKK",
+"......KKKKKK.......KKK",
+"......KKKKKK......KKKK",
+"......KKKKKK......KKKK",
+".......KKKK........KKK"];
+const SHIELD=[
+"BBBBBBBBBB",
+"BRRRRWWWWB",
+"BRRRRWWWWB",
+"BRRRRWWWWB",
+"BRRRRWWWWB",
+"BRRRRWWWWB",
+"BRRRRWWWWB",
+".BRRRWWWB.",
+".BRRRWWWB.",
+"..BRRWWB..",
+"...BRWB...",
+"....BB...."];
+const BALL=[
+"..GGGGG..",
+".GWWWWWG.",
+"GWWWWWWWG",
+"WWWWWWWWW",
+"WWWGGWWWW",
+"GWWWWWWWG",
+".GWWWWWG.",
+"..GGGGG.."];
+function title(){
+  if(menuPage===1)return opties();
+  px(0,0,320,200,"#7BD07B");
+  for(let y=1;y<200;y+=2)px(0,y,320,1,"#69C069");
+  const map={K:C.blk,W:C.wht,R:"#D82820",S:"#E09878",D:"#A86048",G:"#B8B8B8"};
+  const S=3;
+  for(let r=0;r<MAN.length;r++)for(let i=0;i<22;i++){
+    const ch=MAN[r][i];if(ch==="."||!ch)continue;px(14+i*S,10+r*S,S,S,map[ch])}
+  ctx.textAlign="center";ctx.textBaseline="top";
+  ctx.fillStyle=C.wht;ctx.font="bold 9px monospace";ctx.fillText("NISSAN",48,72);
+  for(let r=0;r<BALL.length;r++)for(let i=0;i<9;i++){
+    const ch=BALL[r][i];if(ch==="."||!ch)continue;px(88+i*3,164+r*3,3,3,map[ch])}
+  const smap={B:"#2040A8",R:"#D82820",W:C.wht};
+  for(let r=0;r<SHIELD.length;r++)for(let i=0;i<10;i++){
+    const ch=SHIELD[r][i];if(ch==="."||!ch)continue;px(196+i*4,30+r*4,4,4,smap[ch])}
+  ctx.fillStyle="#D82820";ctx.font="20px monospace";ctx.fillText("UTREG 84",218,86);
+  ctx.fillStyle=C.tan;ctx.font="9px monospace";ctx.fillText("SEIZOEN 1984",218,112);
+  ctx.fillStyle="#2E7A2E";ctx.fillText("SPONSOR NISSAN",218,124);
+  px(150,146,136,16,C.blk);
+  ctx.fillStyle=C.wht;ctx.font="10px monospace";ctx.fillText("DRUK KICK",218,149);
+  ctx.fillStyle="#2E7A2E";ctx.font="8px monospace";
+  ctx.fillText("EERBETOON AAN INTERNATIONAL SOCCER 1983",160,186)}
+
+function opties(){
+  px(0,0,320,200,"#0C400C");
+  px(0,0,320,22,C.blk);
+  ctx.textAlign="center";ctx.textBaseline="top";
+  ctx.fillStyle="#D82820";ctx.font="16px monospace";ctx.fillText("UTREG 84",160,4);
+  px(28,30,264,116,"#083008");
+  ctx.strokeStyle="#2E7A2E";ctx.lineWidth=1;ctx.strokeRect(28,30,264,116);
+  const waarden=[String(level),players2===1?"1 SPELER":"2 SPELERS",KITS[kitA].naam,KITS[kitB].naam];
+  const namen=["COMPUTERNIVEAU","AANTAL SPELERS","TENUE THUIS","TENUE UIT"];
+  for(let r=0;r<4;r++){
+    const y=42+r*26, aan=menuSel===r;
+    if(aan)px(34,y-6,252,22,"#145014");
+    ctx.textAlign="left";
+    ctx.fillStyle=aan?C.yel:"#7FB27F";ctx.font="10px monospace";
+    ctx.fillText((aan?"\u25b8 ":"  ")+namen[r],42,y);
+    ctx.textAlign="right";
+    ctx.fillStyle=aan?C.wht:"#A8C8A8";
+    ctx.fillText(waarden[r],252,y);
+    if(r===2)px(262,y-2,18,12,KITS[kitA].shirt);
+    if(r===3)px(262,y-2,18,12,KITS[kitB].shirt);
+    if(r===0&&aan){ctx.textAlign="left";ctx.fillStyle="#7FB27F";ctx.font="8px monospace";
+      ctx.fillText("1 = MAKKELIJK   9 = ZWAAR",42,y+11)}
+  }
+  ctx.textAlign="center";ctx.font="8px monospace";
+  ctx.fillStyle="#7FB27F";
+  ctx.fillText("OP EN NEER KIEST EEN REGEL",160,156);
+  ctx.fillText("LINKS EN RECHTS VERANDERT DE WAARDE",160,168);
+  px(96,180,128,14,C.blk);
+  ctx.fillStyle=C.wht;ctx.font="10px monospace";ctx.fillText("KICK START",160,182)}
+
+function scoreboards(){          // twee borden in de tribune, tijd loopt terug
+  const left=Math.max(0,200-(half===1?clock:clock-200))|0;
+  const s=String(Math.min(999,left)).padStart(3,"0");
+  for(const wx of [midX-118,midX+118]){
+    const sx=SX(wx,W.top);
+    if(sx<-40||sx>360)continue;
+    px(sx-23,0,46,24,C.blk);
+    px(sx-24,0,48,1,"#606060");px(sx-24,24,48,1,"#606060");
+    px(sx-24,0,1,25,"#606060");px(sx+23,0,1,25,"#606060");
+    bigDigit(Math.min(9,score[0]),sx-19,2,2,2,KIT[0].light);
+    px(sx-6,7,5,2,C.lgrey);
+    bigDigit(Math.min(9,score[1]),sx+2,2,2,2,KIT[1].light);
+    for(let i=0;i<3;i++)bigDigit(+s[i],sx-17+i*12,13,2,2,C.wht);
+  }}
+function ceremonie(){
+  const ploeg=P.filter(p=>p.team===winnaar);
+  if(!ploeg.length)return;
+  const cap=ploeg[0];
+  if(cap.cel)trophy(SX(cap.x,cap.y),Math.round(cap.y)-62);   // beker omhoog
+  const ax=SX(midX-34,midY-26), ay=Math.round(midY-26);      // presentatrice
+  px(ax-4,ay-30,9,7,C.blk);
+  px(ax-3,ay-25,7,6,C.skin);
+  px(ax-4,ay-24,2,5,C.blk);px(ax+3,ay-24,2,5,C.blk);
+  px(ax-4,ay-19,9,9,"#68C0D8");
+  px(ax-6,ay-10,13,12,"#68C0D8");
+  px(ax-4,ay-13,9,2,C.wht);
+  px(ax-6,ay-18,2,7,C.skin);px(ax+5,ay-18,2,7,C.skin);
+  px(ax-3,ay+2,3,3,C.blk);px(ax+2,ay+2,3,3,C.blk)}
+function hud(){if(msg)txt(msg,160,58,C.yel,16)}
+function trophy(x,y){                           // beker voor de winnaar
+  const G="#E8C040", G2="#A08018", B="#8B5A18";
+  px(x-10,y,20,4,G);px(x-8,y+2,16,10,G);
+  px(x-6,y+12,12,4,G2);
+  px(x-3,y+15,6,6,G2);
+  px(x-9,y+21,18,4,B);px(x-11,y+24,22,4,B);
+  px(x-14,y+2,4,8,G);px(x-13,y+9,3,3,G);
+  px(x+10,y+2,4,8,G);px(x+10,y+9,3,3,G);
+  px(x-6,y+3,4,6,"#FFF0A0")}
+function endBox(){
+  px(46,70,228,60,C.blk);ctx.strokeStyle=C.grey;ctx.lineWidth=1;ctx.strokeRect(48,72,224,56);
+  if(state==="halftime"){txt("RUST",160,78,C.yel,16);
+    txt("UTRECHT "+score[0]+" - "+score[1]+" GASTEN",160,100,C.wht);
+    txt("KICK VOOR DE TWEEDE HELFT",160,114,C.lgrey)}
+  else{
+    const gelijk=score[0]===score[1];
+    const r=gelijk?"GELIJKSPEL":(score[0]>score[1]?"UTRECHT WINT":"GASTEN WINNEN");
+    if(!gelijk){
+      px(40,50,240,84,C.blk);ctx.strokeStyle=C.grey;ctx.lineWidth=1;ctx.strokeRect(42,52,236,80);
+      trophy(160,56);
+      txt(r,160,90,C.yel,16);
+      txt(score[0]+" - "+score[1],160,110,C.wht);
+      txt("KICK VOOR HET MENU",160,121,C.lgrey);
+      return}
+    txt("EINDE",160,78,C.yel,16);
+    txt(r+"   "+score[0]+" - "+score[1],160,100,C.wht);
+    txt("KICK VOOR HET MENU",160,114,C.lgrey)}}
+
+let last=0;
+function frame(ts){
+  const dt=Math.min(.033,(ts-last)/1000);last=ts;
+  update(dt);
+  if(state==="menu"){title();requestAnimationFrame(frame);return}
+  crowd();scoreboards();pitch();
+  goalpost(0,"net");goalpost(1,"net");
+  const order=[...P].sort((a,b)=>a.y-b.y);
+  let drawn=false;
+  for(const p of order){
+    if(!drawn&&p.y>ball.y){drawBall();drawn=true}
+    drawPlayer(p)}
+  if(!drawn)drawBall();
+  goalpost(0,"frame");goalpost(1,"frame");
+  if(state==="ceremonie")ceremonie();
+  hud();
+  if(state==="halftime"||state==="fulltime")endBox();
+  requestAnimationFrame(frame)}
+build();reset(0);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
