@@ -33,6 +33,10 @@
         right:calc(env(safe-area-inset-right,0px) + 16px);bottom:calc(env(safe-area-inset-bottom,0px) + 22px)}
 
   /* knop voor schermvullend, verdwijnt als de app al schermvullend draait */
+  #geluid{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);
+       left:calc(env(safe-area-inset-left,0px) + 10px);z-index:11;pointer-events:auto;
+       background:rgba(0,0,0,.55);color:#ddd;border:1px solid #aa5a5a;border-radius:6px;
+       font:11px monospace;padding:6px 9px;opacity:.75}
   #vol{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);
        right:calc(env(safe-area-inset-right,0px) + 10px);z-index:11;pointer-events:auto;
        background:rgba(0,0,0,.5);color:#ddd;border:1px solid #666;border-radius:6px;
@@ -60,6 +64,7 @@
     <button id="fire">KICK</button>
   </div>
   <button id="vol">SCHERMVULLEND</button>
+  <button id="geluid">GELUID AANZETTEN</button>
   <div id="draai">
     <b>DRAAI JE TOESTEL</b>
     <div>Utreg 84 speelt liggend.</div>
@@ -92,6 +97,32 @@
     el.addEventListener("touchstart",aan,{passive:true});
     el.addEventListener("touchend",uit,{passive:true});
   }
+  /* iOS zwijgt bij webaudio als het belknopje op stil staat. Met een afspeelsessie
+     en een stil geluidsbestandje schakelt het toestel naar de gewone afspeelstand. */
+  const STIL="data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YSADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
+  const stilAudio=new Audio(STIL);
+  stilAudio.loop=true;stilAudio.playsInline=true;stilAudio.setAttribute("playsinline","");
+  stilAudio.volume=.01;
+  let gewekt=false;
+  function wekGeluid(){
+    try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
+    stilAudio.play().then(()=>{gewekt=true}).catch(()=>{});
+    if(window.__wek)try{window.__wek()}catch(e){}
+    toonStand();
+  }
+  const gknop=document.getElementById("geluid");
+  function toonStand(){
+    const st=window.__audioStand?window.__audioStand():"geen";
+    gknop.textContent=st==="running"?"GELUID AAN":"GELUID AANZETTEN";
+    gknop.style.borderColor=st==="running"?"#5a9a5a":"#aa5a5a";
+  }
+  gknop.addEventListener("click",e=>{e.preventDefault();wekGeluid()});
+  gknop.addEventListener("touchend",e=>{e.preventDefault();wekGeluid()});
+  for(const ev of ["touchend","pointerup","keydown"])
+    document.addEventListener(ev,()=>{if(!gewekt)wekGeluid();else if(window.__wek)window.__wek()},{passive:true});
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)wekGeluid()});
+  setInterval(toonStand,1000);toonStand();
+
   // dubbeltik zoomt niet
   document.addEventListener("gesturestart",e=>e.preventDefault());
 })();
@@ -137,6 +168,8 @@ function ac(){
   if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
   if(AC.state==="suspended")AC.resume();       // iOS start opgeschort
   return AC}
+window.__wek=ac;
+window.__audioStand=()=>AC?AC.state:"geen";
 function beep(f,d,t,v){if(!snd)return;try{const a=ac(),o=a.createOscillator(),g=a.createGain();
   o.type=t||"square";o.frequency.value=f;g.gain.value=v||.05;o.connect(g);g.connect(a.destination);
   o.start();o.frequency.exponentialRampToValueAtTime(Math.max(40,f*.5),a.currentTime+d);
@@ -1044,7 +1077,12 @@ function title(){
   px(150,146,136,16,C.blk);
   ctx.fillStyle=C.wht;ctx.font="10px monospace";ctx.fillText("DRUK KICK",218,149);
   ctx.fillStyle="#2E7A2E";ctx.font="8px monospace";
-  ctx.fillText("EERBETOON AAN INTERNATIONAL SOCCER 1983",160,186)}
+  ctx.fillText("EERBETOON AAN INTERNATIONAL SOCCER 1983",160,186);
+  const st=AC?AC.state:"geen";
+  ctx.textAlign="left";
+  ctx.fillStyle=(st==="running"&&snd)?"#9FD89F":"#FF8878";
+  ctx.fillText("GELUID: "+(!snd?"UIT":st==="running"?"AAN":st==="suspended"?"WACHT OP TIK":"NOG NIET GESTART"),6,190);
+  ctx.textAlign="center"}
 
 function opties(){
   px(0,0,320,200,"#0C400C");
