@@ -330,7 +330,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v13 - 5 aug";
+const VERSIE="v14 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -844,19 +844,54 @@ function keeper(p,dt,kpSpd){
       else{ball.vx=s*130;ball.vy=(ball.y-p.y)*3+(Math.random()-.5)*80;ball.vz=28;ball.touch=.35;
         beep(240,.07,"square",.05)}}}
 }
+function formatiePlek(p){          // basispositie, met de vleugels aan de zijlijn
+  const push=Math.max(-140,Math.min(140,(ball.x-midX)*.45*attack[p.team]));
+  let tx=homeX(p)+attack[p.team]*push;
+  let ty=homeY(p)+(ball.y-midY)*.12;
+  const buiten=p.fy<.35||p.fy>.65;
+  const aanvallend=(ball.x-midX)*attack[p.team]>-60;
+  if(buiten&&aanvallend)ty=p.fy<.5?W.top+10:W.bot-10;
+  return [tx,ty]}
+
+/* Vrijlopen: rond de eigen formatieplek worden een paar plekken afgewogen.
+   Ruimte telt, vooruit staan telt, en een speellijn die door een tegenstander
+   wordt afgesneden kost punten. De keuze blijft ruim een halve seconde staan,
+   anders gaat iedereen staan trillen. */
+const LOOPPLEKKEN=[[0,0],[75,0],[135,0],[60,-30],[60,30],[0,-38],[0,38],[-55,0],[115,-26],[115,26]];
+function vrijloop(p,dt){
+  p.loopT=(p.loopT||0)-dt;
+  if(p.loopT>0&&p.loopX!==undefined)return [p.loopX,p.loopY];
+  p.loopT=.55+Math.random()*.35;
+  const basis=formatiePlek(p);
+  let best=null,bs=-1e9;
+  for(const [ox,oy] of LOOPPLEKKEN){
+    const cx=basis[0]+ox*attack[p.team], cy=basis[1]+oy;
+    if(cx<W.gx0+25||cx>W.gx1-25||cy<W.top+6||cy>W.bot-6)continue;
+    let ruimte=1e9;
+    for(const o of P){if(o.team===p.team||o.role==="K")continue;
+      ruimte=Math.min(ruimte,Math.hypot(o.x-cx,(o.y-cy)*3))}
+    const vooruit=Math.max(0,Math.min(150,(cx-ball.x)*attack[p.team]));
+    const dx=cx-ball.x, dy=cy-ball.y, l=Math.hypot(dx,dy)||1;
+    let dicht=0;
+    for(const o of P){if(o.team===p.team||o.role==="K")continue;
+      const s=((o.x-ball.x)*dx+(o.y-ball.y)*dy)/(l*l);
+      if(s<=.1||s>=1)continue;
+      if(Math.hypot(o.x-(ball.x+dx*s),(o.y-(ball.y+dy*s))*3)<26)dicht++}
+    const loop=Math.hypot(p.x-cx,(p.y-cy)*3);
+    const punt=Math.min(ruimte,170)+vooruit*.45-dicht*55-loop*.18;
+    if(punt>bs){bs=punt;best=[cx,cy]}}
+  p.loopX=best?best[0]:basis[0];p.loopY=best?best[1]:basis[1];
+  return [p.loopX,p.loopY]}
+
 function ai(p,dt,spd,spread){
   const chaser=(p===nearest(p.team)), bd=dist(p,ball);
   let tx,ty;
   if(ball.held&&ball.held.role==="K"&&ball.held.team!==p.team){
     tx=homeX(p);ty=homeY(p)}                       // keeper heeft hem vast: terug naar je plek
   else if(chaser){tx=ball.x;ty=ball.y}
-  else{const push=Math.max(-140,Math.min(140,(ball.x-midX)*.45*attack[p.team]));
-    tx=homeX(p)+attack[p.team]*push;
-    ty=homeY(p)+(ball.y-midY)*.12;                // veel minder naar de bal toe zuigen
-    const buiten=p.fy<.35||p.fy>.65;              // vleugelspelers houden de zijlijn
-    const aanvallend=(ball.x-midX)*attack[p.team]>-60;
-    if(buiten&&aanvallend)ty=p.fy<.5?W.top+10:W.bot-10;
-  }
+  else if(state==="play"&&ball.last&&ball.last.team===p.team&&!ball.held){
+    const v=vrijloop(p,dt);tx=v[0];ty=v[1];       // eigen ploeg aan de bal: vrijlopen
+  }else{const f=formatiePlek(p);tx=f[0];ty=f[1]}
   if(state==="setpiece"&&teDichtbij(p)){        // uit de buurt blijven bij een hervatting
     tx=p.x+(p.x-ball.x);ty=p.y+(p.y-ball.y)*.3}
   const dx=tx-p.x,dy=ty-p.y,l=Math.hypot(dx,dy);
