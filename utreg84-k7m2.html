@@ -336,7 +336,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v17 - 5 aug";
+const VERSIE="v18 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1258,48 +1258,65 @@ function bigDigit(n,x,y,sx,sy,c){const r=DIG[n].split(" ");
 
 /* ===== startscherm ===== */
 const MAN=[
-"........KKKKK.........",
-"........KKKKK.........",
-"........KSSSK.........",
-"........KSKSK.........",
-"........KSSSS.........",
-"........KSDDS.........",
-".........SSS..........",
-".........SSS..........",
-"......RRRRRRRRR.......",
-"....RRRRRRRRRRRR......",
-"...SRRRRRRRRRRRRS.....",
-"..SSRRRRRRRRRRRRSS....",
-".SS.RRRRRRRRRRRR.SS...",
-".SS.RRRRRRRRRRRR.SS...",
-"SS..RRRRRRRRRRRR.SS...",
-"SS..RRRRRRRRRRRR.SS...",
-"SS..RRRRRRRRRRRR.SS...",
-".SS.RRRRRRRRRRRR.SS...",
-"..SSRRRRRRRRRRRR.SS...",
-"...SRRRRRRRRRRRR.SS...",
-"....RRRRRRRRRRRR.SS...",
-"....RRRRRRRRRRRR.SS...",
-"....WWWWWWWWWWWW.SS...",
-"....WWWWWWWWWWWW.SS...",
-"....WWWWWWWWWWWW......",
-"....WWWWWWWWWWWW......",
-"....WWWWW..WWWWW......",
-"....SSSS....SSSS......",
-"....SSSS....SSSS......",
-"....SSSS....SSSS......",
-"....SSSS....SSSS......",
-"....SSSS.....SSSS.....",
-"....SSSS.....SSSS.....",
-"....SSSS.....SSSS.....",
-"....RRRR.....RRRR.....",
-"....WWWW.....WWWW.....",
-"....RRRR.....WWWW.....",
-"....WWWW.....RRRR.....",
-"....WWWW.....WWWW.....",
-"....WWWW.....WWWW.....",
-"...KKKKK.....KKKKK....",
-"...KKKKK....KKKKKK...."];
+"..........KKKKK.........",
+".........KKKKKKK........",
+".........KSSSSSS........",
+".........KSKSSKS........",
+".........KSSSSSS........",
+".........KSSSSSS........",
+".........KSDDDSS........",
+"..........SSSSS.........",
+"..........SSSS..........",
+".........RRRRRRRRRR.....",
+".......RRRRRRRRRRRRR....",
+"....RRRRRRRRRRRRRRRRR...",
+"....RRRRRRRRRRRRRRRRR...",
+"...SRRRRRRRRRRRRRRRRS...",
+"..SSRRRRRRRRRRRRRRRSS...",
+"..SSKRRRRRRRRRRRRRRSS...",
+".SSSKRRRRRRRRRRRRRRSS...",
+".SSSSKRRRRRRRRRRRRRSS...",
+"SSSSSRRRRRRRRRRRRRRSS...",
+"SSSS.RRRRRRRRRRRRRRSS...",
+"SSSS.RRRRRRRRRRRRRRSS...",
+"SSSS.RRRRRRRRRRRRRRSS...",
+"SSSSSRRRRRRRRRRRRRRSS...",
+".SSSSSRRRRRRRRRRRRRSS...",
+"..SSSSSRRRRRRRRRRRRSS...",
+"...SSSSRRRRRRRRRRRRSS...",
+".....SSSRRRRRRRRRRRSS...",
+".....SSSWWWWWWWWWWWSS...",
+"......SSWWWWWWWWWWWWS...",
+"......SSSWWWWWWWWWWWS...",
+"......SSSWWWWWWWWWWWW...",
+"......SSSWWWWWWWWWWWW...",
+"......SSWWWWWWWWWWWWW...",
+"......SSWWWWWWWWWWWWS...",
+"......SSSSSSS.WWWSSSSS..",
+"......SSSSSSS.SSSSSSSS..",
+"......SSSSSS..SSSSSSSS..",
+"......SSSSSS...SSSSSSS..",
+"......SSSSSS....SSSSSS..",
+".......SSSSS.....SSSSSS.",
+".......SSSSS.....SSSSSS.",
+".......SSSS.....SWKSSSS.",
+".......SSSS....SSWKSSS..",
+".......SSSS....KSWKKK...",
+".......RRRR...WKSWWWW...",
+".......WWWW...WWSKKW....",
+".......RRRR..WWWWWW.....",
+".......WWWW..WWWWW......",
+".......WWWW.SWWWWW......",
+".......WWWW.SWWWW.......",
+".......WWWW.KWWW........",
+".........WWWKKK.........",
+".........WWWKKKK........",
+".........WWW..KKK.......",
+".........WWW..KKK.......",
+".........WWK............",
+".........KKKKK..........",
+".........KKKKKK.........",
+".........KKKKKK........."];
 const SHIELD=[
 "BBBBBBBBBB",
 "BRRRRWWWWB",
@@ -1331,9 +1348,9 @@ function title(){
   for(let r=0;r<MAN.length;r++)for(let i=0;i<22;i++){
     const ch=MAN[r][i];if(ch==="."||!ch)continue;px(14+i*S,10+r*S,S,S,map[ch])}
   ctx.textAlign="center";ctx.textBaseline="top";
-  ctx.fillStyle=C.wht;ctx.font="bold 9px monospace";ctx.fillText("NISSAN",50,80);
+  ctx.fillStyle=C.wht;ctx.font="bold 9px monospace";ctx.fillText("NISSAN",48,70);
   for(let r=0;r<BALL.length;r++)for(let i=0;i<9;i++){
-    const ch=BALL[r][i];if(ch==="."||!ch)continue;px(92+i*3,168+r*3,3,3,map[ch])}
+    const ch=BALL[r][i];if(ch==="."||!ch)continue;px(96+i*3,166+r*3,3,3,map[ch])}
   const smap={B:"#2040A8",R:"#D82820",W:C.wht};
   for(let r=0;r<SHIELD.length;r++)for(let i=0;i<10;i++){
     const ch=SHIELD[r][i];if(ch==="."||!ch)continue;px(196+i*4,30+r*4,4,4,smap[ch])}
