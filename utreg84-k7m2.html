@@ -330,7 +330,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v11 - 5 aug";
+const VERSIE="v12 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -795,14 +795,22 @@ function keeper(p,dt,kpSpd){
     ball.vx=ball.vy=ball.vz=0;
     if(p.hold<=0){ball.held=null;p.dir=attack[p.team]>0?0:4;kick(p,1,true)}
     return}
-  const inBox=Math.abs(ball.x-ownGoal(p.team))<80;
+  const inBox=Math.abs(ball.x-ownGoal(p.team))<170;
+  const balSnel=Math.hypot(ball.vx,ball.vy)>115;   // pas bij een geschoten of gespeelde bal
   p.aimT=(p.aimT||0)-dt;
   if(p.aimT<=0){p.aimT=.45;                       // hij leest de bal niet perfect
     p.aimY=ball.y+(Math.random()-.5)*(11-level)*11}
-  const ty=Math.max(W.gy1+4,Math.min(W.gy2-4,inBox?(p.aimY||ball.y):midY));
+  /* Zolang een aanvaller de bal aan de voet houdt dekt de keeper alleen de hoek af.
+     Hij spiegelt je dribbel dus niet meer; pas als de bal onderweg is duikt hij mee. */
+  let ty;
+  if(!inBox)ty=midY;
+  else if(balSnel)ty=(p.aimY!==undefined?p.aimY:ball.y);
+  else ty=midY+(ball.y-midY)*.35;
+  ty=Math.max(W.gy1+4,Math.min(W.gy2-4,ty));
   const dy=ty-p.y;
+  const tempo=kpSpd*(balSnel?1:.45);              // rustig verplaatsen, snel reageren
   if(Math.abs(dy)>4){p.moving=true;p.anim+=dt*5;
-    p.y+=Math.sign(dy)*Math.min(Math.abs(dy),kpSpd*dt)}
+    p.y+=Math.sign(dy)*Math.min(Math.abs(dy),tempo*dt)}
   p.dir=attack[p.team]>0?0:4;
   const mine=humans().includes(p.team);
   if(state==="play"&&inBox&&Math.abs(ball.x-p.x)<16&&Math.abs(ball.y-p.y)<10&&ball.z<30&&p.cool<=0&&!ball.held){
@@ -822,8 +830,13 @@ function ai(p,dt,spd,spread){
   if(ball.held&&ball.held.role==="K"&&ball.held.team!==p.team){
     tx=homeX(p);ty=homeY(p)}                       // keeper heeft hem vast: terug naar je plek
   else if(chaser){tx=ball.x;ty=ball.y}
-  else{const push=Math.max(-100,Math.min(100,(ball.x-midX)*.45*attack[p.team]));
-    tx=homeX(p)+attack[p.team]*push;ty=homeY(p)+(ball.y-midY)*.3}
+  else{const push=Math.max(-140,Math.min(140,(ball.x-midX)*.45*attack[p.team]));
+    tx=homeX(p)+attack[p.team]*push;
+    ty=homeY(p)+(ball.y-midY)*.12;                // veel minder naar de bal toe zuigen
+    const buiten=p.fy<.35||p.fy>.65;              // vleugelspelers houden de zijlijn
+    const aanvallend=(ball.x-midX)*attack[p.team]>-60;
+    if(buiten&&aanvallend)ty=p.fy<.5?W.top+10:W.bot-10;
+  }
   if(state==="setpiece"&&teDichtbij(p)){        // uit de buurt blijven bij een hervatting
     tx=p.x+(p.x-ball.x);ty=p.y+(p.y-ball.y)*.3}
   const dx=tx-p.x,dy=ty-p.y,l=Math.hypot(dx,dy);
