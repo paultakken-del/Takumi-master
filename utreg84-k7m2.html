@@ -180,13 +180,18 @@ const KEEP=[
  {shirt:"#A030A8",sleeve:"#A030A8",shorts:"#202020",sock:"#202020",sock2:"#B0B0B0",badge:"#A030A8"}];
 
 /* ===== veld ===== */
-const W={w:1250,top:45,bot:186,gy1:98,gy2:134,gx0:26,gx1:1224};
+const W={w:1050,top:45,bot:186,gy1:98,gy2:134,gx0:30,gx1:1020};
 const midX=W.w/2, midY=(W.top+W.bot)/2;
 const SHEAR=0.0;
-const projX=(wx,wy)=>wx+(W.bot-wy)*SHEAR;
-const CAMMAX=projX(W.w,W.top)-320+24;
-let cam=0;
-const SX=(wx,wy)=>Math.round(projX(wx,wy)-cam);
+/* Perspectief met een verdwijnpunt. Dicht bij de camera staan dingen verder uit
+   elkaar dan aan de overkant. Een lijn midden in beeld staat daardoor recht,
+   terwijl dezelfde lijn aan de rand van het beeld schuin wegloopt. */
+const PS=0.854, PK=0.62;
+const schaal=wy=>PS*(1+PK*(wy-W.top)/(W.bot-W.top));
+const CAMMIN=W.gx0+130, CAMMAX=W.gx1-130;
+let cam=(W.gx0+W.gx1)/2;
+const SX=(wx,wy)=>Math.round(160+(wx-cam)*schaal(wy));
+const camWens=x=>Math.max(CAMMIN,Math.min(CAMMAX,x));
 
 /* ===== geluid ===== */
 let AC=null,snd=true;
@@ -332,7 +337,7 @@ function reset(kt){
   ball.x=midX;ball.y=midY;ball.z=0;ball.vx=ball.vy=ball.vz=0;
   ball.held=null;ball.last=null;ball.touch=0;
   ctrl[0]=nearest(0);ctrl[1]=nearest(1);taker=null;msg="";
-  cam=Math.max(0,Math.min(CAMMAX,projX(midX,midY)-160))}
+  cam=camWens(midX)}
 
 /* ===== invoer ===== */
 const K={};
@@ -455,13 +460,21 @@ function kick(p,power,loft){        // korte druk is vlak, lang vasthouden geeft
   ball.last=p;ball.touch=.25;p.cool=.28;beep(loft?260:400,.1,"square",.07)}
 /* Balbehandeling: de kracht loopt vloeiend mee met hoe lang je drukt.
    Een pass zoekt een medespeler, een voorzet mikt op de zestien, een schot volgt je kijkrichting. */
+/* De zwaartekracht is 210, dus een bal die met snelheid v omhoog gaat haalt
+   een tophoogte van v*v/420. Hieronder rekenen we met de tophoogte in pixels. */
+const vzVoor=top=>Math.sqrt(420*Math.max(0,top));
 function balNaar(p,tx,ty,hoogte,minSp){
   const dx=tx-p.x, dy=ty-p.y;
-  const afst=Math.hypot(dx,dy*3.2);                 // diepte weegt zwaarder
-  const sp=Math.max(minSp||100,Math.min(280,70+afst*1.25));
   const l=Math.hypot(dx,dy)||1;
+  let sp;
+  if(hoogte>10){                                    // boogbal: snelheid past bij de vluchttijd
+    const T=2*hoogte/210;                           // hoe lang hij in de lucht is
+    sp=Math.max(minSp||90,Math.min(300,l/Math.max(.3,T*.86)));
+  }else{                                            // rollende bal: snelheid past bij de afstand
+    sp=Math.max(minSp||100,Math.min(285,80+l*1.1));
+  }
   p.dir=dirOf(dx,dy);
-  ball.vx=dx/l*sp;ball.vy=inward(p,dy/l*sp*.55);ball.vz=hoogte;
+  ball.vx=dx/l*sp;ball.vy=inward(p,dy/l*sp);ball.vz=hoogte;
   ball.last=p;ball.touch=.25;p.cool=.28;
   beep(hoogte>25?260:400,.1,"square",.07)}
 function medespeler(p,maxAfst){                     // beste medespeler voor je uit
@@ -484,19 +497,19 @@ function speelBal(p,hold){
   const d=D8[p.dir];
   if(t<.5){                                         // pass: zoekt een medespeler
     const mate=medespeler(p,70+t*420);
-    const hoog=t<.28?0:Math.round((t-.28)*150);      // langer drukken tilt hem op
+    const hoog=vzVoor(t<.26?0:(t-.26)*60);           // langer drukken stift hem over
     if(mate)return balNaar(p,mate.x,mate.y,hoog,95);
     return balNaar(p,p.x+d[0]*(60+t*420),p.y+d[1]*(25+t*140),hoog,95)}
-  if(!centraal&&naarDoel<400){                      // voorzet: naar de zestien
-    const mik=gx-Math.sign(gx-p.x)*46;
-    return balNaar(p,mik,midY+(p.y<midY?8:-8),88+(t-.5)*40,150)}
+  if(!centraal&&naarDoel<420){                      // voorzet: landt voor het doel
+    const mik=gx-Math.sign(gx-p.x)*95;
+    return balNaar(p,mik,midY+(p.y<midY?6:-6),vzVoor(22+(t-.5)*14),120)}
   if(centraal&&naarDoel<260){                       // schot: volgt je kijkrichting
-    const kracht=278+(t-.5)*100;                    // sluit aan op de zwaarste pass
-    const hoogte=32+(t-.5)*80;
+    const kracht=300+(t-.5)*90;                     // sluit aan op de zwaarste pass
+    const hoogte=vzVoor(13+(t-.5)*32);
     ball.vx=d[0]*kracht;ball.vy=inward(p,d[1]*kracht*.55);ball.vz=hoogte;
     ball.last=p;ball.touch=.25;p.cool=.28;
     return beep(hoogte>25?300:430,.11,"square",.08)}
-  const hoog=60+(t-.5)*80;                          // lange bal vooruit
+  const hoog=vzVoor(21+(t-.5)*18);                  // lange bal vooruit
   return balNaar(p,p.x+d[0]*300,p.y+d[1]*90,hoog,170)}
 function headShot(p){               // lange klik bij een hoge bal: kopstoot op doel
   const d=D8[p.dir];
@@ -614,7 +627,7 @@ function update(dt){
       else{p.dir=2;p.cel=1}
       p.walkT=p.moving?.18:Math.max(0,(p.walkT||0)-dt);
       clampP(p)}
-    const wc=Math.max(0,Math.min(CAMMAX,projX(midX,midY)-160));
+    const wc=camWens(midX);
     cam+=(wc-cam)*Math.min(1,3*dt);
     msg=stateT>3?"HULDIGING":"";
     if(stateT>9||fireEdge[0]){state="fulltime";msg=""}
@@ -629,7 +642,7 @@ function update(dt){
         turn(p,dx,dy,dt);p.anim+=dt*5;p.moving=true}
       p.walkT=p.moving?.18:Math.max(0,(p.walkT||0)-dt)}
     msg=stateT<3?"DE PLOEGEN KOMEN OP":"";
-    const w=Math.max(0,Math.min(CAMMAX,projX(midX,midY)-160));
+    const w=camWens(midX);
     cam+=(w-cam)*Math.min(1,3*dt);
     if((klaar&&stateT>2.5)||stateT>9){state="kickoff";stateT=0;whistle()}
     fireEdge[0]=fireEdge[1]=false;return}
@@ -683,7 +696,7 @@ function update(dt){
   if(state==="play")contacts(dt);
   if(state==="play")outOfPlay();
 
-  const want=Math.max(0,Math.min(CAMMAX,projX(ball.x,ball.y)-160));
+  const want=camWens(ball.x);
   cam+=(want-cam)*Math.min(1,5*dt);
   fireEdge[0]=fireEdge[1]=false;
 }
@@ -904,18 +917,17 @@ function pitch(){
   line(SX(W.gx0,W.bot),W.bot,SX(W.gx1,W.bot),W.bot,L);
   for(const wx of [W.gx0,W.gx1,midX])wline(wx,W.top,0,wx,W.bot,0,L);
   ctx.fillStyle=L;                              // middencirkel: nette ovaal
-  {const cx=SX(midX,midY);
-   for(let a=0;a<Math.PI*2;a+=.004){
-     const sx=Math.round(cx+Math.cos(a)*102), sy=Math.round(midY+Math.sin(a)*27);
-     if(sx>=0&&sx<320)ctx.fillRect(sx,sy,1,1)}}
+  for(let a=0;a<Math.PI*2;a+=.004){
+    const wy=midY+Math.sin(a)*27, sx=SX(midX+Math.cos(a)*91,wy);
+    if(sx>=0&&sx<320)ctx.fillRect(sx,Math.round(wy),1,1)}
   px(SX(midX,midY)-1,midY-1,2,2,L);
   for(const gx of [W.gx0,W.gx1]){const d=gx===W.gx0?1:-1;
-    for(const [dep,sp] of [[66,32],[26,13]]){
+    for(const [dep,sp] of [[165,42],[55,19]]){
       const y1=W.gy1-sp,y2=W.gy2+sp,x2=gx+d*dep;
       line(SX(gx,y1),y1,SX(x2,y1),y1,L);
       line(SX(gx,y2),y2,SX(x2,y2),y2,L);
       wline(x2,y1,0,x2,y2,0,L)}
-    px(SX(gx+d*46,midY)-1,midY-1,2,2,L)}
+    px(SX(gx+d*110,midY)-1,midY-1,2,2,L)}
   for(const gx of [W.gx0,W.gx1])for(const gy of [W.top,W.bot]){
     const s=SX(gx,gy);if(s<-4||s>324)continue;
     px(s,gy-10,2,10,C.lgrey);px(s+2,gy-10,4,3,C.yel)}}
