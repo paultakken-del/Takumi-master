@@ -330,7 +330,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v12 - 5 aug";
+const VERSIE="v13 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -434,9 +434,19 @@ function inOwnBox(t){const gx=ownGoal(t);
   return Math.abs(ball.x-gx)<74&&ball.y>W.gy1-36&&ball.y<W.gy2+36}
 const lockT=[0,0];
 function ctrlFor(t){
-  if(inOwnBox(t))return P.find(p=>p.team===t&&p.role==="K");
+  const gk=P.find(p=>p.team===t&&p.role==="K");
+  const veld=nearest(t);
+  if(gk&&ball.held===gk)return gk;
+  if(gk&&inOwnBox(t)){
+    /* Alleen naar de keeper als hij dichter bij de bal is dan je dichtstbijzijnde
+       veldspeler. Anders sta je machteloos toe te kijken terwijl je verdediger
+       naast de bal staat. */
+    const dGk=Math.hypot(gk.x-ball.x,(gk.y-ball.y)*3);
+    const dVeld=veld?Math.hypot(veld.x-ball.x,(veld.y-ball.y)*3):1e9;
+    if(dGk<dVeld)return gk;
+  }
   if(lockT[t]>0&&ctrl[t]&&ctrl[t].role!=="K")return ctrl[t];
-  return nearest(t)||ctrl[t]}
+  return veld||ctrl[t]}
 function wissel(t){                       // korte klik zonder bal: volgende speler pakken
   const veld=P.filter(p=>p.team===t&&p.role!=="K")
     .sort((a,b)=>Math.hypot(a.x-ball.x,a.y-ball.y)-Math.hypot(b.x-ball.x,b.y-ball.y));
@@ -503,17 +513,25 @@ function balNaar(p,tx,ty,hoogte,minSp){
   ball.vx=dx/l*sp;ball.vy=inward(p,dy/l*sp);ball.vz=hoogte;
   ball.last=p;ball.touch=.25;p.cool=.28;
   beep(hoogte>25?260:400,.1,"square",.07)}
-function medespeler(p,maxAfst){                     // beste medespeler voor je uit
+function medespeler(p,maxAfst){    // kiest de best aanspeelbare medespeler
   const d=D8[p.dir];let best=null,bs=1e9;
   for(const q of P){
     if(q.team!==p.team||q===p||q.role==="K")continue;
     const dx=q.x-p.x, dy=q.y-p.y;
     const af=Math.hypot(dx,dy*3.2);
-    if(af<20||af>maxAfst)continue;
+    if(af<18||af>maxAfst)continue;
     const l=Math.hypot(dx,dy)||1;
     const richting=(dx/l)*d[0]+(dy/l)*d[1];
-    if(richting<.3)continue;                        // moet ongeveer voor je liggen
-    const punt=af*(1.7-richting);
+    if(richting<-.05)continue;                      // ruime kegel, jij hoeft niet exact te mikken
+    let dekking=0;                                  // staat er iemand in de speellijn?
+    for(const o of P){
+      if(o.team===p.team||o.role==="K")continue;
+      const s=((o.x-p.x)*dx+(o.y-p.y)*dy)/(l*l);
+      if(s<=.08||s>=1.05)continue;
+      const afw=Math.hypot(o.x-(p.x+dx*s),(o.y-(p.y+dy*s))*3.2);
+      if(afw<28)dekking++;
+    }
+    const punt=af*(1.9-richting)*(1+dekking*.9);    // vrijstaande medespelers eerst
     if(punt<bs){bs=punt;best=q}}
   return best}
 function speelBal(p,hold){
@@ -522,9 +540,9 @@ function speelBal(p,hold){
   const centraal=Math.abs(p.y-midY)<34;
   const d=D8[p.dir];
   if(t<.5){                                         // pass: zoekt een medespeler
-    const mate=medespeler(p,70+t*420);
+    const mate=medespeler(p,110+t*520);
     const hoog=vzVoor(t<.24?0:(t-.24)*95);           // langer drukken stift hem op kophoogte
-    if(mate)return balNaar(p,mate.x,mate.y,hoog,95);
+    if(mate)return balNaar(p,mate.x+(mate.mvx||0)*.35,mate.y+(mate.mvy||0)*.35,hoog,95);
     return balNaar(p,p.x+d[0]*(60+t*420),p.y+d[1]*(25+t*140),hoog,95)}
   if(!centraal&&naarDoel<420){                      // voorzet: landt voor het doel
     const mik=gx-Math.sign(gx-p.x)*95;
@@ -746,6 +764,8 @@ function hasBall(p){return !ball.held&&ball.z<11&&dist(p,ball)<13}
 function human(p,dt){
   const i=p.team;
   const gk=P.find(q=>q.team===p.team&&q.role==="K");
+  if(p.role==="K"&&fireEdge[i]&&ball.held!==p&&dist(p,ball)>44){
+    wissel(i);return}                          // niets te redden: pak een veldspeler
   if(p.role==="K"){                            // keeper: lopen binnen de zestien plus de vuurknop
     const kx=(K["r"+i]?1:0)-(K["l"+i]?1:0), ky=(K["d"+i]?1:0)-(K["u"+i]?1:0);
     if(kx||ky){const l=Math.hypot(kx,ky);p.dir=dirOf(kx/l,ky/l);
