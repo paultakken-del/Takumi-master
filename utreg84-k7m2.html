@@ -169,13 +169,13 @@ const C={blk:"#000000",wht:"#FFFFFF",grass:"#00A000",
 
 /* ===== tenues: FC Utrecht 1984 tegen de gasten ===== */
 const KITS=[
- {naam:"UTRECHT",  shirt:"#D82820",light:"#FF8878",sleeve:"#D82820",shorts:"#FFFFFF",sock:"#D82820",sock2:"#FFFFFF",badge:"#FFFFFF"},
- {naam:"WIT",      shirt:"#F0F0F0",light:"#FFFFFF",sleeve:"#F0F0F0",shorts:"#202020",sock:"#F0F0F0",sock2:"#202020",badge:"#202020"},
- {naam:"BLAUW",    shirt:"#2038B8",light:"#7890FF",sleeve:"#2038B8",shorts:"#FFFFFF",sock:"#2038B8",sock2:"#FFFFFF",badge:"#FFFFFF"},
- {naam:"GEEL",     shirt:"#E0C830",light:"#FFF090",sleeve:"#E0C830",shorts:"#202048",sock:"#E0C830",sock2:"#202048",badge:"#202048"},
- {naam:"GROEN",    shirt:"#188838",light:"#60D080",sleeve:"#188838",shorts:"#FFFFFF",sock:"#188838",sock2:"#FFFFFF",badge:"#FFFFFF"},
- {naam:"ORANJE",   shirt:"#E07018",light:"#FFA860",sleeve:"#E07018",shorts:"#202020",sock:"#E07018",sock2:"#FFFFFF",badge:"#202020"},
- {naam:"PAARS",    shirt:"#8828A0",light:"#C878E0",sleeve:"#8828A0",shorts:"#F0F0F0",sock:"#8828A0",sock2:"#F0F0F0",badge:"#F0F0F0"}];
+ {naam:"UTRECHT",kraag:"#FFFFFF",  shirt:"#D82820",light:"#FF8878",sleeve:"#D82820",shorts:"#FFFFFF",sock:"#D82820",sock2:"#FFFFFF",badge:"#FFFFFF"},
+ {naam:"WIT",kraag:"#202020",      shirt:"#F0F0F0",light:"#FFFFFF",sleeve:"#F0F0F0",shorts:"#202020",sock:"#F0F0F0",sock2:"#202020",badge:"#202020"},
+ {naam:"BLAUW",kraag:"#FFFFFF",    shirt:"#2038B8",light:"#7890FF",sleeve:"#2038B8",shorts:"#FFFFFF",sock:"#2038B8",sock2:"#FFFFFF",badge:"#FFFFFF"},
+ {naam:"GEEL",kraag:"#202048",     shirt:"#E0C830",light:"#FFF090",sleeve:"#E0C830",shorts:"#202048",sock:"#E0C830",sock2:"#202048",badge:"#202048"},
+ {naam:"GROEN",kraag:"#FFFFFF",    shirt:"#188838",light:"#60D080",sleeve:"#188838",shorts:"#FFFFFF",sock:"#188838",sock2:"#FFFFFF",badge:"#FFFFFF"},
+ {naam:"ORANJE",kraag:"#FFFFFF",   shirt:"#E07018",light:"#FFA860",sleeve:"#E07018",shorts:"#202020",sock:"#E07018",sock2:"#FFFFFF",badge:"#202020"},
+ {naam:"PAARS",kraag:"#F0F0F0",    shirt:"#8828A0",light:"#C878E0",sleeve:"#8828A0",shorts:"#F0F0F0",sock:"#8828A0",sock2:"#F0F0F0",badge:"#F0F0F0"}];
 let kitA=0, kitB=2;
 let KIT=[KITS[kitA],KITS[kitB]];
 const zetTenues=()=>{KIT[0]=KITS[kitA];KIT[1]=KITS[kitB]};
@@ -336,7 +336,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v21 - 5 aug";
+const VERSIE="v22 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1090,7 +1090,7 @@ function crowd(){
   for(let row=0;row<4;row++){const y=row*6;
     for(let i=-1;i<56;i++){const x=Math.round(i*6-off);
       const k=Math.abs((i*5+row*3+((cam*.3/6)|0))%4);
-      const col=[C.wht,C.blue,C.grey,C.blk][k];
+      const col=[C.wht,"#D82820",C.grey,"#F0A0A0"][k];
       px(x+1,y,4,3,col);px(x,y+3,5,4,col===C.blk?C.dgrey:C.blk)}}
   px(0,24,320,8,C.blk);
   const bo=(cam*.7)%100;
@@ -1210,11 +1210,15 @@ function drawPlayer(p){
   if(!sideV||schuin)arm(armVan,ph,C.skin);        // van opzij valt de verre arm weg
   leg(lb[1],ph,C.skin);
   px(bx,ty-24,bw,10,shirt);                                     // romp
+  const kr=kit.kraag||C.wht;
+  px(bx,ty-24,bw,1,kr);                                         // kraag over de schouders
+  if(front||back)px(X-1,ty-25,3,1,kr);                          // halsboordje
   px(bx,ty-15,bw,4,kit.shorts);                                 // broek
   if(gk)px(bx,ty-24,bw,2,C.yel);
   const sl=mine?kit.light:kit.sleeve;
-  if(sideV){px(X+face*((bw>>1)-1)-1,ty-24,2,6,sl)}              // van opzij één mouw, aan de kijkzijde
-  else{px(bx-2,ty-24,2,6,sl);px(bx+bw,ty-24,2,6,sl)}
+  if(sideV){const mx=X+face*((bw>>1)-1)-1;px(mx,ty-24,2,6,sl);px(mx,ty-24,2,1,kr)}
+  else{px(bx-2,ty-24,2,6,sl);px(bx+bw,ty-24,2,6,sl);
+       px(bx-2,ty-24,2,1,kr);px(bx+bw,ty-24,2,1,kr)}          // biesje op de mouwen
   if(!gk&&front)px(X-2,ty-21,5,2,kit.badge);                     // sponsor alleen op de borst
   px(X-1+(sideV?face:0),ty-26,3,3,C.skin);                      // nek
   px(hx,ty-33,7,7,C.skin);                                      // hoofd
