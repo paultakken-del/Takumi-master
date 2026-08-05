@@ -341,7 +341,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v27 - 5 aug";
+const VERSIE="v28 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -908,9 +908,10 @@ function save(gk){
   if(dist(gk,ball)>40)return;                  // te ver weg: geen zinloze duik                              // keeper: alleen de vuurknop
   gk.dive=.5;
   const d=dist(gk,ball);
-  if(d<28&&ball.z<34){gk.hold=1.4;ball.held=gk;beep(220,.1,"triangle",.06)}
+  if(d<28&&ball.z<34){gk.hold=1.4;ball.held=gk;ball.last=gk;beep(220,.1,"triangle",.06)}
   else if(d<40){const s=Math.sign(ball.x-ownGoal(gk.team))||1;   // gestompt
     ball.vx=s*110;ball.vy=(ball.y-gk.y)*3;ball.vz=30;ball.touch=.3;
+    ball.last=gk;                                 // hij was de laatste aan de bal
     beep(240,.07,"square",.05)}}
 function punt(gk){gk.hold=0;ball.held=null;gk.uit=0;
   ball.x=gk.x+attack[gk.team]*8;ball.y=gk.y+2;ball.z=8;
@@ -946,6 +947,7 @@ function keeper(p,dt,kpSpd){
   if(state==="play"&&inBox&&Math.abs(ball.x-p.x)<16&&Math.abs(ball.y-p.y)<10&&ball.z<30&&p.cool<=0&&!ball.held){
     const s=Math.sign(ball.x-ownGoal(p.team))||1;
     p.cool=.7;                                   // niet elke frame opnieuw
+    ball.last=p;                                 // elke keeperaanraking telt mee
     if(mine){                                    // jouw keeper blokt met het lichaam
       ball.vx=s*120;ball.vy=(ball.y-p.y)*3+(Math.random()-.5)*70;ball.vz=22;ball.touch=.35;
       beep(240,.06,"square",.05)}
