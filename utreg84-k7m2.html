@@ -341,7 +341,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v26 - 5 aug";
+const VERSIE="v27 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -860,7 +860,10 @@ function hasBall(p){return !ball.held&&ball.z<11&&dist(p,ball)<13}
 function human(p,dt){
   const i=p.team;
   const gk=P.find(q=>q.team===p.team&&q.role==="K");
-  if(p.role==="K"&&fireEdge[i]&&ball.held!==p&&dist(p,ball)>44){
+  if(p.role==="K"&&state==="setpiece"&&taker===p){
+    if(fireEdge[i])release(p);                 // hij neemt de hervatting, niet duiken
+    return}
+  if(p.role==="K"&&fireEdge[i]&&ball.held!==p&&dist(p,ball)>44&&state==="play"){
     wissel(i);return}                          // niets te redden: pak een veldspeler
   if(p.role==="K"){                            // keeper: lopen binnen de zestien plus de vuurknop
     const kx=(K["r"+i]?1:0)-(K["l"+i]?1:0), ky=(K["d"+i]?1:0)-(K["u"+i]?1:0);
@@ -901,7 +904,8 @@ function human(p,dt){
     if(state==="play"&&foe&&fd<30&&p.cool<=0){tackle(p,foe);return}
     wissel(i)}                                        // anders van speler wisselen
 }
-function save(gk){                              // keeper: alleen de vuurknop
+function save(gk){
+  if(dist(gk,ball)>40)return;                  // te ver weg: geen zinloze duik                              // keeper: alleen de vuurknop
   gk.dive=.5;
   const d=dist(gk,ball);
   if(d<28&&ball.z<34){gk.hold=1.4;ball.held=gk;beep(220,.1,"triangle",.06)}
