@@ -27,9 +27,13 @@
   /* bediening ligt over het beeld, met ruimte voor de ronde schermhoeken */
   #pad{position:fixed;inset:0;pointer-events:none;z-index:10}
   #stick,#fire{position:fixed;pointer-events:auto;opacity:.42;transition:opacity .15s}
-  #stick:active,#fire:active,#pad.actief #stick,#pad.actief #fire{opacity:.75}
+  #fire:active,#pad.actief #fire{opacity:.75}
+  #stick.zicht:active{opacity:.7}
+  #stickzone{position:fixed;left:0;top:0;width:46%;height:100%;pointer-events:auto;z-index:9}
   #stick{width:134px;height:134px;border-radius:50%;background:#141414;border:3px solid #8a8a8a;
-         left:calc(env(safe-area-inset-left,0px) + 14px);bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
+         left:calc(env(safe-area-inset-left,0px) + 14px);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
+         opacity:0;transition:opacity .12s}       /* pas zichtbaar zodra je hem aanraakt */
+  #stick.zicht{opacity:.5}
   #knob{position:absolute;width:56px;height:56px;border-radius:50%;background:#9a9a9a;
         left:35px;top:35px;pointer-events:none}
   #fire{width:112px;height:112px;border-radius:50%;background:#C03028;border:4px solid #FF6050;
@@ -70,6 +74,7 @@
 <body>
   <canvas id="c" width="320" height="200"></canvas>
   <div id="pad">
+    <div id="stickzone"></div>
     <div id="stick"><div id="knob"></div></div>
     <button id="fire">KICK</button>
   </div>
@@ -104,7 +109,7 @@
   const pad=document.getElementById("pad");
   const aan=()=>pad.classList.add("actief");
   const uit=()=>setTimeout(()=>pad.classList.remove("actief"),1200);
-  for(const el of [document.getElementById("stick"),document.getElementById("fire")]){
+  for(const el of [document.getElementById("stickzone"),document.getElementById("fire")]){
     el.addEventListener("touchstart",aan,{passive:true});
     el.addEventListener("touchend",uit,{passive:true});
   }
@@ -336,7 +341,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v24 - 5 aug";
+const VERSIE="v25 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -402,12 +407,24 @@ function stickAt(t){const r=stick.getBoundingClientRect();
   const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l}
   knob.style.left=(35+dx*34)+"px";knob.style.top=(35+dy*34)+"px";
   const dz=.32;K.l0=dx<-dz;K.r0=dx>dz;K.u0=dy<-dz;K.d0=dy>dz;return{dx,dy}}
-stick.addEventListener("touchstart",e=>{e.preventDefault();ac();
-  sid=e.changedTouches[0].identifier;const v=stickAt(e.changedTouches[0]);
+const zone=document.getElementById("stickzone");
+function zetKnuppel(t){                       // knuppel onder je duim plaatsen
+  stick.style.left=(t.clientX-67)+"px";
+  stick.style.top=(t.clientY-67)+"px";
+  stick.style.bottom="auto";
+  stick.classList.add("zicht")}
+zone.addEventListener("touchstart",e=>{e.preventDefault();ac();
+  const t=e.changedTouches[0];
+  zetKnuppel(t);sid=t.identifier;
+  const v=stickAt(t);
   if(state==="menu")menuKey(Math.abs(v.dx)>Math.abs(v.dy)?(v.dx>0?"ArrowRight":"ArrowLeft"):(v.dy>0?"ArrowDown":"ArrowUp"))});
-stick.addEventListener("touchmove",e=>{e.preventDefault();
+zone.addEventListener("touchmove",e=>{e.preventDefault();
   const t=[...e.touches].find(t=>t.identifier===sid);if(t)stickAt(t)});
-stick.addEventListener("touchend",e=>{e.preventDefault();sid=null;
+zone.addEventListener("touchend",e=>{e.preventDefault();sid=null;
+  stick.classList.remove("zicht");
+  knob.style.left="35px";knob.style.top="35px";K.l0=K.r0=K.u0=K.d0=false});
+zone.addEventListener("touchcancel",e=>{sid=null;
+  stick.classList.remove("zicht");
   knob.style.left="35px";knob.style.top="35px";K.l0=K.r0=K.u0=K.d0=false});
 const fb=document.getElementById("fire");
 fb.addEventListener("touchstart",e=>{e.preventDefault();ac();
@@ -691,10 +708,14 @@ function houdAfstand(dt){                // tegenstanders wijken tot ze ver geno
   return vrij}
 function release(p){
   // de bal komt automatisch in het spel, naar de best geplaatste medespeler
-  let mate=null,md=1e9;
+  const ver=setType==="goalkick";               // een doeltrap gaat het veld in, niet naar de dichtstbijzijnde
+  let mate=null,md=ver?-1:1e9;
   for(const q of P){if(q.team!==p.team||q===p||q.role==="K")continue;
-    if((q.x-p.x)*attack[p.team]<-30)continue;
-    const d=dist(p,q);if(d<md&&d>25){md=d;mate=q}}
+    const vooruit=(q.x-p.x)*attack[p.team];
+    if(vooruit<-30)continue;
+    const d=dist(p,q);
+    if(ver){if(vooruit>md){md=vooruit;mate=q}}
+    else if(d<md&&d>25){md=d;mate=q}}
   const tx=setType==="corner"?foeGoal(p.team):(mate?mate.x:p.x+attack[p.team]*120);
   const ty=setType==="corner"?midY:(mate?mate.y:midY);
   p.dir=dirOf(tx-p.x,ty-p.y);
@@ -715,7 +736,8 @@ function release(p){
     ball.x=p.x;ball.y=p.y;ball.z=32;
     ball.vx=d[0]/l*95;ball.vy=dy/l*95;ball.vz=46;
     ball.last=p;ball.touch=.4;p.cool=.7;beep(300,.1,"triangle",.05)}
-  else if(mate)balNaar(p,mate.x+(mate.mvx||0)*.4,mate.y+(mate.mvy||0)*.4,vzVoor(20),120);
+  else if(mate)balNaar(p,mate.x+(mate.mvx||0)*.4,mate.y+(mate.mvy||0)*.4,
+                       vzVoor(setType==="goalkick"?32:20),setType==="goalkick"?210:120);
   else kick(p,setType==="corner"?.85:.9,true);
   taker=null;state="play";msg=""}
 
