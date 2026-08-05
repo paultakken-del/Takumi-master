@@ -191,7 +191,7 @@ const KEEP=[
  {shirt:"#A030A8",sleeve:"#A030A8",shorts:"#202020",sock:"#202020",sock2:"#B0B0B0",badge:"#A030A8"}];
 
 /* ===== veld ===== */
-const W={w:1050,top:45,bot:186,gy1:98,gy2:134,gx0:30,gx1:1020};
+const W={w:1230,top:50,bot:182,gy1:98,gy2:134,gx0:90,gx1:1140};
 const midX=W.w/2, midY=(W.top+W.bot)/2;
 const SHEAR=0.0;
 /* Perspectief met een verdwijnpunt. Dicht bij de camera staan dingen verder uit
@@ -199,7 +199,7 @@ const SHEAR=0.0;
    terwijl dezelfde lijn aan de rand van het beeld schuin wegloopt. */
 const PS=0.854, PK=0.62;
 const schaal=wy=>PS*(1+PK*(wy-W.top)/(W.bot-W.top));
-const CAMMIN=W.gx0+130, CAMMAX=W.gx1-130;
+const CAMMIN=W.gx0-55, CAMMAX=W.gx1+55;      // je kunt tot achter de doelen kijken
 let cam=(W.gx0+W.gx1)/2;
 const SX=(wx,wy)=>Math.round(160+(wx-cam)*schaal(wy));
 const camWens=x=>Math.max(CAMMIN,Math.min(CAMMAX,x));
@@ -341,7 +341,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v25 - 5 aug";
+const VERSIE="v26 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -472,6 +472,7 @@ function inOwnBox(t){const gx=ownGoal(t);
 const lockT=[0,0];
 function ctrlFor(t){
   const gk=P.find(p=>p.team===t&&p.role==="K");
+  if(state==="setpiece"&&taker&&taker.team===t)return taker;
   const veld=nearest(t);
   if(gk&&ball.held===gk)return gk;
   if(gk&&inOwnBox(t)){
@@ -871,6 +872,9 @@ function human(p,dt){
       p.x=Math.max(Math.min(b.gx+2,b.rand),Math.min(Math.max(b.gx+2,b.rand),p.x));
       p.y=Math.max(b.y1,Math.min(b.y2,p.y))}
     if(fireEdge[i]){if(ball.held===p)punt(p);else save(p)}
+    if(ball.held===p){                          // hij houdt hem niet eindeloos vast
+      p.uit=(p.uit||0)+dt;
+      if(p.uit>4)punt(p)}
     return}
   const mx=(K["r"+i]?1:0)-(K["l"+i]?1:0), my=(K["d"+i]?1:0)-(K["u"+i]?1:0);
   const rooted=(state==="setpiece"&&taker===p);
@@ -904,7 +908,7 @@ function save(gk){                              // keeper: alleen de vuurknop
   else if(d<40){const s=Math.sign(ball.x-ownGoal(gk.team))||1;   // gestompt
     ball.vx=s*110;ball.vy=(ball.y-gk.y)*3;ball.vz=30;ball.touch=.3;
     beep(240,.07,"square",.05)}}
-function punt(gk){gk.hold=0;ball.held=null;
+function punt(gk){gk.hold=0;ball.held=null;gk.uit=0;
   ball.x=gk.x+attack[gk.team]*8;ball.y=gk.y+2;ball.z=8;
   const mate=medespeler(gk,600)||P.find(q=>q.team===gk.team&&q.role==="M");
   if(mate)return balNaar(gk,mate.x+(mate.mvx||0)*.5,mate.y+(mate.mvy||0)*.5,vzVoor(24),140);
