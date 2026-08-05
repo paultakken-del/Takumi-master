@@ -304,7 +304,7 @@ const RUSTDEUN=maakDeun(110,[
  {golf:"triangle",vol:.4,noten:[[-17,.5],[-21,.5],[-24,1]]}]);
 
 /* ===== staat ===== */
-const VERSIE="v8 - 5 aug";
+const VERSIE="v9 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -497,7 +497,7 @@ function speelBal(p,hold){
   const d=D8[p.dir];
   if(t<.5){                                         // pass: zoekt een medespeler
     const mate=medespeler(p,70+t*420);
-    const hoog=vzVoor(t<.26?0:(t-.26)*60);           // langer drukken stift hem over
+    const hoog=vzVoor(t<.24?0:(t-.24)*95);           // langer drukken stift hem op kophoogte
     if(mate)return balNaar(p,mate.x,mate.y,hoog,95);
     return balNaar(p,p.x+d[0]*(60+t*420),p.y+d[1]*(25+t*140),hoog,95)}
   if(!centraal&&naarDoel<420){                      // voorzet: landt voor het doel
@@ -540,13 +540,14 @@ function setPiece(type,team,x,y){
 /* Afstanden bij hervattingen. Het veld is 940 bij 153, dus ongeveer 9 pixels
    per meter in de breedte en 2,2 in de diepte. Daarom telt diepte vier keer zwaarder. */
 const AFSTAND={corner:82,throwin:32,goalkick:0};
-function boxUit(t){                      // grenzen van het strafschopgebied van ploeg t
+function boxUit(t){                      // strafschopgebied: 16,5 bij 40,3 meter
   const gx=ownGoal(t), d=attack[t]>0?1:-1;
-  return {gx,d,rand:gx+d*66,y1:W.gy1-32,y2:W.gy2+32}}
+  return {gx,d,rand:gx+d*165,y1:W.gy1-42,y2:W.gy2+42}}
 function teDichtbij(p){
   if(!taker)return false;
-  if(p.team===taker.team||p.role==="K")return false;
-  if(setType==="goalkick"){
+  if(p===taker||p.role==="K")return false;
+  if(setType!=="goalkick"&&p.team===taker.team)return false;
+  if(setType==="goalkick"){                       // bij een doeltrap moet iedereen eruit
     const b=boxUit(taker.team);
     return (p.x-b.gx)*b.d>=-2&&(p.x-b.rand)*b.d<=0&&p.y>b.y1&&p.y<b.y2}
   const need=AFSTAND[setType]||32;
@@ -569,7 +570,7 @@ function houdAfstand(dt){                // tegenstanders wijken tot ze ver geno
     vrij=false;
     if(setType==="goalkick"){
       const b=boxUit(taker.team);
-      p.x+=b.d*58*dt;
+      p.x+=b.d*74*dt;
     }else{
       let dx=p.x-ball.x, dy=p.y-ball.y;
       let n=Math.hypot(dx,dy);
@@ -821,7 +822,7 @@ function contacts(dt){
   for(const t of humans()){                       // jouw speler heeft voorrang
     const q=ctrl[t];if(!q||q.cool>0)continue;
     const d=Math.hypot(q.x-ball.x,q.y-ball.y);
-    if(d<16&&d<bd){bd=d;p=q}}
+    if(d<19&&d<bd){bd=d;p=q}}
   if(!p){for(const q of P){if(q.cool>0)continue;
     const d=Math.hypot(q.x-ball.x,q.y-ball.y);if(d<bd){bd=d;p=q}}}
   if(!p)return;
@@ -840,8 +841,12 @@ function contacts(dt){
   if(bd>14||ball.z>13)return;
   const bs=Math.hypot(ball.vx,ball.vy);
   if(p===ctrl[p.team]&&humans().includes(p.team)){
-    if(bs>110||ball.z>4){                       // aanname: bal dood voor je voeten
-      ball.vx*=.10;ball.vy*=.10;ball.vz*=.12;ball.z=Math.min(ball.z,3);ball.touch=.12;return}
+    if(bs>110||ball.z>4){                       // aanname: bal dood en meteen naar de voet
+      ball.vx*=.10;ball.vy*=.10;ball.vz*=.12;ball.z=Math.min(ball.z,3);
+      const d0=D8[p.dir], tx=p.x+d0[0]*9, ty=p.y+d0[1]*6+2;
+      const k0=Math.min(1,7*dt);
+      ball.x+=(tx-ball.x)*k0;ball.y+=(ty-ball.y)*k0;   // trekt hem om je heen naar voren
+      ball.touch=.06;return}
     dribble(p,dt);return}
   if(bs>150&&Math.abs(foeGoal(p.team)-p.x)>200){ // computer neemt ook eerst aan
     ball.vx*=.16;ball.vy*=.16;ball.vz*=.15;ball.z=Math.min(ball.z,4);ball.touch=.16;
@@ -849,8 +854,12 @@ function contacts(dt){
   // computerspeler beslist bij aanraking
   const gx=foeGoal(p.team), far=Math.abs(gx-p.x);
   const wide=Math.abs(p.y-midY)>26;
-  if(far<190&&!wide){p.dir=dirOf(gx-p.x,midY+(Math.random()-.5)*spreadFor()-p.y);
-    kick(p,.75,false);return}
+  if(far<190&&!wide){                            // schot precies gericht, niet in acht stappen
+    const my=midY+(Math.random()-.5)*spreadFor()*.5;
+    const dx=gx-p.x, dy=my-p.y, l=Math.hypot(dx,dy)||1;
+    p.dir=dirOf(dx,dy);
+    ball.vx=dx/l*230;ball.vy=inward(p,dy/l*230);ball.vz=0;
+    ball.last=p;ball.touch=.25;p.cool=.3;beep(400,.1,"square",.07);return}
   if(far<300&&wide&&Math.random()<.5){          // voorzet de zestien in
     p.dir=dirOf(gx-p.x,midY-p.y);kick(p,.9,true);return}
   let mate=null,md=1e9;
@@ -874,7 +883,7 @@ function outOfPlay(){
     if(ball.y>W.gy1&&ball.y<W.gy2&&ball.z<42){goal(ownGoal(0)===gx?1:0);return}
     const def=(ownGoal(0)===gx)?0:1;
     if(ball.last&&ball.last.team===def)setPiece("corner",1-def,gx,ball.y<midY?W.top+4:W.bot-4);
-    else setPiece("goalkick",def,gx+(side===0?36:-36),midY+(ball.y<midY?-22:22));
+    else setPiece("goalkick",def,gx+(side===0?55:-55),midY+(ball.y<midY?-14:14));
     return}}
 
 /* ===== tekenen ===== */
@@ -1040,6 +1049,11 @@ function drawBall(){
 function txt(s,x,y,c,sz,al){ctx.font=(sz||8)+"px monospace";ctx.textAlign=al||"center";
   ctx.textBaseline="top";ctx.fillStyle=C.blk;ctx.fillText(s,x+1,y+1);
   ctx.fillStyle=c;ctx.fillText(s,x,y)}
+const DIG3=["111 101 101 101 111","010 110 010 010 010","111 001 111 100 111",
+ "111 001 111 001 111","101 101 111 001 001","111 100 111 001 111","111 100 111 101 111",
+ "111 001 010 010 010","111 101 111 101 111","111 101 111 001 111"];
+function kleinCijfer(n,x,y,s,c){const r=DIG3[n].split(" ");
+  for(let a=0;a<5;a++)for(let i=0;i<3;i++)if(r[a][i]==="1")px(x+i*s,y+a*s,s,s,c)}
 const DIG=["11111 10001 10001 10001 10001 10001 11111",
  "00100 01100 00100 00100 00100 00100 01110",
  "11111 00001 00001 11111 10000 10000 11111",
@@ -1210,10 +1224,10 @@ function scoreboards(){          // twee borden in de tribune, tijd loopt terug
     px(sx-23,0,46,24,C.blk);
     px(sx-24,0,48,1,"#606060");px(sx-24,24,48,1,"#606060");
     px(sx-24,0,1,25,"#606060");px(sx+23,0,1,25,"#606060");
-    bigDigit(Math.min(9,score[0]),sx-19,2,2,2,KIT[0].light);
-    px(sx-6,7,5,2,C.lgrey);
-    bigDigit(Math.min(9,score[1]),sx+2,2,2,2,KIT[1].light);
-    for(let i=0;i<3;i++)bigDigit(+s[i],sx-17+i*12,13,2,2,C.wht);
+    kleinCijfer(Math.min(9,score[0]),sx-9,4,2,KIT[0].light);   // stand netjes gecentreerd
+    px(sx-2,8,4,2,C.lgrey);
+    kleinCijfer(Math.min(9,score[1]),sx+4,4,2,KIT[1].light);
+    for(let i=0;i<3;i++)kleinCijfer(+s[i],sx-11+i*8,14,2,C.wht); // tijd in drie cijfers
   }}
 function ceremonie(){
   const ploeg=P.filter(p=>p.team===winnaar);
