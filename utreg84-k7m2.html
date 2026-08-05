@@ -299,6 +299,7 @@ const RUSTDEUN=maakDeun(110,[
  {golf:"triangle",vol:.4,noten:[[-17,.5],[-21,.5],[-24,1]]}]);
 
 /* ===== staat ===== */
+const VERSIE="v8 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1148,6 +1149,8 @@ function title(){
   ctx.fillStyle=C.wht;ctx.font="10px monospace";ctx.fillText("DRUK KICK",218,149);
   ctx.fillStyle="#2E7A2E";ctx.font="8px monospace";
   ctx.fillText("EERBETOON AAN INTERNATIONAL SOCCER 1983",160,186);
+  ctx.textAlign="right";
+  ctx.fillStyle="#2E7A2E";ctx.fillText(VERSIE,314,190);
   const st=AC?AC.state:"geen";
   ctx.textAlign="left";
   ctx.fillStyle=(st==="running"&&snd)?"#9FD89F":"#FF8878";
@@ -1182,7 +1185,9 @@ function opties(){
   ctx.fillText("OP EN NEER KIEST EEN REGEL",160,156);
   ctx.fillText("LINKS EN RECHTS VERANDERT DE WAARDE",160,168);
   px(96,180,128,14,C.blk);
-  ctx.fillStyle=C.wht;ctx.font="10px monospace";ctx.fillText("KICK START",160,182)}
+  ctx.fillStyle=C.wht;ctx.font="10px monospace";ctx.fillText("KICK START",160,182);
+  ctx.textAlign="right";ctx.font="8px monospace";ctx.fillStyle="#4E8A4E";
+  ctx.fillText(VERSIE,314,4);ctx.textAlign="center"}
 
 function scoreboards(){          // twee borden in de tribune, tijd loopt terug
   const left=Math.max(0,200-(half===1?clock:clock-200))|0;
