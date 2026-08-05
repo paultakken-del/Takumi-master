@@ -175,6 +175,8 @@ const KITS=[
 let kitA=0, kitB=2;
 let KIT=[KITS[kitA],KITS[kitB]];
 const zetTenues=()=>{KIT[0]=KITS[kitA];KIT[1]=KITS[kitB]};
+const SCHEIDS={naam:"SCHEIDS",shirt:"#181818",light:"#181818",sleeve:"#181818",
+  shorts:"#181818",sock:"#181818",sock2:"#E8E8E8",badge:"#E8E8E8"};
 const KEEP=[
  {shirt:"#309030",sleeve:"#309030",shorts:"#202020",sock:"#202020",sock2:"#B0B0B0",badge:"#309030"},
  {shirt:"#A030A8",sleeve:"#A030A8",shorts:"#202020",sock:"#202020",sock2:"#B0B0B0",badge:"#A030A8"}];
@@ -330,7 +332,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v14 - 5 aug";
+const VERSIE="v15 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -342,6 +344,17 @@ const FORM=[[0.04,0.50,"K"],[0.20,0.30,"D"],[0.20,0.70,"D"],
             [0.44,0.24,"M"],[0.44,0.76,"M"],
             [0.68,0.36,"F"],[0.68,0.64,"F"]];
 let P=[],ctrl=[null,null];
+const ref={x:0,y:0,dir:0,anim:0,moving:false,walkT:0,z:0,cool:0,dive:0,cel:0,
+  team:0,role:"R",fx:.5,fy:.5,ref:true};
+function refLoopt(dt){                    // blijft schuin achter het spel
+  const doelX=ball.x-42*(ball.vx>=0?1:-1);
+  const doelY=Math.max(W.top+8,Math.min(W.bot-6,ball.y+34));
+  const dx=doelX-ref.x, dy=doelY-ref.y, l=Math.hypot(dx,dy);
+  ref.moving=false;
+  if(l>10){ref.x+=dx/l*56*dt;ref.y+=dy/l*56*dt*.72;
+    turn(ref,dx,dy,dt);ref.anim+=dt*6;ref.moving=true}
+  ref.x=Math.max(W.gx0+6,Math.min(W.gx1-6,ref.x));
+  ref.walkT=ref.moving?.18:Math.max(0,(ref.walkT||0)-dt)}
 const homeX=p=>attack[p.team]>0?p.fx*W.w:(1-p.fx)*W.w;
 const homeY=p=>W.top+p.fy*(W.bot-W.top);
 const foeGoal=t=>attack[t]>0?W.gx1:W.gx0;
@@ -363,6 +376,7 @@ function reset(kt){
   ball.x=midX;ball.y=midY;ball.z=0;ball.vx=ball.vy=ball.vz=0;
   ball.held=null;ball.last=null;ball.touch=0;
   ctrl[0]=nearest(0);ctrl[1]=nearest(1);taker=null;msg="";
+  ref.x=midX-40;ref.y=midY+34;
   cam=camWens(midX)}
 
 /* ===== invoer ===== */
@@ -569,10 +583,41 @@ function head(p){                   // korte klik: gecontroleerde kopbal
 function goal(team){scorer=team;score[team]++;state="goal";stateT=0;msg="GOAL!";
   speelDeun(GOALDEUN,"goal",false);
   ball.held=null;whistle();cheer();for(const p of P)if(p.team===team)p.cel=1}
+function tackle(p,foe){                        // sliding: op tijd is balafname, te laat is een overtreding
+  p.dive=.45;p.cool=.55;
+  const bijBal=Math.hypot(p.x-ball.x,(p.y-ball.y)*3)<24&&ball.z<12&&!ball.held;
+  const vanAchter=(p.x-foe.x)*attack[foe.team]<0;
+  if(bijBal&&!vanAchter&&Math.random()<.72){    // schoon: je speelt de bal weg
+    const d=D8[p.dir];
+    ball.vx=d[0]*120;ball.vy=inward(p,d[1]*120);ball.vz=0;
+    ball.last=p;ball.touch=.3;beep(300,.07,"square",.06);return}
+  overtreding(p,foe)}
+
+function overtreding(dader,slachtoffer){       // vrije trap, of strafschop in de zestien
+  whistle();
+  const ploeg=slachtoffer.team;
+  const b=boxUit(dader.team);
+  const inEigenZestien=(ball.x-b.gx)*b.d>=0&&(ball.x-b.rand)*b.d<=0&&
+                       ball.y>b.y1&&ball.y<b.y2;
+  dader.cool=1.2;
+  if(inEigenZestien&&dader.team!==ploeg){
+    const stip=b.gx+b.d*110;
+    setPiece("penalty",ploeg,stip,midY);
+    msg="STRAFSCHOP";
+  }else{
+    setPiece("freekick",ploeg,
+      Math.max(W.gx0+30,Math.min(W.gx1-30,ball.x)),
+      Math.max(W.top+6,Math.min(W.bot-6,ball.y)));
+    msg="VRIJE TRAP";
+  }}
 function setPiece(type,team,x,y){
   setType=type;ball.x=x;ball.y=y;ball.z=0;ball.vx=ball.vy=ball.vz=0;ball.held=null;ball.touch=0;
   let t=null;
   if(type==="goalkick")t=P.find(p=>p.team===team&&p.role==="K");
+  else if(type==="penalty"){                    // de beste spits neemt hem
+    t=P.filter(p=>p.team===team&&p.role==="F")
+       .sort((a,b)=>Math.abs(a.y-midY)-Math.abs(b.y-midY))[0]
+      ||P.find(p=>p.team===team&&p.role!=="K")}
   else{let bd=1e9;for(const p of P){if(p.team!==team||p.role==="K")continue;
     const d=Math.hypot(p.x-x,p.y-y);if(d<bd){bd=d;t=p}}}
   t.x=x-(type==="throwin"?0:9*attack[team]);
@@ -580,17 +625,24 @@ function setPiece(type,team,x,y){
   t.cool=0;t.charge=0;t.dir=dirOf(foeGoal(team)-t.x,midY-t.y);
   taker=t;takerT=0;ctrl[team]=t;
   state="setpiece";stateT=0;
-  msg=type==="throwin"?"INWORP":type==="corner"?"CORNER":"DOELTRAP";whistle()}
+  msg=type==="throwin"?"INWORP":type==="corner"?"CORNER":
+      type==="penalty"?"STRAFSCHOP":type==="freekick"?"VRIJE TRAP":"DOELTRAP";
+  if(type!=="freekick"&&type!=="penalty")whistle()}
 /* Afstanden bij hervattingen. Het veld is 940 bij 153, dus ongeveer 9 pixels
    per meter in de breedte en 2,2 in de diepte. Daarom telt diepte vier keer zwaarder. */
-const AFSTAND={corner:82,throwin:32,goalkick:0};
+const AFSTAND={corner:82,throwin:32,goalkick:0,freekick:82,penalty:82};
 function boxUit(t){                      // strafschopgebied: 16,5 bij 40,3 meter
   const gx=ownGoal(t), d=attack[t]>0?1:-1;
   return {gx,d,rand:gx+d*165,y1:W.gy1-42,y2:W.gy2+42}}
 function teDichtbij(p){
   if(!taker)return false;
   if(p===taker||p.role==="K")return false;
-  if(setType!=="goalkick"&&p.team===taker.team)return false;
+  if(setType!=="goalkick"&&setType!=="penalty"&&p.team===taker.team)return false;
+  if(setType==="penalty"){                        // alleen nemer en keeper in de zestien
+    if(p.role==="K")return false;
+    const b=boxUit(taker.team===0?1:0);
+    const inBox=(p.x-b.gx)*b.d>=-2&&(p.x-b.rand)*b.d<=0&&p.y>b.y1&&p.y<b.y2;
+    return inBox||Math.hypot(p.x-ball.x,(p.y-ball.y)*4)<82}
   if(setType==="goalkick"){                       // bij een doeltrap moet iedereen eruit
     const b=boxUit(taker.team);
     return (p.x-b.gx)*b.d>=-2&&(p.x-b.rand)*b.d<=0&&p.y>b.y1&&p.y<b.y2}
@@ -612,9 +664,9 @@ function houdAfstand(dt){                // tegenstanders wijken tot ze ver geno
   for(const p of P){
     if(!teDichtbij(p))continue;
     vrij=false;
-    if(setType==="goalkick"){
-      const b=boxUit(taker.team);
-      p.x+=b.d*74*dt;
+    if(setType==="goalkick"||setType==="penalty"){
+      const b=boxUit(setType==="penalty"?(taker.team===0?1:0):taker.team);
+      p.x+=b.d*74*dt;                            // van de doellijn af, het gebied uit
     }else{
       let dx=p.x-ball.x, dy=p.y-ball.y;
       let n=Math.hypot(dx,dy);
@@ -638,6 +690,16 @@ function release(p){
   const tx=setType==="corner"?foeGoal(p.team):(mate?mate.x:p.x+attack[p.team]*120);
   const ty=setType==="corner"?midY:(mate?mate.y:midY);
   p.dir=dirOf(tx-p.x,ty-p.y);
+  if(setType==="penalty"){
+    const gx=foeGoal(p.team);
+    const my=midY+(Math.random()-.5)*22;
+    if(humans().includes(p.team)){const d=D8[p.dir];
+      ball.vx=d[0]*260;ball.vy=inward(p,d[1]*260*.5)}
+    else{const dx=gx-p.x,dy=my-p.y,l=Math.hypot(dx,dy)||1;
+      ball.vx=dx/l*250;ball.vy=dy/l*250}
+    ball.vz=vzVoor(6);ball.last=p;ball.touch=.3;p.cool=.3;
+    beep(430,.11,"square",.08);
+    taker=null;state="play";msg="";return}
   if(setType==="throwin"){
     const d=D8[p.dir], inw=p.y<midY?1:-1;
     let dy=d[1];if(dy*inw<.2)dy=inw*.5;
@@ -645,6 +707,7 @@ function release(p){
     ball.x=p.x;ball.y=p.y;ball.z=32;
     ball.vx=d[0]/l*95;ball.vy=dy/l*95;ball.vz=46;
     ball.last=p;ball.touch=.4;p.cool=.7;beep(300,.1,"triangle",.05)}
+  else if(mate)balNaar(p,mate.x+(mate.mvx||0)*.4,mate.y+(mate.mvy||0)*.4,vzVoor(20),120);
   else kick(p,setType==="corner"?.85:.9,true);
   taker=null;state="play";msg=""}
 
@@ -742,6 +805,7 @@ function update(dt){
     else if(bk){a.x-=ux*push*2;a.y-=uy*push*2;clampP(a)}
     else{a.x-=ux*push;a.y-=uy*push;b.x+=ux*push;b.y+=uy*push;clampP(a);clampP(b)}}
 
+  refLoopt(dt);
   keeperRuimte(dt);
   if(state==="setpiece"&&taker){takerT+=dt;
     const vrij=houdAfstand(dt);
@@ -796,7 +860,11 @@ function human(p,dt){
     if(d<19&&ball.z>12&&ball.z<36&&p.cool<=0){        // bal op kophoogte
       if(hold<.25)head(p); else headShot(p);return}
     if(d<18&&ball.z<14&&p.cool<=0){speelBal(p,hold);return}
-    wissel(i)}                                        // geen bal bij de voet: van speler wisselen
+    let foe=null,fd=1e9;                            // tegenstander vlakbij: tackle
+    for(const q of P){if(q.team===p.team||q.role==="K")continue;
+      const dd=Math.hypot(q.x-p.x,(q.y-p.y)*3);if(dd<fd){fd=dd;foe=q}}
+    if(state==="play"&&foe&&fd<20&&p.cool<=0){tackle(p,foe);return}
+    wissel(i)}                                        // anders van speler wisselen
 }
 function save(gk){                              // keeper: alleen de vuurknop
   gk.dive=.5;
@@ -806,6 +874,9 @@ function save(gk){                              // keeper: alleen de vuurknop
     ball.vx=s*110;ball.vy=(ball.y-gk.y)*3;ball.vz=30;ball.touch=.3;
     beep(240,.07,"square",.05)}}
 function punt(gk){gk.hold=0;ball.held=null;
+  ball.x=gk.x+attack[gk.team]*8;ball.y=gk.y+2;ball.z=8;
+  const mate=medespeler(gk,600)||P.find(q=>q.team===gk.team&&q.role==="M");
+  if(mate)return balNaar(gk,mate.x+(mate.mvx||0)*.5,mate.y+(mate.mvy||0)*.5,vzVoor(24),140);
   gk.dir=attack[gk.team]>0?0:4;kick(gk,.8,true)}
 function keeper(p,dt,kpSpd){
   const gx=ownGoal(p.team)+(attack[p.team]>0?7:-7);
@@ -1082,8 +1153,8 @@ function drawPlayer(p){
   const X=snap(SX(p.x,p.y)), gy=Math.round(p.y), y=gy-Math.round(p.z);
   if(X<-26||X>346)return;
   const gk=p.role==="K";
-  const kit=gk?KEEP[p.team]:KIT[p.team];
-  const mine=humans().includes(p.team)&&p===ctrl[p.team];
+  const kit=p.ref?SCHEIDS:(gk?KEEP[p.team]:KIT[p.team]);
+  const mine=!p.ref&&humans().includes(p.team)&&p===ctrl[p.team];
   const shirt=mine?kit.light:kit.shirt;
   const d=p.dir, front=(d>=1&&d<=3), back=(d>=5&&d<=7);
   const sideV=(d!==2&&d!==6), face=(d>=3&&d<=5)?-1:1;
@@ -1401,7 +1472,7 @@ function frame(ts){
     title();requestAnimationFrame(frame);return}
   crowd();scoreboards();pitch();
   goalpost(0,"net");goalpost(1,"net");
-  const order=[...P].sort((a,b)=>a.y-b.y);
+  const order=[...P,ref].sort((a,b)=>a.y-b.y);
   let drawn=false;
   for(const p of order){
     if(!drawn&&p.y>ball.y){drawBall();drawn=true}
