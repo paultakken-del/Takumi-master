@@ -303,8 +303,23 @@ const RUSTDEUN=maakDeun(110,[
  {golf:"square",vol:.36,noten:[[7,.5],[3,.5],[0,1]]},
  {golf:"triangle",vol:.4,noten:[[-17,.5],[-21,.5],[-24,1]]}]);
 
+/* ===== herhaling =====
+   We bewaren de laatste seconden als losse beeldjes en spelen die na een doelpunt
+   op halve snelheid af, met een knipperende H rechtsboven. */
+let film=[], filmT=0, herhaling=null, herIdx=0;
+function maakBeeldje(){
+  const a=[ball.x,ball.y,ball.z];
+  for(const p of P)a.push(p.x,p.y,p.dir,(p.walkT||0)>0?1:0,p.anim);
+  return a}
+function zetBeeldje(f){
+  ball.x=f[0];ball.y=f[1];ball.z=f[2];
+  let i=3;
+  for(const p of P){p.x=f[i++];p.y=f[i++];p.dir=f[i++];
+    p.walkT=f[i++]?.5:0;p.anim=f[i++];p.cel=0;p.dive=0;p.charge=0}
+  cam=camWens(ball.x)}
+
 /* ===== staat ===== */
-const VERSIE="v9 - 5 aug";
+const VERSIE="v10 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -391,7 +406,7 @@ function menuKey(k){
   else if(k==="ArrowUp"){menuSel=(menuSel+3)%4;beep(400,.04)}
   else if(k==="ArrowDown"){menuSel=(menuSel+1)%4;beep(400,.04)}
   else if(k===" "||k==="Enter")start()}
-function start(){stopMuziek();score=[0,0];clock=0;half=1;attack=[1,-1];build();reset(0);
+function start(){stopMuziek();film=[];herhaling=null;score=[0,0];clock=0;half=1;attack=[1,-1];build();reset(0);
   P.forEach((p,i)=>{                            // opkomen vanaf de zijlijn
     p.spotX=p.x;p.spotY=p.y;
     p.x=midX-135+i*20;p.y=W.bot+4;p.dir=6;p.anim=i*.7});
@@ -504,7 +519,7 @@ function speelBal(p,hold){
     const mik=gx-Math.sign(gx-p.x)*95;
     return balNaar(p,mik,midY+(p.y<midY?6:-6),vzVoor(22+(t-.5)*14),120)}
   if(centraal&&naarDoel<260){                       // schot: volgt je kijkrichting
-    const kracht=300+(t-.5)*90;                     // sluit aan op de zwaarste pass
+    const kracht=270+(t-.5)*81;                     // een tiende zachter dan eerst
     const hoogte=vzVoor(13+(t-.5)*32);
     ball.vx=d[0]*kracht;ball.vy=inward(p,d[1]*kracht*.55);ball.vz=hoogte;
     ball.last=p;ball.touch=.25;p.cool=.28;
@@ -612,7 +627,18 @@ function update(dt){
     for(const p of P)if(p.cel){p.anim+=dt*10;p.moving=true;p.x+=attack[p.team]*24*dt;
       p.dir=attack[p.team]>0?0:4;clampP(p)}
     ballPhysics(dt);
-    if(stateT>2.8){reset(scorer===0?1:0);state="kickoff";stateT=0;whistle()}
+    filmT-=dt;
+    if(filmT<=0){filmT=1/30;film.push(maakBeeldje());if(film.length>130)film.shift()}
+    if(stateT>2.4){
+      if(film.length>30){herhaling=film.slice(-105);herIdx=0;state="herhaling";stateT=0;msg=""}
+      else{reset(scorer===0?1:0);state="kickoff";stateT=0;whistle()}}
+    fireEdge[0]=fireEdge[1]=false;return}
+  if(state==="herhaling"){                     // op halve snelheid terugkijken
+    if(!herhaling||!herhaling.length||fireEdge[0]||fireEdge[1]||herIdx>=herhaling.length){
+      film=[];herhaling=null;reset(scorer===0?1:0);state="kickoff";stateT=0;whistle();
+      fireEdge[0]=fireEdge[1]=false;return}
+    zetBeeldje(herhaling[herIdx]);
+    herIdx++;
     fireEdge[0]=fireEdge[1]=false;return}
   if((state==="entry"||state==="kickoff")&&fireEdge[0]){    // snelstart
     if(state==="entry")for(const p of P){p.x=p.spotX;p.y=p.spotY;p.moving=false;p.walkT=0}
@@ -693,6 +719,8 @@ function update(dt){
     const wacht=zelf?3:2.2, uiterste=zelf?9:5;
     if((vrij&&takerT>wacht)||takerT>uiterste)release(taker)}
 
+  filmT-=dt;                                   // beeldje bewaren, dertig per seconde
+  if(filmT<=0){filmT=1/30;film.push(maakBeeldje());if(film.length>130)film.shift()}
   ballPhysics(dt);
   if(state==="play")contacts(dt);
   if(state==="play")outOfPlay();
@@ -936,7 +964,13 @@ function pitch(){
       line(SX(gx,y1),y1,SX(x2,y1),y1,L);
       line(SX(gx,y2),y2,SX(x2,y2),y2,L);
       wline(x2,y1,0,x2,y2,0,L)}
-    px(SX(gx+d*110,midY)-1,midY-1,2,2,L)}
+    px(SX(gx+d*110,midY)-1,midY-1,2,2,L);
+    const spot=gx+d*110, rnd=gx+d*165;               // halve cirkel buiten de zestien
+    for(let a=0;a<Math.PI*2;a+=.006){
+      const wx=spot+Math.cos(a)*91, wy=midY+Math.sin(a)*27;
+      if((wx-rnd)*d<0)continue;
+      const sx=SX(wx,wy);
+      if(sx>=0&&sx<320)ctx.fillRect(sx,Math.round(wy),1,1)}}
   for(const gx of [W.gx0,W.gx1])for(const gy of [W.top,W.bot]){
     const s=SX(gx,gy);if(s<-4||s>324)continue;
     px(s,gy-10,2,10,C.lgrey);px(s+2,gy-10,4,3,C.yel)}}
@@ -1243,7 +1277,14 @@ function ceremonie(){
   px(ax-4,ay-13,9,2,C.wht);
   px(ax-6,ay-18,2,7,C.skin);px(ax+5,ay-18,2,7,C.skin);
   px(ax-3,ay+2,3,3,C.blk);px(ax+2,ay+2,3,3,C.blk)}
-function hud(){if(msg)txt(msg,160,58,C.yel,16)}
+function hud(){
+  if(state==="herhaling"){
+    if(Math.floor(stateT*3)%2===0){             // knippert anderhalf keer per seconde
+      px(292,4,16,18,C.blk);
+      txt("H",300,6,C.wht,14)}
+    txt("TIK OM DOOR TE GAAN",160,178,C.lgrey);
+    return}
+  if(msg)txt(msg,160,58,C.yel,16)}
 function trophy(x,y){                           // beker voor de winnaar
   const G="#E8C040", G2="#A08018", B="#8B5A18";
   px(x-10,y,20,4,G);px(x-8,y+2,16,10,G);
