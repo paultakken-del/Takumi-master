@@ -311,15 +311,26 @@ function maakBeeldje(){
   const a=[ball.x,ball.y,ball.z];
   for(const p of P)a.push(p.x,p.y,p.dir,(p.walkT||0)>0?1:0,p.anim);
   return a}
-function zetBeeldje(f){
-  ball.x=f[0];ball.y=f[1];ball.z=f[2];
-  let i=3;
-  for(const p of P){p.x=f[i++];p.y=f[i++];p.dir=f[i++];
-    p.walkT=f[i++]?.5:0;p.anim=f[i++];p.cel=0;p.dive=0;p.charge=0}
+/* De film loopt op 30 beeldjes per seconde. Bij halve snelheid tonen we er
+   vijftien per seconde en rekenen we de tussenliggende standen uit, zodat het
+   vloeiend blijft in plaats van schokkerig. */
+const HER_FPS=30, HER_TRAAG=0.5, HER_SEC=6;
+function zetBeeldje(idx){
+  const i0=Math.min(herhaling.length-1,Math.floor(idx));
+  const i1=Math.min(herhaling.length-1,i0+1);
+  const m=idx-i0;
+  const a=herhaling[i0], b=herhaling[i1];
+  const tussen=(k)=>a[k]+(b[k]-a[k])*m;
+  ball.x=tussen(0);ball.y=tussen(1);ball.z=tussen(2);
+  let k=3;
+  for(const p of P){
+    p.x=tussen(k);p.y=tussen(k+1);p.dir=a[k+2];
+    p.walkT=a[k+3]?.5:0;p.anim=a[k+4];
+    p.cel=0;p.dive=0;p.charge=0;k+=5}
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v10 - 5 aug";
+const VERSIE="v11 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -630,15 +641,16 @@ function update(dt){
     filmT-=dt;
     if(filmT<=0){filmT=1/30;film.push(maakBeeldje());if(film.length>130)film.shift()}
     if(stateT>2.4){
-      if(film.length>30){herhaling=film.slice(-105);herIdx=0;state="herhaling";stateT=0;msg=""}
+      const nodig=Math.round(HER_FPS*HER_SEC*HER_TRAAG);   // zes seconden op halve snelheid
+      if(film.length>30){herhaling=film.slice(-nodig);herIdx=0;state="herhaling";stateT=0;msg=""}
       else{reset(scorer===0?1:0);state="kickoff";stateT=0;whistle()}}
     fireEdge[0]=fireEdge[1]=false;return}
   if(state==="herhaling"){                     // op halve snelheid terugkijken
-    if(!herhaling||!herhaling.length||fireEdge[0]||fireEdge[1]||herIdx>=herhaling.length){
+    if(!herhaling||!herhaling.length||fireEdge[0]||fireEdge[1]||herIdx>=herhaling.length-1){
       film=[];herhaling=null;reset(scorer===0?1:0);state="kickoff";stateT=0;whistle();
       fireEdge[0]=fireEdge[1]=false;return}
-    zetBeeldje(herhaling[herIdx]);
-    herIdx++;
+    zetBeeldje(herIdx);
+    herIdx+=dt*HER_FPS*HER_TRAAG;               // halve snelheid
     fireEdge[0]=fireEdge[1]=false;return}
   if((state==="entry"||state==="kickoff")&&fireEdge[0]){    // snelstart
     if(state==="entry")for(const p of P){p.x=p.spotX;p.y=p.spotY;p.moving=false;p.walkT=0}
