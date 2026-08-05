@@ -336,7 +336,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v23 - 5 aug";
+const VERSIE="v24 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1169,11 +1169,18 @@ function drawPlayer(p){
   const d=p.dir, front=(d>=1&&d<=3), back=(d>=5&&d<=7);
   const sideV=(d!==2&&d!==6), face=(d>=3&&d<=5)?-1:1;
   px(X-5,gy,11,2,"rgba(0,0,0,.25)");
-  if(p.dive){const dy=y-10;
-    px(X-12,dy-6,24,9,shirt);px(X-6,dy+3,14,6,C.blk);
-    px(X+10,dy-13,10,9,C.skin);px(X+10,dy-14,10,4,C.blk);
-    limb(X-12,dy-4,X-24,dy-9,C.skin,4);px(X-28,dy-12,7,6,C.yel);
-    limb(X-2,dy+9,X-14,dy+13,C.skin,4);px(X-18,dy+12,7,3,C.blk);
+  if(p.dive){                                   // liggende duik, op dezelfde maat als staand
+    const dy=y-7, f=face;
+    const R=(x0,yy,w,hh,c)=>px(f>0?X+x0:X-x0-w,yy,w,hh,c);
+    R(-10,dy-3,16,7,shirt);                     // romp
+    R(-15,dy-1,6,6,kit.shorts);                 // broek
+    R(-4,dy-4,4,2,kit.kraag||C.wht);            // kraagje
+    R(6,dy-7,7,7,C.skin);                       // hoofd
+    R(6,dy-8,7,3,C.blk);                        // haar
+    R(f>0?11:11,dy-4,2,2,C.blk);                // oog
+    R(5,dy-2,6,3,C.skin);R(11,dy-3,5,4,gk?C.yel:C.skin);   // gestrekte arm
+    R(-20,dy+1,6,3,C.skin);R(-17,dy+1,4,3,kit.sock);       // been en kous
+    R(-25,dy+2,5,2,C.blk);                      // schoen
     return}
   const air=false;
   const STEP=Math.PI/6;
