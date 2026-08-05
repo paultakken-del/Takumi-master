@@ -312,7 +312,7 @@ const RUSTDEUN=maakDeun(110,[
 /* ===== herhaling =====
    We bewaren de laatste seconden als losse beeldjes en spelen die na een doelpunt
    op halve snelheid af, met een knipperende H rechtsboven. */
-let film=[], filmT=0, herhaling=null, herIdx=0;
+let film=[], filmT=0, herhaling=null, herIdx=0, aftrapVrij=0;
 function maakBeeldje(){
   const a=[ball.x,ball.y,ball.z];
   for(const p of P)a.push(p.x,p.y,p.dir,(p.walkT||0)>0?1:0,p.anim);
@@ -336,7 +336,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v22 - 5 aug";
+const VERSIE="v23 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -438,7 +438,9 @@ function menuKey(k){
 function start(){stopMuziek();film=[];herhaling=null;score=[0,0];clock=0;half=1;attack=[1,-1];build();reset(0);
   P.forEach((p,i)=>{                            // opkomen vanaf de zijlijn
     p.spotX=p.x;p.spotY=p.y;
-    p.x=midX-135+i*20;p.y=W.bot+4;p.dir=6;p.anim=i*.7});
+    p.x=midX-150+i*20;p.y=W.bot+4;p.dir=6;p.anim=i*.7});
+  ref.spotX=midX-40;ref.spotY=midY+34;          // de scheidsrechter loopt mee op
+  ref.x=midX+130;ref.y=W.bot+4;ref.dir=6;ref.anim=1.4;
   state="entry";stateT=0;msg=""}
 function advance(){
   if(state==="halftime"){half=2;attack=[-1,1];reset(1);state="kickoff";stateT=0;whistle()}
@@ -588,7 +590,9 @@ function goal(team){scorer=team;score[team]++;state="goal";stateT=0;msg="GOAL!";
   speelDeun(GOALDEUN,"goal",false);
   ball.held=null;whistle();cheer();for(const p of P)if(p.team===team)p.cel=1}
 function tackle(p,foe){                        // sliding: op tijd is balafname, te laat is een overtreding
-  p.dive=.45;p.cool=.55;
+  p.dive=.5;p.cool=.55;
+  const d0=D8[p.dir];p.x+=d0[0]*7;p.y+=inward(p,d0[1]*5);clampP(p);   // hij schuift vooruit
+  beep(200,.09,"square",.05);
   const bijBal=Math.hypot(p.x-ball.x,(p.y-ball.y)*3)<24&&ball.z<12&&!ball.held;
   const vanAchter=(p.x-foe.x)*attack[foe.team]<0;
   if(bijBal&&!vanAchter&&Math.random()<.72){    // schoon: je speelt de bal weg
@@ -758,7 +762,7 @@ function update(dt){
     fireEdge[0]=fireEdge[1]=false;return}
   if(state==="entry"){                          // de ploegen lopen het veld op
     let klaar=true;
-    for(const p of P){
+    for(const p of [...P,ref]){
       p.moving=false;
       const dx=p.spotX-p.x, dy=p.spotY-p.y, l=Math.hypot(dx,dy);
       if(l>3){klaar=false;
@@ -770,7 +774,7 @@ function update(dt){
     cam+=(w-cam)*Math.min(1,3*dt);
     if((klaar&&stateT>2.5)||stateT>9){state="kickoff";stateT=0;whistle()}
     fireEdge[0]=fireEdge[1]=false;return}
-  if(state==="kickoff"){msg="AFTRAP";if(stateT>.7){state="play";msg=""}}
+  if(state==="kickoff"){msg="AFTRAP";if(stateT>.7){state="play";msg="";aftrapVrij=1.4}}
   if(state==="play"){clock+=dt*MPS;
     if(half===1&&clock>=200){state="halftime";whistle();speelDeun(RUSTDEUN,"rust",false);fireEdge[0]=fireEdge[1]=false;return}
     if(half===2&&clock>=400){whistle();cheer();
@@ -781,6 +785,7 @@ function update(dt){
       fireEdge[0]=fireEdge[1]=false;return}}
 
   const hum=humans();
+  aftrapVrij=Math.max(0,aftrapVrij-dt);
   for(const t of [0,1])lockT[t]=Math.max(0,lockT[t]-dt);
   for(const t of hum)if(state!=="setpiece")ctrl[t]=ctrlFor(t);
   const aiSpd=37+level*1.9, kpSpd=19+level*2.7, spread=48-level*4.4;
@@ -867,7 +872,7 @@ function human(p,dt){
     let foe=null,fd=1e9;                            // tegenstander vlakbij: tackle
     for(const q of P){if(q.team===p.team||q.role==="K")continue;
       const dd=Math.hypot(q.x-p.x,(q.y-p.y)*3);if(dd<fd){fd=dd;foe=q}}
-    if(state==="play"&&foe&&fd<20&&p.cool<=0){tackle(p,foe);return}
+    if(state==="play"&&foe&&fd<30&&p.cool<=0){tackle(p,foe);return}
     wissel(i)}                                        // anders van speler wisselen
 }
 function save(gk){                              // keeper: alleen de vuurknop
@@ -920,7 +925,8 @@ function keeper(p,dt,kpSpd){
         beep(240,.07,"square",.05)}}}
 }
 function formatiePlek(p){          // basispositie, met de vleugels aan de zijlijn
-  const push=Math.max(-140,Math.min(140,(ball.x-midX)*.45*attack[p.team]));
+  const rem=aftrapVrij>0?.12:1;    // vlak na de aftrap komt de ploeg rustig op gang
+  const push=Math.max(-140,Math.min(140,(ball.x-midX)*.45*attack[p.team]))*rem;
   let tx=homeX(p)+attack[p.team]*push;
   let ty=homeY(p)+(ball.y-midY)*.12;
   const buiten=p.fy<.35||p.fy>.65;
@@ -964,7 +970,7 @@ function ai(p,dt,spd,spread){
   if(ball.held&&ball.held.role==="K"&&ball.held.team!==p.team){
     tx=homeX(p);ty=homeY(p)}                       // keeper heeft hem vast: terug naar je plek
   else if(chaser){tx=ball.x;ty=ball.y}
-  else if(state==="play"&&ball.last&&ball.last.team===p.team&&!ball.held){
+  else if(state==="play"&&aftrapVrij<=0&&ball.last&&ball.last.team===p.team&&!ball.held){
     const v=vrijloop(p,dt);tx=v[0];ty=v[1];       // eigen ploeg aan de bal: vrijlopen
   }else{const f=formatiePlek(p);tx=f[0];ty=f[1]}
   if(state==="setpiece"&&teDichtbij(p)){        // uit de buurt blijven bij een hervatting
