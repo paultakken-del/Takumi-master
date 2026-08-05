@@ -133,7 +133,10 @@ const SX=(wx,wy)=>Math.round(projX(wx,wy)-cam);
 
 /* ===== geluid ===== */
 let AC=null,snd=true;
-const ac=()=>AC||(AC=new (window.AudioContext||window.webkitAudioContext)());
+function ac(){
+  if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
+  if(AC.state==="suspended")AC.resume();       // iOS start opgeschort
+  return AC}
 function beep(f,d,t,v){if(!snd)return;try{const a=ac(),o=a.createOscillator(),g=a.createGain();
   o.type=t||"square";o.frequency.value=f;g.gain.value=v||.05;o.connect(g);g.connect(a.destination);
   o.start();o.frequency.exponentialRampToValueAtTime(Math.max(40,f*.5),a.currentTime+d);
@@ -159,6 +162,79 @@ function cheer(){if(!snd)return;try{const a=ac(),n=a.sampleRate*1.6,b=a.createBu
   for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.min(1,i/2500)*(1-i/n);
   const s=a.createBufferSource();s.buffer=b;const f=a.createBiquadFilter();f.type="bandpass";f.frequency.value=950;
   const g=a.createGain();g.gain.value=.11;s.connect(f);f.connect(g);g.connect(a.destination);s.start()}catch(e){}}
+
+/* ===== muziek en effecten in SID-stijl =====
+   Drie stemmen zoals de SID: bas, lead en een snelle arpeggio die een akkoord nabootst.
+   Alle melodieën zijn eigen werk, geschreven voor dit spel. */
+const toon=n=>440*Math.pow(2,n/12);            // halve tonen ten opzichte van de A
+let muziekBronnen=[], muziekTimer=null, deunNu="";
+function stopMuziek(){
+  if(muziekTimer){clearTimeout(muziekTimer);muziekTimer=null}
+  for(const o of muziekBronnen){try{o.stop()}catch(e){}}
+  muziekBronnen=[];deunNu=""}
+function stemDuur(stem){return stem.reduce((s,n)=>s+n[1],0)}
+function speelDeun(deun,naam,herhaal){
+  if(!snd)return;
+  if(deunNu===naam&&muziekBronnen.length)return;
+  stopMuziek();deunNu=naam;
+  try{
+    const a=ac(), t0=a.currentTime+.06;
+    const uit=a.createGain();uit.gain.value=.075;uit.connect(a.destination);
+    let eind=0;
+    for(const stem of deun){
+      const o=a.createOscillator();o.type=stem.golf||"square";
+      const g=a.createGain();g.gain.value=0;
+      if(stem.detune)o.detune.value=stem.detune;
+      o.connect(g);g.connect(uit);
+      let t=t0;
+      for(const [n,d] of stem.noten){
+        const dur=d*(60/deun.tempo);
+        if(n!==null){
+          o.frequency.setValueAtTime(toon(n),t);
+          g.gain.setValueAtTime(0,t);
+          g.gain.linearRampToValueAtTime(stem.vol,t+.012);          // scherpe aanslag
+          g.gain.setValueAtTime(stem.vol*.8,t+dur*.55);
+          g.gain.linearRampToValueAtTime(0,t+dur*.92);
+        }
+        t+=dur;
+      }
+      o.start(t0);o.stop(t+.15);muziekBronnen.push(o);
+      eind=Math.max(eind,t-t0);
+    }
+    if(herhaal)muziekTimer=setTimeout(()=>{deunNu="";speelDeun(deun,naam,true)},eind*1000);
+  }catch(e){}
+}
+function maakDeun(tempo,stemmen){const d=stemmen.slice();d.tempo=tempo;return d}
+
+/* Titeldeun: opgewekt loopje in a klein, met stuiterende bas en arpeggio. */
+const TITELDEUN=maakDeun(150,[
+ {golf:"triangle",vol:.5,noten:[[-24,1],[-24,1],[-19,1],[-19,1],[-26,1],[-26,1],[-21,1],[-21,1],
+                                [-24,1],[-24,1],[-19,1],[-19,1],[-17,1],[-17,1],[-19,2]]},
+ {golf:"square",vol:.34,noten:[[0,.5],[7,.5],[12,.5],[7,.5],[3,.5],[10,.5],[15,.5],[10,.5],
+                               [-2,.5],[5,.5],[10,.5],[5,.5],[3,.5],[7,.5],[12,.5],[15,.5],
+                               [0,.5],[7,.5],[12,.5],[7,.5],[3,.5],[10,.5],[15,.5],[10,.5],
+                               [5,.5],[8,.5],[12,.5],[8,.5],[7,1],[null,1]]},
+ {golf:"square",vol:.14,detune:9,
+  noten:[[12,.25],[16,.25],[19,.25],[24,.25],[12,.25],[16,.25],[19,.25],[24,.25],
+         [15,.25],[19,.25],[22,.25],[27,.25],[15,.25],[19,.25],[22,.25],[27,.25],
+         [10,.25],[14,.25],[17,.25],[22,.25],[10,.25],[14,.25],[17,.25],[22,.25],
+         [12,.25],[16,.25],[19,.25],[24,.25],[12,.25],[16,.25],[19,.25],[24,.25]]}]);
+
+/* Korte juichdeun bij een doelpunt. */
+const GOALDEUN=maakDeun(190,[
+ {golf:"square",vol:.4,noten:[[0,.25],[4,.25],[7,.25],[12,.25],[7,.25],[12,.5],[16,1]]},
+ {golf:"triangle",vol:.45,noten:[[-24,.5],[-17,.5],[-12,.5],[-12,1]]}]);
+
+/* Zegedeun bij de huldiging. */
+const ZEGEDEUN=maakDeun(120,[
+ {golf:"triangle",vol:.5,noten:[[-24,1],[-24,1],[-19,1],[-17,1],[-24,1],[-24,1],[-15,2]]},
+ {golf:"square",vol:.36,noten:[[12,.75],[12,.25],[12,.5],[10,.5],[12,1],[7,1],
+                               [9,.75],[9,.25],[9,.5],[7,.5],[9,1],[12,1]]}]);
+
+/* Rustsignaal en einde. */
+const RUSTDEUN=maakDeun(110,[
+ {golf:"square",vol:.36,noten:[[7,.5],[3,.5],[0,1]]},
+ {golf:"triangle",vol:.4,noten:[[-17,.5],[-21,.5],[-24,1]]}]);
 
 /* ===== staat ===== */
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
@@ -200,12 +276,12 @@ const K={};
 const MAP={ArrowUp:"u0",ArrowDown:"d0",ArrowLeft:"l0",ArrowRight:"r0"," ":"f0",
            w:"u1",s:"d1",a:"l1",d:"r1",shift:"f1"};
 let fireEdge=[false,false];
-addEventListener("keydown",e=>{const k=MAP[e.key]||MAP[e.key.toLowerCase()];
+addEventListener("keydown",e=>{ac();const k=MAP[e.key]||MAP[e.key.toLowerCase()];
   if(k){e.preventDefault();if(!K[k]&&k[0]==="f")fireEdge[+k[1]]=true;K[k]=true}
   if(!AC)ac();
   if(state==="menu")menuKey(e.key);
   else if((e.key===" "||e.key==="Enter")&&(state==="halftime"||state==="fulltime"))advance();
-  if(e.key==="m"||e.key==="M")snd=!snd});
+  if(e.key==="m"||e.key==="M"){snd=!snd;if(!snd)stopMuziek()}});
 addEventListener("keyup",e=>{const k=MAP[e.key]||MAP[e.key.toLowerCase()];if(k){e.preventDefault();K[k]=false}});
 const stick=document.getElementById("stick"),knob=document.getElementById("knob");
 let sid=null;
@@ -214,7 +290,7 @@ function stickAt(t){const r=stick.getBoundingClientRect();
   const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l}
   knob.style.left=(35+dx*34)+"px";knob.style.top=(35+dy*34)+"px";
   const dz=.32;K.l0=dx<-dz;K.r0=dx>dz;K.u0=dy<-dz;K.d0=dy>dz;return{dx,dy}}
-stick.addEventListener("touchstart",e=>{e.preventDefault();if(!AC)ac();
+stick.addEventListener("touchstart",e=>{e.preventDefault();ac();
   sid=e.changedTouches[0].identifier;const v=stickAt(e.changedTouches[0]);
   if(state==="menu")menuKey(Math.abs(v.dx)>Math.abs(v.dy)?(v.dx>0?"ArrowRight":"ArrowLeft"):(v.dy>0?"ArrowDown":"ArrowUp"))});
 stick.addEventListener("touchmove",e=>{e.preventDefault();
@@ -222,11 +298,13 @@ stick.addEventListener("touchmove",e=>{e.preventDefault();
 stick.addEventListener("touchend",e=>{e.preventDefault();sid=null;
   knob.style.left="35px";knob.style.top="35px";K.l0=K.r0=K.u0=K.d0=false});
 const fb=document.getElementById("fire");
-fb.addEventListener("touchstart",e=>{e.preventDefault();if(!AC)ac();
+fb.addEventListener("touchstart",e=>{e.preventDefault();ac();
   if(!K.f0)fireEdge[0]=true;K.f0=true;
   if(state==="menu")menuFire();else if(state==="halftime"||state==="fulltime")advance()});
 fb.addEventListener("touchend",e=>{e.preventDefault();K.f0=false});
-cv.addEventListener("pointerdown",()=>{if(!AC)ac()});
+cv.addEventListener("pointerdown",()=>{ac()});
+addEventListener("touchstart",()=>{ac()},{passive:true});
+addEventListener("visibilitychange",()=>{if(!document.hidden&&AC)ac()});
 function menuFire(){
   if(menuPage===0){menuPage=1;menuSel=0;beep(700,.06)}
   else start()}
@@ -245,7 +323,7 @@ function menuKey(k){
   else if(k==="ArrowUp"){menuSel=(menuSel+3)%4;beep(400,.04)}
   else if(k==="ArrowDown"){menuSel=(menuSel+1)%4;beep(400,.04)}
   else if(k===" "||k==="Enter")start()}
-function start(){score=[0,0];clock=0;half=1;attack=[1,-1];build();reset(0);
+function start(){stopMuziek();score=[0,0];clock=0;half=1;attack=[1,-1];build();reset(0);
   P.forEach((p,i)=>{                            // opkomen vanaf de zijlijn
     p.spotX=p.x;p.spotY=p.y;
     p.x=midX-135+i*20;p.y=W.bot+4;p.dir=6;p.anim=i*.7});
@@ -324,6 +402,7 @@ function head(p){                   // korte klik: gecontroleerde kopbal
   ball.vx=d[0]*sp;ball.vy=inward(p,d[1]*sp*.5);ball.vz=near?14:90;
   ball.last=p;ball.touch=.2;p.cool=.16;beep(760,.07,"triangle",.06)}
 function goal(team){scorer=team;score[team]++;state="goal";stateT=0;msg="GOAL!";
+  speelDeun(GOALDEUN,"goal",false);
   ball.held=null;whistle();cheer();for(const p of P)if(p.team===team)p.cel=1}
 function setPiece(type,team,x,y){
   setType=type;ball.x=x;ball.y=y;ball.z=0;ball.vx=ball.vy=ball.vz=0;ball.held=null;ball.touch=0;
@@ -448,12 +527,12 @@ function update(dt){
     fireEdge[0]=fireEdge[1]=false;return}
   if(state==="kickoff"){msg="AFTRAP";if(stateT>.7){state="play";msg=""}}
   if(state==="play"){clock+=dt*MPS;
-    if(half===1&&clock>=200){state="halftime";whistle();fireEdge[0]=fireEdge[1]=false;return}
+    if(half===1&&clock>=200){state="halftime";whistle();speelDeun(RUSTDEUN,"rust",false);fireEdge[0]=fireEdge[1]=false;return}
     if(half===2&&clock>=400){whistle();cheer();
-      if(score[0]===score[1]){state="fulltime";fireEdge[0]=fireEdge[1]=false;return}
+      if(score[0]===score[1]){state="fulltime";speelDeun(RUSTDEUN,"einde",false);fireEdge[0]=fireEdge[1]=false;return}
       winnaar=score[0]>score[1]?0:1;
       P.filter(p=>p.team===winnaar).forEach((p,i)=>{p.spotX=midX-58+i*20;p.spotY=midY+10});
-      state="ceremonie";stateT=0;msg="";
+      state="ceremonie";stateT=0;msg="";speelDeun(ZEGEDEUN,"zege",true);
       fireEdge[0]=fireEdge[1]=false;return}}
 
   const hum=humans();
@@ -1058,7 +1137,8 @@ let last=0;
 function frame(ts){
   const dt=Math.min(.033,(ts-last)/1000);last=ts;
   update(dt);
-  if(state==="menu"){title();requestAnimationFrame(frame);return}
+  if(state==="menu"){if(AC&&AC.state==="running")speelDeun(TITELDEUN,"titel",true);
+    title();requestAnimationFrame(frame);return}
   crowd();scoreboards();pitch();
   goalpost(0,"net");goalpost(1,"net");
   const order=[...P].sort((a,b)=>a.y-b.y);
@@ -1068,6 +1148,7 @@ function frame(ts){
     drawPlayer(p)}
   if(!drawn)drawBall();
   goalpost(0,"frame");goalpost(1,"frame");
+  if(state!=="ceremonie"&&state!=="menu"&&deunNu&&deunNu!=="goal")stopMuziek();
   if(state==="ceremonie")ceremonie();
   hud();
   if(state==="halftime"||state==="fulltime")endBox();
