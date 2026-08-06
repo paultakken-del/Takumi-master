@@ -349,10 +349,10 @@ let attack=[1,-1];
 /* de bal plakt nooit aan een speler; alleen de keeper kan hem vasthouden */
 const ball={x:midX,y:midY,z:0,vx:0,vy:0,vz:0,held:null,last:null,touch:0};
 
-const FORM=[[0.04,0.50,"K"],
-            [0.18,0.18,"D"],[0.18,0.40,"D"],[0.18,0.60,"D"],[0.18,0.82,"D"],
-            [0.44,0.18,"M"],[0.44,0.50,"M"],[0.44,0.82,"M"],
-            [0.68,0.28,"F"],[0.68,0.50,"F"],[0.68,0.72,"F"]];
+const FORM=[[0.05,0.50,"K"],
+            [0.24,0.32,"D"],[0.24,0.68,"D"],
+            [0.48,0.18,"M"],[0.48,0.50,"M"],[0.48,0.82,"M"],
+            [0.72,0.34,"F"],[0.72,0.66,"F"]];
 let P=[],ctrl=[null,null];
 const ref={x:0,y:0,dir:0,anim:0,moving:false,walkT:0,z:0,cool:0,dive:0,cel:0,
   team:0,role:"R",fx:.5,fy:.5,ref:true};
@@ -595,16 +595,24 @@ function speelBal(p,hold){
     return beep(hoogte>25?300:430,.11,"square",.08)}
   const hoog=vzVoor(21+(t-.5)*18);                  // lange bal vooruit
   return balNaar(p,p.x+d[0]*300,p.y+d[1]*90,hoog,170)}
-function headShot(p){               // lange klik bij een hoge bal: kopstoot op doel
+function volley(p,hold){          // bal uit de lucht op de slof nemen
+  const t=Math.max(0,Math.min(1,hold));
+  const d=D8[p.dir], kracht=235+t*95;
+  ball.vx=d[0]*kracht;ball.vy=inward(p,d[1]*kracht*.55);
+  ball.vz=vzVoor(2+t*11);
+  ball.last=p;ball.touch=.28;p.cool=.3;
+  beep(360,.12,"square",.09)}
+function headShot(p){               // lange klik bij een hoge bal: harde kopstoot
   const d=D8[p.dir];
   ball.z=Math.min(ball.z,22);
-  ball.vx=d[0]*195;ball.vy=inward(p,d[1]*195*.5);ball.vz=8;
+  ball.vx=d[0]*240;ball.vy=inward(p,d[1]*240*.5);ball.vz=vzVoor(4);
   ball.last=p;ball.touch=.25;p.cool=.26;beep(560,.09,"square",.07)}
 function head(p){                   // korte klik: gecontroleerde kopbal
   const d=D8[p.dir], near=Math.abs(foeGoal(p.team)-p.x)<150;
-  const sp=near?185:58;
-  ball.z=Math.min(ball.z,20);
-  ball.vx=d[0]*sp;ball.vy=inward(p,d[1]*sp*.5);ball.vz=near?14:90;
+  const sp=near?235:58;
+  ball.z=Math.min(ball.z,12);
+  ball.vx=d[0]*sp;ball.vy=inward(p,d[1]*sp*.5);
+  ball.vz=near?14:vzVoor(19);          // komt tot in het kopbereik terug
   ball.last=p;ball.touch=.2;p.cool=.16;beep(760,.07,"triangle",.06)}
 function goal(team){scorer=team;score[team]++;state="goal";stateT=0;msg="GOAL!";
   speelDeun(GOALDEUN,"goal",false);
@@ -837,8 +845,8 @@ function update(dt){
   for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){
     const a=P[i],b=P[j];
     const dx=b.x-a.x,dy=(b.y-a.y)*1.7,dd=Math.hypot(dx,dy);
-    if(dd>=16||dd<.01)continue;
-    const push=(16-dd)/2,ux=dx/dd,uy=dy/dd/1.7;
+    if(dd>=24||dd<.01)continue;
+    const push=(24-dd)/2,ux=dx/dd,uy=dy/dd/1.7;
     const ak=a.role==="K",bk=b.role==="K";
     if(ak&&bk)continue;
     if(ak){b.x+=ux*push*2;b.y+=uy*push*2;clampP(b)}
@@ -903,9 +911,10 @@ function human(p,dt){
     const hold=p.fireT;p.fireT=null;
     if(p.fireUsed)return;
     const d=dist(p,ball);
-    if(d<19&&ball.z>12&&ball.z<36&&p.cool<=0){        // bal op kophoogte
+    if(d<19&&ball.z>21&&ball.z<40&&p.cool<=0){        // bal op kophoogte
       if(hold<.25)head(p); else headShot(p);return}
-    if(d<18&&ball.z<14&&p.cool<=0){speelBal(p,hold);return}
+    if(d<20&&ball.z>4&&ball.z<=21&&p.cool<=0){volley(p,hold);return}   // bal in de lucht
+    if(d<18&&ball.z<=6&&p.cool<=0){speelBal(p,hold);return}
     let foe=null,fd=1e9;                            // tegenstander vlakbij: tackle
     for(const q of P){if(q.team===p.team||q.role==="K")continue;
       const dd=Math.hypot(q.x-p.x,(q.y-p.y)*3);if(dd<fd){fd=dd;foe=q}}
@@ -978,7 +987,7 @@ function formatiePlek(p){          // basispositie, met de vleugels aan de zijli
    Ruimte telt, vooruit staan telt, en een speellijn die door een tegenstander
    wordt afgesneden kost punten. De keuze blijft ruim een halve seconde staan,
    anders gaat iedereen staan trillen. */
-const LOOPPLEKKEN=[[0,0],[75,0],[135,0],[60,-30],[60,30],[0,-38],[0,38],[-55,0],[115,-26],[115,26]];
+const LOOPPLEKKEN=[[0,0],[55,0],[95,0],[45,-26],[45,26],[0,-32],[0,32],[-40,0],[80,-22],[80,22]];
 function vrijloop(p,dt){
   p.loopT=(p.loopT||0)-dt;
   if(p.loopT>0&&p.loopX!==undefined)return [p.loopX,p.loopY];
@@ -998,8 +1007,11 @@ function vrijloop(p,dt){
       const s=((o.x-ball.x)*dx+(o.y-ball.y)*dy)/(l*l);
       if(s<=.1||s>=1)continue;
       if(Math.hypot(o.x-(ball.x+dx*s),(o.y-(ball.y+dy*s))*3)<26)dicht++}
+    let maat=1e9;                                  // niet op de lip van een ploeggenoot gaan staan
+    for(const q of P){if(q.team!==p.team||q===p||q.role==="K")continue;
+      maat=Math.min(maat,Math.hypot(q.x-cx,(q.y-cy)*3))}
     const loop=Math.hypot(p.x-cx,(p.y-cy)*3);
-    const punt=Math.min(ruimte,170)+vooruit*.45-dicht*55-loop*.18;
+    const punt=Math.min(ruimte,170)+vooruit*.4-dicht*55-loop*.2+Math.min(maat,90)*.55;
     if(punt>bs){bs=punt;best=[cx,cy]}}
   p.loopX=best?best[0]:basis[0];p.loopY=best?best[1]:basis[1];
   return [p.loopX,p.loopY]}
@@ -1009,7 +1021,15 @@ function ai(p,dt,spd,spread){
   let tx,ty;
   if(ball.held&&ball.held.role==="K"&&ball.held.team!==p.team){
     tx=homeX(p);ty=homeY(p)}                       // keeper heeft hem vast: terug naar je plek
-  else if(chaser){tx=ball.x;ty=ball.y}
+  else if(chaser){tx=ball.x;ty=ball.y;
+    /* Staat er een tegenstander aan de bal en ben jij erbij, dan probeert hij hem
+       af te pakken. Lukt dat niet netjes, dan is het een overtreding. */
+    const houder=ball.last;
+    if(state==="play"&&houder&&houder.team!==p.team&&houder.role!=="K"&&
+       !ball.held&&p.cool<=0&&dist(p,houder)<17&&dist(p,ball)<22){
+      p.pakT=(p.pakT||0)-dt;
+      if(p.pakT<=0){p.pakT=.55;
+        if(Math.random()<.18+level*.045)tackle(p,houder)}}}
   else if(state==="play"&&aftrapVrij<=0&&ball.last&&ball.last.team===p.team&&!ball.held){
     const v=vrijloop(p,dt);tx=v[0];ty=v[1];       // eigen ploeg aan de bal: vrijlopen
   }else{const f=formatiePlek(p);tx=f[0];ty=f[1]}
@@ -1056,7 +1076,7 @@ function contacts(dt){
     const d=Math.hypot(q.x-ball.x,q.y-ball.y);if(d<bd){bd=d;p=q}}}
   if(!p)return;
   const jij=p===ctrl[p.team]&&humans().includes(p.team);
-  if(bd<15&&ball.z>13&&ball.z<34&&p.role!=="K"&&!jij){   // kophoogte: alleen de computer kopt vanzelf
+  if(bd<15&&ball.z>21&&ball.z<38&&p.role!=="K"&&!jij){   // kophoogte: alleen de computer kopt vanzelf
     if(!(p===ctrl[p.team]&&humans().includes(p.team)))
       p.dir=dirOf(foeGoal(p.team)-p.x,midY-p.y);
     head(p);return}
@@ -1070,6 +1090,7 @@ function contacts(dt){
   if(bd>14||ball.z>13)return;
   const bs=Math.hypot(ball.vx,ball.vy);
   if(p===ctrl[p.team]&&humans().includes(p.team)){
+    if(p.fireT!=null&&ball.z>4)return;          // knop ingedrukt: je laadt een volley of kopbal
     if(bs>110||ball.z>4){                       // aanname: bal dood en meteen naar de voet
       ball.vx*=.10;ball.vy*=.10;ball.vz*=.12;ball.z=Math.min(ball.z,3);
       const d0=D8[p.dir], tx=p.x+d0[0]*9, ty=p.y+d0[1]*6+2;
