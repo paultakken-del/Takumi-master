@@ -172,9 +172,10 @@
   }
   window.__pasMaat=pasMaat;
   pasMaat();
-  addEventListener("resize",pasMaat);
-  addEventListener("orientationchange",()=>setTimeout(pasMaat,250));
-  setTimeout(pasMaat,300);
+  const herzie=()=>{if(window.__herbereken)window.__herbereken();pasMaat()};
+  addEventListener("resize",herzie);
+  addEventListener("orientationchange",()=>setTimeout(herzie,250));
+  setTimeout(herzie,300);
 
   // dubbeltik zoomt niet
   document.addEventListener("gesturestart",e=>e.preventDefault());
@@ -215,17 +216,33 @@ const SHEAR=0.0;
 /* Perspectief met een verdwijnpunt. Dicht bij de camera staan dingen verder uit
    elkaar dan aan de overkant. Een lijn midden in beeld staat daardoor recht,
    terwijl dezelfde lijn aan de rand van het beeld schuin wegloopt. */
-const BEELDEN=[{naam:"4:3",w:266},{naam:"8:5",w:320},{naam:"16:9",w:356}];
+const BEELDEN=[{naam:"4:3",w:266},{naam:"8:5",w:320},{naam:"16:9",w:356},{naam:"VULLEND",w:0}];
 let beeldKeuze=1;
+/* Bij VULLEND kiezen we eerst hoeveel hele schermpunten er per spelpixel passen in
+   de hoogte, en daarna precies zoveel spelpixels breed als er dan in het scherm gaan.
+   Zo vult het beeld het scherm en blijft de schaal een heel getal. */
+function breedteVoor(i){
+  const vast=BEELDEN[i].w;
+  if(vast)return vast;
+  const dpr=window.devicePixelRatio||1;
+  const s=Math.max(1,Math.floor((window.innerHeight||400)*dpr/200));
+  const w=Math.floor((window.innerWidth||640)*dpr/s);
+  return Math.max(240,Math.min(520,w-(w%2)));
+}
 let VW=BEELDEN[beeldKeuze].w;          // schermbreedte in spelpixels
 const CX=()=>VW>>1;                    // midden van het scherm
 function zetBeeld(i){
   beeldKeuze=(i+BEELDEN.length)%BEELDEN.length;
-  VW=BEELDEN[beeldKeuze].w;
+  VW=breedteVoor(beeldKeuze);
   const cv=document.getElementById("c");
   cv.width=VW;
   if(window.__pasMaat)window.__pasMaat();
 }
+window.__herbereken=()=>{             // bij draaien opnieuw uitrekenen
+  if(BEELDEN[beeldKeuze].w)return;
+  const nw=breedteVoor(beeldKeuze);
+  if(nw!==VW){VW=nw;document.getElementById("c").width=VW;
+    if(window.__pasMaat)window.__pasMaat()}};
 const PS=0.854, PK=0.62;
 const schaal=wy=>PS*(1+PK*(wy-W.top)/(W.bot-W.top));
 const CAMMIN=W.gx0-55, CAMMAX=W.gx1+55;      // je kunt tot achter de doelen kijken
@@ -376,7 +393,7 @@ function zetBeeldje(idx){
   zetCam(camWens(ball.x))}
 
 /* ===== staat ===== */
-const VERSIE="v37 - 5 aug";
+const VERSIE="v38 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
