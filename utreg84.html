@@ -19,9 +19,11 @@
   body{font-family:monospace;touch-action:none;user-select:none;-webkit-user-select:none}
 
   /* het speelveld vult het scherm en houdt de verhouding 8 op 5 */
+  /* De maat wordt in javascript gezet op een heel aantal schermpunten per spelpixel.
+     Bij een gebroken factor krijgt de ene pixel twee punten en de volgende drie,
+     en dat patroon schuift bij het scrollen door het beeld. */
   canvas{position:fixed;inset:0;margin:auto;display:block;background:#000;
-         image-rendering:pixelated;image-rendering:crisp-edges;
-         width:100%;height:auto;max-width:100%;max-height:100%;aspect-ratio:8/5}
+         image-rendering:pixelated;image-rendering:crisp-edges}
 
   /* bediening ligt over het beeld, met ruimte voor de ronde schermhoeken */
   #pad{position:fixed;inset:0;pointer-events:none;z-index:10}
@@ -66,7 +68,6 @@
   /* op een computer geen aanraakbediening */
   @media (hover:hover) and (pointer:fine){
     #pad,#vol{display:none}
-    canvas{width:auto;height:100%;max-width:100%}
   }
 </style>
 </head>
@@ -156,6 +157,22 @@
   }
   kruis.addEventListener("click",sluitOfTerug);
   kruis.addEventListener("touchend",sluitOfTerug);
+
+  /* Heel aantal schermpunten per spelpixel, anders krijg je een schuivend
+     interferentiepatroon over het veld. */
+  const cv=document.getElementById("c");
+  function pasMaat(){
+    const dpr=window.devicePixelRatio||1;
+    const bw=window.innerWidth, bh=window.innerHeight;
+    let s=Math.floor(Math.min(bw*dpr/320, bh*dpr/200));
+    if(s<1)s=1;
+    const w=320*s/dpr, hh=200*s/dpr;
+    cv.style.width=w+"px";cv.style.height=hh+"px";
+  }
+  pasMaat();
+  addEventListener("resize",pasMaat);
+  addEventListener("orientationchange",()=>setTimeout(pasMaat,250));
+  setTimeout(pasMaat,300);
 
   // dubbeltik zoomt niet
   document.addEventListener("gesturestart",e=>e.preventDefault());
@@ -346,7 +363,7 @@ function zetBeeldje(idx){
   zetCam(camWens(ball.x))}
 
 /* ===== staat ===== */
-const VERSIE="v35 - 5 aug";
+const VERSIE="v36 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
