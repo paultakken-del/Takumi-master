@@ -346,7 +346,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v40 sprint";
+const VERSIE="v41 strafschop";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -738,6 +738,24 @@ function houdAfstand(dt){                // tegenstanders wijken tot ze ver geno
   }
   return vrij}
 function release(p){
+  if(setType==="penalty"){
+    /* De bal gaat altijd op doel; met de stick kies je alleen de hoek.
+       Anders schiet je bij omhoog sturen recht naar de zijlijn. */
+    const gx=foeGoal(p.team);
+    let mikY;
+    if(humans().includes(p.team)){
+      const d=D8[p.dir];
+      mikY=midY+d[1]*16;                       // omhoog of omlaag kiest de hoek
+    }else{
+      mikY=midY+(Math.random()-.5)*24;
+    }
+    mikY=Math.max(W.gy1+5,Math.min(W.gy2-5,mikY));
+    const dx=gx-p.x, dy=mikY-p.y, l=Math.hypot(dx,dy)||1;
+    p.dir=dirOf(dx,dy);
+    ball.vx=dx/l*255;ball.vy=dy/l*255;
+    ball.vz=vzVoor(6);ball.last=p;ball.touch=.3;p.cool=.3;
+    beep(430,.11,"square",.08);
+    taker=null;state="play";msg="";return}
   // de bal komt automatisch in het spel, naar de best geplaatste medespeler
   const ver=setType==="goalkick";               // een doeltrap gaat het veld in, niet naar de dichtstbijzijnde
   let mate=null,md=ver?-1:1e9;
@@ -750,16 +768,6 @@ function release(p){
   const tx=setType==="corner"?foeGoal(p.team):(mate?mate.x:p.x+attack[p.team]*120);
   const ty=setType==="corner"?midY:(mate?mate.y:midY);
   p.dir=dirOf(tx-p.x,ty-p.y);
-  if(setType==="penalty"){
-    const gx=foeGoal(p.team);
-    const my=midY+(Math.random()-.5)*22;
-    if(humans().includes(p.team)){const d=D8[p.dir];
-      ball.vx=d[0]*260;ball.vy=inward(p,d[1]*260*.5)}
-    else{const dx=gx-p.x,dy=my-p.y,l=Math.hypot(dx,dy)||1;
-      ball.vx=dx/l*250;ball.vy=dy/l*250}
-    ball.vz=vzVoor(6);ball.last=p;ball.touch=.3;p.cool=.3;
-    beep(430,.11,"square",.08);
-    taker=null;state="play";msg="";return}
   if(setType==="throwin"){
     const d=D8[p.dir], inw=p.y<midY?1:-1;
     let dy=d[1];if(dy*inw<.2)dy=inw*.5;
