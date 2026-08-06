@@ -341,7 +341,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v30 - 5 aug";
+const VERSIE="v31 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -349,9 +349,10 @@ let attack=[1,-1];
 /* de bal plakt nooit aan een speler; alleen de keeper kan hem vasthouden */
 const ball={x:midX,y:midY,z:0,vx:0,vy:0,vz:0,held:null,last:null,touch:0};
 
-const FORM=[[0.04,0.50,"K"],[0.20,0.30,"D"],[0.20,0.70,"D"],
-            [0.44,0.24,"M"],[0.44,0.76,"M"],
-            [0.68,0.36,"F"],[0.68,0.64,"F"]];
+const FORM=[[0.04,0.50,"K"],
+            [0.19,0.26,"D"],[0.19,0.50,"D"],[0.19,0.74,"D"],
+            [0.44,0.20,"M"],[0.44,0.50,"M"],[0.44,0.80,"M"],
+            [0.68,0.34,"F"],[0.68,0.66,"F"]];
 let P=[],ctrl=[null,null];
 const ref={x:0,y:0,dir:0,anim:0,moving:false,walkT:0,z:0,cool:0,dive:0,cel:0,
   team:0,role:"R",fx:.5,fy:.5,ref:true};
