@@ -317,7 +317,7 @@ const RUSTDEUN=maakDeun(110,[
 /* ===== herhaling =====
    We bewaren de laatste seconden als losse beeldjes en spelen die na een doelpunt
    op halve snelheid af, met een knipperende H rechtsboven. */
-let film=[], filmT=0, herhaling=null, herIdx=0, aftrapVrij=0;
+let film=[], filmT=0, herhaling=null, herIdx=0, aftrapVrij=0, bezitTeam=null;
 function maakBeeldje(){
   const a=[ball.x,ball.y,ball.z];
   for(const p of P)a.push(p.x,p.y,p.dir,(p.walkT||0)>0?1:0,p.anim);
@@ -341,7 +341,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v33 - 5 aug";
+const VERSIE="v34 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -626,8 +626,8 @@ function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een 
   if(bijBal&&!vanAchter&&Math.random()<.72){    // schoon: jij glijdt, hij blijft staan
     p.dive=.35;
     const d=D8[p.dir];
-    ball.vx=d[0]*120;ball.vy=inward(p,d[1]*120);ball.vz=0;
-    ball.last=p;ball.touch=.3;beep(300,.07,"square",.06);return}
+    ball.vx=d[0]*165;ball.vy=inward(p,d[1]*165);ball.vz=0;   // duidelijk weggespeeld
+    ball.last=p;ball.touch=.35;beep(300,.07,"square",.06);return}
   foe.dive=1.1;foe.cool=1.1;                    // te laat: de tegenstander gaat neer
   const w=Math.sign(foe.x-p.x)||1;
   foe.x+=w*5;clampP(foe);
@@ -824,6 +824,9 @@ function update(dt){
       fireEdge[0]=fireEdge[1]=false;return}}
 
   const hum=humans();
+  ball.rust=Math.max(0,(ball.rust||0)-dt);
+  if(ball.last&&ball.last.team!==bezitTeam){    // net veroverd: even niet terugpakken
+    bezitTeam=ball.last.team;ball.rust=.5}
   aftrapVrij=Math.max(0,aftrapVrij-dt);
   for(const t of [0,1])lockT[t]=Math.max(0,lockT[t]-dt);
   for(const t of hum)if(state!=="setpiece")ctrl[t]=ctrlFor(t);
@@ -1028,8 +1031,8 @@ function ai(p,dt,spd,spread){
     if(state==="play"&&houder&&houder.team!==p.team&&houder.role!=="K"&&
        !ball.held&&p.cool<=0&&dist(p,houder)<17&&dist(p,ball)<22){
       p.pakT=(p.pakT||0)-dt;
-      if(p.pakT<=0){p.pakT=.55;
-        if(Math.random()<.18+level*.045)tackle(p,houder)}}}
+      if(ball.rust<=0&&p.pakT<=0){p.pakT=.75;
+        if(Math.random()<.15+level*.04)tackle(p,houder)}}}
   else if(state==="play"&&aftrapVrij<=0&&ball.last&&ball.last.team===p.team&&!ball.held){
     const v=vrijloop(p,dt);tx=v[0];ty=v[1];       // eigen ploeg aan de bal: vrijlopen
   }else{const f=formatiePlek(p);tx=f[0];ty=f[1]}
@@ -1068,11 +1071,12 @@ function ballPhysics(dt){
 function contacts(dt){
   if(ball.held||ball.touch>0)return;
   let p=null,bd=1e9;
+  const vers=(q)=>!(ball.rust>0&&ball.last&&q.team!==ball.last.team);
   for(const t of humans()){                       // jouw speler heeft voorrang
-    const q=ctrl[t];if(!q||q.cool>0)continue;
+    const q=ctrl[t];if(!q||q.cool>0||!vers(q))continue;
     const d=Math.hypot(q.x-ball.x,q.y-ball.y);
     if(d<19&&d<bd){bd=d;p=q}}
-  if(!p){for(const q of P){if(q.cool>0)continue;
+  if(!p){for(const q of P){if(q.cool>0||!vers(q))continue;
     const d=Math.hypot(q.x-ball.x,q.y-ball.y);if(d<bd){bd=d;p=q}}}
   if(!p)return;
   const jij=p===ctrl[p.team]&&humans().includes(p.team);
