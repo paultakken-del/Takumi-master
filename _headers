@@ -16,6 +16,6 @@
   X-Robots-Tag: noindex, nofollow
 
 # Verborgen spelpagina: niet indexeren en nooit uit de cache serveren
-/utreg84-k7m2.html
+/utreg84.html
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store, must-revalidate
