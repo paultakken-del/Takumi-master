@@ -341,7 +341,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v34 hersteld";
+const VERSIE="v39 duels";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -472,6 +472,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 function inOwnBox(t){const gx=ownGoal(t);
   return Math.abs(ball.x-gx)<74&&ball.y>W.gy1-36&&ball.y<W.gy2+36}
 const lockT=[0,0];
+const pogingT=[0,0];      // hoogstens één duelpoging per ploeg tegelijk
 function ctrlFor(t){
   const gk=P.find(p=>p.team===t&&p.role==="K");
   if(state==="setpiece"&&taker&&taker.team===t)return taker;
@@ -626,8 +627,9 @@ function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een 
   if(bijBal&&!vanAchter&&Math.random()<.72){    // schoon: jij glijdt, hij blijft staan
     p.dive=.35;
     const d=D8[p.dir];
-    ball.vx=d[0]*165;ball.vy=inward(p,d[1]*165);ball.vz=0;   // duidelijk weggespeeld
-    ball.last=p;ball.touch=.35;beep(300,.07,"square",.06);return}
+    ball.vx=d[0]*70;ball.vy=inward(p,d[1]*70);ball.vz=0;   // bal blijft in de buurt
+    ball.last=p;ball.touch=.3;foe.cool=.55;                // hij is even uitgespeeld
+    beep(300,.07,"square",.06);return}
   foe.dive=1.1;foe.cool=1.1;                    // te laat: de tegenstander gaat neer
   const w=Math.sign(foe.x-p.x)||1;
   foe.x+=w*5;clampP(foe);
@@ -826,7 +828,8 @@ function update(dt){
   const hum=humans();
   ball.rust=Math.max(0,(ball.rust||0)-dt);
   if(ball.last&&ball.last.team!==bezitTeam){    // net veroverd: even niet terugpakken
-    bezitTeam=ball.last.team;ball.rust=.5}
+    bezitTeam=ball.last.team;ball.rust=.9}
+  for(const t of [0,1])pogingT[t]=Math.max(0,pogingT[t]-dt);
   aftrapVrij=Math.max(0,aftrapVrij-dt);
   for(const t of [0,1])lockT[t]=Math.max(0,lockT[t]-dt);
   for(const t of hum)if(state!=="setpiece")ctrl[t]=ctrlFor(t);
@@ -1029,10 +1032,15 @@ function ai(p,dt,spd,spread){
        af te pakken. Lukt dat niet netjes, dan is het een overtreding. */
     const houder=ball.last;
     if(state==="play"&&houder&&houder.team!==p.team&&houder.role!=="K"&&
-       !ball.held&&p.cool<=0&&dist(p,houder)<17&&dist(p,ball)<22){
-      p.pakT=(p.pakT||0)-dt;
-      if(ball.rust<=0&&p.pakT<=0){p.pakT=.75;
-        if(Math.random()<.15+level*.04)tackle(p,houder)}}}
+       !ball.held&&p.cool<=0&&dist(p,houder)<27&&dist(p,ball)<32){
+      /* Eerst afstoppen, dan pas een poging. Hoe langer hij naast je loopt,
+         hoe groter zijn kans. Zo kost een duel tijd in plaats van een muntworp. */
+      p.drukT=Math.min(2,(p.drukT||0)+dt);
+      if(ball.rust<=0&&p.drukT>.45&&pogingT[p.team]<=0){
+        pogingT[p.team]=1;                        // de hele ploeg wacht daarna even
+        const kans=Math.min(.6,(.09+level*.03)*(1+(p.drukT-.45)));
+        if(Math.random()<kans)tackle(p,houder);else p.drukT=.15}}
+    else p.drukT=Math.max(0,(p.drukT||0)-dt*1.5);}   // druk zakt weg, maar niet meteen
   else if(state==="play"&&aftrapVrij<=0&&ball.last&&ball.last.team===p.team&&!ball.held){
     const v=vrijloop(p,dt);tx=v[0];ty=v[1];       // eigen ploeg aan de bal: vrijlopen
   }else{const f=formatiePlek(p);tx=f[0];ty=f[1]}
