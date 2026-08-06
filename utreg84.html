@@ -12,7 +12,6 @@
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAACc0lEQVR42u3dPU7CYBzAYTFMJjqY6ICDOok6eAtnPQEzF9LZE+jsLRiIOBkGHDRx0MSJpA4mb4yQUPr5tnmeyUFKW3/51wKlnUn/aAOW2bQLEAfiQByIA3EgDsSBOBAH4gBxIA7EgTioQydJEnsBk4M1J0fv5iznIrpb3ZxLmH/PrUOE62By4LCCOBAH4kAciANxIA7EgThAHIgDcSAOxIE4EAfiQByIA8SBOBAH4kAciANxIA7EgThAHIiDDLpFLWg6GDVu4w/vLlb+zmw4Xvk7B7fnla1zmvVJs10mB+Ig8sNKE308vP7+sHvVy7Ocz8e3QpYT23aZHIgDcSAOxIE4EAfioC0qfRFs+3qvsuf6un/31zU5EAftPqwE/17zj+EmNJgciANxIA7EgTgQB+KgvSp97ait73e0dbtMDsSBOBAH4kAciANxIA7EgThggetWVgjf9xW+oaVeVb6PY3IgDiI/rARNvG5l53K/7HXIvx9MDsSBOBAH4kAciANxwDKuW8HkQByIA3EgDsSBOBAH4kAcIA7SK+y9lXD/9HDHW8pQ5XU0JgfioMbDSpDh/unut5LB0utoit0PJgfiQByIA3EgDsSBOGgL9+qN1Gw4zvCo8A6XyYHDCuJAHIgDZysUYjoYlbScPOcvJgfiQByIA3HgbMW5SZXPlf78xeRAHIgDcSAOxIE4EAfiQByIA8SBOBAH4kAciIOG8EmwGix+Fqu8z4a5bgWHFcSBOBAHzlbIf07x9wYBvhOMqHWSJLEXMDlYc3JM+kf2QoROnl4yPOr59NjkwOTA/xyIA3EgDsSBOEAciANxIA7EgTgQB033A9qjbdKIrDb+AAAAAElFTkSuQmCC">
 <link rel="shortcut icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAACc0lEQVR42u3dPU7CYBzAYTFMJjqY6ICDOok6eAtnPQEzF9LZE+jsLRiIOBkGHDRx0MSJpA4mb4yQUPr5tnmeyUFKW3/51wKlnUn/aAOW2bQLEAfiQByIA3EgDsSBOBAH4gBxIA7EgTioQydJEnsBk4M1J0fv5iznIrpb3ZxLmH/PrUOE62By4LCCOBAH4kAciANxIA7EgThAHIgDcSAOxIE4EAfiQByIA8SBOBAH4kAciANxIA7EgThAHIiDDLpFLWg6GDVu4w/vLlb+zmw4Xvk7B7fnla1zmvVJs10mB+Ig8sNKE308vP7+sHvVy7Ocz8e3QpYT23aZHIgDcSAOxIE4EAfioC0qfRFs+3qvsuf6un/31zU5EAftPqwE/17zj+EmNJgciANxIA7EgTgQB+KgvSp97ait73e0dbtMDsSBOBAH4kAciANxIA7EgThggetWVgjf9xW+oaVeVb6PY3IgDiI/rARNvG5l53K/7HXIvx9MDsSBOBAH4kAciANxwDKuW8HkQByIA3EgDsSBOBAH4kAcIA7SK+y9lXD/9HDHW8pQ5XU0JgfioMbDSpDh/unut5LB0utoit0PJgfiQByIA3EgDsSBOGgL9+qN1Gw4zvCo8A6XyYHDCuJAHIgDZysUYjoYlbScPOcvJgfiQByIA3HgbMW5SZXPlf78xeRAHIgDcSAOxIE4EAfiQByIA8SBOBAH4kAciIOG8EmwGix+Fqu8z4a5bgWHFcSBOBAHzlbIf07x9wYBvhOMqHWSJLEXMDlYc3JM+kf2QoROnl4yPOr59NjkwOTA/xyIA3EgDsSBOEAciANxIA7EgTgQB033A9qjbdKIrDb+AAAAAElFTkSuQmCC">
 <meta name="theme-color" content="#000000">
-<meta name="robots" content="noindex, nofollow">
 <title>UTREG 84</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -200,7 +199,13 @@ const SHEAR=0.0;
 const PS=0.854, PK=0.62;
 const schaal=wy=>PS*(1+PK*(wy-W.top)/(W.bot-W.top));
 const CAMMIN=W.gx0-55, CAMMAX=W.gx1+55;      // je kunt tot achter de doelen kijken
-let cam=(W.gx0+W.gx1)/2;
+let camF=(W.gx0+W.gx1)/2;              // vloeiende waarde
+let cam=Math.round(camF);              // afgerond, anders trilt het hele beeld
+const zetCam=v=>{camF=v;cam=Math.round(camF)};
+function volgCam(doel,dt,tempo,dood){   // dode zone: kleine balbewegingen laten de camera staan
+  const d=doel-camF;
+  if(Math.abs(d)>dood)camF+=(d-Math.sign(d)*dood)*Math.min(1,tempo*dt);
+  cam=Math.round(camF)}
 const SX=(wx,wy)=>Math.round(160+(wx-cam)*schaal(wy));
 const camWens=x=>Math.max(CAMMIN,Math.min(CAMMAX,x));
 
@@ -338,10 +343,10 @@ function zetBeeldje(idx){
     p.x=tussen(k);p.y=tussen(k+1);p.dir=a[k+2];
     p.walkT=a[k+3]?.5:0;p.anim=a[k+4];
     p.cel=0;p.dive=0;p.charge=0;k+=5}
-  cam=camWens(ball.x)}
+  zetCam(camWens(ball.x))}
 
 /* ===== staat ===== */
-const VERSIE="v34 - 5 aug";
+const VERSIE="v35 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -387,7 +392,7 @@ function reset(kt){
   ball.held=null;ball.last=null;ball.touch=0;
   ctrl[0]=nearest(0);ctrl[1]=nearest(1);taker=null;msg="";
   ref.x=midX-40;ref.y=midY+34;
-  cam=camWens(midX)}
+  zetCam(camWens(midX))}
 
 /* ===== invoer ===== */
 const K={};
@@ -793,7 +798,7 @@ function update(dt){
       p.walkT=p.moving?.18:Math.max(0,(p.walkT||0)-dt);
       clampP(p)}
     const wc=camWens(midX);
-    cam+=(wc-cam)*Math.min(1,3*dt);
+    volgCam(wc,dt,3,0);
     msg=stateT>3?"HULDIGING":"";
     if(stateT>9||fireEdge[0]){state="fulltime";msg=""}
     fireEdge[0]=fireEdge[1]=false;return}
@@ -810,7 +815,7 @@ function update(dt){
       p.walkT=p.moving?.18:Math.max(0,(p.walkT||0)-dt)}
     msg=stateT<4?"DE PLOEGEN KOMEN OP":"";
     const w=camWens(midX);
-    cam+=(w-cam)*Math.min(1,3*dt);
+    volgCam(w,dt,3,0);
     if((klaar&&stateT>2.5)||stateT>9){state="kickoff";stateT=0;whistle()}
     fireEdge[0]=fireEdge[1]=false;return}
   if(state==="kickoff"){msg="AFTRAP";if(stateT>.7){state="play";msg="";aftrapVrij=1.4}}
@@ -871,7 +876,7 @@ function update(dt){
   if(state==="play")outOfPlay();
 
   const want=camWens(ball.x);
-  cam+=(want-cam)*Math.min(1,5*dt);
+  volgCam(want,dt,4,24);
   fireEdge[0]=fireEdge[1]=false;
 }
 
@@ -1225,7 +1230,11 @@ function limb(x0,y0,x1,y1,col,w){
     px(snap(x0+(x1-x0)*i/n)-(w>>1)+1,Math.round(y0+(y1-y0)*i/n),w,2,col)}
 
 function drawPlayer(p){
-  const X=snap(SX(p.x,p.y)), gy=Math.round(p.y), y=gy-Math.round(p.z);
+  /* De sprite staat op even pixels, in C64-stijl. Zonder geheugen springt hij heen en
+     weer zodra een speler op een grens balanceert, en dat leest als trillen. */
+  const ruwX=SX(p.x,p.y);
+  if(p.sx===undefined||Math.abs(ruwX-p.sx)>=2)p.sx=snap(ruwX);
+  const X=p.sx, gy=Math.round(p.y), y=gy-Math.round(p.z);
   if(X<-26||X>346)return;
   const gk=p.role==="K";
   const kit=p.ref?SCHEIDS:(gk?KEEP[p.team]:KIT[p.team]);
