@@ -164,11 +164,13 @@
   function pasMaat(){
     const dpr=window.devicePixelRatio||1;
     const bw=window.innerWidth, bh=window.innerHeight;
-    let s=Math.floor(Math.min(bw*dpr/320, bh*dpr/200));
+    const vw=cv.width||320;
+    let s=Math.floor(Math.min(bw*dpr/vw, bh*dpr/200));
     if(s<1)s=1;
-    const w=320*s/dpr, hh=200*s/dpr;
+    const w=vw*s/dpr, hh=200*s/dpr;
     cv.style.width=w+"px";cv.style.height=hh+"px";
   }
+  window.__pasMaat=pasMaat;
   pasMaat();
   addEventListener("resize",pasMaat);
   addEventListener("orientationchange",()=>setTimeout(pasMaat,250));
@@ -213,6 +215,17 @@ const SHEAR=0.0;
 /* Perspectief met een verdwijnpunt. Dicht bij de camera staan dingen verder uit
    elkaar dan aan de overkant. Een lijn midden in beeld staat daardoor recht,
    terwijl dezelfde lijn aan de rand van het beeld schuin wegloopt. */
+const BEELDEN=[{naam:"4:3",w:266},{naam:"8:5",w:320},{naam:"16:9",w:356}];
+let beeldKeuze=1;
+let VW=BEELDEN[beeldKeuze].w;          // schermbreedte in spelpixels
+const CX=()=>VW>>1;                    // midden van het scherm
+function zetBeeld(i){
+  beeldKeuze=(i+BEELDEN.length)%BEELDEN.length;
+  VW=BEELDEN[beeldKeuze].w;
+  const cv=document.getElementById("c");
+  cv.width=VW;
+  if(window.__pasMaat)window.__pasMaat();
+}
 const PS=0.854, PK=0.62;
 const schaal=wy=>PS*(1+PK*(wy-W.top)/(W.bot-W.top));
 const CAMMIN=W.gx0-55, CAMMAX=W.gx1+55;      // je kunt tot achter de doelen kijken
@@ -223,7 +236,7 @@ function volgCam(doel,dt,tempo,dood){   // dode zone: kleine balbewegingen laten
   const d=doel-camF;
   if(Math.abs(d)>dood)camF+=(d-Math.sign(d)*dood)*Math.min(1,tempo*dt);
   cam=Math.round(camF)}
-const SX=(wx,wy)=>Math.round(160+(wx-cam)*schaal(wy));
+const SX=(wx,wy)=>Math.round(CX()+(wx-cam)*schaal(wy));
 const camWens=x=>Math.max(CAMMIN,Math.min(CAMMAX,x));
 
 /* ===== geluid ===== */
@@ -363,7 +376,7 @@ function zetBeeldje(idx){
   zetCam(camWens(ball.x))}
 
 /* ===== staat ===== */
-const VERSIE="v36 - 5 aug";
+const VERSIE="v37 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -468,12 +481,13 @@ function menuKey(k){
     if(menuSel===0)level=((level-1+d+9)%9)+1;
     else if(menuSel===1)players2=players2===1?2:1;
     else if(menuSel===2){kitA=(kitA+d+KITS.length)%KITS.length;if(kitA===kitB)kitA=(kitA+d+KITS.length)%KITS.length}
-    else {kitB=(kitB+d+KITS.length)%KITS.length;if(kitB===kitA)kitB=(kitB+d+KITS.length)%KITS.length}
+    else if(menuSel===3){kitB=(kitB+d+KITS.length)%KITS.length;if(kitB===kitA)kitB=(kitB+d+KITS.length)%KITS.length}
+    else zetBeeld(beeldKeuze+d);
     zetTenues();beep(560,.05)};
   if(k==="ArrowLeft")stap(-1);
   else if(k==="ArrowRight")stap(1);
-  else if(k==="ArrowUp"){menuSel=(menuSel+3)%4;beep(400,.04)}
-  else if(k==="ArrowDown"){menuSel=(menuSel+1)%4;beep(400,.04)}
+  else if(k==="ArrowUp"){menuSel=(menuSel+4)%5;beep(400,.04)}
+  else if(k==="ArrowDown"){menuSel=(menuSel+1)%5;beep(400,.04)}
   else if(k===" "||k==="Enter")start()}
 function start(){stopMuziek();film=[];herhaling=null;score=[0,0];clock=0;half=1;attack=[1,-1];build();reset(0);
   P.forEach((p,i)=>{                            // opkomen vanaf buiten het veld
@@ -1169,7 +1183,7 @@ function line(x1,y1,x2,y2,c){
   const dx=Math.abs(x2-x1),sx=x1<x2?1:-1,dy=-Math.abs(y2-y1),sy=y1<y2?1:-1;
   let err=dx+dy;ctx.fillStyle=c;
   for(let n=0;n<1600;n++){
-    if(x1>=0&&x1<320&&y1>=0&&y1<200)ctx.fillRect(x1,y1,1,1);
+    if(x1>=0&&x1<VW&&y1>=0&&y1<200)ctx.fillRect(x1,y1,1,1);
     if(x1===x2&&y1===y2)break;
     const e2=2*err;
     if(e2>=dy){err+=dy;x1+=sx}
@@ -1178,14 +1192,14 @@ const wline=(x1,y1,h1,x2,y2,h2,c)=>line(SX(x1,y1),y1-h1,SX(x2,y2),y2-h2,c);
 const snap=v=>Math.round(v/2)*2;
 
 function crowd(){
-  px(0,0,320,24,"#202020");
+  px(0,0,VW,24,"#202020");
   const off=(cam*.3)%6;
   for(let row=0;row<4;row++){const y=row*6;
     for(let i=-1;i<56;i++){const x=Math.round(i*6-off);
       const k=Math.abs((i*5+row*3+((cam*.3/6)|0))%4);
       const col=[C.wht,"#D82820",C.grey,"#F0A0A0"][k];
       px(x+1,y,4,3,col);px(x,y+3,5,4,col===C.blk?C.dgrey:C.blk)}}
-  px(0,24,320,8,C.blk);
+  px(0,24,VW,8,C.blk);
   const bo=(cam*.7)%100;
   for(let i=-1;i<6;i++){const x=Math.round(i*100-bo);
     const j=Math.abs(i)%3;
@@ -1193,10 +1207,10 @@ function crowd(){
     px(x,24,98,8,col);
     ctx.font="8px monospace";ctx.textAlign="left";ctx.textBaseline="top";
     ctx.fillStyle=j===2?C.blk:C.wht;ctx.fillText(["NISSAN","UTREG 84","NISSAN"][j],x+12,25)}
-  px(0,31,320,1,"#004000")}
+  px(0,31,VW,1,"#004000")}
 
 function pitch(){
-  px(0,32,320,168,C.grass);
+  px(0,32,VW,168,C.grass);
   const L=C.wht;
   line(SX(W.gx0,W.top),W.top,SX(W.gx1,W.top),W.top,L);
   line(SX(W.gx0,W.bot),W.bot,SX(W.gx1,W.bot),W.bot,L);
@@ -1204,7 +1218,7 @@ function pitch(){
   ctx.fillStyle=L;                              // middencirkel: nette ovaal
   for(let a=0;a<Math.PI*2;a+=.004){
     const wy=midY+Math.sin(a)*27, sx=SX(midX+Math.cos(a)*91,wy);
-    if(sx>=0&&sx<320)ctx.fillRect(sx,Math.round(wy),1,1)}
+    if(sx>=0&&sx<VW)ctx.fillRect(sx,Math.round(wy),1,1)}
   px(SX(midX,midY)-1,midY-1,2,2,L);
   for(const gx of [W.gx0,W.gx1]){const d=gx===W.gx0?1:-1;
     for(const [dep,sp] of [[165,42],[55,19]]){
@@ -1218,7 +1232,7 @@ function pitch(){
       const wx=spot+Math.cos(a)*91, wy=midY+Math.sin(a)*27;
       if((wx-rnd)*d<0)continue;
       const sx=SX(wx,wy);
-      if(sx>=0&&sx<320)ctx.fillRect(sx,Math.round(wy),1,1)}}
+      if(sx>=0&&sx<VW)ctx.fillRect(sx,Math.round(wy),1,1)}}
   for(const gx of [W.gx0,W.gx1])for(const gy of [W.top,W.bot]){
     const s=SX(gx,gy);if(s<-4||s>324)continue;
     px(s,gy-10,2,10,C.lgrey);px(s+2,gy-10,4,3,C.yel)}}
@@ -1453,8 +1467,9 @@ const BALL=[
 "..GGGGG.."];
 function title(){
   if(menuPage===1)return opties();
-  px(0,0,320,200,"#7BD07B");
-  for(let y=1;y<200;y+=2)px(0,y,320,1,"#69C069");
+  ctx.save();ctx.translate((VW-320)/2,0);
+  px(0,0,VW,200,"#7BD07B");
+  for(let y=1;y<200;y+=2)px(0,y,VW,1,"#69C069");
   const map={K:C.blk,W:C.wht,R:"#D82820",S:"#E09878",D:"#A86048",G:"#B8B8B8"};
   const S=3;
   for(let r=0;r<MAN.length;r++)for(let i=0;i<22;i++){
@@ -1473,26 +1488,29 @@ function title(){
   ctx.fillStyle=C.wht;ctx.font="10px monospace";ctx.fillText("DRUK KICK",218,149);
   ctx.fillStyle="#2E7A2E";ctx.font="8px monospace";
   ctx.fillText("EERBETOON AAN INTERNATIONAL SOCCER 1983",160,186);
+  ctx.restore();ctx.save();ctx.translate((VW-320)/2,0);
   ctx.textAlign="right";
   ctx.fillStyle="#2E7A2E";ctx.fillText(VERSIE,314,190);
   const st=AC?AC.state:"geen";
   ctx.textAlign="left";
   ctx.fillStyle=(st==="running"&&snd)?"#9FD89F":"#FF8878";
   ctx.fillText("GELUID: "+(!snd?"UIT":st==="running"?"AAN":st==="suspended"?"WACHT OP TIK":"NOG NIET GESTART"),6,190);
-  ctx.textAlign="center"}
+  ctx.textAlign="center";ctx.restore()}
 
 function opties(){
-  px(0,0,320,200,"#0C400C");
-  px(0,0,320,22,C.blk);
+  ctx.save();ctx.translate((VW-320)/2,0);
+  px(0,0,VW,200,"#0C400C");
+  px(0,0,VW,22,C.blk);
   ctx.textAlign="center";ctx.textBaseline="top";
   ctx.fillStyle="#D82820";ctx.font="16px monospace";ctx.fillText("UTREG 84",160,4);
-  px(28,30,264,116,"#083008");
-  ctx.strokeStyle="#2E7A2E";ctx.lineWidth=1;ctx.strokeRect(28,30,264,116);
-  const waarden=[String(level),players2===1?"1 SPELER":"2 SPELERS",KITS[kitA].naam,KITS[kitB].naam];
-  const namen=["COMPUTERNIVEAU","AANTAL SPELERS","TENUE THUIS","TENUE UIT"];
-  for(let r=0;r<4;r++){
-    const y=42+r*26, aan=menuSel===r;
-    if(aan)px(34,y-6,252,22,"#145014");
+  px(28,28,264,124,"#083008");
+  ctx.strokeStyle="#2E7A2E";ctx.lineWidth=1;ctx.strokeRect(28,28,264,124);
+  const waarden=[String(level),players2===1?"1 SPELER":"2 SPELERS",
+                 KITS[kitA].naam,KITS[kitB].naam,BEELDEN[beeldKeuze].naam];
+  const namen=["COMPUTERNIVEAU","AANTAL SPELERS","TENUE THUIS","TENUE UIT","BEELDVERHOUDING"];
+  for(let r=0;r<5;r++){
+    const y=40+r*22, aan=menuSel===r;
+    if(aan)px(34,y-5,252,19,"#145014");
     ctx.textAlign="left";
     ctx.fillStyle=aan?C.yel:"#7FB27F";ctx.font="10px monospace";
     ctx.fillText((aan?"\u25b8 ":"  ")+namen[r],42,y);
@@ -1501,24 +1519,23 @@ function opties(){
     ctx.fillText(waarden[r],252,y);
     if(r===2)px(262,y-2,18,12,KITS[kitA].shirt);
     if(r===3)px(262,y-2,18,12,KITS[kitB].shirt);
-    if(r===0&&aan){ctx.textAlign="left";ctx.fillStyle="#7FB27F";ctx.font="8px monospace";
-      ctx.fillText("1 = MAKKELIJK   9 = ZWAAR",42,y+11)}
+
   }
   ctx.textAlign="center";ctx.font="8px monospace";
   ctx.fillStyle="#7FB27F";
-  ctx.fillText("OP EN NEER KIEST EEN REGEL",160,156);
+  ctx.fillText("OP EN NEER KIEST EEN REGEL",160,158);
   ctx.fillText("LINKS EN RECHTS VERANDERT DE WAARDE",160,168);
   px(96,180,128,14,C.blk);
   ctx.fillStyle=C.wht;ctx.font="10px monospace";ctx.fillText("KICK START",160,182);
   ctx.textAlign="right";ctx.font="8px monospace";ctx.fillStyle="#4E8A4E";
-  ctx.fillText(VERSIE,314,4);ctx.textAlign="center"}
+  ctx.fillText(VERSIE,314,4);ctx.textAlign="center";ctx.restore()}
 
 function scoreboards(){          // twee borden in de tribune, tijd loopt terug
   const left=Math.max(0,200-(half===1?clock:clock-200))|0;
   const s=String(Math.min(999,left)).padStart(3,"0");
   for(const wx of [midX-118,midX+118]){
     const sx=SX(wx,W.top);
-    if(sx<-40||sx>360)continue;
+    if(sx<-40||sx>VW+40)continue;
     px(sx-23,0,46,24,C.blk);
     px(sx-24,0,48,1,"#606060");px(sx-24,24,48,1,"#606060");
     px(sx-24,0,1,25,"#606060");px(sx+23,0,1,25,"#606060");
