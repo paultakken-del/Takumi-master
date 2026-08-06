@@ -346,7 +346,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v41 strafschop";
+const VERSIE="v42 keeper";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -975,23 +975,35 @@ function keeper(p,dt,kpSpd){
     return}
   const inBox=Math.abs(ball.x-ownGoal(p.team))<170;
   const balSnel=Math.hypot(ball.vx,ball.vy)>115;   // pas bij een geschoten of gespeelde bal
+  /* Hij schat waar de bal de lijn kruist en gaat daarheen, maar hij leest niet
+     perfect en hij is niet oneindig snel. Plaatsing in de hoek loont daardoor. */
+  /* Zodra er geschoten wordt kiest hij eenmalig een hoek en gaat daarheen. Hij mag
+     die keuze niet meer bijstellen, precies zoals een echte keeper moet gokken.
+     Zijn kracht zit in hoe goed hij leest, niet in alles alsnog halen. */
+  const balSp=Math.hypot(ball.vx,ball.vy);
+  if(balSp>120){
+    if(p.gok===undefined){
+      const gx=ownGoal(p.team), t=Math.abs(gx-ball.x)/Math.max(60,Math.abs(ball.vx));
+      const komt=ball.y+ball.vy*Math.min(t,1.2);
+      p.gok=komt+(Math.random()-.5)*(22-level*1.4);   // hoe hoger het niveau, hoe beter de gok
+    }
+  }else p.gok=undefined;
   p.aimT=(p.aimT||0)-dt;
-  if(p.aimT<=0){p.aimT=.45;                       // hij leest de bal niet perfect
-    p.aimY=ball.y+(Math.random()-.5)*(11-level)*11}
+  if(p.aimT<=0){p.aimT=.4;p.aimY=ball.y+(Math.random()-.5)*(20-level*1.2)}
   /* Zolang een aanvaller de bal aan de voet houdt dekt de keeper alleen de hoek af.
      Hij spiegelt je dribbel dus niet meer; pas als de bal onderweg is duikt hij mee. */
   let ty;
   if(!inBox)ty=midY;
-  else if(balSnel)ty=(p.aimY!==undefined?p.aimY:ball.y);
+  else if(balSnel)ty=(p.gok!==undefined?p.gok:(p.aimY!==undefined?p.aimY:ball.y));
   else ty=midY+(ball.y-midY)*.35;
   ty=Math.max(W.gy1+4,Math.min(W.gy2-4,ty));
   const dy=ty-p.y;
-  const tempo=kpSpd*(balSnel?1:.45);              // rustig verplaatsen, snel reageren
+  const tempo=(12+level*0.9)*(balSnel?1:.42);    // niet oneindig snel: hoeken zijn te halen
   if(Math.abs(dy)>4){p.moving=true;p.anim+=dt*5;
     p.y+=Math.sign(dy)*Math.min(Math.abs(dy),tempo*dt)}
   p.dir=attack[p.team]>0?0:4;
   const mine=humans().includes(p.team);
-  if(state==="play"&&inBox&&Math.abs(ball.x-p.x)<16&&Math.abs(ball.y-p.y)<10&&ball.z<30&&p.cool<=0&&!ball.held){
+  if(state==="play"&&inBox&&Math.abs(ball.x-p.x)<16&&Math.abs(ball.y-p.y)<(5+level*.3)&&ball.z<30&&p.cool<=0&&!ball.held){
     const s=Math.sign(ball.x-ownGoal(p.team))||1;
     p.cool=.7;                                   // niet elke frame opnieuw
     ball.last=p;                                 // elke keeperaanraking telt mee
