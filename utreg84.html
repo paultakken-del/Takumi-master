@@ -12,6 +12,7 @@
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAACc0lEQVR42u3dPU7CYBzAYTFMJjqY6ICDOok6eAtnPQEzF9LZE+jsLRiIOBkGHDRx0MSJpA4mb4yQUPr5tnmeyUFKW3/51wKlnUn/aAOW2bQLEAfiQByIA3EgDsSBOBAH4gBxIA7EgTioQydJEnsBk4M1J0fv5iznIrpb3ZxLmH/PrUOE62By4LCCOBAH4kAciANxIA7EgThAHIgDcSAOxIE4EAfiQByIA8SBOBAH4kAciANxIA7EgThAHIiDDLpFLWg6GDVu4w/vLlb+zmw4Xvk7B7fnla1zmvVJs10mB+Ig8sNKE308vP7+sHvVy7Ocz8e3QpYT23aZHIgDcSAOxIE4EAfioC0qfRFs+3qvsuf6un/31zU5EAftPqwE/17zj+EmNJgciANxIA7EgTgQB+KgvSp97ait73e0dbtMDsSBOBAH4kAciANxIA7EgThggetWVgjf9xW+oaVeVb6PY3IgDiI/rARNvG5l53K/7HXIvx9MDsSBOBAH4kAciANxwDKuW8HkQByIA3EgDsSBOBAH4kAcIA7SK+y9lXD/9HDHW8pQ5XU0JgfioMbDSpDh/unut5LB0utoit0PJgfiQByIA3EgDsSBOGgL9+qN1Gw4zvCo8A6XyYHDCuJAHIgDZysUYjoYlbScPOcvJgfiQByIA3HgbMW5SZXPlf78xeRAHIgDcSAOxIE4EAfiQByIA8SBOBAH4kAciIOG8EmwGix+Fqu8z4a5bgWHFcSBOBAHzlbIf07x9wYBvhOMqHWSJLEXMDlYc3JM+kf2QoROnl4yPOr59NjkwOTA/xyIA3EgDsSBOEAciANxIA7EgTgQB033A9qjbdKIrDb+AAAAAElFTkSuQmCC">
 <link rel="shortcut icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAACc0lEQVR42u3dPU7CYBzAYTFMJjqY6ICDOok6eAtnPQEzF9LZE+jsLRiIOBkGHDRx0MSJpA4mb4yQUPr5tnmeyUFKW3/51wKlnUn/aAOW2bQLEAfiQByIA3EgDsSBOBAH4gBxIA7EgTioQydJEnsBk4M1J0fv5iznIrpb3ZxLmH/PrUOE62By4LCCOBAH4kAciANxIA7EgThAHIgDcSAOxIE4EAfiQByIA8SBOBAH4kAciANxIA7EgThAHIiDDLpFLWg6GDVu4w/vLlb+zmw4Xvk7B7fnla1zmvVJs10mB+Ig8sNKE308vP7+sHvVy7Ocz8e3QpYT23aZHIgDcSAOxIE4EAfioC0qfRFs+3qvsuf6un/31zU5EAftPqwE/17zj+EmNJgciANxIA7EgTgQB+KgvSp97ait73e0dbtMDsSBOBAH4kAciANxIA7EgThggetWVgjf9xW+oaVeVb6PY3IgDiI/rARNvG5l53K/7HXIvx9MDsSBOBAH4kAciANxwDKuW8HkQByIA3EgDsSBOBAH4kAcIA7SK+y9lXD/9HDHW8pQ5XU0JgfioMbDSpDh/unut5LB0utoit0PJgfiQByIA3EgDsSBOGgL9+qN1Gw4zvCo8A6XyYHDCuJAHIgDZysUYjoYlbScPOcvJgfiQByIA3HgbMW5SZXPlf78xeRAHIgDcSAOxIE4EAfiQByIA8SBOBAH4kAciIOG8EmwGix+Fqu8z4a5bgWHFcSBOBAHzlbIf07x9wYBvhOMqHWSJLEXMDlYc3JM+kf2QoROnl4yPOr59NjkwOTA/xyIA3EgDsSBOEAciANxIA7EgTgQB033A9qjbdKIrDb+AAAAAElFTkSuQmCC">
 <meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex, nofollow">
 <title>UTREG 84</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -19,11 +20,9 @@
   body{font-family:monospace;touch-action:none;user-select:none;-webkit-user-select:none}
 
   /* het speelveld vult het scherm en houdt de verhouding 8 op 5 */
-  /* De maat wordt in javascript gezet op een heel aantal schermpunten per spelpixel.
-     Bij een gebroken factor krijgt de ene pixel twee punten en de volgende drie,
-     en dat patroon schuift bij het scrollen door het beeld. */
   canvas{position:fixed;inset:0;margin:auto;display:block;background:#000;
-         image-rendering:pixelated;image-rendering:crisp-edges}
+         image-rendering:pixelated;image-rendering:crisp-edges;
+         width:100%;height:auto;max-width:100%;max-height:100%;aspect-ratio:8/5}
 
   /* bediening ligt over het beeld, met ruimte voor de ronde schermhoeken */
   #pad{position:fixed;inset:0;pointer-events:none;z-index:10}
@@ -68,6 +67,7 @@
   /* op een computer geen aanraakbediening */
   @media (hover:hover) and (pointer:fine){
     #pad,#vol{display:none}
+    canvas{width:auto;height:100%;max-width:100%}
   }
 </style>
 </head>
@@ -158,25 +158,6 @@
   kruis.addEventListener("click",sluitOfTerug);
   kruis.addEventListener("touchend",sluitOfTerug);
 
-  /* Heel aantal schermpunten per spelpixel, anders krijg je een schuivend
-     interferentiepatroon over het veld. */
-  const cv=document.getElementById("c");
-  function pasMaat(){
-    const dpr=window.devicePixelRatio||1;
-    const bw=window.innerWidth, bh=window.innerHeight;
-    const vw=cv.width||320;
-    let s=Math.floor(Math.min(bw*dpr/vw, bh*dpr/200));
-    if(s<1)s=1;
-    const w=vw*s/dpr, hh=200*s/dpr;
-    cv.style.width=w+"px";cv.style.height=hh+"px";
-  }
-  window.__pasMaat=pasMaat;
-  pasMaat();
-  const herzie=()=>{if(window.__herbereken)window.__herbereken();pasMaat()};
-  addEventListener("resize",herzie);
-  addEventListener("orientationchange",()=>setTimeout(herzie,250));
-  setTimeout(herzie,300);
-
   // dubbeltik zoomt niet
   document.addEventListener("gesturestart",e=>e.preventDefault());
 })();
@@ -216,44 +197,11 @@ const SHEAR=0.0;
 /* Perspectief met een verdwijnpunt. Dicht bij de camera staan dingen verder uit
    elkaar dan aan de overkant. Een lijn midden in beeld staat daardoor recht,
    terwijl dezelfde lijn aan de rand van het beeld schuin wegloopt. */
-const BEELDEN=[{naam:"4:3",w:266},{naam:"8:5",w:320},{naam:"16:9",w:356},{naam:"VULLEND",w:0}];
-let beeldKeuze=1;
-/* Bij VULLEND kiezen we eerst hoeveel hele schermpunten er per spelpixel passen in
-   de hoogte, en daarna precies zoveel spelpixels breed als er dan in het scherm gaan.
-   Zo vult het beeld het scherm en blijft de schaal een heel getal. */
-function breedteVoor(i){
-  const vast=BEELDEN[i].w;
-  if(vast)return vast;
-  const dpr=window.devicePixelRatio||1;
-  const s=Math.max(1,Math.floor((window.innerHeight||400)*dpr/200));
-  const w=Math.floor((window.innerWidth||640)*dpr/s);
-  return Math.max(240,Math.min(520,w-(w%2)));
-}
-let VW=BEELDEN[beeldKeuze].w;          // schermbreedte in spelpixels
-const CX=()=>VW>>1;                    // midden van het scherm
-function zetBeeld(i){
-  beeldKeuze=(i+BEELDEN.length)%BEELDEN.length;
-  VW=breedteVoor(beeldKeuze);
-  const cv=document.getElementById("c");
-  cv.width=VW;
-  if(window.__pasMaat)window.__pasMaat();
-}
-window.__herbereken=()=>{             // bij draaien opnieuw uitrekenen
-  if(BEELDEN[beeldKeuze].w)return;
-  const nw=breedteVoor(beeldKeuze);
-  if(nw!==VW){VW=nw;document.getElementById("c").width=VW;
-    if(window.__pasMaat)window.__pasMaat()}};
 const PS=0.854, PK=0.62;
 const schaal=wy=>PS*(1+PK*(wy-W.top)/(W.bot-W.top));
 const CAMMIN=W.gx0-55, CAMMAX=W.gx1+55;      // je kunt tot achter de doelen kijken
-let camF=(W.gx0+W.gx1)/2;              // vloeiende waarde
-let cam=Math.round(camF);              // afgerond, anders trilt het hele beeld
-const zetCam=v=>{camF=v;cam=Math.round(camF)};
-function volgCam(doel,dt,tempo,dood){   // dode zone: kleine balbewegingen laten de camera staan
-  const d=doel-camF;
-  if(Math.abs(d)>dood)camF+=(d-Math.sign(d)*dood)*Math.min(1,tempo*dt);
-  cam=Math.round(camF)}
-const SX=(wx,wy)=>Math.round(CX()+(wx-cam)*schaal(wy));
+let cam=(W.gx0+W.gx1)/2;
+const SX=(wx,wy)=>Math.round(160+(wx-cam)*schaal(wy));
 const camWens=x=>Math.max(CAMMIN,Math.min(CAMMAX,x));
 
 /* ===== geluid ===== */
@@ -390,10 +338,10 @@ function zetBeeldje(idx){
     p.x=tussen(k);p.y=tussen(k+1);p.dir=a[k+2];
     p.walkT=a[k+3]?.5:0;p.anim=a[k+4];
     p.cel=0;p.dive=0;p.charge=0;k+=5}
-  zetCam(camWens(ball.x))}
+  cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v38 - 5 aug";
+const VERSIE="v34 hersteld";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -439,7 +387,7 @@ function reset(kt){
   ball.held=null;ball.last=null;ball.touch=0;
   ctrl[0]=nearest(0);ctrl[1]=nearest(1);taker=null;msg="";
   ref.x=midX-40;ref.y=midY+34;
-  zetCam(camWens(midX))}
+  cam=camWens(midX)}
 
 /* ===== invoer ===== */
 const K={};
@@ -498,13 +446,12 @@ function menuKey(k){
     if(menuSel===0)level=((level-1+d+9)%9)+1;
     else if(menuSel===1)players2=players2===1?2:1;
     else if(menuSel===2){kitA=(kitA+d+KITS.length)%KITS.length;if(kitA===kitB)kitA=(kitA+d+KITS.length)%KITS.length}
-    else if(menuSel===3){kitB=(kitB+d+KITS.length)%KITS.length;if(kitB===kitA)kitB=(kitB+d+KITS.length)%KITS.length}
-    else zetBeeld(beeldKeuze+d);
+    else {kitB=(kitB+d+KITS.length)%KITS.length;if(kitB===kitA)kitB=(kitB+d+KITS.length)%KITS.length}
     zetTenues();beep(560,.05)};
   if(k==="ArrowLeft")stap(-1);
   else if(k==="ArrowRight")stap(1);
-  else if(k==="ArrowUp"){menuSel=(menuSel+4)%5;beep(400,.04)}
-  else if(k==="ArrowDown"){menuSel=(menuSel+1)%5;beep(400,.04)}
+  else if(k==="ArrowUp"){menuSel=(menuSel+3)%4;beep(400,.04)}
+  else if(k==="ArrowDown"){menuSel=(menuSel+1)%4;beep(400,.04)}
   else if(k===" "||k==="Enter")start()}
 function start(){stopMuziek();film=[];herhaling=null;score=[0,0];clock=0;half=1;attack=[1,-1];build();reset(0);
   P.forEach((p,i)=>{                            // opkomen vanaf buiten het veld
@@ -846,7 +793,7 @@ function update(dt){
       p.walkT=p.moving?.18:Math.max(0,(p.walkT||0)-dt);
       clampP(p)}
     const wc=camWens(midX);
-    volgCam(wc,dt,3,0);
+    cam+=(wc-cam)*Math.min(1,3*dt);
     msg=stateT>3?"HULDIGING":"";
     if(stateT>9||fireEdge[0]){state="fulltime";msg=""}
     fireEdge[0]=fireEdge[1]=false;return}
@@ -863,7 +810,7 @@ function update(dt){
       p.walkT=p.moving?.18:Math.max(0,(p.walkT||0)-dt)}
     msg=stateT<4?"DE PLOEGEN KOMEN OP":"";
     const w=camWens(midX);
-    volgCam(w,dt,3,0);
+    cam+=(w-cam)*Math.min(1,3*dt);
     if((klaar&&stateT>2.5)||stateT>9){state="kickoff";stateT=0;whistle()}
     fireEdge[0]=fireEdge[1]=false;return}
   if(state==="kickoff"){msg="AFTRAP";if(stateT>.7){state="play";msg="";aftrapVrij=1.4}}
@@ -924,7 +871,7 @@ function update(dt){
   if(state==="play")outOfPlay();
 
   const want=camWens(ball.x);
-  volgCam(want,dt,4,24);
+  cam+=(want-cam)*Math.min(1,5*dt);
   fireEdge[0]=fireEdge[1]=false;
 }
 
@@ -1200,7 +1147,7 @@ function line(x1,y1,x2,y2,c){
   const dx=Math.abs(x2-x1),sx=x1<x2?1:-1,dy=-Math.abs(y2-y1),sy=y1<y2?1:-1;
   let err=dx+dy;ctx.fillStyle=c;
   for(let n=0;n<1600;n++){
-    if(x1>=0&&x1<VW&&y1>=0&&y1<200)ctx.fillRect(x1,y1,1,1);
+    if(x1>=0&&x1<320&&y1>=0&&y1<200)ctx.fillRect(x1,y1,1,1);
     if(x1===x2&&y1===y2)break;
     const e2=2*err;
     if(e2>=dy){err+=dy;x1+=sx}
@@ -1209,14 +1156,14 @@ const wline=(x1,y1,h1,x2,y2,h2,c)=>line(SX(x1,y1),y1-h1,SX(x2,y2),y2-h2,c);
 const snap=v=>Math.round(v/2)*2;
 
 function crowd(){
-  px(0,0,VW,24,"#202020");
+  px(0,0,320,24,"#202020");
   const off=(cam*.3)%6;
   for(let row=0;row<4;row++){const y=row*6;
     for(let i=-1;i<56;i++){const x=Math.round(i*6-off);
       const k=Math.abs((i*5+row*3+((cam*.3/6)|0))%4);
       const col=[C.wht,"#D82820",C.grey,"#F0A0A0"][k];
       px(x+1,y,4,3,col);px(x,y+3,5,4,col===C.blk?C.dgrey:C.blk)}}
-  px(0,24,VW,8,C.blk);
+  px(0,24,320,8,C.blk);
   const bo=(cam*.7)%100;
   for(let i=-1;i<6;i++){const x=Math.round(i*100-bo);
     const j=Math.abs(i)%3;
@@ -1224,10 +1171,10 @@ function crowd(){
     px(x,24,98,8,col);
     ctx.font="8px monospace";ctx.textAlign="left";ctx.textBaseline="top";
     ctx.fillStyle=j===2?C.blk:C.wht;ctx.fillText(["NISSAN","UTREG 84","NISSAN"][j],x+12,25)}
-  px(0,31,VW,1,"#004000")}
+  px(0,31,320,1,"#004000")}
 
 function pitch(){
-  px(0,32,VW,168,C.grass);
+  px(0,32,320,168,C.grass);
   const L=C.wht;
   line(SX(W.gx0,W.top),W.top,SX(W.gx1,W.top),W.top,L);
   line(SX(W.gx0,W.bot),W.bot,SX(W.gx1,W.bot),W.bot,L);
@@ -1235,7 +1182,7 @@ function pitch(){
   ctx.fillStyle=L;                              // middencirkel: nette ovaal
   for(let a=0;a<Math.PI*2;a+=.004){
     const wy=midY+Math.sin(a)*27, sx=SX(midX+Math.cos(a)*91,wy);
-    if(sx>=0&&sx<VW)ctx.fillRect(sx,Math.round(wy),1,1)}
+    if(sx>=0&&sx<320)ctx.fillRect(sx,Math.round(wy),1,1)}
   px(SX(midX,midY)-1,midY-1,2,2,L);
   for(const gx of [W.gx0,W.gx1]){const d=gx===W.gx0?1:-1;
     for(const [dep,sp] of [[165,42],[55,19]]){
@@ -1249,7 +1196,7 @@ function pitch(){
       const wx=spot+Math.cos(a)*91, wy=midY+Math.sin(a)*27;
       if((wx-rnd)*d<0)continue;
       const sx=SX(wx,wy);
-      if(sx>=0&&sx<VW)ctx.fillRect(sx,Math.round(wy),1,1)}}
+      if(sx>=0&&sx<320)ctx.fillRect(sx,Math.round(wy),1,1)}}
   for(const gx of [W.gx0,W.gx1])for(const gy of [W.top,W.bot]){
     const s=SX(gx,gy);if(s<-4||s>324)continue;
     px(s,gy-10,2,10,C.lgrey);px(s+2,gy-10,4,3,C.yel)}}
@@ -1278,11 +1225,7 @@ function limb(x0,y0,x1,y1,col,w){
     px(snap(x0+(x1-x0)*i/n)-(w>>1)+1,Math.round(y0+(y1-y0)*i/n),w,2,col)}
 
 function drawPlayer(p){
-  /* De sprite staat op even pixels, in C64-stijl. Zonder geheugen springt hij heen en
-     weer zodra een speler op een grens balanceert, en dat leest als trillen. */
-  const ruwX=SX(p.x,p.y);
-  if(p.sx===undefined||Math.abs(ruwX-p.sx)>=2)p.sx=snap(ruwX);
-  const X=p.sx, gy=Math.round(p.y), y=gy-Math.round(p.z);
+  const X=snap(SX(p.x,p.y)), gy=Math.round(p.y), y=gy-Math.round(p.z);
   if(X<-26||X>346)return;
   const gk=p.role==="K";
   const kit=p.ref?SCHEIDS:(gk?KEEP[p.team]:KIT[p.team]);
@@ -1484,9 +1427,8 @@ const BALL=[
 "..GGGGG.."];
 function title(){
   if(menuPage===1)return opties();
-  ctx.save();ctx.translate((VW-320)/2,0);
-  px(0,0,VW,200,"#7BD07B");
-  for(let y=1;y<200;y+=2)px(0,y,VW,1,"#69C069");
+  px(0,0,320,200,"#7BD07B");
+  for(let y=1;y<200;y+=2)px(0,y,320,1,"#69C069");
   const map={K:C.blk,W:C.wht,R:"#D82820",S:"#E09878",D:"#A86048",G:"#B8B8B8"};
   const S=3;
   for(let r=0;r<MAN.length;r++)for(let i=0;i<22;i++){
@@ -1505,29 +1447,26 @@ function title(){
   ctx.fillStyle=C.wht;ctx.font="10px monospace";ctx.fillText("DRUK KICK",218,149);
   ctx.fillStyle="#2E7A2E";ctx.font="8px monospace";
   ctx.fillText("EERBETOON AAN INTERNATIONAL SOCCER 1983",160,186);
-  ctx.restore();ctx.save();ctx.translate((VW-320)/2,0);
   ctx.textAlign="right";
   ctx.fillStyle="#2E7A2E";ctx.fillText(VERSIE,314,190);
   const st=AC?AC.state:"geen";
   ctx.textAlign="left";
   ctx.fillStyle=(st==="running"&&snd)?"#9FD89F":"#FF8878";
   ctx.fillText("GELUID: "+(!snd?"UIT":st==="running"?"AAN":st==="suspended"?"WACHT OP TIK":"NOG NIET GESTART"),6,190);
-  ctx.textAlign="center";ctx.restore()}
+  ctx.textAlign="center"}
 
 function opties(){
-  ctx.save();ctx.translate((VW-320)/2,0);
-  px(0,0,VW,200,"#0C400C");
-  px(0,0,VW,22,C.blk);
+  px(0,0,320,200,"#0C400C");
+  px(0,0,320,22,C.blk);
   ctx.textAlign="center";ctx.textBaseline="top";
   ctx.fillStyle="#D82820";ctx.font="16px monospace";ctx.fillText("UTREG 84",160,4);
-  px(28,28,264,124,"#083008");
-  ctx.strokeStyle="#2E7A2E";ctx.lineWidth=1;ctx.strokeRect(28,28,264,124);
-  const waarden=[String(level),players2===1?"1 SPELER":"2 SPELERS",
-                 KITS[kitA].naam,KITS[kitB].naam,BEELDEN[beeldKeuze].naam];
-  const namen=["COMPUTERNIVEAU","AANTAL SPELERS","TENUE THUIS","TENUE UIT","BEELDVERHOUDING"];
-  for(let r=0;r<5;r++){
-    const y=40+r*22, aan=menuSel===r;
-    if(aan)px(34,y-5,252,19,"#145014");
+  px(28,30,264,116,"#083008");
+  ctx.strokeStyle="#2E7A2E";ctx.lineWidth=1;ctx.strokeRect(28,30,264,116);
+  const waarden=[String(level),players2===1?"1 SPELER":"2 SPELERS",KITS[kitA].naam,KITS[kitB].naam];
+  const namen=["COMPUTERNIVEAU","AANTAL SPELERS","TENUE THUIS","TENUE UIT"];
+  for(let r=0;r<4;r++){
+    const y=42+r*26, aan=menuSel===r;
+    if(aan)px(34,y-6,252,22,"#145014");
     ctx.textAlign="left";
     ctx.fillStyle=aan?C.yel:"#7FB27F";ctx.font="10px monospace";
     ctx.fillText((aan?"\u25b8 ":"  ")+namen[r],42,y);
@@ -1536,23 +1475,24 @@ function opties(){
     ctx.fillText(waarden[r],252,y);
     if(r===2)px(262,y-2,18,12,KITS[kitA].shirt);
     if(r===3)px(262,y-2,18,12,KITS[kitB].shirt);
-
+    if(r===0&&aan){ctx.textAlign="left";ctx.fillStyle="#7FB27F";ctx.font="8px monospace";
+      ctx.fillText("1 = MAKKELIJK   9 = ZWAAR",42,y+11)}
   }
   ctx.textAlign="center";ctx.font="8px monospace";
   ctx.fillStyle="#7FB27F";
-  ctx.fillText("OP EN NEER KIEST EEN REGEL",160,158);
+  ctx.fillText("OP EN NEER KIEST EEN REGEL",160,156);
   ctx.fillText("LINKS EN RECHTS VERANDERT DE WAARDE",160,168);
   px(96,180,128,14,C.blk);
   ctx.fillStyle=C.wht;ctx.font="10px monospace";ctx.fillText("KICK START",160,182);
   ctx.textAlign="right";ctx.font="8px monospace";ctx.fillStyle="#4E8A4E";
-  ctx.fillText(VERSIE,314,4);ctx.textAlign="center";ctx.restore()}
+  ctx.fillText(VERSIE,314,4);ctx.textAlign="center"}
 
 function scoreboards(){          // twee borden in de tribune, tijd loopt terug
   const left=Math.max(0,200-(half===1?clock:clock-200))|0;
   const s=String(Math.min(999,left)).padStart(3,"0");
   for(const wx of [midX-118,midX+118]){
     const sx=SX(wx,W.top);
-    if(sx<-40||sx>VW+40)continue;
+    if(sx<-40||sx>360)continue;
     px(sx-23,0,46,24,C.blk);
     px(sx-24,0,48,1,"#606060");px(sx-24,24,48,1,"#606060");
     px(sx-24,0,1,25,"#606060");px(sx+23,0,1,25,"#606060");
