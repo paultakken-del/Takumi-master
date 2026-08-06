@@ -191,7 +191,7 @@ const KEEP=[
  {shirt:"#A030A8",sleeve:"#A030A8",shorts:"#202020",sock:"#202020",sock2:"#B0B0B0",badge:"#A030A8"}];
 
 /* ===== veld ===== */
-const W={w:1230,top:50,bot:182,gy1:98,gy2:134,gx0:90,gx1:1140};
+const W={w:1072,top:50,bot:182,gy1:98,gy2:134,gx0:90,gx1:982};
 const midX=W.w/2, midY=(W.top+W.bot)/2;
 const SHEAR=0.0;
 /* Perspectief met een verdwijnpunt. Dicht bij de camera staan dingen verder uit
@@ -341,7 +341,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v29 - 5 aug";
+const VERSIE="v30 - 5 aug";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -608,16 +608,20 @@ function head(p){                   // korte klik: gecontroleerde kopbal
 function goal(team){scorer=team;score[team]++;state="goal";stateT=0;msg="GOAL!";
   speelDeun(GOALDEUN,"goal",false);
   ball.held=null;whistle();cheer();for(const p of P)if(p.team===team)p.cel=1}
-function tackle(p,foe){                        // sliding: op tijd is balafname, te laat is een overtreding
-  p.dive=.5;p.cool=.55;
+function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een overtreding
+  p.cool=.55;
   const d0=D8[p.dir];p.x+=d0[0]*7;p.y+=inward(p,d0[1]*5);clampP(p);   // hij schuift vooruit
   beep(200,.09,"square",.05);
   const bijBal=Math.hypot(p.x-ball.x,(p.y-ball.y)*3)<24&&ball.z<12&&!ball.held;
   const vanAchter=(p.x-foe.x)*attack[foe.team]<0;
-  if(bijBal&&!vanAchter&&Math.random()<.72){    // schoon: je speelt de bal weg
+  if(bijBal&&!vanAchter&&Math.random()<.72){    // schoon: jij glijdt, hij blijft staan
+    p.dive=.35;
     const d=D8[p.dir];
     ball.vx=d[0]*120;ball.vy=inward(p,d[1]*120);ball.vz=0;
     ball.last=p;ball.touch=.3;beep(300,.07,"square",.06);return}
+  foe.dive=1.1;foe.cool=1.1;                    // te laat: de tegenstander gaat neer
+  const w=Math.sign(foe.x-p.x)||1;
+  foe.x+=w*5;clampP(foe);
   overtreding(p,foe)}
 
 function overtreding(dader,slachtoffer){       // vrije trap, of strafschop in de zestien
