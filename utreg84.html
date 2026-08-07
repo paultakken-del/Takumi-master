@@ -346,7 +346,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v47 pass";
+const VERSIE="v48 tempo";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -674,7 +674,7 @@ function headShot(p){               // lange klik bij een hoge bal: harde kopsto
   ball.last=p;ball.touch=.25;p.cool=.26;beep(560,.09,"square",.07)}
 function head(p){                   // korte klik: gecontroleerde kopbal
   const d=D8[p.dir], near=Math.abs(foeGoal(p.team)-p.x)<150;
-  const sp=near?235:58;
+  const sp=near?235:64;
   ball.z=Math.min(ball.z,12);
   ball.vx=d[0]*sp;ball.vy=inward(p,d[1]*sp*.5);
   ball.vz=near?14:vzVoor(19);          // komt tot in het kopbereik terug
@@ -826,9 +826,22 @@ function release(p){
     ball.x=p.x;ball.y=p.y;ball.z=32;
     ball.vx=d[0]/l*62;ball.vy=dy/l*62;ball.vz=34;   // een worp, geen trap
     ball.last=p;ball.touch=.4;p.cool=.7;beep(300,.1,"triangle",.05)}
-  else if(mate)balNaar(p,mate.x+(mate.mvx||0)*.4,mate.y+(mate.mvy||0)*.4,
-                       vzVoor(setType==="goalkick"?32:20),setType==="goalkick"?210:120);
-  else kick(p,setType==="corner"?.85:.9,true);
+  else if(mate){
+    /* Een vrije trap, corner of inworp is gewoon een pass: kracht op de afstand,
+       en alleen een boogje als er iemand in de lijn staat. */
+    const lijn=speellijn(p,mate);
+    const afst=Math.hypot(mate.x-p.x,(mate.y-p.y)*3.2);
+    let top;
+    if(setType==="goalkick")      top=32;
+    else if(setType==="corner")   top=Math.max(16,afst*.10);
+    else if(lijn.dekking>0)       top=Math.max(14,afst*.10);
+    else if(afst>190)             top=9;
+    else                          top=0;
+    balNaar(p,mate.x+(mate.mvx||0)*.4,mate.y+(mate.mvy||0)*.4,
+            vzVoor(top),setType==="goalkick"?200:88);
+    balDoel=mate;balDoelT=1.8;
+  }
+  else kick(p,setType==="corner"?.85:.6,true);
   taker=null;state="play";msg=""}
 
 /* ===== update ===== */
@@ -912,7 +925,7 @@ function update(dt){
   aftrapVrij=Math.max(0,aftrapVrij-dt);
   for(const t of [0,1])lockT[t]=Math.max(0,lockT[t]-dt);
   for(const t of hum)if(state!=="setpiece")ctrl[t]=ctrlFor(t);
-  const aiSpd=37+level*1.9, kpSpd=19+level*2.7, spread=48-level*4.4;
+  const aiSpd=46+level*2.2, kpSpd=19+level*2.7, spread=48-level*4.4;
   aiPace=aiSpd*.72;
 
   for(const p of P){
@@ -984,7 +997,7 @@ function human(p,dt){
   const rooted=(state==="setpiece"&&taker===p);
   const sprint=K["s"+i];
   if(mx||my){const l=Math.hypot(mx,my);p.dir=dirOf(mx/l,my/l);
-    if(!rooted){const sp=hasBall(p)?(sprint?56:42):(sprint?72:58);
+    if(!rooted){const sp=hasBall(p)?(sprint?60:46):(sprint?84:66);
       p.anim+=dt*(sp/8);p.moving=true;p.x+=mx/l*sp*dt;p.y+=my/l*sp*dt*.72}}
   if(fireEdge[i]){
     p.fireT=0;p.fireUsed=false;
