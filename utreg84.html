@@ -349,7 +349,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v55 testregel";
+const VERSIE="v56 eenvoud";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -616,32 +616,43 @@ function speellijn(p,q){
     if(afw<28)dekking++;
     if(afw<dichtste)dichtste=afw}
   return {dekking,dichtste}}
-function medespeler(p,maxAfst){
+/* Kliklengte bepaalt hoe ver je wilt spelen. We zoeken de medespeler die het
+   dichtst bij die gevraagde afstand staat, met bonus voor vrijstaan en voor
+   spelen in de richting waarin je kijkt. Zo weet je bij elke druk wie je aanspeelt. */
+function medespeler(p,gevraagd){
   const d=D8[p.dir];
   let best=null,bs=1e9,noodBest=null,noodBs=1e9;
   for(const q of P){
     if(q.team!==p.team||q===p||q.role==="K")continue;
     const dx=q.x-p.x, dy=q.y-p.y;
     const af=Math.hypot(dx,dy*3.2);
-    if(af<18)continue;
+    if(af<20)continue;
     const l=Math.hypot(dx,dy)||1;
     const richting=(dx/l)*d[0]+(dy/l)*d[1];
     const lijn=speellijn(p,q);
-    const punt=af*(1.9-richting)*(1+lijn.dekking*.9);
-    if(af<=maxAfst*1.6&&richting>-.4&&punt<noodBs){   // terugvaloptie, ook opzij of achter
+    const mis=Math.abs(af-gevraagd)/gevraagd;          // hoe goed past hij bij je druk
+    const punt=mis*100+(1-richting)*55+lijn.dekking*70+(lijn.dichtste<40?25:0);
+    if(richting>-.4&&punt<noodBs){
       noodBs=punt;noodBest={q,dekking:lijn.dekking,dichtste:lijn.dichtste,af}}
-    if(af>maxAfst||richting<.25)continue;             // voor je uit telt eerst
+    if(richting<.2)continue;                           // voor je uit telt eerst
     if(punt<bs){bs=punt;best={q,dekking:lijn.dekking,dichtste:lijn.dichtste,af}}}
   return best||noodBest}
+/* Eén regel voor de trapknop: ben je dicht bij het doel, dan is het een schot;
+   verder weg is het altijd een pass. Hoe lang je drukt bepaalt hoe ver je speelt,
+   niet wat voor soort actie het wordt. */
+function inSchietzone(p){
+  return Math.abs(foeGoal(p.team)-p.x)<300&&
+         Math.abs(p.y-midY)<(W.gy2-W.gy1)/2+60}
 function speelBal(p,hold){
   const t=Math.max(0,Math.min(1,hold));
   const jij=isHuman(p);          // vooraf vastleggen: de besturing kan zo overgaan
-  if(inVak(p)&&t>=.18)return opDoel(p,245+t*75,3+t*11);   // in de zestien is het een schot
+  if(inSchietzone(p)){
+    if(jij)meld("SCHOT "+t.toFixed(2)+"s");
+    return opDoel(p,240+t*90,3+t*13)}
   const gx=foeGoal(p.team), naarDoel=Math.abs(gx-p.x);
-  const centraal=Math.abs(p.y-midY)<34;
   const d=D8[p.dir];
-  if(t<.5){                                         // pass: zoekt een medespeler
-    const keuze=medespeler(p,140+t*560);
+  {                                                 // buiten de schietzone: altijd een pass
+    const keuze=medespeler(p,80+t*620);
     if(keuze){
       const m=keuze.q;
       /* In de loop spelen: hij komt de bal tegemoet, dus mikken we een stuk
@@ -665,22 +676,8 @@ function speelBal(p,hold){
         (top>0?" BOOG "+Math.round(top):" VLAK"));
       return balNaar(p,tx,ty,vzVoor(top),112)}
     if(jij)meld("PASS "+t.toFixed(2)+"s GEEN AANSPEELPUNT, VOORUIT");
-    return balNaar(p,p.x+d[0]*(60+t*420),p.y+d[1]*(25+t*140),
-                   vzVoor(t<.24?0:(t-.24)*70),95)}
-  if(!centraal&&naarDoel<420){                      // voorzet: landt voor het doel
-    if(jij)meld("VOORZET "+t.toFixed(2)+"s");
-    const mik=gx-Math.sign(gx-p.x)*95;
-    return balNaar(p,mik,midY+(p.y<midY?6:-6),vzVoor(22+(t-.5)*14),120)}
-  if(centraal&&naarDoel<260){                       // schot: volgt je kijkrichting
-    if(jij)meld("SCHOT "+t.toFixed(2)+"s");
-    const kracht=270+(t-.5)*81;                     // een tiende zachter dan eerst
-    const hoogte=vzVoor(13+(t-.5)*32);
-    ball.vx=d[0]*kracht;ball.vy=inward(p,d[1]*kracht*.55);ball.vz=hoogte;
-    ball.last=p;ball.touch=.25;p.cool=.28;
-    return beep(hoogte>25?300:430,.11,"square",.08)}
-  if(jij)meld("LANGE BAL "+t.toFixed(2)+"s");
-  const hoog=vzVoor(21+(t-.5)*18);                  // lange bal vooruit
-  return balNaar(p,p.x+d[0]*300,p.y+d[1]*90,hoog,170)}
+    return balNaar(p,p.x+d[0]*(80+t*520),p.y+d[1]*(30+t*160),
+                   vzVoor(t<.3?0:(t-.3)*60),112)}}
 function inVak(p){                 // sta je in het strafschopgebied van de tegenstander?
   const b=boxUit(1-p.team);
   return (p.x-b.gx)*b.d>=-6&&(p.x-b.rand)*b.d<=0&&p.y>b.y1-4&&p.y<b.y2+4}
