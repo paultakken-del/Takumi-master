@@ -346,7 +346,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v45 passing";
+const VERSIE="v46 pass op maat";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -559,37 +559,46 @@ function balNaar(p,tx,ty,hoogte,minSp){
   const dx=tx-p.x, dy=ty-p.y;
   const l=Math.hypot(dx,dy)||1;
   let sp;
-  if(hoogte>10){                                    // boogbal: snelheid past bij de vluchttijd
+  if(hoogte>8){                                    // boogbal: snelheid past bij de vluchttijd
     const T=2*hoogte/210;                           // hoe lang hij in de lucht is
     sp=Math.max(minSp||90,Math.min(300,l/Math.max(.3,T*.86)));
   }else{                                            // rollende bal: snelheid past bij de afstand
-    sp=Math.max(minSp||78,Math.min(285,48+l*.92));  // korte pass zachter, lange blijft stevig
+    sp=Math.max(minSp||74,Math.min(255,44+l*.88));  // komt zachter aan, makkelijker aan te nemen
   }
   p.dir=dirOf(dx,dy);
   ball.vx=dx/l*sp;ball.vy=inward(p,dy/l*sp);ball.vz=hoogte;
   ball.last=p;ball.touch=.25;p.cool=.28;
   beep(hoogte>25?260:400,.1,"square",.07)}
-function medespeler(p,maxAfst){    // kiest de best aanspeelbare medespeler
-  const d=D8[p.dir];let best=null,bs=1e9;
+/* Zoekt altijd iemand om aan te spelen. Eerst in de kegel voor je uit; vindt hij
+   daar niemand, dan de best bereikbare medespeler waar dan ook. Hij meldt er ook
+   bij hoe gedekt de speellijn is, want daar wordt de hoogte van de pass op gekozen. */
+function speellijn(p,q){
+  const dx=q.x-p.x, dy=q.y-p.y, l=Math.hypot(dx,dy)||1;
+  let dekking=0, dichtste=1e9;
+  for(const o of P){
+    if(o.team===p.team||o.role==="K")continue;
+    const s=((o.x-p.x)*dx+(o.y-p.y)*dy)/(l*l);
+    if(s<=.08||s>=1.05)continue;
+    const afw=Math.hypot(o.x-(p.x+dx*s),(o.y-(p.y+dy*s))*3.2);
+    if(afw<28)dekking++;
+    if(afw<dichtste)dichtste=afw}
+  return {dekking,dichtste}}
+function medespeler(p,maxAfst){
+  const d=D8[p.dir];
+  let best=null,bs=1e9,noodBest=null,noodBs=1e9;
   for(const q of P){
     if(q.team!==p.team||q===p||q.role==="K")continue;
     const dx=q.x-p.x, dy=q.y-p.y;
     const af=Math.hypot(dx,dy*3.2);
-    if(af<18||af>maxAfst)continue;
+    if(af<18)continue;
     const l=Math.hypot(dx,dy)||1;
     const richting=(dx/l)*d[0]+(dy/l)*d[1];
-    if(richting<-.05)continue;                      // ruime kegel, jij hoeft niet exact te mikken
-    let dekking=0;                                  // staat er iemand in de speellijn?
-    for(const o of P){
-      if(o.team===p.team||o.role==="K")continue;
-      const s=((o.x-p.x)*dx+(o.y-p.y)*dy)/(l*l);
-      if(s<=.08||s>=1.05)continue;
-      const afw=Math.hypot(o.x-(p.x+dx*s),(o.y-(p.y+dy*s))*3.2);
-      if(afw<28)dekking++;
-    }
-    const punt=af*(1.9-richting)*(1+dekking*.9);    // vrijstaande medespelers eerst
-    if(punt<bs){bs=punt;best=q}}
-  return best}
+    const lijn=speellijn(p,q);
+    const punt=af*(1.9-richting)*(1+lijn.dekking*.9);
+    if(punt<noodBs){noodBs=punt;noodBest={q,dekking:lijn.dekking,dichtste:lijn.dichtste,af}}
+    if(af>maxAfst||richting<-.05)continue;
+    if(punt<bs){bs=punt;best={q,dekking:lijn.dekking,dichtste:lijn.dichtste,af}}}
+  return best||noodBest}
 function speelBal(p,hold){
   const t=Math.max(0,Math.min(1,hold));
   if(inVak(p)&&t>=.18)return opDoel(p,245+t*75,3+t*11);   // in de zestien is het een schot
@@ -597,11 +606,22 @@ function speelBal(p,hold){
   const centraal=Math.abs(p.y-midY)<34;
   const d=D8[p.dir];
   if(t<.5){                                         // pass: zoekt een medespeler
-    const mate=medespeler(p,140+t*560);
-    const hoog=vzVoor(t<.24?0:(t-.24)*95);           // langer drukken stift hem op kophoogte
-    if(mate){balDoel=mate;balDoelT=1.8;               // hij komt hem tegemoet
-      return balNaar(p,mate.x+(mate.mvx||0)*.35,mate.y+(mate.mvy||0)*.35,hoog,78)}
-    return balNaar(p,p.x+d[0]*(60+t*420),p.y+d[1]*(25+t*140),hoog,95)}
+    const keuze=medespeler(p,140+t*560);
+    if(keuze){
+      const m=keuze.q;
+      const tx=m.x+(m.mvx||0)*.4, ty=m.y+(m.mvy||0)*.4;   // op de loop gespeeld
+      const afst=Math.hypot(tx-p.x,(ty-p.y)*3.2);
+      /* Hoogte op maat: over een gedekte lijn heen een boogje, bij een lange bal
+         een lichte boog, en bij een vrije korte pass gewoon over het gras. */
+      let top;
+      if(keuze.dekking>0)        top=Math.max(15,afst*.10);
+      else if(keuze.dichtste<44) top=11;
+      else if(afst>190)          top=9;
+      else                       top=t<.24?0:(t-.24)*70;
+      balDoel=m;balDoelT=1.8;
+      return balNaar(p,tx,ty,vzVoor(top),74)}
+    return balNaar(p,p.x+d[0]*(60+t*420),p.y+d[1]*(25+t*140),
+                   vzVoor(t<.24?0:(t-.24)*70),95)}
   if(!centraal&&naarDoel<420){                      // voorzet: landt voor het doel
     const mik=gx-Math.sign(gx-p.x)*95;
     return balNaar(p,mik,midY+(p.y<midY?6:-6),vzVoor(22+(t-.5)*14),120)}
