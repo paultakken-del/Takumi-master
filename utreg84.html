@@ -349,7 +349,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v50 resolutie";
+const VERSIE="v51 sprint";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -418,7 +418,13 @@ function stickAt(t){const r=stick.getBoundingClientRect();
   let dx=(t.clientX-r.left-r.width/2)/(r.width/2),dy=(t.clientY-r.top-r.height/2)/(r.height/2);
   const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l}
   knob.style.left=(35+dx*34)+"px";knob.style.top=(35+dy*34)+"px";
-  const dz=.32;K.l0=dx<-dz;K.r0=dx>dz;K.u0=dy<-dz;K.d0=dy>dz;return{dx,dy}}
+  const dz=.32;K.l0=dx<-dz;K.r0=dx>dz;K.u0=dy<-dz;K.d0=dy>dz;
+  /* Ver doorduwen betekent sprinten. Zo hoef je er geen tweede duim bij te halen;
+     de sprintknop blijft gewoon werken voor wie dat prettiger vindt. */
+  const uit=Math.hypot(dx,dy)>.86;
+  if(uit&&!K.sd0)sprintEdge[0]=true;
+  K.sd0=uit;K.s0=uit||K.sk0;
+  return{dx,dy}}
 const zone=document.getElementById("stickzone");
 function zetKnuppel(t){                       // knuppel onder je duim plaatsen
   stick.style.left=(t.clientX-67)+"px";
@@ -434,16 +440,17 @@ zone.addEventListener("touchmove",e=>{e.preventDefault();
   const t=[...e.touches].find(t=>t.identifier===sid);if(t)stickAt(t)});
 zone.addEventListener("touchend",e=>{e.preventDefault();sid=null;
   stick.classList.remove("zicht");
-  knob.style.left="35px";knob.style.top="35px";K.l0=K.r0=K.u0=K.d0=false});
+  knob.style.left="35px";knob.style.top="35px";
+  K.l0=K.r0=K.u0=K.d0=false;K.sd0=false;K.s0=K.sk0||false});
 zone.addEventListener("touchcancel",e=>{sid=null;
   stick.classList.remove("zicht");
   knob.style.left="35px";knob.style.top="35px";K.l0=K.r0=K.u0=K.d0=false});
 const fb=document.getElementById("fire");
 const sb=document.getElementById("sprint");
 sb.addEventListener("touchstart",e=>{e.preventDefault();ac();
-  if(!K.s0)sprintEdge[0]=true;K.s0=true},{passive:false});
-sb.addEventListener("touchend",e=>{e.preventDefault();K.s0=false},{passive:false});
-sb.addEventListener("touchcancel",()=>{K.s0=false});
+  if(!K.s0)sprintEdge[0]=true;K.sk0=true;K.s0=true},{passive:false});
+sb.addEventListener("touchend",e=>{e.preventDefault();K.sk0=false;K.s0=K.sd0||false},{passive:false});
+sb.addEventListener("touchcancel",()=>{K.sk0=false;K.s0=K.sd0||false});
 fb.addEventListener("touchstart",e=>{e.preventDefault();ac();
   if(!K.f0)fireEdge[0]=true;K.f0=true;
   if(state==="menu")menuFire();else if(state==="halftime"||state==="fulltime")advance()});
@@ -1022,8 +1029,9 @@ function human(p,dt){
       p.x+=dx/l*sp*dt;p.y+=dy/l*sp*dt*.72;
       turn(p,dx,dy,dt);p.anim+=dt*(sp/8);p.moving=true}
   }
+  const laadt=p.fireT!=null&&hasBall(p);        // je houdt de trapknop vast
   if(mx||my){const l=Math.hypot(mx,my);p.dir=dirOf(mx/l,my/l);
-    if(!rooted){const sp=hasBall(p)?(sprint?60:46):(sprint?84:66);
+    if(!rooted){const sp=(hasBall(p)?(sprint?60:46):(sprint?84:66))*(laadt?.45:1);
       p.anim+=dt*(sp/8);p.moving=true;p.x+=mx/l*sp*dt;p.y+=my/l*sp*dt*.72}}
   if(fireEdge[i]){
     p.fireT=0;p.fireUsed=false;
