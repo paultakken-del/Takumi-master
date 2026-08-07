@@ -76,7 +76,7 @@
 </style>
 </head>
 <body>
-  <canvas id="c" width="320" height="200"></canvas>
+  <canvas id="c" width="384" height="240"></canvas>
   <div id="pad">
     <div id="stickzone"></div>
     <div id="stick"><div id="knob"></div></div>
@@ -196,7 +196,10 @@ const KEEP=[
  {shirt:"#A030A8",sleeve:"#A030A8",shorts:"#202020",sock:"#202020",sock2:"#B0B0B0",badge:"#A030A8"}];
 
 /* ===== veld ===== */
-const W={w:1072,top:50,bot:182,gy1:98,gy2:134,gx0:90,gx1:982};
+const VB=384, SH=240;                  // schermmaat, twintig procent groter dan 320 bij 200
+/* Het veld houdt zijn afmetingen; door het grotere scherm zie je er meer van
+   en staat er meer gras omheen. */
+const W={w:1072,top:74,bot:206,gy1:122,gy2:158,gx0:90,gx1:982};
 const midX=W.w/2, midY=(W.top+W.bot)/2;
 const SHEAR=0.0;
 /* Perspectief met een verdwijnpunt. Dicht bij de camera staan dingen verder uit
@@ -206,7 +209,7 @@ const PS=0.854, PK=0.62;
 const schaal=wy=>PS*(1+PK*(wy-W.top)/(W.bot-W.top));
 const CAMMIN=W.gx0-55, CAMMAX=W.gx1+55;      // je kunt tot achter de doelen kijken
 let cam=(W.gx0+W.gx1)/2;
-const SX=(wx,wy)=>Math.round(160+(wx-cam)*schaal(wy));
+const SX=(wx,wy)=>Math.round((VB>>1)+(wx-cam)*schaal(wy));
 const camWens=x=>Math.max(CAMMIN,Math.min(CAMMAX,x));
 
 /* ===== geluid ===== */
@@ -346,7 +349,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v49 besturing";
+const VERSIE="v50 resolutie";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1300,7 +1303,7 @@ function line(x1,y1,x2,y2,c){
   const dx=Math.abs(x2-x1),sx=x1<x2?1:-1,dy=-Math.abs(y2-y1),sy=y1<y2?1:-1;
   let err=dx+dy;ctx.fillStyle=c;
   for(let n=0;n<1600;n++){
-    if(x1>=0&&x1<320&&y1>=0&&y1<200)ctx.fillRect(x1,y1,1,1);
+    if(x1>=0&&x1<VB&&y1>=0&&y1<SH)ctx.fillRect(x1,y1,1,1);
     if(x1===x2&&y1===y2)break;
     const e2=2*err;
     if(e2>=dy){err+=dy;x1+=sx}
@@ -1309,25 +1312,25 @@ const wline=(x1,y1,h1,x2,y2,h2,c)=>line(SX(x1,y1),y1-h1,SX(x2,y2),y2-h2,c);
 const snap=v=>Math.round(v/2)*2;
 
 function crowd(){
-  px(0,0,320,24,"#202020");
+  px(0,0,VB,29,"#202020");
   const off=(cam*.3)%6;
-  for(let row=0;row<4;row++){const y=row*6;
+  for(let row=0;row<5;row++){const y=row*6;
     for(let i=-1;i<56;i++){const x=Math.round(i*6-off);
       const k=Math.abs((i*5+row*3+((cam*.3/6)|0))%4);
       const col=[C.wht,"#D82820",C.grey,"#F0A0A0"][k];
       px(x+1,y,4,3,col);px(x,y+3,5,4,col===C.blk?C.dgrey:C.blk)}}
-  px(0,24,320,8,C.blk);
-  const bo=(cam*.7)%100;
-  for(let i=-1;i<6;i++){const x=Math.round(i*100-bo);
+  px(0,29,VB,10,C.blk);
+  const bo=(cam*.7)%120;
+  for(let i=-1;i<6;i++){const x=Math.round(i*120-bo);
     const j=Math.abs(i)%3;
     const col=["#4830B0","#D82820","#C8C020"][j];
-    px(x,24,98,8,col);
+    px(x,29,118,10,col);
     ctx.font="8px monospace";ctx.textAlign="left";ctx.textBaseline="top";
-    ctx.fillStyle=j===2?C.blk:C.wht;ctx.fillText(["NISSAN","UTREG 84","NISSAN"][j],x+12,25)}
-  px(0,31,320,1,"#004000")}
+    ctx.fillStyle=j===2?C.blk:C.wht;ctx.fillText(["NISSAN","UTREG 84","NISSAN"][j],x+14,30)}
+  px(0,38,VB,1,"#004000")}
 
 function pitch(){
-  px(0,32,320,168,C.grass);
+  px(0,39,VB,SH-39,C.grass);
   /* Gemaaide banen: stroken van tien meter die met het veld meeschuiven, plus
      kaalgespeelde plekken voor de doelen. Egaal groen oogt plat. */
   const donker="#2E9440";
@@ -1337,16 +1340,16 @@ function pitch(){
     for(let y=W.top;y<=W.bot;y++){
       const t=(y-W.top)/(W.bot-W.top);
       const x1=Math.round(a+(c-a)*t), x2=Math.round(b2+(d2-b2)*t);
-      if(x2<0||x1>320)continue;
-      px(Math.max(0,x1),y,Math.min(320,x2)-Math.max(0,x1),1,donker)}}
+      if(x2<0||x1>VB)continue;
+      px(Math.max(0,x1),y,Math.min(VB,x2)-Math.max(0,x1),1,donker)}}
   const kaal="#84B058";
   for(const gx of [W.gx0,W.gx1]){
     const d=gx===W.gx0?1:-1;
     for(let y=W.gy1-6;y<=W.gy2+6;y++){
       const x1=SX(gx+d*4,y), x2=SX(gx+d*30,y);
       const a2=Math.min(x1,x2), b3=Math.max(x1,x2);
-      if(b3<0||a2>320)continue;
-      px(Math.max(0,a2),y,Math.min(320,b3)-Math.max(0,a2),1,kaal)}}
+      if(b3<0||a2>VB)continue;
+      px(Math.max(0,a2),y,Math.min(VB,b3)-Math.max(0,a2),1,kaal)}}
   const L=C.wht;
   line(SX(W.gx0,W.top),W.top,SX(W.gx1,W.top),W.top,L);
   line(SX(W.gx0,W.bot),W.bot,SX(W.gx1,W.bot),W.bot,L);
@@ -1354,7 +1357,7 @@ function pitch(){
   ctx.fillStyle=L;                              // middencirkel: nette ovaal
   for(let a=0;a<Math.PI*2;a+=.004){
     const wy=midY+Math.sin(a)*27, sx=SX(midX+Math.cos(a)*91,wy);
-    if(sx>=0&&sx<320)ctx.fillRect(sx,Math.round(wy),1,1)}
+    if(sx>=0&&sx<VB)ctx.fillRect(sx,Math.round(wy),1,1)}
   px(SX(midX,midY)-1,midY-1,2,2,L);
   for(const gx of [W.gx0,W.gx1]){const d=gx===W.gx0?1:-1;
     for(const [dep,sp] of [[165,42],[55,19]]){
@@ -1368,7 +1371,7 @@ function pitch(){
       const wx=spot+Math.cos(a)*91, wy=midY+Math.sin(a)*27;
       if((wx-rnd)*d<0)continue;
       const sx=SX(wx,wy);
-      if(sx>=0&&sx<320)ctx.fillRect(sx,Math.round(wy),1,1)}}
+      if(sx>=0&&sx<VB)ctx.fillRect(sx,Math.round(wy),1,1)}}
   for(const gx of [W.gx0,W.gx1])for(const gy of [W.top,W.bot]){
     const s=SX(gx,gy);if(s<-4||s>324)continue;
     px(s,gy-10,2,10,C.lgrey);px(s+2,gy-10,4,3,C.yel)}}
@@ -1624,8 +1627,8 @@ const BALL=[
 "..GGGGG.."];
 function title(){
   if(menuPage===1)return opties();
-  px(0,0,320,200,"#7BD07B");
-  for(let y=1;y<200;y+=2)px(0,y,320,1,"#69C069");
+  px(-40,-20,VB+80,SH+40,"#7BD07B");
+  for(let y=-20;y<SH+20;y+=2)px(-40,y,VB+80,1,"#69C069");
   const map={K:C.blk,W:C.wht,R:"#D82820",S:"#E09878",D:"#A86048",G:"#B8B8B8"};
   const S=3;
   for(let r=0;r<MAN.length;r++)for(let i=0;i<22;i++){
@@ -1653,8 +1656,8 @@ function title(){
   ctx.textAlign="center"}
 
 function opties(){
-  px(0,0,320,200,"#0C400C");
-  px(0,0,320,22,C.blk);
+  px(-40,-20,VB+80,SH+40,"#0C400C");
+  px(-40,-20,VB+80,42,C.blk);
   ctx.textAlign="center";ctx.textBaseline="top";
   ctx.fillStyle="#D82820";ctx.font="16px monospace";ctx.fillText("UTREG 84",160,4);
   px(28,30,264,116,"#083008");
@@ -1689,14 +1692,14 @@ function scoreboards(){          // twee borden in de tribune, tijd loopt terug
   const s=String(Math.min(999,left)).padStart(3,"0");
   for(const wx of [midX-118,midX+118]){
     const sx=SX(wx,W.top);
-    if(sx<-40||sx>360)continue;
-    px(sx-23,0,46,24,C.blk);
-    px(sx-24,0,48,1,"#606060");px(sx-24,24,48,1,"#606060");
-    px(sx-24,0,1,25,"#606060");px(sx+23,0,1,25,"#606060");
-    kleinCijfer(Math.min(9,score[0]),sx-9,4,2,KIT[0].light);   // stand netjes gecentreerd
-    px(sx-2,8,4,2,C.lgrey);
-    kleinCijfer(Math.min(9,score[1]),sx+4,4,2,KIT[1].light);
-    for(let i=0;i<3;i++)kleinCijfer(+s[i],sx-11+i*8,14,2,C.wht); // tijd in drie cijfers
+    if(sx<-40||sx>VB+40)continue;
+    px(sx-27,0,55,29,C.blk);
+    px(sx-28,0,57,1,"#606060");px(sx-28,29,57,1,"#606060");
+    px(sx-28,0,1,30,"#606060");px(sx+27,0,1,30,"#606060");
+    kleinCijfer(Math.min(9,score[0]),sx-11,4,2,KIT[0].light);
+    px(sx-3,9,5,2,C.lgrey);
+    kleinCijfer(Math.min(9,score[1]),sx+5,4,2,KIT[1].light);
+    for(let i=0;i<3;i++)kleinCijfer(+s[i],sx-13+i*9,17,2,C.wht);
   }}
 function ceremonie(){
   const ploeg=P.filter(p=>p.team===winnaar);
@@ -1713,13 +1716,14 @@ function ceremonie(){
   px(ax-6,ay-18,2,7,C.skin);px(ax+5,ay-18,2,7,C.skin);
   px(ax-3,ay+2,3,3,C.blk);px(ax+2,ay+2,3,3,C.blk)}
 function hud(){
+  const CXs=VB>>1;
   if(state==="herhaling"){
     if(Math.floor(stateT*3)%2===0){             // knippert anderhalf keer per seconde
-      px(292,4,16,18,C.blk);
-      txt("H",300,6,C.wht,14)}
-    txt("TIK OM DOOR TE GAAN",160,178,C.lgrey);
+      px(VB-30,4,18,20,C.blk);
+      txt("H",VB-21,6,C.wht,14)}
+    txt("TIK OM DOOR TE GAAN",CXs,SH-26,C.lgrey);
     return}
-  if(msg)txt(msg,160,58,C.yel,16)}
+  if(msg)txt(msg,CXs,70,C.yel,16)}
 function trophy(x,y){                           // beker voor de winnaar
   const G="#E8C040", G2="#A08018", B="#8B5A18";
   px(x-10,y,20,4,G);px(x-8,y+2,16,10,G);
@@ -1738,15 +1742,15 @@ function endBox(){
     const gelijk=score[0]===score[1];
     const r=gelijk?"GELIJKSPEL":(score[0]>score[1]?"UTRECHT WINT":"GASTEN WINNEN");
     if(!gelijk){
-      px(40,50,240,84,C.blk);ctx.strokeStyle=C.grey;ctx.lineWidth=1;ctx.strokeRect(42,52,236,80);
-      trophy(160,56);
-      txt(r,160,90,C.yel,16);
-      txt(score[0]+" - "+score[1],160,110,C.wht);
+      px((VB>>1)-120,(SH>>1)-50,240,84,C.blk);ctx.strokeStyle=C.grey;ctx.lineWidth=1;ctx.strokeRect((VB>>1)-118,(SH>>1)-48,236,80);
+      trophy(VB>>1,(SH>>1)-44);
+      txt(r,VB>>1,(SH>>1)-10,C.yel,16);
+      txt(score[0]+" - "+score[1],VB>>1,(SH>>1)+10,C.wht);
       txt("KICK VOOR HET MENU",160,121,C.lgrey);
       return}
-    txt("EINDE",160,78,C.yel,16);
-    txt(r+"   "+score[0]+" - "+score[1],160,100,C.wht);
-    txt("KICK VOOR HET MENU",160,114,C.lgrey)}}
+    txt("EINDE",VB>>1,(SH>>1)-22,C.yel,16);
+    txt(r+"   "+score[0]+" - "+score[1],VB>>1,SH>>1,C.wht);
+    txt("KICK VOOR HET MENU",VB>>1,(SH>>1)+14,C.lgrey)}}
 
 let last=0;
 function frame(ts){
