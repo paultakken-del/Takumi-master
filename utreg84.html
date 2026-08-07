@@ -349,7 +349,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v54 pass";
+const VERSIE="v55 testregel";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -469,12 +469,13 @@ function menuKey(k){
     if(menuSel===0)level=((level-1+d+9)%9)+1;
     else if(menuSel===1)players2=players2===1?2:1;
     else if(menuSel===2){kitA=(kitA+d+KITS.length)%KITS.length;if(kitA===kitB)kitA=(kitA+d+KITS.length)%KITS.length}
-    else {kitB=(kitB+d+KITS.length)%KITS.length;if(kitB===kitA)kitB=(kitB+d+KITS.length)%KITS.length}
+    else if(menuSel===3){kitB=(kitB+d+KITS.length)%KITS.length;if(kitB===kitA)kitB=(kitB+d+KITS.length)%KITS.length}
+    else testregel=!testregel;
     zetTenues();beep(560,.05)};
   if(k==="ArrowLeft")stap(-1);
   else if(k==="ArrowRight")stap(1);
-  else if(k==="ArrowUp"){menuSel=(menuSel+3)%4;beep(400,.04)}
-  else if(k==="ArrowDown"){menuSel=(menuSel+1)%4;beep(400,.04)}
+  else if(k==="ArrowUp"){menuSel=(menuSel+4)%5;beep(400,.04)}
+  else if(k==="ArrowDown"){menuSel=(menuSel+1)%5;beep(400,.04)}
   else if(k===" "||k==="Enter")start()}
 function start(){stopMuziek();film=[];herhaling=null;score=[0,0];clock=0;half=1;attack=[1,-1];build();reset(0);
   P.forEach((p,i)=>{                            // opkomen vanaf buiten het veld
@@ -528,7 +529,8 @@ function wissel(t){                       // korte klik zonder bal: volgende spe
   if(veld.length<2)return;
   const i=veld.indexOf(ctrl[t]);
   ctrl[t]=veld[(i+1)%veld.length];
-  lockT[t]=2;beep(660,.05,"square",.05)}
+  lockT[t]=2;beep(660,.05,"square",.05);
+  meld("WISSEL NAAR "+ctrl[t].role)}
 function nearest(t){let b=null,d=1e9;for(const p of P){if(p.team!==t||p.role==="K")continue;
   const dd=Math.hypot(p.x-ball.x,p.y-ball.y);if(dd<d){d=dd;b=p}}return b}
 function turn(p,dx,dy,dt){          // vlot draaien, maar niet elke frame een andere kant op
@@ -575,7 +577,12 @@ function kick(p,power,loft){        // korte druk is vlak, lang vasthouden geeft
 /* De zwaartekracht is 210, dus een bal die met snelheid v omhoog gaat haalt
    een tophoogte van v*v/420. Hieronder rekenen we met de tophoogte in pixels. */
 const vzVoor=top=>Math.sqrt(420*Math.max(0,top));
-let balDoel=null, balDoelT=0;      // wie is er aangespeeld
+let balDoel=null, balDoelT=0, balDoelPloeg=-1;   // wie is er aangespeeld
+/* Testregel onderin: laat zien wat het spel van jouw knopdruk maakte en hoe het
+   afliep. Bedoeld om samen te kijken waar passen misgaat; met de menuregel
+   TESTREGEL zet je hem uit. */
+let melding="", meldingT=0, testregel=true;
+function meld(t){if(testregel){melding=t;meldingT=3}}
 function balNaar(p,tx,ty,hoogte,minSp){
   const dx=tx-p.x, dy=ty-p.y;
   const l=Math.hypot(dx,dy)||1;
@@ -628,6 +635,7 @@ function medespeler(p,maxAfst){
   return best||noodBest}
 function speelBal(p,hold){
   const t=Math.max(0,Math.min(1,hold));
+  const jij=isHuman(p);          // vooraf vastleggen: de besturing kan zo overgaan
   if(inVak(p)&&t>=.18)return opDoel(p,245+t*75,3+t*11);   // in de zestien is het een schot
   const gx=foeGoal(p.team), naarDoel=Math.abs(gx-p.x);
   const centraal=Math.abs(p.y-midY)<34;
@@ -651,20 +659,26 @@ function speelBal(p,hold){
       else if(keuze.dichtste<48) top=16;
       else if(afst>190)          top=9;
       else                       top=t<.24?0:(t-.24)*70;
-      balDoel=m;balDoelT=1.8;
+      balDoel=m;balDoelT=1.8;balDoelPloeg=p.team;
       if(humans().includes(p.team))pakOver(p.team,m);   // jij bestuurt nu de ontvanger
+      if(jij)meld("PASS "+t.toFixed(2)+"s NAAR "+m.role+" OP "+Math.round(afst)+
+        (top>0?" BOOG "+Math.round(top):" VLAK"));
       return balNaar(p,tx,ty,vzVoor(top),112)}
+    if(jij)meld("PASS "+t.toFixed(2)+"s GEEN AANSPEELPUNT, VOORUIT");
     return balNaar(p,p.x+d[0]*(60+t*420),p.y+d[1]*(25+t*140),
                    vzVoor(t<.24?0:(t-.24)*70),95)}
   if(!centraal&&naarDoel<420){                      // voorzet: landt voor het doel
+    if(jij)meld("VOORZET "+t.toFixed(2)+"s");
     const mik=gx-Math.sign(gx-p.x)*95;
     return balNaar(p,mik,midY+(p.y<midY?6:-6),vzVoor(22+(t-.5)*14),120)}
   if(centraal&&naarDoel<260){                       // schot: volgt je kijkrichting
+    if(jij)meld("SCHOT "+t.toFixed(2)+"s");
     const kracht=270+(t-.5)*81;                     // een tiende zachter dan eerst
     const hoogte=vzVoor(13+(t-.5)*32);
     ball.vx=d[0]*kracht;ball.vy=inward(p,d[1]*kracht*.55);ball.vz=hoogte;
     ball.last=p;ball.touch=.25;p.cool=.28;
     return beep(hoogte>25?300:430,.11,"square",.08)}
+  if(jij)meld("LANGE BAL "+t.toFixed(2)+"s");
   const hoog=vzVoor(21+(t-.5)*18);                  // lange bal vooruit
   return balNaar(p,p.x+d[0]*300,p.y+d[1]*90,hoog,170)}
 function inVak(p){                 // sta je in het strafschopgebied van de tegenstander?
@@ -674,6 +688,7 @@ function inVak(p){                 // sta je in het strafschopgebied van de tege
    alleen nog de hoek, net als bij een strafschop. Anders moet je in het gedrang
    ook nog precies staan te draaien en dat lukt nooit. */
 function opDoel(p,kracht,top){
+  if(isHuman(p))meld("SCHOT OP DOEL UIT DE ZESTIEN");
   const gx=foeGoal(p.team), d=D8[p.dir];
   let mikY=p.y+d[1]*15;                  // jouw eigen lijn is het uitgangspunt
   mikY=Math.max(W.gy1+5,Math.min(W.gy2-5,mikY));
@@ -685,6 +700,7 @@ function opDoel(p,kracht,top){
   beep(430,.11,"square",.08)}
 function volley(p,hold){          // bal uit de lucht op de slof nemen
   const t=Math.max(0,Math.min(1,hold));
+  if(isHuman(p))meld("VOLLEY "+t.toFixed(2)+"s");
   if(inVak(p))return opDoel(p,240+t*80,2+t*9);   // in de zestien meteen op doel
   const d=D8[p.dir], kracht=235+t*95;
   ball.vx=d[0]*kracht;ball.vy=inward(p,d[1]*kracht*.55);
@@ -692,12 +708,14 @@ function volley(p,hold){          // bal uit de lucht op de slof nemen
   ball.last=p;ball.touch=.28;p.cool=.3;
   beep(360,.12,"square",.09)}
 function headShot(p){               // lange klik bij een hoge bal: harde kopstoot
+  if(isHuman(p))meld("KOPSTOOT");
   if(inVak(p))return opDoel(p,235,4);            // in de zestien kop je op doel
   const d=D8[p.dir];
   ball.z=Math.min(ball.z,22);
   ball.vx=d[0]*240;ball.vy=inward(p,d[1]*240*.5);ball.vz=vzVoor(4);
   ball.last=p;ball.touch=.25;p.cool=.26;beep(560,.09,"square",.07)}
 function head(p){                   // korte klik: gecontroleerde kopbal
+  if(isHuman(p))meld("KOPBAL");
   const d=D8[p.dir], near=Math.abs(foeGoal(p.team)-p.x)<150;
   const sp=near?235:64;
   ball.z=Math.min(ball.z,12);
@@ -718,7 +736,9 @@ function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een 
     const d=D8[p.dir];
     ball.vx=d[0]*70;ball.vy=inward(p,d[1]*70);ball.vz=0;   // bal blijft in de buurt
     ball.last=p;ball.touch=.3;foe.cool=.55;                // hij is even uitgespeeld
+    if(isHuman(p))meld("TACKLE GESLAAGD");
     beep(300,.07,"square",.06);return}
+  if(isHuman(p))meld("TACKLE TE LAAT");
   foe.dive=1.1;foe.cool=1.1;                    // te laat: de tegenstander gaat neer
   const w=Math.sign(foe.x-p.x)||1;
   foe.x+=w*5;clampP(foe);
@@ -1679,11 +1699,12 @@ function opties(){
   ctx.fillStyle="#D82820";ctx.font="16px monospace";ctx.fillText("UTREG 84",160,4);
   px(28,30,264,116,"#083008");
   ctx.strokeStyle="#2E7A2E";ctx.lineWidth=1;ctx.strokeRect(28,30,264,116);
-  const waarden=[String(level),players2===1?"1 SPELER":"2 SPELERS",KITS[kitA].naam,KITS[kitB].naam];
-  const namen=["COMPUTERNIVEAU","AANTAL SPELERS","TENUE THUIS","TENUE UIT"];
-  for(let r=0;r<4;r++){
-    const y=42+r*26, aan=menuSel===r;
-    if(aan)px(34,y-6,252,22,"#145014");
+  const waarden=[String(level),players2===1?"1 SPELER":"2 SPELERS",
+                 KITS[kitA].naam,KITS[kitB].naam,testregel?"AAN":"UIT"];
+  const namen=["COMPUTERNIVEAU","AANTAL SPELERS","TENUE THUIS","TENUE UIT","TESTREGEL"];
+  for(let r=0;r<5;r++){
+    const y=40+r*22, aan=menuSel===r;
+    if(aan)px(34,y-5,252,19,"#145014");
     ctx.textAlign="left";
     ctx.fillStyle=aan?C.yel:"#7FB27F";ctx.font="10px monospace";
     ctx.fillText((aan?"\u25b8 ":"  ")+namen[r],42,y);
