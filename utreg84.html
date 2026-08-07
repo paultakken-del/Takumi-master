@@ -346,7 +346,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v43 zestien";
+const VERSIE="v44 bal";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1392,18 +1392,38 @@ function drawPlayer(p){
   arm(armNaar,ph+Math.PI,C.skin);
 }
 
+/* De bal: rond silhouet met donkere rand, lichte bovenkant en schaduwzijde,
+   plus zwarte vlakken die meedraaien zodat je ziet dat hij rolt. */
+const BALVORM=[
+ "..oooo..",
+ ".oWWWWo.",
+ "oWWWWWWo",
+ "oWWWWWWo",
+ "oWWWWWgo",
+ ".oWWggo.",
+ "..oooo.."];
+const BALVLEK=[
+ [[3,2],[4,2],[3,3],[4,3]],
+ [[2,2],[3,3],[4,3],[3,4]],
+ [[4,1],[3,2],[4,4],[2,3]],
+ [[2,1],[3,1],[4,3],[3,4]],
+ [[3,1],[2,3],[5,3],[3,5]],
+ [[4,2],[2,2],[3,4],[4,4]]];
 function drawBall(){
   const x=SX(ball.x,ball.y),y=Math.round(ball.y),z=Math.round(ball.z);
-  px(x-3,y-1,8,2,"rgba(0,0,0,.34)");            // schaduw
+  const sp=Math.hypot(ball.vx,ball.vy);
+  ball.rol=(ball.rol||0)+sp*.0042;              // hoe sneller, hoe sneller hij draait
+  const vlek=BALVLEK[Math.floor(Math.abs(ball.rol))%BALVLEK.length];
+  const sb=Math.max(3,7-Math.round(z/7));       // schaduw krimpt als hij hoog gaat
+  const dek=Math.max(.10,.36-z*.011);
+  px(x-(sb>>1),y-1,sb,2,"rgba(0,0,0,"+dek.toFixed(2)+")");
   const b=y-6-z;
-  px(x-2,b-1,6,1,"#303030");                    // donkere rand: valt op tussen lijnen en shirts
-  px(x-3,b,8,1,"#303030");
-  px(x-4,b+1,10,3,"#303030");
-  px(x-3,b+4,8,1,"#303030");
-  px(x-2,b+5,6,1,"#303030");
-  px(x-1,b,4,1,C.wht);
-  px(x-2,b+1,6,3,C.wht);
-  px(x-1,b+4,4,1,C.wht)}
+  for(let r=0;r<7;r++)for(let c=0;c<8;c++){
+    const ch=BALVORM[r][c];
+    if(ch===".")continue;
+    px(x-4+c,b-1+r,1,1,ch==="o"?"#282828":ch==="g"?"#A8A8A8":C.wht)}
+  for(const [c,r] of vlek)px(x-4+c,b-1+r,1,1,"#282828");
+  px(x-2,b,1,1,"#FFFFFF")}                      // glans linksboven
 
 function txt(s,x,y,c,sz,al){ctx.font=(sz||8)+"px monospace";ctx.textAlign=al||"center";
   ctx.textBaseline="top";ctx.fillStyle=C.blk;ctx.fillText(s,x+1,y+1);
