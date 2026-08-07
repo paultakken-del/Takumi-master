@@ -346,7 +346,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v48 tempo";
+const VERSIE="v49 besturing";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -486,6 +486,9 @@ function inOwnBox(t){const gx=ownGoal(t);
   return Math.abs(ball.x-gx)<74&&ball.y>W.gy1-36&&ball.y<W.gy2+36}
 const lockT=[0,0];
 const pogingT=[0,0];      // hoogstens één duelpoging per ploeg tegelijk
+function pakOver(t,q){            // besturing overdragen aan wie je aanspeelt
+  if(!q||q.role==="K")return;
+  ctrl[t]=q;lockT[t]=1.6}
 function ctrlFor(t){
   const gk=P.find(p=>p.team===t&&p.role==="K");
   if(state==="setpiece"&&taker&&taker.team===t)return taker;
@@ -500,6 +503,14 @@ function ctrlFor(t){
     if(dGk<dVeld)return gk;
   }
   if(lockT[t]>0&&ctrl[t]&&ctrl[t].role!=="K")return ctrl[t];
+  /* Niet bij elk pixeltje wisselen: de nieuwe speler moet duidelijk dichter bij
+     de bal staan dan degene die je nu bestuurt. Anders springt de besturing rond. */
+  const nu=ctrl[t];
+  if(nu&&nu.role!=="K"&&veld&&veld!==nu){
+    const dNu=Math.hypot(nu.x-ball.x,(nu.y-ball.y)*3);
+    const dNieuw=Math.hypot(veld.x-ball.x,(veld.y-ball.y)*3);
+    if(dNieuw>dNu*.75)return nu;
+  }
   return veld||ctrl[t]}
 function wissel(t){                       // korte klik zonder bal: volgende speler pakken
   const veld=P.filter(p=>p.team===t&&p.role!=="K")
@@ -623,11 +634,12 @@ function speelBal(p,hold){
       /* Hoogte op maat: over een gedekte lijn heen een boogje, bij een lange bal
          een lichte boog, en bij een vrije korte pass gewoon over het gras. */
       let top;
-      if(keuze.dekking>0)        top=Math.max(15,afst*.10);
-      else if(keuze.dichtste<44) top=11;
+      if(keuze.dekking>0)        top=Math.max(22,afst*.13);   // hoog genoeg om er echt over te gaan
+      else if(keuze.dichtste<48) top=16;
       else if(afst>190)          top=9;
       else                       top=t<.24?0:(t-.24)*70;
       balDoel=m;balDoelT=1.8;
+      if(humans().includes(p.team))pakOver(p.team,m);   // jij bestuurt nu de ontvanger
       return balNaar(p,tx,ty,vzVoor(top),74)}
     return balNaar(p,p.x+d[0]*(60+t*420),p.y+d[1]*(25+t*140),
                    vzVoor(t<.24?0:(t-.24)*70),95)}
@@ -840,6 +852,7 @@ function release(p){
     balNaar(p,mate.x+(mate.mvx||0)*.4,mate.y+(mate.mvy||0)*.4,
             vzVoor(top),setType==="goalkick"?200:88);
     balDoel=mate;balDoelT=1.8;
+    if(humans().includes(p.team))pakOver(p.team,mate);
   }
   else kick(p,setType==="corner"?.85:.6,true);
   taker=null;state="play";msg=""}
@@ -996,6 +1009,16 @@ function human(p,dt){
   const mx=(K["r"+i]?1:0)-(K["l"+i]?1:0), my=(K["d"+i]?1:0)-(K["u"+i]?1:0);
   const rooted=(state==="setpiece"&&taker===p);
   const sprint=K["s"+i];
+  /* Ben jij de aangespeelde speler en stuur je zelf niet, dan loopt hij de bal
+     automatisch tegemoet. Anders blijft hij staan wachten terwijl de pass aankomt. */
+  if(!mx&&!my&&balDoel===p&&balDoelT>0&&!ball.held&&!rooted){
+    const vt=Math.min(.9,Math.hypot(ball.vx,ball.vy)/260);
+    const tx=ball.x+ball.vx*vt, ty=ball.y+ball.vy*vt;
+    const dx=tx-p.x, dy=ty-p.y, l=Math.hypot(dx,dy);
+    if(l>6){const sp=66;
+      p.x+=dx/l*sp*dt;p.y+=dy/l*sp*dt*.72;
+      turn(p,dx,dy,dt);p.anim+=dt*(sp/8);p.moving=true}
+  }
   if(mx||my){const l=Math.hypot(mx,my);p.dir=dirOf(mx/l,my/l);
     if(!rooted){const sp=hasBall(p)?(sprint?60:46):(sprint?84:66);
       p.anim+=dt*(sp/8);p.moving=true;p.x+=mx/l*sp*dt;p.y+=my/l*sp*dt*.72}}
