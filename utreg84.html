@@ -349,7 +349,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v51 sprint";
+const VERSIE="v52 linie";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -358,7 +358,7 @@ let attack=[1,-1];
 const ball={x:midX,y:midY,z:0,vx:0,vy:0,vz:0,held:null,last:null,touch:0};
 
 const FORM=[[0.05,0.50,"K"],
-            [0.24,0.32,"D"],[0.24,0.68,"D"],
+            [0.30,0.32,"D"],[0.30,0.68,"D"],
             [0.48,0.18,"M"],[0.48,0.50,"M"],[0.48,0.82,"M"],
             [0.72,0.34,"F"],[0.72,0.66,"F"]];
 let P=[],ctrl=[null,null];
@@ -1126,7 +1126,9 @@ function keeper(p,dt,kpSpd){
 }
 function formatiePlek(p){          // basispositie, met de vleugels aan de zijlijn
   const rem=aftrapVrij>0?.12:1;    // vlak na de aftrap komt de ploeg rustig op gang
-  const push=Math.max(-140,Math.min(140,(ball.x-midX)*.45*attack[p.team]))*rem;
+  /* De ploeg schuift als geheel op met de bal. Bij balbezit in de andere helft
+     komt de verdediging tot ver over de middenlijn, bij verdedigen zakt ze terug. */
+  const push=Math.max(-150,Math.min(260,(ball.x-midX)*.78*attack[p.team]))*rem;
   let tx=homeX(p)+attack[p.team]*push;
   let ty=homeY(p)+(ball.y-midY)*.12;
   const buiten=p.fy<.35||p.fy>.65;
