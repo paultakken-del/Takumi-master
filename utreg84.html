@@ -346,7 +346,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v46 pass op maat";
+const VERSIE="v46 pass";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -595,8 +595,9 @@ function medespeler(p,maxAfst){
     const richting=(dx/l)*d[0]+(dy/l)*d[1];
     const lijn=speellijn(p,q);
     const punt=af*(1.9-richting)*(1+lijn.dekking*.9);
-    if(punt<noodBs){noodBs=punt;noodBest={q,dekking:lijn.dekking,dichtste:lijn.dichtste,af}}
-    if(af>maxAfst||richting<-.05)continue;
+    if(af<=maxAfst*1.6&&richting>-.4&&punt<noodBs){   // terugvaloptie, ook opzij of achter
+      noodBs=punt;noodBest={q,dekking:lijn.dekking,dichtste:lijn.dichtste,af}}
+    if(af>maxAfst||richting<.25)continue;             // voor je uit telt eerst
     if(punt<bs){bs=punt;best={q,dekking:lijn.dekking,dichtste:lijn.dichtste,af}}}
   return best||noodBest}
 function speelBal(p,hold){
@@ -1007,8 +1008,12 @@ function save(gk){
     beep(240,.07,"square",.05)}}
 function punt(gk){gk.hold=0;ball.held=null;gk.uit=0;
   ball.x=gk.x+attack[gk.team]*8;ball.y=gk.y+2;ball.z=8;
-  const mate=medespeler(gk,600)||P.find(q=>q.team===gk.team&&q.role==="M");
-  if(mate)return balNaar(gk,mate.x+(mate.mvx||0)*.5,mate.y+(mate.mvy||0)*.5,vzVoor(24),140);
+  let mate=null,best=-1;                      // de verst opgestelde medespeler
+  for(const q of P){
+    if(q.team!==gk.team||q.role==="K")continue;
+    const vooruit=(q.x-gk.x)*attack[gk.team];
+    if(vooruit>best){best=vooruit;mate=q}}
+  if(mate&&best>90)return balNaar(gk,mate.x+(mate.mvx||0)*.5,mate.y+(mate.mvy||0)*.5,vzVoor(30),190);
   gk.dir=attack[gk.team]>0?0:4;kick(gk,.8,true)}
 function keeper(p,dt,kpSpd){
   const gx=ownGoal(p.team)+(attack[p.team]>0?7:-7);
