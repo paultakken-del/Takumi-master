@@ -349,7 +349,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v52 linie";
+const VERSIE="v53 blok";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1126,10 +1126,14 @@ function keeper(p,dt,kpSpd){
 }
 function formatiePlek(p){          // basispositie, met de vleugels aan de zijlijn
   const rem=aftrapVrij>0?.12:1;    // vlak na de aftrap komt de ploeg rustig op gang
-  /* De ploeg schuift als geheel op met de bal. Bij balbezit in de andere helft
-     komt de verdediging tot ver over de middenlijn, bij verdedigen zakt ze terug. */
-  const push=Math.max(-150,Math.min(260,(ball.x-midX)*.78*attack[p.team]))*rem;
-  let tx=homeX(p)+attack[p.team]*push;
+  /* De ploeg beweegt als één blok mee met de bal in plaats van in vaste zones te
+     blijven hangen. Het zwaartepunt volgt de bal; iedereen houdt zijn afstand
+     daartoe naar zijn rol, dus verdedigers achter en spitsen voor. Zakt de bal
+     terug, dan zakt de hele linie mee terug. */
+  const blok=midX+(ball.x-midX)*.58*rem;
+  const rol=(p.fx-.5)*(W.gx1-W.gx0)*.62;
+  let tx=blok+attack[p.team]*rol;
+  tx=Math.max(W.gx0+34,Math.min(W.gx1-34,tx));
   let ty=homeY(p)+(ball.y-midY)*.12;
   const buiten=p.fy<.35||p.fy>.65;
   const aanvallend=(ball.x-midX)*attack[p.team]>-60;
