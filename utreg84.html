@@ -346,7 +346,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v44 bal";
+const VERSIE="v45 passing";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -554,6 +554,7 @@ function kick(p,power,loft){        // korte druk is vlak, lang vasthouden geeft
 /* De zwaartekracht is 210, dus een bal die met snelheid v omhoog gaat haalt
    een tophoogte van v*v/420. Hieronder rekenen we met de tophoogte in pixels. */
 const vzVoor=top=>Math.sqrt(420*Math.max(0,top));
+let balDoel=null, balDoelT=0;      // wie is er aangespeeld
 function balNaar(p,tx,ty,hoogte,minSp){
   const dx=tx-p.x, dy=ty-p.y;
   const l=Math.hypot(dx,dy)||1;
@@ -596,9 +597,10 @@ function speelBal(p,hold){
   const centraal=Math.abs(p.y-midY)<34;
   const d=D8[p.dir];
   if(t<.5){                                         // pass: zoekt een medespeler
-    const mate=medespeler(p,110+t*520);
+    const mate=medespeler(p,140+t*560);
     const hoog=vzVoor(t<.24?0:(t-.24)*95);           // langer drukken stift hem op kophoogte
-    if(mate)return balNaar(p,mate.x+(mate.mvx||0)*.35,mate.y+(mate.mvy||0)*.35,hoog,78);
+    if(mate){balDoel=mate;balDoelT=1.8;               // hij komt hem tegemoet
+      return balNaar(p,mate.x+(mate.mvx||0)*.35,mate.y+(mate.mvy||0)*.35,hoog,78)}
     return balNaar(p,p.x+d[0]*(60+t*420),p.y+d[1]*(25+t*140),hoog,95)}
   if(!centraal&&naarDoel<420){                      // voorzet: landt voor het doel
     const mik=gx-Math.sign(gx-p.x)*95;
@@ -870,6 +872,9 @@ function update(dt){
   ball.rust=Math.max(0,(ball.rust||0)-dt);
   if(ball.last&&ball.last.team!==bezitTeam){    // net veroverd: even niet terugpakken
     bezitTeam=ball.last.team;ball.rust=.9}
+  balDoelT=Math.max(0,balDoelT-dt);
+  if(balDoelT<=0)balDoel=null;
+  if(balDoel&&ball.last===balDoel)balDoel=null;   // aangekomen
   for(const t of [0,1])pogingT[t]=Math.max(0,pogingT[t]-dt);
   aftrapVrij=Math.max(0,aftrapVrij-dt);
   for(const t of [0,1])lockT[t]=Math.max(0,lockT[t]-dt);
@@ -883,7 +888,7 @@ function update(dt){
 
     if(hum.includes(p.team)&&p===ctrl[p.team])human(p,dt);
     else if(p.role==="K"&&!(state==="setpiece"&&taker===p))keeper(p,dt,kpSpd);
-    else ai(p,dt,aiSpd,spread);
+    else if(!(state==="setpiece"&&taker===p))ai(p,dt,aiSpd,spread);   // de nemer blijft staan
     p.mvx=(p.x-ox0)/dt;p.mvy=(p.y-oy0)/dt;   // werkelijke snelheid, voor de bal aan de voet
     p.walkT=p.moving?.18:Math.max(0,(p.walkT||0)-dt);
     clampP(p)}
@@ -1083,6 +1088,12 @@ function ai(p,dt,spd,spread){
   let tx,ty;
   if(ball.held&&ball.held.role==="K"&&ball.held.team!==p.team){
     tx=homeX(p);ty=homeY(p)}                       // keeper heeft hem vast: terug naar je plek
+  else if(balDoel===p&&balDoelT>0&&!ball.held){
+    /* Jij bent aangespeeld: loop naar waar de bal aankomt in plaats van naar
+       waar hij nu ligt. Zo komt een pass veel vaker aan. */
+    const vt=Math.min(.9,Math.hypot(ball.vx,ball.vy)/260);
+    tx=ball.x+ball.vx*vt;ty=ball.y+ball.vy*vt;
+    spd*=1.12}
   else if(chaser){tx=ball.x;ty=ball.y;
     /* Staat er een tegenstander aan de bal en ben jij erbij, dan probeert hij hem
        af te pakken. Lukt dat niet netjes, dan is het een overtreding. */
@@ -1136,6 +1147,10 @@ function contacts(dt){
   if(ball.held||ball.touch>0)return;
   let p=null,bd=1e9;
   const vers=(q)=>!(ball.rust>0&&ball.last&&q.team!==ball.last.team);
+  if(balDoel&&balDoelT>0&&!ball.held&&ball.z<12){   // aangespeelde speler krijgt wat hulp
+    const d=Math.hypot(balDoel.x-ball.x,(balDoel.y-ball.y)*2);
+    if(d<24&&balDoel.cool<=0){
+      ball.vx*=.25;ball.vy*=.25;ball.last=balDoel;ball.touch=.08;balDoel=null}}
   for(const t of humans()){                       // jouw speler heeft voorrang
     const q=ctrl[t];if(!q||q.cool>0||!vers(q))continue;
     const d=Math.hypot(q.x-ball.x,q.y-ball.y);
