@@ -346,7 +346,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v46 pass";
+const VERSIE="v47 pass";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -563,7 +563,9 @@ function balNaar(p,tx,ty,hoogte,minSp){
     const T=2*hoogte/210;                           // hoe lang hij in de lucht is
     sp=Math.max(minSp||90,Math.min(300,l/Math.max(.3,T*.86)));
   }else{                                            // rollende bal: snelheid past bij de afstand
-    sp=Math.max(minSp||74,Math.min(255,44+l*.88));  // komt zachter aan, makkelijker aan te nemen
+    /* Gemeten: een bal met beginsnelheid v rolt ongeveer (v-77)*2,1 ver.
+       Omgekeerd is de snelheid voor afstand d dus ruwweg 80 + d*0,49. */
+    sp=Math.max(minSp||90,Math.min(285,82+l*.5));
   }
   p.dir=dirOf(dx,dy);
   ball.vx=dx/l*sp;ball.vy=inward(p,dy/l*sp);ball.vz=hoogte;
@@ -610,7 +612,13 @@ function speelBal(p,hold){
     const keuze=medespeler(p,140+t*560);
     if(keuze){
       const m=keuze.q;
-      const tx=m.x+(m.mvx||0)*.4, ty=m.y+(m.mvy||0)*.4;   // op de loop gespeeld
+      /* In de loop spelen: hij komt de bal tegemoet, dus mikken we een stuk
+         vóór hem in de aanvalsrichting, plus zijn eigen beweging. */
+      const ruw=Math.hypot(m.x-p.x,(m.y-p.y)*3.2);
+      const vooruit=(m.x-p.x)*attack[p.team];
+      const voor=vooruit>10?(8+Math.min(26,ruw*.10)):0;   // alleen in de loop als hij ook vooruit staat
+      const tx=m.x+(m.mvx||0)*.35+attack[p.team]*voor,
+            ty=m.y+(m.mvy||0)*.35;
       const afst=Math.hypot(tx-p.x,(ty-p.y)*3.2);
       /* Hoogte op maat: over een gedekte lijn heen een boogje, bij een lange bal
          een lichte boog, en bij een vrije korte pass gewoon over het gras. */
@@ -811,6 +819,7 @@ function release(p){
   const ty=setType==="corner"?midY:(mate?mate.y:midY);
   p.dir=dirOf(tx-p.x,ty-p.y);
   if(setType==="throwin"){
+    ball.verbod=p;ball.verbodT=2.2;              // de inwerper mag hem niet zelf terugpakken
     const d=D8[p.dir], inw=p.y<midY?1:-1;
     let dy=d[1];if(dy*inw<.2)dy=inw*.5;
     const l=Math.hypot(d[0],dy)||1;
@@ -893,6 +902,9 @@ function update(dt){
   ball.rust=Math.max(0,(ball.rust||0)-dt);
   if(ball.last&&ball.last.team!==bezitTeam){    // net veroverd: even niet terugpakken
     bezitTeam=ball.last.team;ball.rust=.9}
+  ball.verbodT=Math.max(0,(ball.verbodT||0)-dt);
+  if(ball.verbodT<=0)ball.verbod=null;
+  if(ball.verbod&&ball.last&&ball.last!==ball.verbod)ball.verbodT=0;  // ander raakte hem: weer vrij
   balDoelT=Math.max(0,balDoelT-dt);
   if(balDoelT<=0)balDoel=null;
   if(balDoel&&ball.last===balDoel)balDoel=null;   // aangekomen
@@ -1171,7 +1183,8 @@ function ballPhysics(dt){
 function contacts(dt){
   if(ball.held||ball.touch>0)return;
   let p=null,bd=1e9;
-  const vers=(q)=>!(ball.rust>0&&ball.last&&q.team!==ball.last.team);
+  const vers=(q)=>!(ball.rust>0&&ball.last&&q.team!==ball.last.team)
+                  &&!(ball.verbodT>0&&q===ball.verbod);
   if(balDoel&&balDoelT>0&&!ball.held&&ball.z<12){   // aangespeelde speler krijgt wat hulp
     const d=Math.hypot(balDoel.x-ball.x,(balDoel.y-ball.y)*2);
     if(d<24&&balDoel.cool<=0){
