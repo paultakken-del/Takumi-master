@@ -346,7 +346,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v42 keeper";
+const VERSIE="v43 zestien";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -591,6 +591,7 @@ function medespeler(p,maxAfst){    // kiest de best aanspeelbare medespeler
   return best}
 function speelBal(p,hold){
   const t=Math.max(0,Math.min(1,hold));
+  if(inVak(p)&&t>=.18)return opDoel(p,245+t*75,3+t*11);   // in de zestien is het een schot
   const gx=foeGoal(p.team), naarDoel=Math.abs(gx-p.x);
   const centraal=Math.abs(p.y-midY)<34;
   const d=D8[p.dir];
@@ -610,14 +611,32 @@ function speelBal(p,hold){
     return beep(hoogte>25?300:430,.11,"square",.08)}
   const hoog=vzVoor(21+(t-.5)*18);                  // lange bal vooruit
   return balNaar(p,p.x+d[0]*300,p.y+d[1]*90,hoog,170)}
+function inVak(p){                 // sta je in het strafschopgebied van de tegenstander?
+  const b=boxUit(1-p.team);
+  return (p.x-b.gx)*b.d>=-6&&(p.x-b.rand)*b.d<=0&&p.y>b.y1-4&&p.y<b.y2+4}
+/* In de zestien wordt elke haal automatisch op doel gericht. Je kijkrichting kiest
+   alleen nog de hoek, net als bij een strafschop. Anders moet je in het gedrang
+   ook nog precies staan te draaien en dat lukt nooit. */
+function opDoel(p,kracht,top){
+  const gx=foeGoal(p.team), d=D8[p.dir];
+  let mikY=p.y+d[1]*15;                  // jouw eigen lijn is het uitgangspunt
+  mikY=Math.max(W.gy1+5,Math.min(W.gy2-5,mikY));
+  const dx=gx-p.x, dy=mikY-p.y, l=Math.hypot(dx,dy)||1;
+  p.dir=dirOf(dx,dy);
+  ball.z=Math.min(ball.z,24);
+  ball.vx=dx/l*kracht;ball.vy=dy/l*kracht;ball.vz=vzVoor(top);
+  ball.last=p;ball.touch=.28;p.cool=.3;
+  beep(430,.11,"square",.08)}
 function volley(p,hold){          // bal uit de lucht op de slof nemen
   const t=Math.max(0,Math.min(1,hold));
+  if(inVak(p))return opDoel(p,240+t*80,2+t*9);   // in de zestien meteen op doel
   const d=D8[p.dir], kracht=235+t*95;
   ball.vx=d[0]*kracht;ball.vy=inward(p,d[1]*kracht*.55);
   ball.vz=vzVoor(2+t*11);
   ball.last=p;ball.touch=.28;p.cool=.3;
   beep(360,.12,"square",.09)}
 function headShot(p){               // lange klik bij een hoge bal: harde kopstoot
+  if(inVak(p))return opDoel(p,235,4);            // in de zestien kop je op doel
   const d=D8[p.dir];
   ball.z=Math.min(ball.z,22);
   ball.vx=d[0]*240;ball.vy=inward(p,d[1]*240*.5);ball.vz=vzVoor(4);
@@ -945,10 +964,11 @@ function human(p,dt){
     const hold=p.fireT;p.fireT=null;
     if(p.fireUsed)return;
     const d=dist(p,ball);
-    if(d<19&&ball.z>21&&ball.z<40&&p.cool<=0){        // bal op kophoogte
+    const ruim=inVak(p)?5:0;                          // in het gedrang wat meer speling
+    if(d<19+ruim&&ball.z>21&&ball.z<40&&p.cool<=0){   // bal op kophoogte
       if(hold<.25)head(p); else headShot(p);return}
-    if(d<20&&ball.z>4&&ball.z<=21&&p.cool<=0){volley(p,hold);return}   // bal in de lucht
-    if(d<18&&ball.z<=6&&p.cool<=0){speelBal(p,hold);return}
+    if(d<20+ruim&&ball.z>4&&ball.z<=21&&p.cool<=0){volley(p,hold);return}   // bal in de lucht
+    if(d<18+ruim&&ball.z<=6&&p.cool<=0){speelBal(p,hold);return}
     wissel(i)}                                        // geen bal in de buurt: wisselen
 }
 function save(gk){
