@@ -349,7 +349,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v56 eenvoud";
+const VERSIE="v57 uitrollen";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -593,10 +593,9 @@ function balNaar(p,tx,ty,hoogte,minSp){
   }else{                                            // rollende bal: snelheid past bij de afstand
     /* Gemeten: een bal met beginsnelheid v rolt ongeveer (v-77)*2,1 ver.
        Omgekeerd is de snelheid voor afstand d dus ruwweg 80 + d*0,49. */
-    /* Ondergrens: een pass moet altijd duidelijk van je voet komen. Je loopt zelf
-       46 en sprintend 60, dus alles daaronder oogt als een tikje. De ontvanger
-       remt hem af, dus overschot is geen probleem. */
-    sp=Math.max(minSp||118,Math.min(285,100+l*.52));
+    /* Geijkt op de nieuwe rolwrijving: snelheid 80 rolt 63 ver, 120 rolt 116,
+       200 rolt 236 en 300 rolt 401. Omgekeerd: snelheid = 38 + afstand * 0,66. */
+    sp=Math.max(minSp||112,Math.min(285,38+l*.66));
   }
   p.dir=dirOf(dx,dy);
   ball.vx=dx/l*sp;ball.vy=inward(p,dy/l*sp);ball.vz=hoogte;
@@ -1238,8 +1237,16 @@ function ballPhysics(dt){
   ball.z+=ball.vz*dt;ball.vz-=210*dt;
   if(ball.z<=0){ball.z=0;
     if(ball.vz<-6){ball.vz*=-.82;beep(180,.04,"triangle",.03)}else ball.vz=0;
+    /* Rolwrijving: een vast deel plus een deel dat met de snelheid meeloopt.
+       Een puur exponentieel model laat een trage bal abrupt stilvallen; zo rolt
+       hij aan het eind juist zacht uit en kun je een bal in de loop meegeven. */
     const sp=Math.hypot(ball.vx,ball.vy);
-    const f=Math.pow(sp>110?.62:.13,dt);ball.vx*=f;ball.vy*=f}
+    if(sp>1){
+      const rem=(25+sp*.5)*dt;
+      const f=Math.max(0,(sp-rem)/sp);
+      ball.vx*=f;ball.vy*=f;
+      if(Math.hypot(ball.vx,ball.vy)<3){ball.vx=0;ball.vy=0}
+    }}
   else{const f=Math.pow(.94,dt);ball.vx*=f;ball.vy*=f}
   // netten: een bal die erin gaat blijft erin liggen
   for(const side of [0,1]){
