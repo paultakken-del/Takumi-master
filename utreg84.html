@@ -349,7 +349,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v60 tackle";
+const VERSIE="v61 rust";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -722,7 +722,8 @@ function head(p){                   // korte klik: gecontroleerde kopbal
 function goal(team){scorer=team;score[team]++;state="goal";stateT=0;msg="GOAL!";
   speelDeun(GOALDEUN,"goal",false);
   ball.held=null;whistle();cheer();for(const p of P)if(p.team===team)p.cel=1}
-function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een overtreding
+let fluitRust=0;               // niet twee overtredingen kort achter elkaar
+function tackle(p,foe,opzet){  // opzet: een bewuste sliding, anders een poging in de loop
   p.cool=.55;
   const d0=D8[p.dir];p.x+=d0[0]*7;p.y+=inward(p,d0[1]*5);clampP(p);   // hij schuift vooruit
   beep(200,.09,"square",.05);
@@ -735,6 +736,14 @@ function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een 
     ball.last=p;ball.touch=.3;foe.cool=.55;                // hij is even uitgespeeld
     if(isHuman(p))meld("TACKLE GESLAAGD");
     beep(300,.07,"square",.06);return}
+  /* Een mislukte poging in de loop is meestal gewoon mis, geen overtreding.
+     Alleen een bewuste sliding of een echt late ingreep wordt gefloten, en niet
+     twee keer kort achter elkaar, want dan ligt het spel voortdurend stil. */
+  if(!opzet&&(fluitRust>0||Math.random()<.78)){
+    p.cool=.8;if(isHuman(p))meld("TACKLE MIS");
+    return}
+  if(fluitRust>0){p.cool=.8;return}
+  fluitRust=5;
   if(isHuman(p))meld("TACKLE TE LAAT");
   foe.dive=1.1;foe.cool=1.1;                    // te laat: de tegenstander gaat neer
   const w=Math.sign(foe.x-p.x)||1;
@@ -965,6 +974,7 @@ function update(dt){
   if(balDoelT<=0)balDoel=null;
   if(balDoel&&ball.last===balDoel)balDoel=null;   // aangekomen
   for(const t of [0,1])pogingT[t]=Math.max(0,pogingT[t]-dt);
+  fluitRust=Math.max(0,fluitRust-dt);
   aftrapVrij=Math.max(0,aftrapVrij-dt);
   for(const t of [0,1])lockT[t]=Math.max(0,lockT[t]-dt);
   for(const t of hum)if(state!=="setpiece")ctrl[t]=ctrlFor(t);
@@ -1076,7 +1086,7 @@ function human(p,dt){
       if(dd<36){foe=houder;fd=dd}}
     if(!foe)for(const q of P){if(q.team===p.team||q.role==="K")continue;
       const dd=Math.hypot(q.x-p.x,(q.y-p.y)*2);if(dd<fd){fd=dd;foe=q}}
-    if(foe&&fd<36){p.tackleT=1;tackle(p,foe);return}}
+    if(foe&&fd<36){p.tackleT=1;tackle(p,foe,true);return}}
   if(K["f"+i]){if(p.fireT!=null)p.fireT+=dt}
   else if(p.fireT!=null){
     const hold=p.fireT;p.fireT=null;
@@ -1229,7 +1239,7 @@ function ai(p,dt,spd,spread){
       if(ball.rust<=0&&p.drukT>.45&&pogingT[p.team]<=0){
         pogingT[p.team]=1;                        // de hele ploeg wacht daarna even
         const kans=Math.min(.6,(.09+level*.03)*(1+(p.drukT-.45)));
-        if(Math.random()<kans)tackle(p,houder);else p.drukT=.15}}
+        if(Math.random()<kans)tackle(p,houder,false);else p.drukT=.15}}
     else p.drukT=Math.max(0,(p.drukT||0)-dt*1.5);}   // druk zakt weg, maar niet meteen
   else if(state==="play"&&aftrapVrij<=0&&ball.last&&ball.last.team===p.team&&!ball.held){
     const v=vrijloop(p,dt);tx=v[0];ty=v[1];       // eigen ploeg aan de bal: vrijlopen
