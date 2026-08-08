@@ -186,6 +186,11 @@ const KITS=[
  {naam:"GROEN",kraag:"#FFFFFF",    shirt:"#188838",light:"#60D080",sleeve:"#188838",shorts:"#FFFFFF",sock:"#188838",sock2:"#FFFFFF",badge:"#FFFFFF"},
  {naam:"ORANJE",kraag:"#FFFFFF",   shirt:"#E07018",light:"#FFA860",sleeve:"#E07018",shorts:"#202020",sock:"#E07018",sock2:"#FFFFFF",badge:"#202020"},
  {naam:"PAARS",kraag:"#F0F0F0",    shirt:"#8828A0",light:"#C878E0",sleeve:"#8828A0",shorts:"#F0F0F0",sock:"#8828A0",sock2:"#F0F0F0",badge:"#F0F0F0"}];
+/* Hoeveel doet het spel voor je? Zoals moderne voetbalspellen dat per onderdeel
+   laten kiezen, in plaats van dat ik voor je gok wat prettig speelt. */
+let hulpPass=1;     // 1 = zoekt zelf een medespeler, 0 = precies jouw richting
+let hulpSchot=1;    // 1 = richt in de zestien op doel, 0 = precies jouw richting
+let hulpWissel=1;   // 1 = besturing springt naar wie het dichtst bij de bal is, 0 = alleen op de knop
 let kitA=0, kitB=2;
 let KIT=[KITS[kitA],KITS[kitB]];
 const zetTenues=()=>{KIT[0]=KITS[kitA];KIT[1]=KITS[kitB]};
@@ -346,7 +351,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v48 hersteld";
+const VERSIE="v62 hulp";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -459,12 +464,15 @@ function menuKey(k){
     if(menuSel===0)level=((level-1+d+9)%9)+1;
     else if(menuSel===1)players2=players2===1?2:1;
     else if(menuSel===2){kitA=(kitA+d+KITS.length)%KITS.length;if(kitA===kitB)kitA=(kitA+d+KITS.length)%KITS.length}
-    else {kitB=(kitB+d+KITS.length)%KITS.length;if(kitB===kitA)kitB=(kitB+d+KITS.length)%KITS.length}
+    else if(menuSel===3){kitB=(kitB+d+KITS.length)%KITS.length;if(kitB===kitA)kitB=(kitB+d+KITS.length)%KITS.length}
+    else if(menuSel===4)hulpPass=1-hulpPass;
+    else if(menuSel===5)hulpSchot=1-hulpSchot;
+    else hulpWissel=1-hulpWissel;
     zetTenues();beep(560,.05)};
   if(k==="ArrowLeft")stap(-1);
   else if(k==="ArrowRight")stap(1);
-  else if(k==="ArrowUp"){menuSel=(menuSel+3)%4;beep(400,.04)}
-  else if(k==="ArrowDown"){menuSel=(menuSel+1)%4;beep(400,.04)}
+  else if(k==="ArrowUp"){menuSel=(menuSel+6)%7;beep(400,.04)}
+  else if(k==="ArrowDown"){menuSel=(menuSel+1)%7;beep(400,.04)}
   else if(k===" "||k==="Enter")start()}
 function start(){stopMuziek();film=[];herhaling=null;score=[0,0];clock=0;half=1;attack=[1,-1];build();reset(0);
   P.forEach((p,i)=>{                            // opkomen vanaf buiten het veld
@@ -500,6 +508,7 @@ function ctrlFor(t){
     if(dGk<dVeld)return gk;
   }
   if(lockT[t]>0&&ctrl[t]&&ctrl[t].role!=="K")return ctrl[t];
+  if(!hulpWissel&&ctrl[t]&&ctrl[t].role!=="K")return ctrl[t];   // handmatig: jij houdt je speler
   return veld||ctrl[t]}
 function wissel(t){                       // korte klik zonder bal: volgende speler pakken
   const veld=P.filter(p=>p.team===t&&p.role!=="K")
@@ -604,12 +613,12 @@ function medespeler(p,maxAfst){
   return best||noodBest}
 function speelBal(p,hold){
   const t=Math.max(0,Math.min(1,hold));
-  if(inVak(p)&&t>=.18)return opDoel(p,245+t*75,3+t*11);   // in de zestien is het een schot
+  if(hulpSchot&&inVak(p)&&t>=.18)return opDoel(p,245+t*75,3+t*11);   // in de zestien is het een schot
   const gx=foeGoal(p.team), naarDoel=Math.abs(gx-p.x);
   const centraal=Math.abs(p.y-midY)<34;
   const d=D8[p.dir];
   if(t<.5){                                         // pass: zoekt een medespeler
-    const keuze=medespeler(p,140+t*560);
+    const keuze=hulpPass?medespeler(p,140+t*560):null;
     if(keuze){
       const m=keuze.q;
       /* In de loop spelen: hij komt de bal tegemoet, dus mikken we een stuk
@@ -660,14 +669,14 @@ function opDoel(p,kracht,top){
   beep(430,.11,"square",.08)}
 function volley(p,hold){          // bal uit de lucht op de slof nemen
   const t=Math.max(0,Math.min(1,hold));
-  if(inVak(p))return opDoel(p,240+t*80,2+t*9);   // in de zestien meteen op doel
+  if(hulpSchot&&inVak(p))return opDoel(p,240+t*80,2+t*9);   // in de zestien meteen op doel
   const d=D8[p.dir], kracht=235+t*95;
   ball.vx=d[0]*kracht;ball.vy=inward(p,d[1]*kracht*.55);
   ball.vz=vzVoor(2+t*11);
   ball.last=p;ball.touch=.28;p.cool=.3;
   beep(360,.12,"square",.09)}
 function headShot(p){               // lange klik bij een hoge bal: harde kopstoot
-  if(inVak(p))return opDoel(p,235,4);            // in de zestien kop je op doel
+  if(hulpSchot&&inVak(p))return opDoel(p,235,4);            // in de zestien kop je op doel
   const d=D8[p.dir];
   ball.z=Math.min(ball.z,22);
   ball.vx=d[0]*240;ball.vy=inward(p,d[1]*240*.5);ball.vz=vzVoor(4);
@@ -1634,21 +1643,23 @@ function opties(){
   px(0,0,320,22,C.blk);
   ctx.textAlign="center";ctx.textBaseline="top";
   ctx.fillStyle="#D82820";ctx.font="16px monospace";ctx.fillText("UTREG 84",160,4);
-  px(28,30,264,116,"#083008");
-  ctx.strokeStyle="#2E7A2E";ctx.lineWidth=1;ctx.strokeRect(28,30,264,116);
-  const waarden=[String(level),players2===1?"1 SPELER":"2 SPELERS",KITS[kitA].naam,KITS[kitB].naam];
-  const namen=["COMPUTERNIVEAU","AANTAL SPELERS","TENUE THUIS","TENUE UIT"];
-  for(let r=0;r<4;r++){
-    const y=42+r*26, aan=menuSel===r;
-    if(aan)px(34,y-6,252,22,"#145014");
+  px(24,26,272,132,"#083008");
+  ctx.strokeStyle="#2E7A2E";ctx.lineWidth=1;ctx.strokeRect(24,26,272,132);
+  const waarden=[String(level),players2===1?"1 SPELER":"2 SPELERS",KITS[kitA].naam,KITS[kitB].naam,
+                 hulpPass?"GERICHT":"VRIJ",hulpSchot?"GERICHT":"VRIJ",hulpWissel?"AUTO":"HANDMATIG"];
+  const namen=["COMPUTERNIVEAU","AANTAL SPELERS","TENUE THUIS","TENUE UIT",
+               "PASSEN","SCHIETEN","SPELERWISSEL"];
+  for(let r=0;r<7;r++){
+    const y=34+r*18, aan=menuSel===r;
+    if(aan)px(30,y-4,260,16,"#145014");
     ctx.textAlign="left";
     ctx.fillStyle=aan?C.yel:"#7FB27F";ctx.font="10px monospace";
     ctx.fillText((aan?"\u25b8 ":"  ")+namen[r],42,y);
     ctx.textAlign="right";
     ctx.fillStyle=aan?C.wht:"#A8C8A8";
     ctx.fillText(waarden[r],252,y);
-    if(r===2)px(262,y-2,18,12,KITS[kitA].shirt);
-    if(r===3)px(262,y-2,18,12,KITS[kitB].shirt);
+    if(r===2)px(264,y-1,16,10,KITS[kitA].shirt);
+    if(r===3)px(264,y-1,16,10,KITS[kitB].shirt);
     if(r===0&&aan){ctx.textAlign="left";ctx.fillStyle="#7FB27F";ctx.font="8px monospace";
       ctx.fillText("1 = MAKKELIJK   9 = ZWAAR",42,y+11)}
   }
