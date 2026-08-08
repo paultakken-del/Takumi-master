@@ -349,7 +349,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v61 rust";
+const VERSIE="v56 hersteld";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -421,7 +421,8 @@ function stickAt(t){const r=stick.getBoundingClientRect();
   const dz=.32;K.l0=dx<-dz;K.r0=dx>dz;K.u0=dy<-dz;K.d0=dy>dz;
   /* Ver doorduwen betekent sprinten. Zo hoef je er geen tweede duim bij te halen;
      de sprintknop blijft gewoon werken voor wie dat prettiger vindt. */
-  const uit=Math.hypot(dx,dy)>.86;   // ver doorduwen is sprinten, geen tackle
+  const uit=Math.hypot(dx,dy)>.86;
+  if(uit&&!K.sd0)sprintEdge[0]=true;
   K.sd0=uit;K.s0=uit||K.sk0;
   return{dx,dy}}
 const zone=document.getElementById("stickzone");
@@ -552,12 +553,10 @@ function dribble(p,dt){         // bal blijft voor de voet en volgt jouw eigen s
   const d=D8[p.dir];
   const ver=(humans().includes(p.team)&&p===ctrl[p.team]&&K["s"+p.team])?17:10;
   const tx=p.x+d[0]*ver, ty=p.y+d[1]*(ver*.7)+2;
-  const k=Math.min(1,28*dt);              // bal zwenkt vlot mee bij het keren
+  const k=Math.min(1,22*dt);              // bal zwenkt vlot mee bij het keren
   ball.x+=(tx-ball.x)*k;ball.y+=(ty-ball.y)*k;
   ball.z=0;ball.vz=0;
-  /* Bal krijgt maar een deel van je eigen snelheid mee. Met de volle snelheid
-     rolt hij bij het keren door en ben je hem kwijt; de positie doet het werk. */
-  ball.vx=(p.mvx||0)*.55;ball.vy=(p.mvy||0)*.55;
+  ball.vx=p.mvx||0;ball.vy=p.mvy||0;      // sta je stil, dan ligt de bal stil
   ball.last=p;ball.touch=0;
   if(!p.tick||p.tick<=0){p.tick=.28;beep(520,.035,"square",.025)}
   p.tick-=dt}
@@ -594,9 +593,10 @@ function balNaar(p,tx,ty,hoogte,minSp){
   }else{                                            // rollende bal: snelheid past bij de afstand
     /* Gemeten: een bal met beginsnelheid v rolt ongeveer (v-77)*2,1 ver.
        Omgekeerd is de snelheid voor afstand d dus ruwweg 80 + d*0,49. */
-    /* Geijkt op de nieuwe rolwrijving: snelheid 80 rolt 63 ver, 120 rolt 116,
-       200 rolt 236 en 300 rolt 401. Omgekeerd: snelheid = 38 + afstand * 0,66. */
-    sp=Math.max(minSp||112,Math.min(285,38+l*.66));
+    /* Ondergrens: een pass moet altijd duidelijk van je voet komen. Je loopt zelf
+       46 en sprintend 60, dus alles daaronder oogt als een tikje. De ontvanger
+       remt hem af, dus overschot is geen probleem. */
+    sp=Math.max(minSp||118,Math.min(285,100+l*.52));
   }
   p.dir=dirOf(dx,dy);
   ball.vx=dx/l*sp;ball.vy=inward(p,dy/l*sp);ball.vz=hoogte;
@@ -722,13 +722,12 @@ function head(p){                   // korte klik: gecontroleerde kopbal
 function goal(team){scorer=team;score[team]++;state="goal";stateT=0;msg="GOAL!";
   speelDeun(GOALDEUN,"goal",false);
   ball.held=null;whistle();cheer();for(const p of P)if(p.team===team)p.cel=1}
-let fluitRust=0;               // niet twee overtredingen kort achter elkaar
-function tackle(p,foe,opzet){  // opzet: een bewuste sliding, anders een poging in de loop
+function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een overtreding
   p.cool=.55;
   const d0=D8[p.dir];p.x+=d0[0]*7;p.y+=inward(p,d0[1]*5);clampP(p);   // hij schuift vooruit
   beep(200,.09,"square",.05);
-  const bijBal=Math.hypot(p.x-ball.x,(p.y-ball.y)*1.7)<36&&ball.z<14&&!ball.held;
-  const vanAchter=(p.x-foe.x)*attack[foe.team]<-9;   // pas echt van achteren bij een duidelijke marge
+  const bijBal=Math.hypot(p.x-ball.x,(p.y-ball.y)*3)<24&&ball.z<12&&!ball.held;
+  const vanAchter=(p.x-foe.x)*attack[foe.team]<0;
   if(bijBal&&!vanAchter&&Math.random()<.72){    // schoon: jij glijdt, hij blijft staan
     p.dive=.35;
     const d=D8[p.dir];
@@ -736,14 +735,6 @@ function tackle(p,foe,opzet){  // opzet: een bewuste sliding, anders een poging 
     ball.last=p;ball.touch=.3;foe.cool=.55;                // hij is even uitgespeeld
     if(isHuman(p))meld("TACKLE GESLAAGD");
     beep(300,.07,"square",.06);return}
-  /* Een mislukte poging in de loop is meestal gewoon mis, geen overtreding.
-     Alleen een bewuste sliding of een echt late ingreep wordt gefloten, en niet
-     twee keer kort achter elkaar, want dan ligt het spel voortdurend stil. */
-  if(!opzet&&(fluitRust>0||Math.random()<.78)){
-    p.cool=.8;if(isHuman(p))meld("TACKLE MIS");
-    return}
-  if(fluitRust>0){p.cool=.8;return}
-  fluitRust=5;
   if(isHuman(p))meld("TACKLE TE LAAT");
   foe.dive=1.1;foe.cool=1.1;                    // te laat: de tegenstander gaat neer
   const w=Math.sign(foe.x-p.x)||1;
@@ -974,7 +965,6 @@ function update(dt){
   if(balDoelT<=0)balDoel=null;
   if(balDoel&&ball.last===balDoel)balDoel=null;   // aangekomen
   for(const t of [0,1])pogingT[t]=Math.max(0,pogingT[t]-dt);
-  fluitRust=Math.max(0,fluitRust-dt);
   aftrapVrij=Math.max(0,aftrapVrij-dt);
   for(const t of [0,1])lockT[t]=Math.max(0,lockT[t]-dt);
   for(const t of hum)if(state!=="setpiece")ctrl[t]=ctrlFor(t);
@@ -1069,24 +1059,11 @@ function human(p,dt){
     else if(gk&&inOwnBox(p.team)&&dist(gk,ball)<40&&!ball.held){save(gk);p.fireUsed=true}
     else if(ball.held===gk){punt(gk);p.fireUsed=true}
   }
-  /* Tackelen alleen als de tegenpartij de bal heeft. Anders glijd je onderuit
-     vlak nadat je zelf hebt gepasst, want dan heb jij de bal ook niet meer. */
-  /* Tackelen: sprintknop ingedrukt terwijl de tegenpartij de bal heeft en er
-     iemand binnen bereik staat. Heeft je eigen ploeg de bal, dan gebeurt er niets,
-     anders glijd je onderuit vlak nadat je zelf hebt gepasst. */
-  p.tackleT=Math.max(0,(p.tackleT||0)-dt);
-  if(K["s"+i]&&state==="play"&&p.cool<=0&&p.tackleT<=0&&!hasBall(p)&&
-     ball.last&&ball.last.team!==p.team&&!ball.held){
-    /* Mik op de speler die de bal heeft. Pak je de dichtstbijzijnde, dan reken je
-       je tackle af tegen iemand anders en is hij per definitie te laat. */
-    let foe=null,fd=1e9;
-    const houder=ball.last;
-    if(houder&&houder.team!==p.team){
-      const dd=Math.hypot(houder.x-p.x,(houder.y-p.y)*2);
-      if(dd<36){foe=houder;fd=dd}}
-    if(!foe)for(const q of P){if(q.team===p.team||q.role==="K")continue;
-      const dd=Math.hypot(q.x-p.x,(q.y-p.y)*2);if(dd<fd){fd=dd;foe=q}}
-    if(foe&&fd<36){p.tackleT=1;tackle(p,foe,true);return}}
+  if(sprintEdge[i]&&state==="play"&&p.cool<=0&&!hasBall(p)){
+    let foe=null,fd=1e9;                              // tweede knop zonder bal: tackle
+    for(const q of P){if(q.team===p.team||q.role==="K")continue;
+      const dd=Math.hypot(q.x-p.x,(q.y-p.y)*3);if(dd<fd){fd=dd;foe=q}}
+    if(foe&&fd<32){tackle(p,foe);return}}
   if(K["f"+i]){if(p.fireT!=null)p.fireT+=dt}
   else if(p.fireT!=null){
     const hold=p.fireT;p.fireT=null;
@@ -1239,7 +1216,7 @@ function ai(p,dt,spd,spread){
       if(ball.rust<=0&&p.drukT>.45&&pogingT[p.team]<=0){
         pogingT[p.team]=1;                        // de hele ploeg wacht daarna even
         const kans=Math.min(.6,(.09+level*.03)*(1+(p.drukT-.45)));
-        if(Math.random()<kans)tackle(p,houder,false);else p.drukT=.15}}
+        if(Math.random()<kans)tackle(p,houder);else p.drukT=.15}}
     else p.drukT=Math.max(0,(p.drukT||0)-dt*1.5);}   // druk zakt weg, maar niet meteen
   else if(state==="play"&&aftrapVrij<=0&&ball.last&&ball.last.team===p.team&&!ball.held){
     const v=vrijloop(p,dt);tx=v[0];ty=v[1];       // eigen ploeg aan de bal: vrijlopen
@@ -1261,16 +1238,8 @@ function ballPhysics(dt){
   ball.z+=ball.vz*dt;ball.vz-=210*dt;
   if(ball.z<=0){ball.z=0;
     if(ball.vz<-6){ball.vz*=-.82;beep(180,.04,"triangle",.03)}else ball.vz=0;
-    /* Rolwrijving: een vast deel plus een deel dat met de snelheid meeloopt.
-       Een puur exponentieel model laat een trage bal abrupt stilvallen; zo rolt
-       hij aan het eind juist zacht uit en kun je een bal in de loop meegeven. */
     const sp=Math.hypot(ball.vx,ball.vy);
-    if(sp>1){
-      const rem=(25+sp*.5)*dt;
-      const f=Math.max(0,(sp-rem)/sp);
-      ball.vx*=f;ball.vy*=f;
-      if(Math.hypot(ball.vx,ball.vy)<3){ball.vx=0;ball.vy=0}
-    }}
+    const f=Math.pow(sp>110?.62:.13,dt);ball.vx*=f;ball.vy*=f}
   else{const f=Math.pow(.94,dt);ball.vx*=f;ball.vy*=f}
   // netten: een bal die erin gaat blijft erin liggen
   for(const side of [0,1]){
@@ -1296,7 +1265,7 @@ function contacts(dt){
   for(const t of humans()){                       // jouw speler heeft voorrang
     const q=ctrl[t];if(!q||q.cool>0||!vers(q))continue;
     const d=Math.hypot(q.x-ball.x,q.y-ball.y);
-    if(d<22&&d<bd){bd=d;p=q}}
+    if(d<19&&d<bd){bd=d;p=q}}
   if(!p){for(const q of P){if(q.cool>0||!vers(q))continue;
     const d=Math.hypot(q.x-ball.x,q.y-ball.y);if(d<bd){bd=d;p=q}}}
   if(!p)return;
