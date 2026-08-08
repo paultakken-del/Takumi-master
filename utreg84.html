@@ -349,7 +349,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v59 tackle";
+const VERSIE="v60 tackle";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -726,8 +726,8 @@ function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een 
   p.cool=.55;
   const d0=D8[p.dir];p.x+=d0[0]*7;p.y+=inward(p,d0[1]*5);clampP(p);   // hij schuift vooruit
   beep(200,.09,"square",.05);
-  const bijBal=Math.hypot(p.x-ball.x,(p.y-ball.y)*3)<24&&ball.z<12&&!ball.held;
-  const vanAchter=(p.x-foe.x)*attack[foe.team]<0;
+  const bijBal=Math.hypot(p.x-ball.x,(p.y-ball.y)*1.7)<36&&ball.z<14&&!ball.held;
+  const vanAchter=(p.x-foe.x)*attack[foe.team]<-9;   // pas echt van achteren bij een duidelijke marge
   if(bijBal&&!vanAchter&&Math.random()<.72){    // schoon: jij glijdt, hij blijft staan
     p.dive=.35;
     const d=D8[p.dir];
@@ -1067,10 +1067,16 @@ function human(p,dt){
   p.tackleT=Math.max(0,(p.tackleT||0)-dt);
   if(K["s"+i]&&state==="play"&&p.cool<=0&&p.tackleT<=0&&!hasBall(p)&&
      ball.last&&ball.last.team!==p.team&&!ball.held){
+    /* Mik op de speler die de bal heeft. Pak je de dichtstbijzijnde, dan reken je
+       je tackle af tegen iemand anders en is hij per definitie te laat. */
     let foe=null,fd=1e9;
-    for(const q of P){if(q.team===p.team||q.role==="K")continue;
-      const dd=Math.hypot(q.x-p.x,(q.y-p.y)*3);if(dd<fd){fd=dd;foe=q}}
-    if(foe&&fd<32){p.tackleT=1;tackle(p,foe);return}}
+    const houder=ball.last;
+    if(houder&&houder.team!==p.team){
+      const dd=Math.hypot(houder.x-p.x,(houder.y-p.y)*2);
+      if(dd<36){foe=houder;fd=dd}}
+    if(!foe)for(const q of P){if(q.team===p.team||q.role==="K")continue;
+      const dd=Math.hypot(q.x-p.x,(q.y-p.y)*2);if(dd<fd){fd=dd;foe=q}}
+    if(foe&&fd<36){p.tackleT=1;tackle(p,foe);return}}
   if(K["f"+i]){if(p.fireT!=null)p.fireT+=dt}
   else if(p.fireT!=null){
     const hold=p.fireT;p.fireT=null;
