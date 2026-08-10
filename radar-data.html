@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyclusradar data-API · Takumi</title>
+<meta name="description" content="Publieke, read-only data-API van de Takumi Cyclusradar: maandsignaal macro, weeksignaal crypto, kapitaalstromen en trackrecord in JSON, tekst of markdown.">
+<link rel="canonical" href="https://takumi-master.com/radar-data">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#1a1815; --panel:#232019; --line:#37332a; --ink:#efeadf; --mut:#a89f8d; --faint:#6f695c; --brass:#c9a54a; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--ink); font:16px/1.65 Georgia,serif; padding:0 20px 80px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  header { text-align:center; padding:56px 0 8px; }
+  .kanji { font-family:'Noto Serif JP',serif; font-size:56px; color:var(--brass); line-height:1; }
+  h1 { font-size:28px; font-weight:normal; margin:14px 0 6px; }
+  h2 { font-size:19px; font-weight:normal; margin:0 0 10px; }
+  .sub { color:var(--mut); font-size:15px; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:24px; margin-top:24px; }
+  a { color:var(--brass); }
+  code, .mono { font-family:'IBM Plex Mono',monospace; font-size:13px; }
+  ul { margin:10px 0 0 18px; color:var(--mut); }
+  li { margin:7px 0; }
+  .veld { border-top:1px solid var(--line); padding:7px 0; color:var(--mut); font-family:'IBM Plex Mono',monospace; font-size:12.5px; }
+  .voet { color:var(--faint); font-size:13px; margin-top:26px; text-align:center; line-height:1.7; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kanji">環</div>
+    <h1>Cyclusradar data-API</h1>
+    <p class="sub">Publiek, read-only, zonder sleutel. Bedoeld voor agents, briefings en andere machines.</p>
+  </header>
+
+  <section>
+    <h2>Endpoints</h2>
+    <ul>
+      <li><a href="/api/rapport">/api/rapport</a> — volledig rapport als JSON</li>
+      <li><a href="/api/rapport?vorm=tekst">/api/rapport?vorm=tekst</a> — platte tekst</li>
+      <li><a href="/api/rapport?vorm=md">/api/rapport?vorm=md</a> — markdown</li>
+      <li><a href="/api/ping">/api/ping</a> — bereikbaarheidstest</li>
+      <li><a href="/radar">/radar</a> — de radar zelf, met grafiek en trackrecord</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Wat erin zit</h2>
+    <div class="veld">macro / crypto: stand, verdeling (kansen per fase), samenvatting, synthese, indicatoren, calls met kMin–kMax, analogieen, dominantie, stabiliteit</div>
+    <div class="veld">liquiditeit: netto liquiditeit, NFCI, dollarindex, stablecoin-aanbod — gemeten, bewust nog niet gewogen</div>
+    <div class="veld">trackrecord / trackrecordMacro: n, raak, brier — de radar scoort zijn eigen eerdere calls</div>
+    <div class="veld">wijzigingSindsVorigeRun: leesbare regels met wat er sinds de vorige weging veranderde</div>
+    <div class="veld">laatstBijgewerkt, versie, disclaimer, toelichting</div>
+  </section>
+
+  <section>
+    <h2>Spelregels</h2>
+    <p class="sub">Kansverdelingen, geen voorspellingen. Educatief, geen beleggingsadvies. Data ververst dagelijks (meting) en wekelijks (weging). CORS staat open; vijf minuten cache. Takumi weegt, het handelt niet.</p>
+  </section>
+
+  <p class="voet"><a href="/">takumi-master.com</a> · <a href="/radar">Cyclusradar</a> · <a href="/api/rapport?vorm=tekst">rapport als tekst</a></p>
+</div>
+</body>
+</html>

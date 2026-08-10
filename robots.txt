@@ -35,3 +35,5 @@ Disallow: /stats
 Disallow: /stats.html
 Disallow: /utreg84.html
 Allow: /
+
+Sitemap: https://takumi-master.com/sitemap.xml
