@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Takumi Engine — paper trading</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--aiiro:#165E83;--antraciet:#3F3F41;--creme:#FCFBF8;--paneel:#F0F4F6;--lijn:#DCE3E8;--groen:#2E7D5B;--rood:#A4442E}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--creme);color:var(--antraciet);font-family:'IBM Plex Serif',serif;font-size:15px;line-height:1.5}
+.wrap{max-width:700px;margin:0 auto;padding:28px 18px 60px}
+header h1{font-size:22px;font-weight:600;letter-spacing:-.01em}
+header p{color:#6B7075;font-size:13.5px;margin-top:2px}
+h2{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--aiiro);margin:26px 0 10px}
+.kaart{background:#fff;border:1px solid var(--lijn);border-radius:10px;padding:16px 18px}
+.actie{font-size:26px;font-weight:600}
+.actie.koop{color:var(--groen)}.actie.verkoop{color:var(--rood)}
+.reden{margin-top:8px;font-size:14px;color:#55595d}
+.sloten{display:flex;align-items:center;margin:14px 0 4px}
+.slot{display:flex;flex-direction:column;align-items:center;gap:6px}
+.slot .ring{width:34px;height:34px;border-radius:50%;border:2.5px solid var(--lijn);background:#fff;position:relative}
+.slot.open .ring{border-color:var(--aiiro)}
+.slot.open .ring::after{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--aiiro)}
+.slot small{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#6B7075}
+.draad{flex:1;height:2px;background:var(--lijn);min-width:24px;margin:0 6px 20px}
+.draad.actief{background:var(--aiiro)}
+dl{display:grid;grid-template-columns:1fr auto;gap:7px 16px;font-size:14px}
+dt{color:#6B7075}dd{font-family:'IBM Plex Mono',monospace;text-align:right}
+.fase{display:grid;grid-template-columns:96px 1fr 42px;align-items:center;gap:10px;font-size:13px;margin-top:6px}
+.fase .balk{height:8px;background:var(--paneel);border-radius:4px;overflow:hidden}
+.fase .balk i{display:block;height:100%;background:var(--aiiro)}
+.fase .pct{font-family:'IBM Plex Mono',monospace;font-size:12px;text-align:right}
+.log{list-style:none;display:flex;flex-direction:column;gap:8px}
+.log li{background:#fff;border:1px solid var(--lijn);border-radius:8px;padding:10px 14px;font-size:13px}
+.log .kop{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:12px}
+.log b.KOOP{color:var(--groen)}.log b.VERKOOP{color:var(--rood)}
+.log p{margin-top:4px;color:#6B7075}
+.stil{color:#6B7075;font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Takumi Engine</h1>
+  <p>Automatisch paper traden · BTC-EUR · de radar weegt, de engine handelt — fictief, binnen twee sloten en een 5%-grens. Weekronde: elke maandagochtend.</p>
+</header>
+
+<h2>Laatste weekronde</h2>
+<div class="kaart" id="kVerslag"><p class="stil">Laden…</p></div>
+
+<h2>Portfolio</h2>
+<div class="kaart"><dl id="portfolio"></dl></div>
+
+<h2>Weging — Cyclusradar</h2>
+<div class="kaart" id="kWeging"><p class="stil">—</p></div>
+
+<h2>Logboek</h2>
+<ul class="log" id="logboek"></ul>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const eur=n=>'€'+Number(n).toLocaleString('nl-NL',{maximumFractionDigits:2});
+const rij=(dt,dd)=>'<dt>'+dt+'</dt><dd>'+dd+'</dd>';
+
+fetch('/api/engine').then(r=>r.json()).then(d=>{
+  const v=d.laatsteWeekronde;
+  if(!v){
+    $('kVerslag').innerHTML='<p class="stil">Nog geen weekronde gedraaid. De eerste staat gepland voor maandagochtend.</p>';
+  } else {
+    const a=v.advies;
+    let html='<div class="actie '+(a.actie==='KOOP'?'koop':a.actie==='VERKOOP'?'verkoop':'')+'">'+
+      (a.actie==='GEEN_ACTIE'?'Geen actie':a.actie==='KOOP'?'Koop':'Verkoop')+'</div>';
+    if(a.sloten){
+      const richting=v.portfolioNa.btc>0&&a.actie!=='KOOP'?'verkoop':(a.actie==='VERKOOP'?'verkoop':'koop');
+      const s=richting==='verkoop'?a.sloten.verkoop:a.sloten.koop;
+      const lbl=richting==='verkoop'?['seizoen · distributie','markt · onder trend']:['seizoen · accumulatie','markt · boven trend'];
+      html+='<div class="sloten">'+
+        '<div class="slot'+(s.seizoen?' open':'')+'"><div class="ring"></div><small>'+lbl[0]+'</small></div>'+
+        '<div class="draad'+(s.seizoen?' actief':'')+'"></div>'+
+        '<div class="slot'+(s.markt?' open':'')+'"><div class="ring"></div><small>'+lbl[1]+'</small></div></div>';
+    }
+    html+='<p class="reden">'+a.reden+'</p>';
+    if(v.order)html+='<p class="reden"><b>Order uitgevoerd:</b> '+v.order.actie+' '+eur(v.order.bedragEUR)+' @ '+eur(v.order.prijs)+'</p>';
+    html+='<p class="reden">Ronde van '+new Date(v.tijd).toLocaleString('nl-NL')+' · weekclose '+eur(v.meting.laatsteWeekclose)+' vs. 30-weeks '+eur(v.meting.sma30)+'</p>';
+    $('kVerslag').innerHTML=html;
+    const w=v.weging;
+    if(w&&w.verdeling){
+      let f='';
+      for(const[naam,val]of Object.entries(w.verdeling))
+        f+='<div class="fase"><span>'+naam+'</span><span class="balk"><i style="width:'+val+'%"></i></span><span class="pct">'+val+'%</span></div>';
+      f+='<p class="reden">'+(w.status==='ok'?('Weging van '+new Date(w.tijdstip).toLocaleDateString('nl-NL')+(w.samenvatting?' — '+w.samenvatting:'')):w.melding)+'</p>';
+      $('kWeging').innerHTML=f;
+    } else if(w){$('kWeging').innerHTML='<p class="stil">'+w.melding+'</p>';}
+  }
+  const p=d.portfolio;
+  $('portfolio').innerHTML=
+    rij('Vrij saldo',eur(p.saldoEUR))+
+    rij('Positie',p.btc.toFixed(6)+' BTC'+(p.waardeBtcEUR!=null?' ('+eur(p.waardeBtcEUR)+')':''))+
+    (p.totaalEUR!=null?rij('Totale waarde',eur(p.totaalEUR)):'')+
+    (p.rendementEngine!=null?rij('Rendement engine',p.rendementEngine+'%'):'')+
+    (p.rendementBuyHold!=null?rij('Rendement buy & hold',p.rendementBuyHold+'%'):'')+
+    rij('Gestart',new Date(p.gestartOp).toLocaleDateString('nl-NL')+' @ '+eur(p.startPrijs));
+  const log=$('logboek');
+  for(const r of d.logboek||[]){
+    const li=document.createElement('li');
+    li.innerHTML='<div class="kop"><b class="'+r.advies.actie+'">'+(r.advies.actie==='GEEN_ACTIE'?'GEEN ACTIE':r.advies.actie)+'</b><span>'+
+      new Date(r.tijd).toLocaleDateString('nl-NL')+'</span></div><p>'+r.advies.reden+'</p>';
+    log.appendChild(li);
+  }
+  if(!(d.logboek||[]).length)log.innerHTML='<li><p class="stil">Nog geen rondes in het logboek.</p></li>';
+}).catch(()=>{$('kVerslag').innerHTML='<p class="stil">Status kon niet geladen worden.</p>'});
+</script>
+</body>
+</html>
