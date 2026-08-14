@@ -215,6 +215,7 @@ export async function onRequestGet({ request, env }) {
       trackrecord: scoreCrypto(log),
       trackrecordMacro: scoreMacro(log),
       liquiditeit: liquiditeitBlok(reeks),
+      meetfouten: reeks && reeks.length ? (reeks[reeks.length - 1].fouten || null) : null,
       wijzigingSindsVorigeRun: w.leesbaar,
       wijzigingenDetail: w.detail,
     };

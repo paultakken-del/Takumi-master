@@ -92,7 +92,7 @@ async function metingMacro(env, fouten) {
   ]);
   // netto liquiditeit in miljarden dollar: Fed-balans (mln) / 1000 - reverse repo (mrd) - schatkistrekening (mrd)
   const netliq = [walcl, rrp, tga].every((x) => Number.isFinite(x))
-    ? Math.round(walcl / 1000 - rrp - tga)
+    ? Math.round(walcl / 1000 - rrp - tga / 1000)
     : null;
   return { spread, sahm, hy, cpi, unrate, dff, wti, vix, spx, netliq, nfci, dxy };
 }
@@ -162,19 +162,19 @@ async function metingCrypto(fouten) {
 
 async function metingEtf(fouten) {
   const uit = {};
-  await Promise.all(Object.entries(SECTOR_ETF).map(async ([naam, sym]) => {
-    // keten: Stooq -> Yahoo
-    let v = await veilig({}, sym, () => stooq(sym));
-    if (!Number.isFinite(v)) {
-      const y = sym.replace('.us', '').toUpperCase();
-      v = await veilig({}, y, async () => {
-        const j = await haalJson('https://query1.finance.yahoo.com/v8/finance/chart/' + y + '?range=1d&interval=1d');
-        return j.chart.result[0].meta.regularMarketPrice;
-      });
+  const naamVan = Object.fromEntries(Object.entries(SECTOR_ETF).map(([n, sym]) => [sym, n]));
+  const symbolen = Object.values(SECTOR_ETF);
+  // Stooq accepteert alle symbolen in een enkel verzoek
+  const rijen = await veilig(fouten, 'stooq', () =>
+    csv('https://stooq.com/q/l/?s=' + symbolen.join('+') + '&f=sd2t2ohlcv&h&e=csv'));
+  if (rijen) {
+    for (const r of rijen.slice(1)) {
+      const sym = (r[0] || '').trim().toLowerCase();
+      const v = parseFloat(r[6]);
+      if (naamVan[sym] && Number.isFinite(v)) uit[naamVan[sym]] = Math.round(v * 100) / 100;
     }
-    if (Number.isFinite(v)) uit[naam] = Math.round(v * 100) / 100;
-  }));
-  if (!Object.keys(uit).length) fouten.etf = 'stooq en yahoo beide onbereikbaar';
+  }
+  if (!Object.keys(uit).length) fouten.etf = 'stooq leverde niets';
   return uit;
 }
 
@@ -323,7 +323,8 @@ export async function onRequestPost({ request, env }) {
 
     if (stap === 'test') {
       const fouten = {};
-      const [macro, crypto, etf] = await Promise.all([metingMacro(env, fouten), metingCrypto(fouten), metingEtf(fouten)]);
+      const crypto = await metingCrypto(fouten);
+      const [macro, etf] = await Promise.all([metingMacro(env, fouten), metingEtf(fouten)]);
       return json({ macro, crypto, etfAantal: Object.keys(etf).length, fouten });
     }
 
@@ -334,7 +335,8 @@ export async function onRequestPost({ request, env }) {
         return json({ fout: 'meting is vers', laatste: vorige.t }, 429);
       }
       const fouten = {};
-      const [macro, crypto, etf] = await Promise.all([metingMacro(env, fouten), metingCrypto(fouten), metingEtf(fouten)]);
+      const crypto = await metingCrypto(fouten);
+      const [macro, etf] = await Promise.all([metingMacro(env, fouten), metingEtf(fouten)]);
       const m = { t: Date.now(), macro, crypto, etf };
       if (Object.keys(fouten).length) m.fouten = fouten;
       reeks.push(m);
