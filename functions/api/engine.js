@@ -17,6 +17,7 @@ const SMA_WEKEN = 30;
 const INZET_FRACTIE = 0.05;          // 5% van het vrije saldo per koop
 const RADAR_MAX_LEEFTIJD_DAGEN = 9;  // weging ouder dan dit = verlopen
 const RONDE_COOLDOWN_UREN = 20;      // dubbele cron-runs onschadelijk maken
+const STOP_FRACTIE = 0.15;           // dagwacht: verkoop bij 15% onder de instapprijs
 const LOG_MAX = 120;
 const DAG_MS = 86400000;
 const WEEK_MS = 7 * DAG_MS;
@@ -206,7 +207,47 @@ export async function onRequestPost({ request, env }) {
     return json({ status: 'gereset' });
   }
 
-  if (body.stap !== 'weekronde') return json({ fout: `Onbekende stap "${body.stap}". Beschikbaar: weekronde, reset.` }, 400);
+  if (body.stap === 'dagwacht') {
+    // De dagwacht beschermt alleen: hij koopt nooit, hij verkoopt uitsluitend
+    // als een open positie door de stop zakt. Zonder positie doet hij niets.
+    const portfolio = (await env.TAKUMI_USERS.get('engine:portfolio', 'json')) || { ...START };
+    if (!(portfolio.btc > 0) || !portfolio.instapPrijs) {
+      return json({ status: 'rust', melding: 'Geen open positie — niets te bewaken.' });
+    }
+    let prijs;
+    try { prijs = await haalPrijs(); } catch (fout) {
+      return json({ status: 'meetfout', melding: String(fout.message || fout) }, 502);
+    }
+    const stopPrijs = portfolio.instapPrijs * (1 - STOP_FRACTIE);
+    if (prijs > stopPrijs) {
+      return json({ status: 'rust', melding: `Positie gezond: koers \u20ac${Math.round(prijs).toLocaleString('nl-NL')} boven de stop \u20ac${Math.round(stopPrijs).toLocaleString('nl-NL')}.` });
+    }
+    const opbrengst = Math.round(portfolio.btc * prijs * 100) / 100;
+    const verslag = {
+      tijd: new Date().toISOString(),
+      meting: { prijs },
+      weging: null,
+      advies: {
+        actie: 'STOP',
+        reden: `Dagwacht: koers \u20ac${Math.round(prijs).toLocaleString('nl-NL')} zakte ${Math.round(STOP_FRACTIE * 100)}% of meer onder de instapprijs \u20ac${Math.round(portfolio.instapPrijs).toLocaleString('nl-NL')} — positie beschermend gesloten.`,
+        sloten: null,
+      },
+      order: { actie: 'VERKOOP', prijs, bedragEUR: opbrengst, btc: portfolio.btc },
+      portfolioNa: null,
+    };
+    portfolio.saldoEUR = Math.round((portfolio.saldoEUR + opbrengst) * 100) / 100;
+    portfolio.btc = 0;
+    portfolio.instapPrijs = null;
+    verslag.portfolioNa = { saldoEUR: portfolio.saldoEUR, btc: 0 };
+    const logboek = (await env.TAKUMI_USERS.get('engine:logboek', 'json')) || [];
+    logboek.unshift(verslag);
+    await env.TAKUMI_USERS.put('engine:logboek', JSON.stringify(logboek.slice(0, LOG_MAX)));
+    await env.TAKUMI_USERS.put('engine:laatste', JSON.stringify(verslag));
+    await env.TAKUMI_USERS.put('engine:portfolio', JSON.stringify(portfolio));
+    return json({ status: 'gestopt', verslag });
+  }
+
+  if (body.stap !== 'weekronde') return json({ fout: `Onbekende stap "${body.stap}". Beschikbaar: weekronde, dagwacht, reset.` }, 400);
 
   // Cooldown: een dubbel afgevuurde cron mag geen dubbele ronde worden.
   const vorige = await env.TAKUMI_USERS.get('engine:laatste', 'json');
@@ -232,6 +273,9 @@ export async function onRequestPost({ request, env }) {
     if (bedrag >= 10) {
       const btcGekocht = bedrag / prijs;
       portfolio.saldoEUR = Math.round((portfolio.saldoEUR - bedrag) * 100) / 100;
+      portfolio.instapPrijs = portfolio.btc > 0
+        ? (portfolio.instapPrijs * portfolio.btc + prijs * btcGekocht) / (portfolio.btc + btcGekocht)
+        : prijs;
       portfolio.btc += btcGekocht;
       order = { actie: 'KOOP', prijs, bedragEUR: bedrag, btc: btcGekocht };
     }
@@ -240,6 +284,7 @@ export async function onRequestPost({ request, env }) {
     order = { actie: 'VERKOOP', prijs, bedragEUR: opbrengst, btc: portfolio.btc };
     portfolio.saldoEUR = Math.round((portfolio.saldoEUR + opbrengst) * 100) / 100;
     portfolio.btc = 0;
+    portfolio.instapPrijs = null;
   }
 
   const verslag = {
