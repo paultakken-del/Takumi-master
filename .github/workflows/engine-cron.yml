@@ -1,13 +1,26 @@
 name: Takumi Engine weekronde
 on:
   schedule:
-    - cron: "53 5 * * 1"  # maandag ~07:53 NL — ná de weekclose (ma 00:00 UTC) en de zondagweging van de radar
+    - cron: "23 5 * * *"  # dagelijks ~07:23 NL: dagwacht (alleen bescherming, koopt nooit)
+    - cron: "53 5 * * 1"  # maandag ~07:53 NL: weekronde, na weekclose (ma 00:00 UTC) en zondagweging
   workflow_dispatch: {}
 jobs:
-  weekronde:
+  engine:
     runs-on: ubuntu-latest
     steps:
-      - name: Weekronde draaien
+      - name: Dagwacht (stop-bewaking)
+        if: github.event.schedule == '23 5 * * *'
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /tmp/uit.json -w "%{http_code}" \
+            -X POST https://takumi-master.com/api/engine \
+            -H "content-type: application/json" \
+            -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
+            -d '{"stap":"dagwacht"}')
+          echo "dagwacht HTTP $code"; cut -c1-600 /tmp/uit.json; echo
+          [ "$code" = "200" ]
+      - name: Weekronde
+        if: github.event.schedule == '53 5 * * 1' || github.event_name == 'workflow_dispatch'
         run: |
           set -euo pipefail
           code=$(curl -sS -o /tmp/uit.json -w "%{http_code}" \
@@ -15,6 +28,5 @@ jobs:
             -H "content-type: application/json" \
             -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
             -d '{"stap":"weekronde"}')
-          echo "weekronde HTTP $code"
-          cut -c1-800 /tmp/uit.json; echo
+          echo "weekronde HTTP $code"; cut -c1-800 /tmp/uit.json; echo
           [ "$code" = "200" ]
