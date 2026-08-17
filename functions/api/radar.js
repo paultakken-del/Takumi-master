@@ -367,16 +367,7 @@ export async function onRequestPost({ request, env }) {
       const fouten = {};
       const crypto = await metingCrypto(fouten);
       const [macro, etf] = await Promise.all([metingMacro(env, fouten), metingEtf(fouten)]);
-      // klimaat: hooguit eens per kwartaal, meegelift op de dagcron
-      let klimaatReeks = (await env.TAKUMI_USERS.get(KLIMAAT_KEY, 'json')) || [];
-      const kLaatste = klimaatReeks[klimaatReeks.length - 1];
-      if (!kLaatste || Date.now() - kLaatste.t > KLIMAAT_MS) {
-        const km = await metingKlimaat(env, fouten);
-        if (Object.values(km).some((v) => v !== null)) {
-          klimaatReeks.push({ t: Date.now(), ...km });
-          await env.TAKUMI_USERS.put(KLIMAAT_KEY, JSON.stringify(klimaatReeks.slice(-40)));
-        }
-      }
+
       return json({ macro, crypto, etfAantal: Object.keys(etf).length, fouten });
     }
 
@@ -389,21 +380,28 @@ export async function onRequestPost({ request, env }) {
       const fouten = {};
       const crypto = await metingCrypto(fouten);
       const [macro, etf] = await Promise.all([metingMacro(env, fouten), metingEtf(fouten)]);
-      // klimaat: hooguit eens per kwartaal, meegelift op de dagcron
-      let klimaatReeks = (await env.TAKUMI_USERS.get(KLIMAAT_KEY, 'json')) || [];
-      const kLaatste = klimaatReeks[klimaatReeks.length - 1];
-      if (!kLaatste || Date.now() - kLaatste.t > KLIMAAT_MS) {
-        const km = await metingKlimaat(env, fouten);
-        if (Object.values(km).some((v) => v !== null)) {
-          klimaatReeks.push({ t: Date.now(), ...km });
-          await env.TAKUMI_USERS.put(KLIMAAT_KEY, JSON.stringify(klimaatReeks.slice(-40)));
-        }
-      }
+
       const m = { t: Date.now(), macro, crypto, etf };
       if (Object.keys(fouten).length) m.fouten = fouten;
       reeks.push(m);
       await env.TAKUMI_USERS.put(REEKS_KEY, JSON.stringify(reeks.slice(-400)));
       return json({ ok: true, meting: m });
+    }
+
+    if (stap === 'klimaat') {
+      const reeks = (await env.TAKUMI_USERS.get(KLIMAAT_KEY, 'json')) || [];
+      const vorige = reeks[reeks.length - 1];
+      if (!sleutelOk && vorige && Date.now() - vorige.t < KLIMAAT_MS) {
+        return json({ ok: true, actie: 'vers', volgende: new Date(vorige.t + KLIMAAT_MS).toISOString().slice(0, 10) });
+      }
+      const fouten = {};
+      const km = await metingKlimaat(env, fouten);
+      if (!Object.values(km).some((v) => v !== null)) {
+        return json({ fout: 'klimaatmeting leverde niets', fouten }, 502);
+      }
+      reeks.push({ t: Date.now(), ...km, ...(Object.keys(fouten).length ? { fouten } : {}) });
+      await env.TAKUMI_USERS.put(KLIMAAT_KEY, JSON.stringify(reeks.slice(-40)));
+      return json({ ok: true, actie: 'gemeten', klimaat: km, fouten });
     }
 
     if (stap === 'signaal') {

@@ -22,6 +22,15 @@ jobs:
             -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
             -d '{"stap":"meting"}'
           cut -c1-400 /tmp/uit.json; echo
+      - name: Klimaatmeting (kwartaal; server beslist)
+        run: |
+          set -euo pipefail
+          curl -sS -o /tmp/k.json -w "klimaat HTTP %{http_code}\n" \
+            -X POST https://takumi-master.com/api/radar \
+            -H "content-type: application/json" \
+            -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
+            -d '{"stap":"klimaat"}' || true
+          cut -c1-300 /tmp/k.json; echo
       - name: Maandagsignalen
         if: github.event.schedule == '37 18 * * 0' || inputs.signalen
         run: |
