@@ -191,10 +191,13 @@ const ETF_START = {
   ],
 };
 
+const TIJDSLIMIET = 6000;
+const haalMetLimiet = (url) => fetch(url, { signal: AbortSignal.timeout(TIJDSLIMIET) });
+
 async function stooqKoers(symbolen) {
   for (const s of symbolen) {
     try {
-      const r = await fetch(`https://stooq.com/q/l/?s=${s}&f=sd2t2ohlcv&h&e=csv`);
+      const r = await haalMetLimiet(`https://stooq.com/q/l/?s=${s}&f=sd2t2ohlcv&h&e=csv`);
       if (!r.ok) continue;
       const regels = (await r.text()).trim().split('\n');
       if (regels.length < 2) continue;
@@ -208,7 +211,7 @@ async function stooqKoers(symbolen) {
 
 // 30-weeks trend van de wereldindex via Stooq-daghistorie (ISO-weken, alleen afgesloten).
 async function haalEtfTrend() {
-  const r = await fetch(`https://stooq.com/q/d/l/?s=${ETF_TREND_SYMBOOL}&i=d`);
+  const r = await haalMetLimiet(`https://stooq.com/q/d/l/?s=${ETF_TREND_SYMBOOL}&i=d`);
   if (!r.ok) throw new Error(`Stooq historie: HTTP ${r.status}`);
   const regels = (await r.text()).trim().split('\n').slice(1); // kop eraf
   const dagen = regels
@@ -266,13 +269,15 @@ async function leesMacro(env) {
 async function herwaardeerEtf(portfolio) {
   const fouten = [];
   let belegd = 0;
-  for (const p of portfolio.posities) {
-    let vers = null;
-    try { vers = await stooqKoers(p.symbolen); } catch (e) { vers = null; }
+  const versies = await Promise.all(portfolio.posities.map(async (p) => {
+    try { return await stooqKoers(p.symbolen); } catch { return null; }
+  }));
+  portfolio.posities.forEach((p, i) => {
+    const vers = versies[i];
     if (vers) { p.prijs = vers.koers; p.prijsVan = vers.datum; p.bron = vers.symbool; }
     else fouten.push(p.naam);          // laatste bekende koers blijft staan
     belegd += p.aantal * p.prijs;
-  }
+  });
   return { belegd: Math.round(belegd * 100) / 100, fouten };
 }
 
