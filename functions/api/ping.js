@@ -15,3 +15,5 @@ export async function onRequestGet({ env }) {
     radarSleutel: { aanwezig: !!k, lengte: k.length, begin: k.slice(0, 3), eind: k.slice(-3) },
   }), { headers: HEADERS });
 }
+
+// deploy-marker 1609
