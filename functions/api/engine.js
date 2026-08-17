@@ -194,6 +194,27 @@ const ETF_START = {
 const TIJDSLIMIET = 6000;
 const haalMetLimiet = (url) => fetch(url, { signal: AbortSignal.timeout(TIJDSLIMIET) });
 
+const YAHOO_ACHTERVOEGSEL = { '.nl': '.AS', '.de': '.DE', '.uk': '.L', '.us': '' };
+
+function naarYahoo(sym) {
+  const punt = sym.lastIndexOf('.');
+  if (punt === -1) return sym.toUpperCase();
+  const staart = sym.slice(punt);
+  if (!(staart in YAHOO_ACHTERVOEGSEL)) return null;
+  return sym.slice(0, punt).toUpperCase() + YAHOO_ACHTERVOEGSEL[staart];
+}
+
+async function yahooKoers(sym) {
+  const y = naarYahoo(sym);
+  if (!y) return null;
+  const r = await haalMetLimiet('https://query1.finance.yahoo.com/v8/finance/chart/' + y + '?range=5d&interval=1d');
+  if (!r.ok) return null;
+  const meta = (await r.json()).chart.result[0].meta;
+  const koers = meta.regularMarketPrice;
+  if (!Number.isFinite(koers) || koers <= 0) return null;
+  return { koers, symbool: y, datum: new Date(meta.regularMarketTime * 1000).toISOString().slice(0, 10) };
+}
+
 async function stooqKoers(symbolen) {
   for (const s of symbolen) {
     try {
@@ -206,7 +227,39 @@ async function stooqKoers(symbolen) {
       if (Number.isFinite(koers) && koers > 0) return { koers, symbool: s, datum: kolommen[1] };
     } catch { /* volgende kandidaat */ }
   }
+  for (const sym of symbolen) {
+    try {
+      const y = await yahooKoers(sym);
+      if (y) return y;
+    } catch { /* volgende kandidaat */ }
+  }
   return null;
+}
+
+// Terugval: weekcloses rechtstreeks bij Yahoo, veel lichter dan een daghistorie parsen.
+async function yahooTrend() {
+  const y = naarYahoo(ETF_TREND_SYMBOOL);
+  const r = await haalMetLimiet('https://query1.finance.yahoo.com/v8/finance/chart/' + y + '?range=2y&interval=1wk');
+  if (!r.ok) throw new Error(`Yahoo historie: HTTP ${r.status}`);
+  const res = (await r.json()).chart.result[0];
+  const tijden = res.timestamp || [];
+  const closes = (res.indicators.quote[0].close || []);
+  const weken = [];
+  for (let i = 0; i < tijden.length; i++) {
+    const c = closes[i];
+    if (Number.isFinite(c) && (tijden[i] * 1000 + WEEK_MS) <= Date.now()) weken.push({ t: tijden[i] * 1000, close: c });
+  }
+  if (weken.length < SMA_WEKEN) throw new Error('Yahoo: te weinig afgesloten weken voor de 30-weeks trend');
+  const venster = weken.slice(-SMA_WEKEN);
+  const sma = venster.reduce((som, w) => som + w.close, 0) / SMA_WEKEN;
+  const laatste = venster[venster.length - 1];
+  return {
+    symbool: y,
+    laatsteWeekclose: Math.round(laatste.close * 100) / 100,
+    weekVan: new Date(laatste.t).toISOString().slice(0, 10),
+    sma30: Math.round(sma * 100) / 100,
+    bovenTrend: laatste.close > sma,
+  };
 }
 
 // 30-weeks trend van de wereldindex via Stooq-daghistorie (ISO-weken, alleen afgesloten).
@@ -237,7 +290,7 @@ async function haalEtfTrend() {
   }
   const nu = Date.now();
   const afgesloten = [...weken.entries()].filter(([start]) => start + WEEK_MS <= nu).sort((a, b) => b[0] - a[0]);
-  if (afgesloten.length < SMA_WEKEN) throw new Error('Stooq: te weinig afgesloten weken voor de 30-weeks trend');
+  if (afgesloten.length < SMA_WEKEN) return yahooTrend();
   const venster = afgesloten.slice(0, SMA_WEKEN);
   const sma = venster.reduce((som, [, close]) => som + close, 0) / SMA_WEKEN;
   const [laatsteStart, laatsteClose] = venster[0];
