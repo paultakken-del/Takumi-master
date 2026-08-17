@@ -467,6 +467,26 @@ async function postRonde({ request, env }) {
       const h = await herwaardeerEtf(p);
       return json({ fase, belegd: h.belegd, mislukt: h.fouten });
     }
+    if (fase === 'bronnen') {
+      const UA = { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36', accept: '*/*' };
+      const test = async (naam, url, opties) => {
+        try {
+          const r = await fetch(url, { signal: AbortSignal.timeout(6000), ...(opties || {}) });
+          const t = (await r.text()).slice(0, 60).replace(/\s+/g, ' ');
+          return `${naam}=${r.status}:${t}`;
+        } catch (e) { return `${naam}=FOUT ${String(e.message || e).slice(0, 40)}`; }
+      };
+      const uit = await Promise.all([
+        test('y1', 'https://query1.finance.yahoo.com/v8/finance/chart/IWDA.AS?range=5d&interval=1d'),
+        test('y2ua', 'https://query2.finance.yahoo.com/v8/finance/chart/IWDA.AS?range=5d&interval=1d', { headers: UA }),
+        test('stooq-nl', 'https://stooq.com/q/l/?s=iwda.nl&f=sd2t2ohlcv&h&e=csv', { headers: UA }),
+        test('stooq-uk', 'https://stooq.com/q/l/?s=iwda.uk&f=sd2t2ohlcv&h&e=csv', { headers: UA }),
+        test('stooq-de', 'https://stooq.com/q/l/?s=iwda.de&f=sd2t2ohlcv&h&e=csv', { headers: UA }),
+        test('cc-dom', 'https://min-api.cryptocompare.com/data/top/mktcapfull?limit=10&tsym=USD'),
+      ]);
+      return json({ fase, uit });
+    }
+
     if (fase === 'macro') {
       const m = await leesMacro(env);
       return json({ fase, status: m.status, melding: m.melding || null });
