@@ -8,6 +8,13 @@ jobs:
   engine:
     runs-on: ubuntu-latest
     steps:
+      - name: Sleutelcontrole
+        run: |
+          L=${#RADAR_KEY}
+          echo "::error title=sleutel::RADAR_KEY lengte $L"
+          [ "$L" -gt 0 ]
+        env:
+          RADAR_KEY: ${{ secrets.RADAR_KEY }}
       - name: Dagwacht (stop-bewaking BTC)
         if: github.event.schedule == '23 5 * * *'
         run: |
@@ -18,7 +25,7 @@ jobs:
             -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
             -d '{"stap":"dagwacht"}')
           echo "dagwacht HTTP $code"; cut -c1-600 /tmp/uit.json; echo
-          [ "$code" = "200" ]
+          if [ "$code" != "200" ]; then echo "::error title=dagwacht::HTTP $code $(cut -c1-300 /tmp/uit.json)"; exit 1; fi
       - name: Weekronde BTC
         if: github.event.schedule == '53 5 * * 1' || github.event_name == 'workflow_dispatch'
         run: |
@@ -29,7 +36,7 @@ jobs:
             -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
             -d '{"stap":"weekronde"}')
           echo "weekronde HTTP $code"; cut -c1-800 /tmp/uit.json; echo
-          [ "$code" = "200" ]
+          if [ "$code" != "200" ]; then echo "::error title=weekronde::HTTP $code $(cut -c1-300 /tmp/uit.json)"; exit 1; fi
       - name: Weekronde ETF
         if: github.event.schedule == '53 5 * * 1' || github.event_name == 'workflow_dispatch'
         run: |
@@ -40,4 +47,4 @@ jobs:
             -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
             -d '{"stap":"weekronde-etf"}')
           echo "weekronde-etf HTTP $code"; cut -c1-800 /tmp/uit.json; echo
-          [ "$code" = "200" ]
+          if [ "$code" != "200" ]; then echo "::error title=weekronde-etf::HTTP $code $(cut -c1-300 /tmp/uit.json)"; exit 1; fi
