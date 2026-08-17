@@ -162,19 +162,22 @@ async function metingCrypto(fouten) {
 
 async function metingEtf(fouten) {
   const uit = {};
-  const naamVan = Object.fromEntries(Object.entries(SECTOR_ETF).map(([n, sym]) => [sym, n]));
-  const symbolen = Object.values(SECTOR_ETF);
-  // Stooq accepteert alle symbolen in een enkel verzoek
-  const rijen = await veilig(fouten, 'stooq', () =>
-    csv('https://stooq.com/q/l/?s=' + symbolen.join('+') + '&f=sd2t2ohlcv&h&e=csv'));
-  if (rijen) {
-    for (const r of rijen.slice(1)) {
-      const sym = (r[0] || '').trim().toLowerCase();
-      const v = parseFloat(r[6]);
-      if (naamVan[sym] && Number.isFinite(v)) uit[naamVan[sym]] = Math.round(v * 100) / 100;
+  const mislukt = [];
+  // Losse aanroepen: Stooq's meervoudige vorm gaf 404. Crypto meet als eerste,
+  // dus er is ruimte binnen de subrequest-limiet.
+  await Promise.all(Object.entries(SECTOR_ETF).map(async ([naam, sym]) => {
+    let v = await veilig({}, sym, () => stooq(sym));
+    if (!Number.isFinite(v)) {
+      const y = sym.replace('.us', '').toUpperCase();
+      v = await veilig({}, y, async () => {
+        const j = await haalJson('https://query1.finance.yahoo.com/v8/finance/chart/' + y + '?range=1d&interval=1d');
+        return j.chart.result[0].meta.regularMarketPrice;
+      });
     }
-  }
-  if (!Object.keys(uit).length) fouten.etf = 'stooq leverde niets';
+    if (Number.isFinite(v)) uit[naam] = Math.round(v * 100) / 100;
+    else mislukt.push(sym);
+  }));
+  if (mislukt.length) fouten.etf = 'geen koers voor: ' + mislukt.join(', ');
   return uit;
 }
 
