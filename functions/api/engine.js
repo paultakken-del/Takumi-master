@@ -211,9 +211,14 @@ async function stooqKoers(symbolen) {
 
 // 30-weeks trend van de wereldindex via Stooq-daghistorie (ISO-weken, alleen afgesloten).
 async function haalEtfTrend() {
-  const r = await haalMetLimiet(`https://stooq.com/q/d/l/?s=${ETF_TREND_SYMBOOL}&i=d`);
+  // Alleen het benodigde venster ophalen en parseren: de volledige historie kost te veel rekentijd.
+  const ymd = (d) => new Date(d).toISOString().slice(0, 10).replace(/-/g, '');
+  const vanaf = ymd(Date.now() - 400 * DAG_MS);
+  const tot = ymd(Date.now());
+  const r = await haalMetLimiet(`https://stooq.com/q/d/l/?s=${ETF_TREND_SYMBOOL}&i=d&d1=${vanaf}&d2=${tot}`);
   if (!r.ok) throw new Error(`Stooq historie: HTTP ${r.status}`);
-  const regels = (await r.text()).trim().split('\n').slice(1); // kop eraf
+  const alleRegels = (await r.text()).trim().split('\n').slice(1); // kop eraf
+  const regels = alleRegels.slice(-(SMA_WEKEN * 7 + 60));          // parseer alleen de staart
   const dagen = regels
     .map((regel) => {
       const k = regel.split(',');
