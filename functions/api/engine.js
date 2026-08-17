@@ -481,16 +481,18 @@ async function postRonde({ request, env }) {
     }
 
     const portfolio = (await env.TAKUMI_USERS.get('engine:etf:portfolio', 'json')) || structuredClone(ETF_START);
-    let trend;
-    try { trend = await haalEtfTrend(); } catch (fout) {
-      return json({ status: 'meetfout', melding: String(fout.message || fout) }, 502);
-    }
+    // Geen koershistorie = marktslot onbepaald. Dat is geen storing maar een reden
+    // om niet te handelen: hetzelfde principe als een ontbrekende radarweging.
+    let trend = null, trendFout = null;
+    try { trend = await haalEtfTrend(); } catch (fout) { trendFout = String(fout.message || fout); }
     const { belegd, fouten } = await herwaardeerEtf(portfolio);
     const macro = await leesMacro(env);
 
     // Sloten op macroniveau: groeikansen (vroeg+midden) tegenover krimpkansen (laat+contractie).
     let advies;
-    if (macro.status !== 'ok') {
+    if (!trend) {
+      advies = { actie: 'GEEN_ACTIE', reden: `Marktslot onbepaald: geen weekhistorie beschikbaar (${trendFout}). De envelop schakelt niet zonder meting.`, sloten: null };
+    } else if (macro.status !== 'ok') {
       advies = { actie: 'GEEN_ACTIE', reden: `Macroweging niet bruikbaar (${macro.status}): ${macro.melding} De envelop schakelt niet zonder eerlijke weging.`, sloten: null };
     } else {
       const v = macro.verdeling;
@@ -536,7 +538,7 @@ async function postRonde({ request, env }) {
     const verslag = {
       tijd: new Date().toISOString(),
       envelop: 'etf',
-      meting: { trend, belegd: Math.round(belegdNa * 100) / 100, cashEUR: portfolio.cashEUR, herwaarderingFouten: fouten },
+      meting: { trend, trendFout, belegd: Math.round(belegdNa * 100) / 100, cashEUR: portfolio.cashEUR, herwaarderingFouten: fouten },
       weging: macro,
       advies,
       order,
