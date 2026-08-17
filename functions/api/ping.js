@@ -8,6 +8,10 @@ const HEADERS = {
 export async function onRequestOptions() {
   return new Response(null, { headers: HEADERS });
 }
-export async function onRequestGet() {
-  return new Response(JSON.stringify({ ok: true, versie: '1.1', tijd: new Date().toISOString() }), { headers: HEADERS });
+export async function onRequestGet({ env }) {
+  const k = env.RADAR_KEY || '';
+  return new Response(JSON.stringify({
+    ok: true, versie: '1.1', tijd: new Date().toISOString(),
+    radarSleutel: { aanwezig: !!k, lengte: k.length, begin: k.slice(0, 3), eind: k.slice(-3) },
+  }), { headers: HEADERS });
 }
