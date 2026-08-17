@@ -48,3 +48,14 @@ jobs:
             -d '{"stap":"weekronde-etf"}')
           echo "weekronde-etf HTTP $code"; cut -c1-800 /tmp/uit.json; echo
           if [ "$code" != "200" ]; then echo "::error title=weekronde-etf::HTTP $code $(cut -c1-300 /tmp/uit.json)"; exit 1; fi
+      - name: Koopladder
+        if: github.event.schedule == '53 5 * * 1' || github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /tmp/uit.json -w "%{http_code}" \
+            -X POST https://takumi-master.com/api/engine \
+            -H "content-type: application/json" \
+            -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
+            -d '{"stap":"koopladder"}')
+          echo "koopladder HTTP $code"; cut -c1-800 /tmp/uit.json; echo
+          if [ "$code" != "200" ]; then echo "::error title=koopladder::HTTP $code $(cut -c1-300 /tmp/uit.json)"; exit 1; fi

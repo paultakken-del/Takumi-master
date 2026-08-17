@@ -340,6 +340,34 @@ async function herwaardeerEtf(portfolio) {
   return { belegd: Math.round(belegd * 100) / 100, fouten };
 }
 
+// ------------------------------------------------- koopladder (nieuw geld, papier)
+// Drie publieke standaardmixen van gerenommeerde beleggers, EU-uitvoering (UCITS).
+// Bronvermelding in het verslag; de verdeling blijft een persoonlijke keuze.
+const LADDER_MIXEN = {
+  // Bogleheads-drie-fondsen (Bogle): wereld + opkomend + wereldwijde obligaties
+  bogleheads: [
+    { naam: 'iShares Core MSCI World', symbolen: ['iwda.nl'], deel: 0.60 },
+    { naam: 'iShares Core MSCI EM IMI', symbolen: ['emim.nl'], deel: 0.20 },
+    { naam: 'iShares Global Aggregate Bond EURH', symbolen: ['aggh.nl'], deel: 0.20 },
+  ],
+  // Buffett 90/10 (instructie voor zijn nalatenschap): S&P 500 + kortlopend staatspapier
+  buffett9010: [
+    { naam: 'iShares Core S&P 500', symbolen: ['cspx.nl', 'sxr8.de'], deel: 0.90 },
+    { naam: 'iShares USD Treasury 0-1yr', symbolen: ['ib01.uk'], deel: 0.10 },
+  ],
+  // Dalio All Weather: aandelen + lange en middellange staatsobligaties + goud + grondstoffen
+  allweather: [
+    { naam: 'iShares Core MSCI World', symbolen: ['iwda.nl'], deel: 0.30 },
+    { naam: 'iShares USD Treasury 20+yr', symbolen: ['dtla.uk', 'is04.de'], deel: 0.40 },
+    { naam: 'iShares USD Treasury 7-10yr', symbolen: ['ibtm.uk'], deel: 0.15 },
+    { naam: 'iShares Physical Gold', symbolen: ['igln.uk', 'ppfb.de'], deel: 0.075 },
+    { naam: 'Invesco Bloomberg Commodity', symbolen: ['cmod.uk'], deel: 0.075 },
+  ],
+};
+const LADDER_MIX_KEUZE = 'bogleheads'; // wissel hier; Pauls eigen mix kan als vierde sjabloon
+const LADDER_START = { budget: 10000, tranches: 4, gedaan: 0, besteed: 0, mix: LADDER_MIX_KEUZE, posities: {}, gestartOp: null };
+const LADDER_COOLDOWN_DAGEN = 5;
+
 // ---------------------------------------------------------------- GET
 
 export async function onRequestGet({ env }) {
@@ -352,6 +380,8 @@ export async function onRequestGet({ env }) {
     env.TAKUMI_USERS.get('engine:etf:laatste', 'json'),
     env.TAKUMI_USERS.get('engine:etf:logboek', 'json'),
   ]);
+  const ladder = await env.TAKUMI_USERS.get('engine:ladder:staat', 'json');
+  const ladderLog = await env.TAKUMI_USERS.get('engine:ladder:logboek', 'json');
   let prijs = null;
   try { prijs = await haalPrijs(); } catch { /* status blijft leesbaar zonder live prijs */ }
 
@@ -493,6 +523,59 @@ async function postRonde({ request, env }) {
       return json({ fase, status: m.status, melding: m.melding || null });
     }
     return json({ fout: 'fase moet kv, trend, herwaardeer of macro zijn' }, 400);
+  }
+
+  // Koopladder: per open koopsignaal een tranche nieuw (fictief) geld de markt in.
+  if (body.stap === 'koopladder') {
+    const staat = (await env.TAKUMI_USERS.get('engine:ladder:staat', 'json')) || structuredClone(LADDER_START);
+    const logboek = (await env.TAKUMI_USERS.get('engine:ladder:logboek', 'json')) || [];
+    const klaarMet = async (item, status = 200) => {
+      logboek.push(item);
+      await env.TAKUMI_USERS.put('engine:ladder:logboek', JSON.stringify(logboek.slice(-40)));
+      await env.TAKUMI_USERS.put('engine:ladder:staat', JSON.stringify(staat));
+      return json(item, status);
+    };
+    const tijd = new Date().toISOString();
+    if (staat.gedaan >= staat.tranches) {
+      return json({ tijd, stap: 'koopladder', actie: 'KLAAR', melding: `Alle ${staat.tranches} tranches zijn belegd (\u20ac${staat.besteed}).`, staat });
+    }
+    const laatste = [...logboek].reverse().find((l) => l.actie === 'KOOP');
+    if (!body.forceer && laatste && Date.now() - new Date(laatste.tijd).getTime() < LADDER_COOLDOWN_DAGEN * 24 * 3600000) {
+      return json({ tijd, stap: 'koopladder', actie: 'OVERGESLAGEN', melding: 'Vorige tranche is minder dan vijf dagen oud.' });
+    }
+    let trend = null, trendFout = null;
+    try { trend = await haalEtfTrend(); } catch (f) { trendFout = String(f.message || f); }
+    const macro = await leesMacro(env);
+    if (!trend || macro.status !== 'ok') {
+      return klaarMet({ tijd, stap: 'koopladder', actie: 'GEEN_ACTIE', reden: !trend ? `Marktslot onbepaald (${trendFout}); zonder meting geen tranche.` : `Macroweging niet bruikbaar (${macro.status}); zonder eerlijke weging geen tranche.` });
+    }
+    const v = macro.verdeling;
+    const groei = (v.vroeg || 0) + (v.midden || 0);
+    const krimp = (v.laat || 0) + (v.contractie || 0);
+    const sloten = { seizoen: groei > krimp, markt: trend.bovenTrend };
+    if (!sloten.seizoen || !sloten.markt) {
+      return klaarMet({ tijd, stap: 'koopladder', actie: 'GEEN_ACTIE', reden: `Koopsloten niet beide open: seizoen ${sloten.seizoen ? 'open' : `dicht (laat+contractie ${krimp}% \u2265 vroeg+midden ${groei}%)`}, markt ${sloten.markt ? 'open' : 'dicht (weekclose onder 30-weeks trend)'}. Tranche ${staat.gedaan + 1}/${staat.tranches} wacht.`, sloten });
+    }
+    const bedrag = Math.round((staat.budget / staat.tranches) * 100) / 100;
+    const mix = LADDER_MIXEN[staat.mix];
+    const orders = [];
+    for (const regel of mix) {
+      let vers = null;
+      try { vers = await stooqKoers(regel.symbolen); } catch { vers = null; }
+      if (!vers) return klaarMet({ tijd, stap: 'koopladder', actie: 'GEEN_ACTIE', reden: `Geen koers voor ${regel.naam}; geen halve tranches.` });
+      const inleg = Math.round(bedrag * regel.deel * 100) / 100;
+      const aantal = Math.round((inleg / vers.koers) * 10000) / 10000;
+      orders.push({ naam: regel.naam, symbool: vers.symbool, koers: vers.koers, inleg, aantal });
+      const p = staat.posities[regel.naam] || { aantal: 0, ingelegd: 0 };
+      p.aantal = Math.round((p.aantal + aantal) * 10000) / 10000;
+      p.ingelegd = Math.round((p.ingelegd + inleg) * 100) / 100;
+      p.laatsteKoers = vers.koers;
+      staat.posities[regel.naam] = p;
+    }
+    staat.gedaan += 1;
+    staat.besteed = Math.round((staat.besteed + bedrag) * 100) / 100;
+    if (!staat.gestartOp) staat.gestartOp = tijd;
+    return klaarMet({ tijd, stap: 'koopladder', actie: 'KOOP', melding: `Tranche ${staat.gedaan}/${staat.tranches}: \u20ac${bedrag} volgens mix "${staat.mix}" (papier). Beide koopsloten open: vroeg+midden ${groei}% > laat+contractie ${krimp}%, weekclose boven 30-weeks trend.`, orders, sloten, staat });
   }
 
   if (body.stap === 'weekronde-etf') {
