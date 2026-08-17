@@ -7,7 +7,7 @@ jobs:
     steps:
       - name: ETF-fasediagnose
         run: |
-          for fase in bronnen; do
+          for fase in trend herwaardeer; do
             code=$(curl -sS -o /tmp/d.json -w "%{http_code}" -X POST https://takumi-master.com/api/engine \
               -H "content-type: application/json" -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
               -d "{\"stap\":\"etf-diagnose\",\"fase\":\"$fase\"}")

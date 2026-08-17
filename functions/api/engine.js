@@ -192,7 +192,8 @@ const ETF_START = {
 };
 
 const TIJDSLIMIET = 6000;
-const haalMetLimiet = (url) => fetch(url, { signal: AbortSignal.timeout(TIJDSLIMIET) });
+const BROWSER_KOP = { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36', accept: 'application/json,*/*' };
+const haalMetLimiet = (url) => fetch(url, { signal: AbortSignal.timeout(TIJDSLIMIET), headers: BROWSER_KOP });
 
 const YAHOO_ACHTERVOEGSEL = { '.nl': '.AS', '.de': '.DE', '.uk': '.L', '.us': '' };
 
@@ -207,7 +208,7 @@ function naarYahoo(sym) {
 async function yahooKoers(sym) {
   const y = naarYahoo(sym);
   if (!y) return null;
-  const r = await haalMetLimiet('https://query1.finance.yahoo.com/v8/finance/chart/' + y + '?range=5d&interval=1d');
+  const r = await haalMetLimiet('https://query2.finance.yahoo.com/v8/finance/chart/' + y + '?range=5d&interval=1d');
   if (!r.ok) return null;
   const meta = (await r.json()).chart.result[0].meta;
   const koers = meta.regularMarketPrice;
@@ -239,7 +240,7 @@ async function stooqKoers(symbolen) {
 // Terugval: weekcloses rechtstreeks bij Yahoo, veel lichter dan een daghistorie parsen.
 async function yahooTrend() {
   const y = naarYahoo(ETF_TREND_SYMBOOL);
-  const r = await haalMetLimiet('https://query1.finance.yahoo.com/v8/finance/chart/' + y + '?range=2y&interval=1wk');
+  const r = await haalMetLimiet('https://query2.finance.yahoo.com/v8/finance/chart/' + y + '?range=2y&interval=1wk');
   if (!r.ok) throw new Error(`Yahoo historie: HTTP ${r.status}`);
   const res = (await r.json()).chart.result[0];
   const tijden = res.timestamp || [];

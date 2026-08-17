@@ -21,7 +21,7 @@ const METING_MS = 30 * 60 * 1000;
 
 /* ---------------- databronnen (deterministisch) ---------------- */
 
-const UA = 'Mozilla/5.0 (X11; Linux x86_64) TakumiRadar/2.1';
+const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36';
 
 async function csv(url) {
   const r = await fetch(url, { headers: { 'user-agent': UA, accept: 'text/csv,*/*' } });
@@ -148,6 +148,17 @@ async function metingCrypto(fouten) {
       return Math.round(d.bitcoin_dominance_percentage * 10) / 10;
     });
   }
+  if (dominantie === null) {
+    // derde bron: aandeel van BTC in de top-100 marktkapitalisatie
+    dominantie = await veilig(fouten, 'cryptocompare-dom', async () => {
+      const j = await haalJson('https://min-api.cryptocompare.com/data/top/mktcapfull?limit=100&tsym=USD');
+      const caps = (j.Data || []).map((c) => (c.RAW && c.RAW.USD ? c.RAW.USD.MKTCAP : 0));
+      const totaal = caps.reduce((a, b) => a + b, 0);
+      const btcCap = ((j.Data || []).find((c) => c.CoinInfo && c.CoinInfo.Name === 'BTC') || {}).RAW?.USD?.MKTCAP || 0;
+      if (!totaal || !btcCap) throw new Error('geen marktkapitalisatie');
+      return Math.round((btcCap / totaal) * 1000) / 10;
+    });
+  }
   const fng = await veilig(fouten, 'fng', async () =>
     parseInt((await haalJson('https://api.alternative.me/fng/')).data[0].value, 10));
   const stables = await stablecoins(fouten);
@@ -170,7 +181,7 @@ async function metingEtf(fouten) {
     if (!Number.isFinite(v)) {
       const y = sym.replace('.us', '').toUpperCase();
       v = await veilig({}, y, async () => {
-        const j = await haalJson('https://query1.finance.yahoo.com/v8/finance/chart/' + y + '?range=1d&interval=1d');
+        const j = await haalJson('https://query2.finance.yahoo.com/v8/finance/chart/' + y + '?range=5d&interval=1d');
         return j.chart.result[0].meta.regularMarketPrice;
       });
     }
