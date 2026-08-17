@@ -5,6 +5,14 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
+      - name: ETF-fasediagnose
+        run: |
+          for fase in kv trend herwaardeer macro; do
+            code=$(curl -sS -o /tmp/d.json -w "%{http_code}" -X POST https://takumi-master.com/api/engine \
+              -H "content-type: application/json" -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
+              -d "{\"stap\":\"etf-diagnose\",\"fase\":\"$fase\"}")
+            echo "::error title=fase-$fase::HTTP $code $(cut -c1-200 /tmp/d.json)"
+          done
       - name: Radar en engine uitlezen
         run: |
           curl -sS https://takumi-master.com/api/radar -o /tmp/r.json || true

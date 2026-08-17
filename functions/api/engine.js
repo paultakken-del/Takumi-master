@@ -398,6 +398,29 @@ async function postRonde({ request, env }) {
     return json({ status: 'gestopt', verslag });
   }
 
+  // Diagnose: elke fase apart, zodat een storing te lokaliseren is.
+  if (body.stap === 'etf-diagnose') {
+    const fase = body.fase;
+    if (fase === 'kv') {
+      const p = await env.TAKUMI_USERS.get('engine:etf:portfolio', 'json');
+      return json({ fase, posities: p ? p.posities.length : 'startwaarde', stand: p ? p.stand : null });
+    }
+    if (fase === 'trend') {
+      const t = await haalEtfTrend();
+      return json({ fase, sma30: t.sma30, weekclose: t.laatsteWeekclose, bovenTrend: t.bovenTrend });
+    }
+    if (fase === 'herwaardeer') {
+      const p = (await env.TAKUMI_USERS.get('engine:etf:portfolio', 'json')) || structuredClone(ETF_START);
+      const h = await herwaardeerEtf(p);
+      return json({ fase, belegd: h.belegd, mislukt: h.fouten });
+    }
+    if (fase === 'macro') {
+      const m = await leesMacro(env);
+      return json({ fase, status: m.status, melding: m.melding || null });
+    }
+    return json({ fout: 'fase moet kv, trend, herwaardeer of macro zijn' }, 400);
+  }
+
   if (body.stap === 'weekronde-etf') {
     const vorigeEtf = await env.TAKUMI_USERS.get('engine:etf:laatste', 'json');
     if (!body.forceer && vorigeEtf && Date.now() - new Date(vorigeEtf.tijd).getTime() < RONDE_COOLDOWN_UREN * 3600000) {
