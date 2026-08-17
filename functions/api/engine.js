@@ -267,9 +267,10 @@ async function herwaardeerEtf(portfolio) {
   const fouten = [];
   let belegd = 0;
   for (const p of portfolio.posities) {
-    const vers = await stooqKoers(p.symbolen);
+    let vers = null;
+    try { vers = await stooqKoers(p.symbolen); } catch (e) { vers = null; }
     if (vers) { p.prijs = vers.koers; p.prijsVan = vers.datum; p.bron = vers.symbool; }
-    else fouten.push(p.naam);
+    else fouten.push(p.naam);          // laatste bekende koers blijft staan
     belegd += p.aantal * p.prijs;
   }
   return { belegd: Math.round(belegd * 100) / 100, fouten };
@@ -325,7 +326,15 @@ export async function onRequestGet({ env }) {
 
 // ---------------------------------------------------------------- POST
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost(ctx) {
+  try {
+    return await postRonde(ctx);
+  } catch (e) {
+    return json({ fout: 'serverfout: ' + String((e && e.message) || e) }, 500);
+  }
+}
+
+async function postRonde({ request, env }) {
   if (!env.TAKUMI_USERS) return json({ fout: 'KV niet geconfigureerd' }, 500);
   const sleutelOk = env.RADAR_KEY && request.headers.get('x-radar-key') === env.RADAR_KEY;
   if (!sleutelOk) return json({ fout: 'x-radar-key ontbreekt of is ongeldig.' }, 401);
