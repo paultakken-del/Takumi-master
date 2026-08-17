@@ -29,6 +29,7 @@ jobs:
           print(f"::error title=sleutels::FRED={s.get('fred')} RADAR={s.get('radar')}")
           print(f"::error title=crypto::btc={c.get('btc')} eth={c.get('eth')} dom={c.get('dominantie')} fng={c.get('fng')} stables={c.get('stables')}")
           print(f"::error title=liquiditeit::netliq={mac.get('netliq')} nfci={mac.get('nfci')} dxy={mac.get('dxy')} etf={m.get('etfAantal')}")
+          print(f"::error title=klimaat::{json.dumps(d.get('klimaat'))[:220]}")
           print(f"::error title=meetfouten::{json.dumps(m.get('fouten'))[:250]}")
           PY
           curl -sS https://takumi-master.com/api/ping -o /tmp/p.json || true

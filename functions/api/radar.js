@@ -192,6 +192,32 @@ async function metingEtf(fouten) {
   return uit;
 }
 
+/* ---------------- klimaat: traag, kwartaalcadans ----------------
+   Meet het regime waarbinnen de seizoenen draaien. Wordt bewust NIET gewogen;
+   vanaf de oktoberreview kleurt het de analogieen en bandbreedtes. */
+const KLIMAAT_KEY = 'radar:klimaat';
+const KLIMAAT_MS = 80 * 24 * 3600 * 1000; // ~kwartaal
+
+async function metingKlimaat(env, fouten) {
+  const f = (naam, fn) => veilig(fouten, 'klimaat-' + naam, fn);
+  const [schuldBbp, reeleRente10j, rente, arbeidsGroei] = await Promise.all([
+    f('schuld', async () => laatsteVan(await fred(env, 'GFDEGDQ188S', 3)).v),
+    f('reeleRente', async () => laatsteVan(await fred(env, 'REAINTRATREARAT10Y', 3)).v),
+    f('rente10j', async () => {
+      const r = await fred(env, 'GS10', 10); // maandreeks: licht genoeg om 10 jaar te middelen
+      const gem = Math.round((r.reduce((a, b) => a + b.v, 0) / r.length) * 100) / 100;
+      return { nu: laatsteVan(r).v, gem10j: gem };
+    }),
+    f('arbeid', async () => yoy(await fred(env, 'CLF16OV', 3))),
+  ]);
+  return {
+    schuldBbp, reeleRente10j,
+    rente10j: rente ? rente.nu : null,
+    rente10jGem: rente ? rente.gem10j : null,
+    arbeidsGroei,
+  };
+}
+
 /* ---------------- reeks en delta's ---------------- */
 
 const num = (x) => (Number.isFinite(x) ? x : null);
@@ -322,7 +348,9 @@ export async function onRequestGet({ env }) {
     env.TAKUMI_USERS.get(REEKS_KEY, 'json'),
   ]);
   const m = (reeks || [])[reeks ? reeks.length - 1 : 0] || null;
+  const klimaat = await env.TAKUMI_USERS.get(KLIMAAT_KEY, 'json');
   return json({ macro, crypto, log: log || [],
+    klimaat: klimaat && klimaat.length ? klimaat[klimaat.length - 1] : null,
     meting: m ? { t: m.t, macro: m.macro, crypto: m.crypto, etfAantal: Object.keys(m.etf || {}).length,
       fouten: m.fouten || null, reeksLengte: (reeks || []).length,
       sleutels: { fred: !!env.FRED_KEY, radar: !!env.RADAR_KEY } } : null });
@@ -339,6 +367,16 @@ export async function onRequestPost({ request, env }) {
       const fouten = {};
       const crypto = await metingCrypto(fouten);
       const [macro, etf] = await Promise.all([metingMacro(env, fouten), metingEtf(fouten)]);
+      // klimaat: hooguit eens per kwartaal, meegelift op de dagcron
+      let klimaatReeks = (await env.TAKUMI_USERS.get(KLIMAAT_KEY, 'json')) || [];
+      const kLaatste = klimaatReeks[klimaatReeks.length - 1];
+      if (!kLaatste || Date.now() - kLaatste.t > KLIMAAT_MS) {
+        const km = await metingKlimaat(env, fouten);
+        if (Object.values(km).some((v) => v !== null)) {
+          klimaatReeks.push({ t: Date.now(), ...km });
+          await env.TAKUMI_USERS.put(KLIMAAT_KEY, JSON.stringify(klimaatReeks.slice(-40)));
+        }
+      }
       return json({ macro, crypto, etfAantal: Object.keys(etf).length, fouten });
     }
 
@@ -351,6 +389,16 @@ export async function onRequestPost({ request, env }) {
       const fouten = {};
       const crypto = await metingCrypto(fouten);
       const [macro, etf] = await Promise.all([metingMacro(env, fouten), metingEtf(fouten)]);
+      // klimaat: hooguit eens per kwartaal, meegelift op de dagcron
+      let klimaatReeks = (await env.TAKUMI_USERS.get(KLIMAAT_KEY, 'json')) || [];
+      const kLaatste = klimaatReeks[klimaatReeks.length - 1];
+      if (!kLaatste || Date.now() - kLaatste.t > KLIMAAT_MS) {
+        const km = await metingKlimaat(env, fouten);
+        if (Object.values(km).some((v) => v !== null)) {
+          klimaatReeks.push({ t: Date.now(), ...km });
+          await env.TAKUMI_USERS.put(KLIMAAT_KEY, JSON.stringify(klimaatReeks.slice(-40)));
+        }
+      }
       const m = { t: Date.now(), macro, crypto, etf };
       if (Object.keys(fouten).length) m.fouten = fouten;
       reeks.push(m);

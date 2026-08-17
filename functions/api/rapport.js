@@ -85,6 +85,28 @@ function liquiditeitBlok(reeks) {
   };
 }
 
+function klimaatBlok(kl) {
+  if (!kl || !kl.length) return null;
+  const nu = kl[kl.length - 1];
+  const vorig = kl.length >= 5 ? kl[kl.length - 5] : null; // ~een jaar terug
+  const veld = (naam) => {
+    const w = nu[naam];
+    if (!Number.isFinite(w)) return null;
+    const v = vorig ? vorig[naam] : null;
+    return { waarde: Math.round(w * 100) / 100, deltaJaar: Number.isFinite(v) ? Math.round((w - v) * 100) / 100 : null };
+  };
+  return {
+    gemetenOp: new Date(nu.t).toISOString(),
+    cadans: 'kwartaal',
+    staatsschuldPctBbp: veld('schuldBbp'),
+    reeleRente10j: veld('reeleRente10j'),
+    rente10j: veld('rente10j'),
+    rente10jGemiddelde: nu.rente10jGem ?? null,
+    beroepsbevolkingGroeiPct: veld('arbeidsGroei'),
+    toelichting: 'Klimaat = het regime waarbinnen de cyclus draait (schuld, reele rente, renteniveau vs tienjaarsgemiddelde, demografie). Gemeten maar bewust niet gewogen; vanaf de kwartaalreview van oktober 2026 kleurt dit de historische analogieen en bandbreedtes, nooit de weekkansen zelf.',
+  };
+}
+
 function signaalBlok(x) {
   if (!x) return null;
   const s = x.sig;
@@ -174,6 +196,25 @@ function alsTekst(rapport, md) {
       r.push(...regels);
     }
   }
+  const KL = rapport.klimaat;
+  if (KL) {
+    const kw = (naam, x, eenheid) => {
+      if (!x) return null;
+      const d = x.deltaJaar === null ? '' : ' (' + (x.deltaJaar > 0 ? '+' : '') + x.deltaJaar + ' ov. jaar)';
+      return '- ' + naam + ': ' + x.waarde + (eenheid || '') + d;
+    };
+    const regels = [
+      kw('Staatsschuld', KL.staatsschuldPctBbp, '% bbp'),
+      kw('Reele rente 10j', KL.reeleRente10j, '%'),
+      KL.rente10j ? '- Rente 10j: ' + KL.rente10j.waarde + '% (tienjaarsgemiddelde ' + KL.rente10jGemiddelde + '%)' : null,
+      kw('Groei beroepsbevolking', KL.beroepsbevolkingGroeiPct, '%'),
+    ].filter(Boolean);
+    if (regels.length) {
+      r.push('');
+      r.push((md ? '## ' : '') + 'KLIMAAT (traag; gemeten, nog niet gewogen)');
+      r.push(...regels);
+    }
+  }
   if (rapport.trackrecord && rapport.trackrecord.n) {
     r.push('');
     r.push(`${md ? '## ' : ''}TRACKRECORD: n=${rapport.trackrecord.n}, raak ${rapport.trackrecord.raak}/${rapport.trackrecord.n}, Brier ${rapport.trackrecord.brier}`);
@@ -195,16 +236,17 @@ export async function onRequestOptions() {
 
 export async function onRequestGet({ request, env }) {
   try {
-    const [macro, crypto, log, reeks] = await Promise.all([
+    const [macro, crypto, log, reeks, klimaatReeks] = await Promise.all([
       env.TAKUMI_USERS.get('radar:latest:macro', 'json'),
       env.TAKUMI_USERS.get('radar:latest:crypto', 'json'),
       env.TAKUMI_USERS.get('radar:log', 'json'),
       env.TAKUMI_USERS.get('radar:reeks', 'json'),
+      env.TAKUMI_USERS.get('radar:klimaat', 'json'),
     ]);
     const w = wijzigingen(log);
     const tijden = [macro && macro.t, crypto && crypto.t].filter(Boolean);
     const rapport = {
-      versie: '1.3',
+      versie: '1.4',
       bron: 'takumi-master.com/radar',
       gegenereerd: new Date().toISOString(),
       laatstBijgewerkt: tijden.length ? new Date(Math.max(...tijden)).toISOString() : null,
@@ -215,6 +257,7 @@ export async function onRequestGet({ request, env }) {
       trackrecord: scoreCrypto(log),
       trackrecordMacro: scoreMacro(log),
       liquiditeit: liquiditeitBlok(reeks),
+      klimaat: klimaatBlok(klimaatReeks),
       meetfouten: reeks && reeks.length ? (reeks[reeks.length - 1].fouten || null) : null,
       wijzigingSindsVorigeRun: w.leesbaar,
       wijzigingenDetail: w.detail,
