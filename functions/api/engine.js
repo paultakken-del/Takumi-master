@@ -595,6 +595,31 @@ async function postRonde({ request, env }) {
     return klaarMet({ tijd, stap: 'koopladder', actie: 'KOOP', melding: `Tranche ${staat.gedaan}/${staat.tranches}: \u20ac${bedrag} volgens mix "${staat.mix}" (papier). Beide koopsloten open: vroeg+midden ${groei}% > laat+contractie ${krimp}%, weekclose boven 30-weeks trend.`, orders, sloten, staat });
   }
 
+  // Import: werkelijke DEGIRO-posities de envelop in (sleutel vereist).
+  // Expliciete gebeurtenis in het logboek; stand (IN/UIT) blijft behouden.
+  if (body.stap === 'etf-import') {
+    const { posities, cash } = body;
+    if (!Array.isArray(posities) || !posities.length) return json({ fout: 'posities ontbreken' }, 400);
+    for (const p of posities) {
+      if (!p.naam || !Number.isFinite(p.aantal) || !Number.isFinite(p.prijs) || p.prijs <= 0) {
+        return json({ fout: `ongeldige positie: ${JSON.stringify(p).slice(0, 80)}` }, 400);
+      }
+    }
+    const huidig = (await env.TAKUMI_USERS.get('engine:etf:portfolio', 'json')) || structuredClone(ETF_START);
+    const waarde = posities.reduce((a, p) => a + p.aantal * p.prijs, 0) + (Number.isFinite(cash) ? cash : 0);
+    const nieuw = {
+      ...huidig,
+      posities: posities.map((p) => ({ naam: p.naam, symbolen: p.symbolen || [], aantal: p.aantal, prijs: p.prijs, prijsVan: new Date().toISOString().slice(0, 10), bron: 'import' })),
+      cashEUR: Number.isFinite(cash) ? cash : (huidig.cashEUR || 0),
+      laatsteImport: new Date().toISOString(),
+    };
+    await env.TAKUMI_USERS.put('engine:etf:portfolio', JSON.stringify(nieuw));
+    const log = (await env.TAKUMI_USERS.get('engine:etf:logboek', 'json')) || [];
+    log.push({ tijd: new Date().toISOString(), stap: 'etf-import', actie: 'IMPORT', melding: `Werkelijke portefeuille geimporteerd: ${posities.length} posities, waarde \u20ac${Math.round(waarde * 100) / 100}. Stand blijft ${huidig.stand || 'IN'}.` });
+    await env.TAKUMI_USERS.put('engine:etf:logboek', JSON.stringify(log.slice(-60)));
+    return json({ ok: true, posities: nieuw.posities.length, waarde: Math.round(waarde * 100) / 100, stand: huidig.stand || 'IN' });
+  }
+
   if (body.stap === 'weekronde-etf') {
     const vorigeEtf = await env.TAKUMI_USERS.get('engine:etf:laatste', 'json');
     if (!body.forceer && vorigeEtf && Date.now() - new Date(vorigeEtf.tijd).getTime() < RONDE_COOLDOWN_UREN * 3600000) {

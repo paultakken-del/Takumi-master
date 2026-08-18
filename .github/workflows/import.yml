@@ -1,0 +1,23 @@
+name: Takumi import
+on:
+  workflow_dispatch:
+    inputs:
+      payloadB64:
+        description: "Base64 van de import-JSON"
+        required: true
+        type: string
+jobs:
+  importeer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ETF-portefeuille importeren
+        run: |
+          set -euo pipefail
+          echo "${{ inputs.payloadB64 }}" | base64 -d > /tmp/p.json
+          code=$(curl -sS -o /tmp/uit.json -w "%{http_code}" \
+            -X POST https://takumi-master.com/api/engine \
+            -H "content-type: application/json" \
+            -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
+            --data @/tmp/p.json)
+          echo "::error title=import::HTTP $code $(cut -c1-300 /tmp/uit.json)"
+          [ "$code" = "200" ]
