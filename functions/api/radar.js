@@ -400,7 +400,8 @@ export async function onRequestPost({ request, env }) {
     if (stap === 'klimaat') {
       const reeks = (await env.TAKUMI_USERS.get(KLIMAAT_KEY, 'json')) || [];
       const vorige = reeks[reeks.length - 1];
-      if (!sleutelOk && vorige && Date.now() - vorige.t < KLIMAAT_MS) {
+      // kwartaalcadans geldt ook voor de cron; alleen expliciet forceren (met sleutel) meet opnieuw
+      if (!(body.forceer && sleutelOk) && vorige && Date.now() - vorige.t < KLIMAAT_MS) {
         return json({ ok: true, actie: 'vers', volgende: new Date(vorige.t + KLIMAAT_MS).toISOString().slice(0, 10) });
       }
       const fouten = {};
@@ -408,6 +409,7 @@ export async function onRequestPost({ request, env }) {
       if (!Object.values(km).some((v) => v !== null)) {
         return json({ fout: 'klimaatmeting leverde niets', fouten }, 502);
       }
+      if (body.forceer && vorige && Date.now() - vorige.t < KLIMAAT_MS) reeks.pop();
       reeks.push({ t: Date.now(), ...km, ...(Object.keys(fouten).length ? { fouten } : {}) });
       await env.TAKUMI_USERS.put(KLIMAAT_KEY, JSON.stringify(reeks.slice(-40)));
       return json({ ok: true, actie: 'gemeten', klimaat: km, fouten });
