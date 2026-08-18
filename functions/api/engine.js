@@ -193,7 +193,14 @@ const ETF_START = {
 
 const TIJDSLIMIET = 6000;
 const BROWSER_KOP = { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36', accept: 'application/json,*/*' };
-const haalMetLimiet = (url) => fetch(url, { signal: AbortSignal.timeout(TIJDSLIMIET), headers: BROWSER_KOP });
+const haalMetLimiet = async (url) => {
+  let r = await fetch(url, { signal: AbortSignal.timeout(TIJDSLIMIET), headers: BROWSER_KOP });
+  if (r.status === 429) {
+    await new Promise((res) => setTimeout(res, 1500));
+    r = await fetch(url, { signal: AbortSignal.timeout(TIJDSLIMIET), headers: BROWSER_KOP });
+  }
+  return r;
+};
 
 const YAHOO_ACHTERVOEGSEL = { '.nl': '.AS', '.de': '.DE', '.uk': '.L', '.us': '' };
 
@@ -264,6 +271,16 @@ async function yahooTrend() {
 }
 
 // 30-weeks trend van de wereldindex via Stooq-daghistorie (ISO-weken, alleen afgesloten).
+const TREND_CACHE_MS = 4 * 3600 * 1000;
+
+async function haalEtfTrendGecachet(env) {
+  const c = await env.TAKUMI_USERS.get('engine:cache:trend', 'json');
+  if (c && Date.now() - c.t < TREND_CACHE_MS) return c.trend;
+  const trend = await haalEtfTrend();
+  await env.TAKUMI_USERS.put('engine:cache:trend', JSON.stringify({ t: Date.now(), trend }));
+  return trend;
+}
+
 async function haalEtfTrend() {
   // Alleen het benodigde venster ophalen en parseren: de volledige historie kost te veel rekentijd.
   const ymd = (d) => new Date(d).toISOString().slice(0, 10).replace(/-/g, '');
@@ -490,7 +507,7 @@ async function postRonde({ request, env }) {
       return json({ fase, posities: p ? p.posities.length : 'startwaarde', stand: p ? p.stand : null });
     }
     if (fase === 'trend') {
-      const t = await haalEtfTrend();
+      const t = await haalEtfTrendGecachet(env);
       return json({ fase, sma30: t.sma30, weekclose: t.laatsteWeekclose, bovenTrend: t.bovenTrend });
     }
     if (fase === 'herwaardeer') {
@@ -544,7 +561,7 @@ async function postRonde({ request, env }) {
       return json({ tijd, stap: 'koopladder', actie: 'OVERGESLAGEN', melding: 'Vorige tranche is minder dan vijf dagen oud.' });
     }
     let trend = null, trendFout = null;
-    try { trend = await haalEtfTrend(); } catch (f) { trendFout = String(f.message || f); }
+    try { trend = await haalEtfTrendGecachet(env); } catch (f) { trendFout = String(f.message || f); }
     const macro = await leesMacro(env);
     if (!trend || macro.status !== 'ok') {
       return klaarMet({ tijd, stap: 'koopladder', actie: 'GEEN_ACTIE', reden: !trend ? `Marktslot onbepaald (${trendFout}); zonder meting geen tranche.` : `Macroweging niet bruikbaar (${macro.status}); zonder eerlijke weging geen tranche.` });
@@ -588,7 +605,7 @@ async function postRonde({ request, env }) {
     // Geen koershistorie = marktslot onbepaald. Dat is geen storing maar een reden
     // om niet te handelen: hetzelfde principe als een ontbrekende radarweging.
     let trend = null, trendFout = null;
-    try { trend = await haalEtfTrend(); } catch (fout) { trendFout = String(fout.message || fout); }
+    try { trend = await haalEtfTrendGecachet(env); } catch (fout) { trendFout = String(fout.message || fout); }
     const { belegd, fouten } = await herwaardeerEtf(portfolio);
     const macro = await leesMacro(env);
 
