@@ -200,7 +200,7 @@ const KLIMAAT_MS = 80 * 24 * 3600 * 1000; // ~kwartaal
 
 async function metingKlimaat(env, fouten) {
   const f = (naam, fn) => veilig(fouten, 'klimaat-' + naam, fn);
-  const [schuldBbp, reeleRente10j, rente, arbeidsGroei] = await Promise.all([
+  const [schuldBbp, reeleRente10j, rente, arbeidsGroei, productiviteitGroei, techCapexBbp] = await Promise.all([
     f('schuld', async () => laatsteVan(await fred(env, 'GFDEGDQ188S', 3)).v),
     f('reeleRente', async () => laatsteVan(await fred(env, 'REAINTRATREARAT10Y', 3)).v),
     f('rente10j', async () => {
@@ -209,12 +209,21 @@ async function metingKlimaat(env, fouten) {
       return { nu: laatsteVan(r).v, gem10j: gem };
     }),
     f('arbeid', async () => yoy(await fred(env, 'CLF16OV', 3))),
+    f('productiviteit', async () => {
+      // arbeidsproductiviteit VS (output per uur): waar een AI-dividend als eerste macro-zichtbaar wordt
+      const r = await fred(env, 'OPHNFB', 6);
+      const nu = laatsteVan(r).v;
+      const doel = new Date(laatsteVan(r).d).getTime() - 365 * 24 * 3600 * 1000;
+      const vorig = r.reduce((a, b) => (Math.abs(new Date(b.d).getTime() - doel) < Math.abs(new Date(a.d).getTime() - doel) ? b : a));
+      return Math.round(((nu - vorig.v) / vorig.v) * 1000) / 10;
+    }),
+    f('techCapex', async () => laatsteVan(await fred(env, 'Y001RE1Q156NBEA', 3)).v),
   ]);
   return {
     schuldBbp, reeleRente10j,
     rente10j: rente ? rente.nu : null,
     rente10jGem: rente ? rente.gem10j : null,
-    arbeidsGroei,
+    arbeidsGroei, productiviteitGroei, techCapexBbp,
   };
 }
 

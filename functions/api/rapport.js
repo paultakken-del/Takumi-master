@@ -102,8 +102,10 @@ function klimaatBlok(kl) {
     reeleRente10j: veld('reeleRente10j'),
     rente10j: veld('rente10j'),
     rente10jGemiddelde: nu.rente10jGem ?? null,
-    beroepsbevolkingGroeiPct: veld('arbeidsGroei'),
-    toelichting: 'Klimaat = het regime waarbinnen de cyclus draait (schuld, reele rente, renteniveau vs tienjaarsgemiddelde, demografie). Gemeten maar bewust niet gewogen; vanaf de kwartaalreview van oktober 2026 kleurt dit de historische analogieen en bandbreedtes, nooit de weekkansen zelf.',
+    beroepsbevolkingVSGroeiPct: veld('arbeidsGroei'),
+    productiviteitVSGroeiPct: veld('productiviteitGroei'),
+    techCapexPctBbp: veld('techCapexBbp'),
+    toelichting: 'Klimaat = het regime waarbinnen de cyclus draait: schuld, reele rente, renteniveau vs tienjaarsgemiddelde, en beide kanten van het groeipotentieel (beroepsbevolking VS en productiviteit per uur, plus tech-investeringen als aandeel bbp als vroegindicator van een AI-regimewissel). Gemeten maar bewust niet gewogen; vanaf de kwartaalreview van oktober 2026 kleurt dit de historische analogieen en bandbreedtes, nooit de weekkansen zelf.',
   };
 }
 
@@ -207,7 +209,9 @@ function alsTekst(rapport, md) {
       kw('Staatsschuld', KL.staatsschuldPctBbp, '% bbp'),
       kw('Reele rente 10j', KL.reeleRente10j, '%'),
       KL.rente10j ? '- Rente 10j: ' + KL.rente10j.waarde + '% (tienjaarsgemiddelde ' + KL.rente10jGemiddelde + '%)' : null,
-      kw('Groei beroepsbevolking', KL.beroepsbevolkingGroeiPct, '%'),
+      kw('Beroepsbevolking VS', KL.beroepsbevolkingVSGroeiPct, '% j-o-j'),
+      kw('Productiviteit VS', KL.productiviteitVSGroeiPct, '% j-o-j'),
+      kw('Tech-capex', KL.techCapexPctBbp, '% bbp'),
     ].filter(Boolean);
     if (regels.length) {
       r.push('');
