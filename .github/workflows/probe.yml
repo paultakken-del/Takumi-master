@@ -46,4 +46,15 @@ jobs:
           curl -sS https://takumi-master.com/api/ping -o /tmp/p.json || true
           echo "::error title=ping::$(cut -c1-250 /tmp/p.json)"
           code=$(curl -sS -o /tmp/e.json -w "%{http_code}" https://takumi-master.com/api/engine)
-          echo "::error title=engine-status::HTTP $code $(cut -c1-200 /tmp/e.json)"
+          python3 - <<'PY'
+          import json
+          d = json.load(open('/tmp/e.json'))
+          btc = d.get('portfolio') or {}
+          print(f"::error title=btc::saldo {btc.get('saldoEUR')} btc {btc.get('btc')} prijs {d.get('prijs')}")
+          etf = d.get('etf') or {}
+          for L in (etf.get('logboek') or [])[-2:]:
+              print(f"::error title=etf-log::{L.get('tijd','')[:16]} {L.get('actie')} {str(L.get('melding') or L.get('reden'))[:180]}")
+          lad = d.get('koopladder') or {}
+          for L in (lad.get('logboek') or [])[-1:]:
+              print(f"::error title=ladder-log::{L.get('tijd','')[:16]} {L.get('actie')} {str(L.get('melding') or L.get('reden'))[:180]}")
+          PY
