@@ -92,6 +92,8 @@ fetch('/api/engine').then(r=>r.json()).then(d=>{
     }
     html+='<p class="reden">'+a.reden+'</p>';
     if(v.order)html+='<p class="reden"><b>Order uitgevoerd:</b> '+v.order.actie+' '+eur(v.order.bedragEUR)+' @ '+eur(v.order.prijs)+'</p>';
+    if(v.ai&&v.ai.duiding)html+='<p class="reden"><b>Duiding:</b> '+v.ai.duiding+'</p>';
+    if(v.ai&&v.ai.kanttekening)html+='<p class="reden"><b>Tegendenker:</b> '+v.ai.kanttekening+'</p>';
     html+='<p class="reden">Ronde van '+new Date(v.tijd).toLocaleString('nl-NL')+' · weekclose '+eur(v.meting.laatsteWeekclose)+' vs. 30-weeks '+eur(v.meting.sma30)+'</p>';
     $('kVerslag').innerHTML=html;
     const w=v.weging;
@@ -138,6 +140,8 @@ fetch('/api/engine').then(r=>r.json()).then(d=>{
           '<div class="slot'+(s.markt?' open':'')+'"><div class="ring"></div><small>'+lbl[1]+'</small></div></div>';
       }
       h+='<p class="reden">'+a.reden+'</p>';
+      if(ev.ai&&ev.ai.duiding)h+='<p class="reden"><b>Duiding:</b> '+ev.ai.duiding+'</p>';
+      if(ev.ai&&ev.ai.kanttekening)h+='<p class="reden"><b>Tegendenker:</b> '+ev.ai.kanttekening+'</p>';
       if(ev.meting&&ev.meting.herwaarderingFouten&&ev.meting.herwaarderingFouten.length)
         h+='<p class="reden">Koers niet ververst voor: '+ev.meting.herwaarderingFouten.join(', ')+' (laatst bekende prijs gebruikt).</p>';
       h+='<p class="reden">Ronde van '+new Date(ev.tijd).toLocaleString('nl-NL')+'</p>';
