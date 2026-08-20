@@ -191,42 +191,10 @@ const ETF_START = {
   ],
 };
 
-const TIJDSLIMIET = 6000;
-const BROWSER_KOP = { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36', accept: 'application/json,*/*' };
-const haalMetLimiet = async (url) => {
-  let r = await fetch(url, { signal: AbortSignal.timeout(TIJDSLIMIET), headers: BROWSER_KOP });
-  if (r.status === 429) {
-    await new Promise((res) => setTimeout(res, 1500));
-    r = await fetch(url, { signal: AbortSignal.timeout(TIJDSLIMIET), headers: BROWSER_KOP });
-  }
-  return r;
-};
-
-const YAHOO_ACHTERVOEGSEL = { '.nl': '.AS', '.de': '.DE', '.uk': '.L', '.us': '' };
-
-function naarYahoo(sym) {
-  const punt = sym.lastIndexOf('.');
-  if (punt === -1) return sym.toUpperCase();
-  const staart = sym.slice(punt);
-  if (!(staart in YAHOO_ACHTERVOEGSEL)) return null;
-  return sym.slice(0, punt).toUpperCase() + YAHOO_ACHTERVOEGSEL[staart];
-}
-
-async function yahooKoers(sym) {
-  const y = naarYahoo(sym);
-  if (!y) return null;
-  const r = await haalMetLimiet('https://query2.finance.yahoo.com/v8/finance/chart/' + y + '?range=5d&interval=1d');
-  if (!r.ok) return null;
-  const meta = (await r.json()).chart.result[0].meta;
-  const koers = meta.regularMarketPrice;
-  if (!Number.isFinite(koers) || koers <= 0) return null;
-  return { koers, symbool: y, datum: new Date(meta.regularMarketTime * 1000).toISOString().slice(0, 10) };
-}
-
 async function stooqKoers(symbolen) {
   for (const s of symbolen) {
     try {
-      const r = await haalMetLimiet(`https://stooq.com/q/l/?s=${s}&f=sd2t2ohlcv&h&e=csv`);
+      const r = await fetch(`https://stooq.com/q/l/?s=${s}&f=sd2t2ohlcv&h&e=csv`);
       if (!r.ok) continue;
       const regels = (await r.text()).trim().split('\n');
       if (regels.length < 2) continue;
@@ -235,61 +203,14 @@ async function stooqKoers(symbolen) {
       if (Number.isFinite(koers) && koers > 0) return { koers, symbool: s, datum: kolommen[1] };
     } catch { /* volgende kandidaat */ }
   }
-  for (const sym of symbolen) {
-    try {
-      const y = await yahooKoers(sym);
-      if (y) return y;
-    } catch { /* volgende kandidaat */ }
-  }
   return null;
 }
 
-// Terugval: weekcloses rechtstreeks bij Yahoo, veel lichter dan een daghistorie parsen.
-async function yahooTrend() {
-  const y = naarYahoo(ETF_TREND_SYMBOOL);
-  const r = await haalMetLimiet('https://query2.finance.yahoo.com/v8/finance/chart/' + y + '?range=2y&interval=1wk');
-  if (!r.ok) throw new Error(`Yahoo historie: HTTP ${r.status}`);
-  const res = (await r.json()).chart.result[0];
-  const tijden = res.timestamp || [];
-  const closes = (res.indicators.quote[0].close || []);
-  const weken = [];
-  for (let i = 0; i < tijden.length; i++) {
-    const c = closes[i];
-    if (Number.isFinite(c) && (tijden[i] * 1000 + WEEK_MS) <= Date.now()) weken.push({ t: tijden[i] * 1000, close: c });
-  }
-  if (weken.length < SMA_WEKEN) throw new Error('Yahoo: te weinig afgesloten weken voor de 30-weeks trend');
-  const venster = weken.slice(-SMA_WEKEN);
-  const sma = venster.reduce((som, w) => som + w.close, 0) / SMA_WEKEN;
-  const laatste = venster[venster.length - 1];
-  return {
-    symbool: y,
-    laatsteWeekclose: Math.round(laatste.close * 100) / 100,
-    weekVan: new Date(laatste.t).toISOString().slice(0, 10),
-    sma30: Math.round(sma * 100) / 100,
-    bovenTrend: laatste.close > sma,
-  };
-}
-
 // 30-weeks trend van de wereldindex via Stooq-daghistorie (ISO-weken, alleen afgesloten).
-const TREND_CACHE_MS = 4 * 3600 * 1000;
-
-async function haalEtfTrendGecachet(env) {
-  const c = await env.TAKUMI_USERS.get('engine:cache:trend', 'json');
-  if (c && Date.now() - c.t < TREND_CACHE_MS) return c.trend;
-  const trend = await haalEtfTrend();
-  await env.TAKUMI_USERS.put('engine:cache:trend', JSON.stringify({ t: Date.now(), trend }));
-  return trend;
-}
-
 async function haalEtfTrend() {
-  // Alleen het benodigde venster ophalen en parseren: de volledige historie kost te veel rekentijd.
-  const ymd = (d) => new Date(d).toISOString().slice(0, 10).replace(/-/g, '');
-  const vanaf = ymd(Date.now() - 400 * DAG_MS);
-  const tot = ymd(Date.now());
-  const r = await haalMetLimiet(`https://stooq.com/q/d/l/?s=${ETF_TREND_SYMBOOL}&i=d&d1=${vanaf}&d2=${tot}`);
+  const r = await fetch(`https://stooq.com/q/d/l/?s=${ETF_TREND_SYMBOOL}&i=d`);
   if (!r.ok) throw new Error(`Stooq historie: HTTP ${r.status}`);
-  const alleRegels = (await r.text()).trim().split('\n').slice(1); // kop eraf
-  const regels = alleRegels.slice(-(SMA_WEKEN * 7 + 60));          // parseer alleen de staart
+  const regels = (await r.text()).trim().split('\n').slice(1); // kop eraf
   const dagen = regels
     .map((regel) => {
       const k = regel.split(',');
@@ -308,7 +229,7 @@ async function haalEtfTrend() {
   }
   const nu = Date.now();
   const afgesloten = [...weken.entries()].filter(([start]) => start + WEEK_MS <= nu).sort((a, b) => b[0] - a[0]);
-  if (afgesloten.length < SMA_WEKEN) return yahooTrend();
+  if (afgesloten.length < SMA_WEKEN) throw new Error('Stooq: te weinig afgesloten weken voor de 30-weeks trend');
   const venster = afgesloten.slice(0, SMA_WEKEN);
   const sma = venster.reduce((som, [, close]) => som + close, 0) / SMA_WEKEN;
   const [laatsteStart, laatsteClose] = venster[0];
@@ -345,45 +266,45 @@ async function leesMacro(env) {
 async function herwaardeerEtf(portfolio) {
   const fouten = [];
   let belegd = 0;
-  const versies = await Promise.all(portfolio.posities.map(async (p) => {
-    try { return await stooqKoers(p.symbolen); } catch { return null; }
-  }));
-  portfolio.posities.forEach((p, i) => {
-    const vers = versies[i];
+  for (const p of portfolio.posities) {
+    const vers = await stooqKoers(p.symbolen);
     if (vers) { p.prijs = vers.koers; p.prijsVan = vers.datum; p.bron = vers.symbool; }
-    else fouten.push(p.naam);          // laatste bekende koers blijft staan
+    else fouten.push(p.naam);
     belegd += p.aantal * p.prijs;
-  });
+  }
   return { belegd: Math.round(belegd * 100) / 100, fouten };
 }
 
-// ------------------------------------------------- koopladder (nieuw geld, papier)
-// Drie publieke standaardmixen van gerenommeerde beleggers, EU-uitvoering (UCITS).
-// Bronvermelding in het verslag; de verdeling blijft een persoonlijke keuze.
-const LADDER_MIXEN = {
-  // Bogleheads-drie-fondsen (Bogle): wereld + opkomend + wereldwijde obligaties
-  bogleheads: [
-    { naam: 'iShares Core MSCI World', symbolen: ['iwda.nl'], deel: 0.60 },
-    { naam: 'iShares Core MSCI EM IMI', symbolen: ['emim.nl'], deel: 0.20 },
-    { naam: 'iShares Global Aggregate Bond EURH', symbolen: ['aggh.nl'], deel: 0.20 },
-  ],
-  // Buffett 90/10 (instructie voor zijn nalatenschap): S&P 500 + kortlopend staatspapier
-  buffett9010: [
-    { naam: 'iShares Core S&P 500', symbolen: ['cspx.nl', 'sxr8.de'], deel: 0.90 },
-    { naam: 'iShares USD Treasury 0-1yr', symbolen: ['ib01.uk'], deel: 0.10 },
-  ],
-  // Dalio All Weather: aandelen + lange en middellange staatsobligaties + goud + grondstoffen
-  allweather: [
-    { naam: 'iShares Core MSCI World', symbolen: ['iwda.nl'], deel: 0.30 },
-    { naam: 'iShares USD Treasury 20+yr', symbolen: ['dtla.uk', 'is04.de'], deel: 0.40 },
-    { naam: 'iShares USD Treasury 7-10yr', symbolen: ['ibtm.uk'], deel: 0.15 },
-    { naam: 'iShares Physical Gold', symbolen: ['igln.uk', 'ppfb.de'], deel: 0.075 },
-    { naam: 'Invesco Bloomberg Commodity', symbolen: ['cmod.uk'], deel: 0.075 },
-  ],
-};
-const LADDER_MIX_KEUZE = 'bogleheads'; // wissel hier; Pauls eigen mix kan als vierde sjabloon
-const LADDER_START = { budget: 10000, tranches: 4, gedaan: 0, besteed: 0, mix: LADDER_MIX_KEUZE, posities: {}, gestartOp: null };
-const LADDER_COOLDOWN_DAGEN = 5;
+
+// ================================================================ DUIDING
+// AI als verteller en tegendenker — nooit als handelaar. De beslissing is al
+// deterministisch genomen als deze functie draait; Claude geeft context en
+// één kritische kanttekening. Faalt de aanroep, dan mist alleen de duiding.
+
+async function schrijfDuiding(env, verslag, historie) {
+  if (!env.ANTHROPIC_API_KEY) return null;
+  try {
+    const prompt =
+      'Je bent de nuchtere co-piloot van een deterministische paper-trading engine (Takumi). ' +
+      'De beslissing is al genomen door vaste regels; jij duidt alleen. Schrijf in het Nederlands, kalm en eerlijk, zonder hype.\n\n' +
+      'Verslag van deze ronde (JSON):\n' + JSON.stringify(verslag) + '\n\n' +
+      'Vorige rondes (nieuwste eerst, JSON):\n' + JSON.stringify((historie || []).slice(0, 4).map((r) => ({ tijd: r.tijd, actie: r.advies.actie, reden: r.advies.reden }))) + '\n\n' +
+      'Antwoord ALLEEN met minified JSON: {"duiding":"max 60 woorden: wat zeggen de sloten, wat veranderde t.o.v. vorige rondes","kanttekening":"max 30 woorden: de scherpste kritische vraag bij deze uitkomst of deze regels"}';
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 400, messages: [{ role: 'user', content: prompt }] }),
+    });
+    const data = await r.json();
+    if (data.error) return null;
+    const tekst = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+    const clean = tekst.replace(/```json|```/g, '').trim();
+    const a = clean.indexOf('{'), b = clean.lastIndexOf('}');
+    if (a === -1 || b <= a) return null;
+    const uit = JSON.parse(clean.slice(a, b + 1));
+    return { duiding: String(uit.duiding || '').slice(0, 500), kanttekening: String(uit.kanttekening || '').slice(0, 300) };
+  } catch { return null; }
+}
 
 // ---------------------------------------------------------------- GET
 
@@ -397,8 +318,6 @@ export async function onRequestGet({ env }) {
     env.TAKUMI_USERS.get('engine:etf:laatste', 'json'),
     env.TAKUMI_USERS.get('engine:etf:logboek', 'json'),
   ]);
-  const ladder = await env.TAKUMI_USERS.get('engine:ladder:staat', 'json');
-  const ladderLog = await env.TAKUMI_USERS.get('engine:ladder:logboek', 'json');
   let prijs = null;
   try { prijs = await haalPrijs(); } catch { /* status blijft leesbaar zonder live prijs */ }
 
@@ -437,15 +356,7 @@ export async function onRequestGet({ env }) {
 
 // ---------------------------------------------------------------- POST
 
-export async function onRequestPost(ctx) {
-  try {
-    return await postRonde(ctx);
-  } catch (e) {
-    return json({ fout: 'serverfout: ' + String((e && e.message) || e) }, 500);
-  }
-}
-
-async function postRonde({ request, env }) {
+export async function onRequestPost({ request, env }) {
   if (!env.TAKUMI_USERS) return json({ fout: 'KV niet geconfigureerd' }, 500);
   const sleutelOk = env.RADAR_KEY && request.headers.get('x-radar-key') === env.RADAR_KEY;
   if (!sleutelOk) return json({ fout: 'x-radar-key ontbreekt of is ongeldig.' }, 401);
@@ -499,127 +410,6 @@ async function postRonde({ request, env }) {
     return json({ status: 'gestopt', verslag });
   }
 
-  // Diagnose: elke fase apart, zodat een storing te lokaliseren is.
-  if (body.stap === 'etf-diagnose') {
-    const fase = body.fase;
-    if (fase === 'kv') {
-      const p = await env.TAKUMI_USERS.get('engine:etf:portfolio', 'json');
-      return json({ fase, posities: p ? p.posities.length : 'startwaarde', stand: p ? p.stand : null });
-    }
-    if (fase === 'trend') {
-      const t = await haalEtfTrendGecachet(env);
-      return json({ fase, sma30: t.sma30, weekclose: t.laatsteWeekclose, bovenTrend: t.bovenTrend });
-    }
-    if (fase === 'herwaardeer') {
-      const p = (await env.TAKUMI_USERS.get('engine:etf:portfolio', 'json')) || structuredClone(ETF_START);
-      const h = await herwaardeerEtf(p);
-      return json({ fase, belegd: h.belegd, mislukt: h.fouten });
-    }
-    if (fase === 'bronnen') {
-      const UA = { 'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36', accept: '*/*' };
-      const test = async (naam, url, opties) => {
-        try {
-          const r = await fetch(url, { signal: AbortSignal.timeout(6000), ...(opties || {}) });
-          const t = (await r.text()).slice(0, 60).replace(/\s+/g, ' ');
-          return `${naam}=${r.status}:${t}`;
-        } catch (e) { return `${naam}=FOUT ${String(e.message || e).slice(0, 40)}`; }
-      };
-      const uit = await Promise.all([
-        test('y1', 'https://query1.finance.yahoo.com/v8/finance/chart/IWDA.AS?range=5d&interval=1d'),
-        test('y2ua', 'https://query2.finance.yahoo.com/v8/finance/chart/IWDA.AS?range=5d&interval=1d', { headers: UA }),
-        test('stooq-nl', 'https://stooq.com/q/l/?s=iwda.nl&f=sd2t2ohlcv&h&e=csv', { headers: UA }),
-        test('stooq-uk', 'https://stooq.com/q/l/?s=iwda.uk&f=sd2t2ohlcv&h&e=csv', { headers: UA }),
-        test('stooq-de', 'https://stooq.com/q/l/?s=iwda.de&f=sd2t2ohlcv&h&e=csv', { headers: UA }),
-        test('cc-dom', 'https://min-api.cryptocompare.com/data/top/mktcapfull?limit=10&tsym=USD'),
-      ]);
-      return json({ fase, uit });
-    }
-
-    if (fase === 'macro') {
-      const m = await leesMacro(env);
-      return json({ fase, status: m.status, melding: m.melding || null });
-    }
-    return json({ fout: 'fase moet kv, trend, herwaardeer of macro zijn' }, 400);
-  }
-
-  // Koopladder: per open koopsignaal een tranche nieuw (fictief) geld de markt in.
-  if (body.stap === 'koopladder') {
-    const staat = (await env.TAKUMI_USERS.get('engine:ladder:staat', 'json')) || structuredClone(LADDER_START);
-    const logboek = (await env.TAKUMI_USERS.get('engine:ladder:logboek', 'json')) || [];
-    const klaarMet = async (item, status = 200) => {
-      logboek.push(item);
-      await env.TAKUMI_USERS.put('engine:ladder:logboek', JSON.stringify(logboek.slice(-40)));
-      await env.TAKUMI_USERS.put('engine:ladder:staat', JSON.stringify(staat));
-      return json(item, status);
-    };
-    const tijd = new Date().toISOString();
-    if (staat.gedaan >= staat.tranches) {
-      return json({ tijd, stap: 'koopladder', actie: 'KLAAR', melding: `Alle ${staat.tranches} tranches zijn belegd (\u20ac${staat.besteed}).`, staat });
-    }
-    const laatste = [...logboek].reverse().find((l) => l.actie === 'KOOP');
-    if (!body.forceer && laatste && Date.now() - new Date(laatste.tijd).getTime() < LADDER_COOLDOWN_DAGEN * 24 * 3600000) {
-      return json({ tijd, stap: 'koopladder', actie: 'OVERGESLAGEN', melding: 'Vorige tranche is minder dan vijf dagen oud.' });
-    }
-    let trend = null, trendFout = null;
-    try { trend = await haalEtfTrendGecachet(env); } catch (f) { trendFout = String(f.message || f); }
-    const macro = await leesMacro(env);
-    if (!trend || macro.status !== 'ok') {
-      return klaarMet({ tijd, stap: 'koopladder', actie: 'GEEN_ACTIE', reden: !trend ? `Marktslot onbepaald (${trendFout}); zonder meting geen tranche.` : `Macroweging niet bruikbaar (${macro.status}); zonder eerlijke weging geen tranche.` });
-    }
-    const v = macro.verdeling;
-    const groei = (v.vroeg || 0) + (v.midden || 0);
-    const krimp = (v.laat || 0) + (v.contractie || 0);
-    const sloten = { seizoen: groei > krimp, markt: trend.bovenTrend };
-    if (!sloten.seizoen || !sloten.markt) {
-      return klaarMet({ tijd, stap: 'koopladder', actie: 'GEEN_ACTIE', reden: `Koopsloten niet beide open: seizoen ${sloten.seizoen ? 'open' : `dicht (laat+contractie ${krimp}% \u2265 vroeg+midden ${groei}%)`}, markt ${sloten.markt ? 'open' : 'dicht (weekclose onder 30-weeks trend)'}. Tranche ${staat.gedaan + 1}/${staat.tranches} wacht.`, sloten });
-    }
-    const bedrag = Math.round((staat.budget / staat.tranches) * 100) / 100;
-    const mix = LADDER_MIXEN[staat.mix];
-    const orders = [];
-    for (const regel of mix) {
-      let vers = null;
-      try { vers = await stooqKoers(regel.symbolen); } catch { vers = null; }
-      if (!vers) return klaarMet({ tijd, stap: 'koopladder', actie: 'GEEN_ACTIE', reden: `Geen koers voor ${regel.naam}; geen halve tranches.` });
-      const inleg = Math.round(bedrag * regel.deel * 100) / 100;
-      const aantal = Math.round((inleg / vers.koers) * 10000) / 10000;
-      orders.push({ naam: regel.naam, symbool: vers.symbool, koers: vers.koers, inleg, aantal });
-      const p = staat.posities[regel.naam] || { aantal: 0, ingelegd: 0 };
-      p.aantal = Math.round((p.aantal + aantal) * 10000) / 10000;
-      p.ingelegd = Math.round((p.ingelegd + inleg) * 100) / 100;
-      p.laatsteKoers = vers.koers;
-      staat.posities[regel.naam] = p;
-    }
-    staat.gedaan += 1;
-    staat.besteed = Math.round((staat.besteed + bedrag) * 100) / 100;
-    if (!staat.gestartOp) staat.gestartOp = tijd;
-    return klaarMet({ tijd, stap: 'koopladder', actie: 'KOOP', melding: `Tranche ${staat.gedaan}/${staat.tranches}: \u20ac${bedrag} volgens mix "${staat.mix}" (papier). Beide koopsloten open: vroeg+midden ${groei}% > laat+contractie ${krimp}%, weekclose boven 30-weeks trend.`, orders, sloten, staat });
-  }
-
-  // Import: werkelijke DEGIRO-posities de envelop in (sleutel vereist).
-  // Expliciete gebeurtenis in het logboek; stand (IN/UIT) blijft behouden.
-  if (body.stap === 'etf-import') {
-    const { posities, cash } = body;
-    if (!Array.isArray(posities) || !posities.length) return json({ fout: 'posities ontbreken' }, 400);
-    for (const p of posities) {
-      if (!p.naam || !Number.isFinite(p.aantal) || !Number.isFinite(p.prijs) || p.prijs <= 0) {
-        return json({ fout: `ongeldige positie: ${JSON.stringify(p).slice(0, 80)}` }, 400);
-      }
-    }
-    const huidig = (await env.TAKUMI_USERS.get('engine:etf:portfolio', 'json')) || structuredClone(ETF_START);
-    const waarde = posities.reduce((a, p) => a + p.aantal * p.prijs, 0) + (Number.isFinite(cash) ? cash : 0);
-    const nieuw = {
-      ...huidig,
-      posities: posities.map((p) => ({ naam: p.naam, symbolen: p.symbolen || [], aantal: p.aantal, prijs: p.prijs, prijsVan: new Date().toISOString().slice(0, 10), bron: 'import' })),
-      cashEUR: Number.isFinite(cash) ? cash : (huidig.cashEUR || 0),
-      laatsteImport: new Date().toISOString(),
-    };
-    await env.TAKUMI_USERS.put('engine:etf:portfolio', JSON.stringify(nieuw));
-    const log = (await env.TAKUMI_USERS.get('engine:etf:logboek', 'json')) || [];
-    log.push({ tijd: new Date().toISOString(), stap: 'etf-import', actie: 'IMPORT', melding: `Werkelijke portefeuille geimporteerd: ${posities.length} posities, waarde \u20ac${Math.round(waarde * 100) / 100}. Stand blijft ${huidig.stand || 'IN'}.` });
-    await env.TAKUMI_USERS.put('engine:etf:logboek', JSON.stringify(log.slice(-60)));
-    return json({ ok: true, posities: nieuw.posities.length, waarde: Math.round(waarde * 100) / 100, stand: huidig.stand || 'IN' });
-  }
-
   if (body.stap === 'weekronde-etf') {
     const vorigeEtf = await env.TAKUMI_USERS.get('engine:etf:laatste', 'json');
     if (!body.forceer && vorigeEtf && Date.now() - new Date(vorigeEtf.tijd).getTime() < RONDE_COOLDOWN_UREN * 3600000) {
@@ -627,18 +417,16 @@ async function postRonde({ request, env }) {
     }
 
     const portfolio = (await env.TAKUMI_USERS.get('engine:etf:portfolio', 'json')) || structuredClone(ETF_START);
-    // Geen koershistorie = marktslot onbepaald. Dat is geen storing maar een reden
-    // om niet te handelen: hetzelfde principe als een ontbrekende radarweging.
-    let trend = null, trendFout = null;
-    try { trend = await haalEtfTrendGecachet(env); } catch (fout) { trendFout = String(fout.message || fout); }
+    let trend;
+    try { trend = await haalEtfTrend(); } catch (fout) {
+      return json({ status: 'meetfout', melding: String(fout.message || fout) }, 502);
+    }
     const { belegd, fouten } = await herwaardeerEtf(portfolio);
     const macro = await leesMacro(env);
 
     // Sloten op macroniveau: groeikansen (vroeg+midden) tegenover krimpkansen (laat+contractie).
     let advies;
-    if (!trend) {
-      advies = { actie: 'GEEN_ACTIE', reden: `Marktslot onbepaald: geen weekhistorie beschikbaar (${trendFout}). De envelop schakelt niet zonder meting.`, sloten: null };
-    } else if (macro.status !== 'ok') {
+    if (macro.status !== 'ok') {
       advies = { actie: 'GEEN_ACTIE', reden: `Macroweging niet bruikbaar (${macro.status}): ${macro.melding} De envelop schakelt niet zonder eerlijke weging.`, sloten: null };
     } else {
       const v = macro.verdeling;
@@ -684,13 +472,14 @@ async function postRonde({ request, env }) {
     const verslag = {
       tijd: new Date().toISOString(),
       envelop: 'etf',
-      meting: { trend, trendFout, belegd: Math.round(belegdNa * 100) / 100, cashEUR: portfolio.cashEUR, herwaarderingFouten: fouten },
+      meting: { trend, belegd: Math.round(belegdNa * 100) / 100, cashEUR: portfolio.cashEUR, herwaarderingFouten: fouten },
       weging: macro,
       advies,
       order,
       portfolioNa: { stand: portfolio.stand, totaalEUR: Math.round((belegdNa + portfolio.cashEUR) * 100) / 100 },
     };
     const logboek = (await env.TAKUMI_USERS.get('engine:etf:logboek', 'json')) || [];
+    verslag.ai = await schrijfDuiding(env, verslag, logboek);
     logboek.unshift(verslag);
     await env.TAKUMI_USERS.put('engine:etf:logboek', JSON.stringify(logboek.slice(0, LOG_MAX)));
     await env.TAKUMI_USERS.put('engine:etf:laatste', JSON.stringify(verslag));
@@ -748,6 +537,7 @@ async function postRonde({ request, env }) {
   };
 
   const logboek = (await env.TAKUMI_USERS.get('engine:logboek', 'json')) || [];
+  verslag.ai = await schrijfDuiding(env, verslag, logboek);
   logboek.unshift(verslag);
   await env.TAKUMI_USERS.put('engine:logboek', JSON.stringify(logboek.slice(0, LOG_MAX)));
   await env.TAKUMI_USERS.put('engine:laatste', JSON.stringify(verslag));
