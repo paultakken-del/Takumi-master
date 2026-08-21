@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v66 rust";
+const VERSIE="v67 balbezit";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -562,6 +562,21 @@ function wissel(t){                       // korte klik zonder bal: volgende spe
   const i=veld.indexOf(ctrl[t]);
   ctrl[t]=veld[(i+1)%veld.length];
   lockT[t]=2;beep(660,.05,"square",.05)}
+function losseBal(dt){
+  /* Ligt de bal ergens vrij, dan gaat de dichtstbijzijnde speler van elke ploeg
+     hem halen. Zonder dit blijft hij liggen tot iemand er toevallig langs loopt. */
+  if(state!=="play"||ball.held)return;
+  const sp=Math.hypot(ball.vx,ball.vy);
+  if(sp>140)return;
+  for(const t of [0,1]){
+    if(humans().includes(t))continue;
+    let best=null,bd=1e9;
+    for(const q of P){
+      if(q.team!==t||q.role==="K"||q.cool>0)continue;
+      const d=Math.hypot(q.x-ball.x,(q.y-ball.y)*3);
+      if(d<bd){bd=d;best=q}}
+    if(best&&bd<260)best.haalT=.5;
+  }}
 function nearest(t){let b=null,d=1e9;for(const p of P){if(p.team!==t||p.role==="K")continue;
   const dd=Math.hypot(p.x-ball.x,p.y-ball.y);if(dd<d){d=dd;b=p}}return b}
 function turn(p,dx,dy,dt){          // vlot draaien, maar niet elke frame een andere kant op
@@ -979,6 +994,9 @@ function update(dt){
   ball.verbodT=Math.max(0,(ball.verbodT||0)-dt);
   if(ball.verbodT<=0)ball.verbod=null;
   if(ball.verbod&&ball.last&&ball.last!==ball.verbod)ball.verbodT=0;  // ander raakte hem: weer vrij
+  /* Zolang de bal onderweg is blijft de ontvanger hem tegemoet lopen. Anders
+     verloopt zijn klok terwijl de bal nog rolt en blijft die ergens liggen. */
+  if(balDoel&&Math.hypot(ball.vx,ball.vy)>25)balDoelT=Math.max(balDoelT,.5);
   balDoelT=Math.max(0,balDoelT-dt);
   if(balDoelT<=0)balDoel=null;
   if(balDoel&&ball.last===balDoel)balDoel=null;   // aangekomen
@@ -1013,6 +1031,7 @@ function update(dt){
     else if(bk){a.x-=ux*push*2;a.y-=uy*push*2;clampP(a)}
     else{a.x-=ux*push;a.y-=uy*push;b.x+=ux*push;b.y+=uy*push;clampP(a);clampP(b)}}
 
+  losseBal(dt);
   refLoopt(dt);
   keeperRuimte(dt);
   if(state==="setpiece"&&taker){takerT+=dt;
@@ -1206,6 +1225,10 @@ function ai(p,dt,spd,spread){
     const vt=Math.min(.9,Math.hypot(ball.vx,ball.vy)/260);
     tx=ball.x+ball.vx*vt;ty=ball.y+ball.vy*vt;
     spd*=1.12}
+  else if(p.haalT>0){                       // losse bal: ga hem halen
+    p.haalT-=dt;
+    const vt=Math.min(.7,Math.hypot(ball.vx,ball.vy)/300);
+    tx=ball.x+ball.vx*vt;ty=ball.y+ball.vy*vt;spd*=1.1}
   else if(chaser){tx=ball.x;ty=ball.y;
     /* Staat er een tegenstander aan de bal en ben jij erbij, dan probeert hij hem
        af te pakken. Lukt dat niet netjes, dan is het een overtreding. */
@@ -1269,9 +1292,20 @@ function ballPhysics(dt){
 function contacts(dt){
   if(ball.held||ball.touch>0)return;
   let p=null,bd=1e9;
-  const vers=(q)=>!(ball.rust>0&&ball.last&&q.team!==ball.last.team)
-                  &&!(ball.verbodT>0&&q===ball.verbod);
-  if(balDoel&&balDoelT>0&&!ball.held&&ball.z<12){
+  /* Balbezit is kleverig: wie hem heeft, houdt hem, tenzij een tegenstander
+     duidelijk dichter bij de bal staat. Zonder die drempel wordt een stilliggende
+     bal elke frame opnieuw geclaimd en flippert het balbezit heen en weer. */
+  const houder=ball.last;
+  const dHouder=houder?Math.hypot(houder.x-ball.x,(houder.y-ball.y)*2.4):1e9;
+  const vers=(q)=>{
+    if(ball.rust>0&&houder&&q.team!==houder.team)return false;
+    if(ball.verbodT>0&&q===ball.verbod)return false;
+    if(houder&&q.team!==houder.team&&dHouder<26){
+      const d=Math.hypot(q.x-ball.x,(q.y-ball.y)*2.4);
+      if(d>dHouder-9)return false;             // niet zomaar afpakken
+    }
+    return true};
+  if(balDoel&&balDoelT>0&&!ball.held&&ball.z<12){   // geldt voor beide ploegen
     /* Aanname: de bal wordt afgeremd én naar de voet getrokken, zodat je meteen
        verder kunt in plaats van er eerst naartoe te moeten lopen. */
     const d=Math.hypot(balDoel.x-ball.x,(balDoel.y-ball.y)*2);
@@ -1324,12 +1358,26 @@ function contacts(dt){
     ball.last=p;ball.touch=.25;p.cool=.3;beep(400,.1,"square",.07);return}
   if(far<300&&wide&&Math.random()<.5){          // voorzet de zestien in
     p.dir=dirOf(gx-p.x,midY-p.y);kick(p,.9,true);return}
-  let mate=null,md=1e9;
-  for(const q of P){if(q.team!==p.team||q===p||q.role==="K")continue;
-    if((q.x-p.x)*attack[p.team]<20)continue;
-    const d=dist(p,q);if(d<md){md=d;mate=q}}
-  if(mate&&md<190&&Math.random()<.3+level*.05){   // hoger niveau speelt vaker af
-    p.dir=dirOf(mate.x-p.x,mate.y-p.y);kick(p,Math.min(.7,.2+md/260),false);return}
+  /* De computer speelt met dezelfde gerichte pass als jij, inclusief de kleefhulp
+     bij de ontvanger. Met een blinde trap in acht richtingen kwam zijn bal zelden
+     aan en werd er voortdurend om een stilliggende bal gevochten. */
+  let mate=null,mbs=1e9;
+  for(const q of P){
+    if(q.team!==p.team||q===p||q.role==="K")continue;
+    const dx=q.x-p.x, dy=q.y-p.y;
+    const af=Math.hypot(dx,dy*3.2);
+    if(af<25||af>320)continue;
+    const vooruit=dx*attack[p.team];
+    const lijn=speellijn(p,q);
+    const punt=af*(vooruit>0?.7:1.6)*(1+lijn.dekking*1.1);
+    if(punt<mbs){mbs=punt;mate=q}}
+  if(mate&&Math.random()<.35+level*.05){          // hoger niveau speelt vaker af
+    const afst=Math.hypot(mate.x-p.x,(mate.y-p.y)*3.2);
+    const lijn=speellijn(p,mate);
+    const top=lijn.dekking>0?Math.max(16,afst*.11):(afst>200?9:0);
+    balDoel=mate;balDoelT=1.8;
+    balNaar(p,mate.x+(mate.mvx||0)*.4,mate.y+(mate.mvy||0)*.4,vzVoor(top),100);
+    return}
   p.dir=dirOf(attack[p.team],(midY-p.y)*.02);
   dribble(p,dt)}
 const spreadFor=()=>48-level*4.4;
