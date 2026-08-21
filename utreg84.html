@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v65 rust";
+const VERSIE="v66 rust";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -740,14 +740,18 @@ function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een 
   p.cool=.55;
   const d0=D8[p.dir];p.x+=d0[0]*7;p.y+=inward(p,d0[1]*5);clampP(p);   // hij schuift vooruit
   beep(200,.09,"square",.05);
-  const bijBal=Math.hypot(p.x-ball.x,(p.y-ball.y)*3)<24&&ball.z<12&&!ball.held;
-  const vanAchter=(p.x-foe.x)*attack[foe.team]<0;
-  if(bijBal&&!vanAchter&&Math.random()<.72){    // schoon: jij glijdt, hij blijft staan
+  /* Ruime marges: je komt al snel "bij de bal" en je bent pas van achteren als
+     je er duidelijk achter zit. Zo blijft een tackle meestal gewoon een tackle. */
+  const bijBal=Math.hypot(p.x-ball.x,(p.y-ball.y)*1.7)<40&&ball.z<16&&!ball.held;
+  const vanAchter=(p.x-foe.x)*attack[foe.team]<-14;
+  if(bijBal&&!vanAchter&&Math.random()<.90){    // schoon: jij glijdt, hij blijft staan
     p.dive=.35;
     const d=D8[p.dir];
     ball.vx=d[0]*70;ball.vy=inward(p,d[1]*70);ball.vz=0;   // bal blijft in de buurt
     ball.last=p;ball.touch=.3;foe.cool=.55;                // hij is even uitgespeeld
     beep(300,.07,"square",.06);return}
+  if(!vanAchter&&Math.random()<.7){            // net mis, maar geen overtreding
+    p.cool=.8;return}
   foe.dive=1.1;foe.cool=1.1;                    // te laat: de tegenstander gaat neer
   const w=Math.sign(foe.x-p.x)||1;
   foe.x+=w*5;clampP(foe);
@@ -1066,7 +1070,7 @@ function human(p,dt){
   if(sprintEdge[i]&&state==="play"&&p.cool<=0&&!hasBall(p)){
     let foe=null,fd=1e9;                              // tweede knop zonder bal: tackle
     for(const q of P){if(q.team===p.team||q.role==="K")continue;
-      const dd=Math.hypot(q.x-p.x,(q.y-p.y)*3);if(dd<fd){fd=dd;foe=q}}
+      const dd=Math.hypot(q.x-p.x,(q.y-p.y)*1.8);if(dd<fd){fd=dd;foe=q}}
     if(foe&&fd<32){tackle(p,foe);return}}
   if(K["f"+i]){if(p.fireT!=null)p.fireT+=dt}
   else if(p.fireT!=null){
@@ -1219,7 +1223,7 @@ function ai(p,dt,spd,spread){
            er echt bovenop zit wordt het een tackle die gefloten kan worden. */
         if(Math.random()<kans){
           const dichtbij=Math.hypot(p.x-ball.x,(p.y-ball.y)*2)<26&&ball.z<12;
-          if(dichtbij&&Math.random()<.75){
+          if(dichtbij&&Math.random()<.93){
             const d=D8[p.dir];
             ball.vx=d[0]*130;ball.vy=inward(p,d[1]*130);ball.vz=0;
             ball.last=p;ball.touch=.3;houder.cool=.4;
