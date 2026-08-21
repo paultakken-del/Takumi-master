@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v63 tikpass";
+const VERSIE="v64 vloeiend";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1010,7 +1010,7 @@ function update(dt){
   if(state==="setpiece"&&taker){takerT+=dt;
     const vrij=houdAfstand(dt);
     const zelf=humans().includes(taker.team);      // ruimte om zelf te kiezen
-    const wacht=zelf?3:2.2, uiterste=zelf?9:5;
+    const wacht=zelf?1.6:1.1, uiterste=zelf?6:2.6;
     if((vrij&&takerT>wacht)||takerT>uiterste)release(taker)}
 
   filmT-=dt;                                   // beeldje bewaren, dertig per seconde
@@ -1252,14 +1252,19 @@ function contacts(dt){
   let p=null,bd=1e9;
   const vers=(q)=>!(ball.rust>0&&ball.last&&q.team!==ball.last.team)
                   &&!(ball.verbodT>0&&q===ball.verbod);
-  if(balDoel&&balDoelT>0&&!ball.held&&ball.z<12){   // aangespeelde speler krijgt wat hulp
+  if(balDoel&&balDoelT>0&&!ball.held&&ball.z<12){
+    /* Aanname: de bal wordt afgeremd én naar de voet getrokken, zodat je meteen
+       verder kunt in plaats van er eerst naartoe te moeten lopen. */
     const d=Math.hypot(balDoel.x-ball.x,(balDoel.y-ball.y)*2);
-    if(d<24&&balDoel.cool<=0){
-      ball.vx*=.25;ball.vy*=.25;ball.last=balDoel;ball.touch=.08;balDoel=null}}
+    if(d<34&&balDoel.cool<=0){
+      const dd=D8[balDoel.dir];
+      ball.x=balDoel.x+dd[0]*9;ball.y=balDoel.y+dd[1]*6+2;ball.z=0;
+      ball.vx*=.14;ball.vy*=.14;ball.vz=0;
+      ball.last=balDoel;ball.touch=.05;balDoel=null}}
   for(const t of humans()){                       // jouw speler heeft voorrang
     const q=ctrl[t];if(!q||q.cool>0||!vers(q))continue;
     const d=Math.hypot(q.x-ball.x,q.y-ball.y);
-    if(d<19&&d<bd){bd=d;p=q}}
+    if(d<23&&d<bd){bd=d;p=q}}
   if(!p){for(const q of P){if(q.cool>0||!vers(q))continue;
     const d=Math.hypot(q.x-ball.x,q.y-ball.y);if(d<bd){bd=d;p=q}}}
   if(!p)return;
