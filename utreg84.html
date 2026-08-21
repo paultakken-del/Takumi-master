@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v64 vloeiend";
+const VERSIE="v65 rust";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -753,7 +753,10 @@ function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een 
   foe.x+=w*5;clampP(foe);
   overtreding(p,foe)}
 
+let fluitRust=0;                               // niet twee keer kort achter elkaar fluiten
 function overtreding(dader,slachtoffer){       // vrije trap, of strafschop in de zestien
+  if(fluitRust>0){dader.cool=.8;return}
+  fluitRust=6;
   whistle();
   const ploeg=slachtoffer.team;
   const b=boxUit(dader.team);
@@ -975,6 +978,7 @@ function update(dt){
   balDoelT=Math.max(0,balDoelT-dt);
   if(balDoelT<=0)balDoel=null;
   if(balDoel&&ball.last===balDoel)balDoel=null;   // aangekomen
+  fluitRust=Math.max(0,fluitRust-dt);
   for(const t of [0,1])pogingT[t]=Math.max(0,pogingT[t]-dt);
   aftrapVrij=Math.max(0,aftrapVrij-dt);
   for(const t of [0,1])lockT[t]=Math.max(0,lockT[t]-dt);
@@ -1210,7 +1214,18 @@ function ai(p,dt,spd,spread){
       if(ball.rust<=0&&p.drukT>.45&&pogingT[p.team]<=0){
         pogingT[p.team]=1;                        // de hele ploeg wacht daarna even
         const kans=Math.min(.6,(.09+level*.03)*(1+(p.drukT-.45)));
-        if(Math.random()<kans)tackle(p,houder);else p.drukT=.15}}
+        /* De computer probeert de bal te veroveren zonder sliding. Lukt het, dan
+           tikt hij hem weg; lukt het niet, dan gebeurt er niets. Alleen als hij
+           er echt bovenop zit wordt het een tackle die gefloten kan worden. */
+        if(Math.random()<kans){
+          const dichtbij=Math.hypot(p.x-ball.x,(p.y-ball.y)*2)<26&&ball.z<12;
+          if(dichtbij&&Math.random()<.75){
+            const d=D8[p.dir];
+            ball.vx=d[0]*130;ball.vy=inward(p,d[1]*130);ball.vz=0;
+            ball.last=p;ball.touch=.3;houder.cool=.4;
+            beep(300,.06,"square",.05);
+          }else tackle(p,houder);
+        }else p.drukT=.15}}
     else p.drukT=Math.max(0,(p.drukT||0)-dt*1.5);}   // druk zakt weg, maar niet meteen
   else if(state==="play"&&aftrapVrij<=0&&ball.last&&ball.last.team===p.team&&!ball.held){
     const v=vrijloop(p,dt);tx=v[0];ty=v[1];       // eigen ploeg aan de bal: vrijlopen
