@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v67 balbezit";
+const VERSIE="v68 paal";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -735,6 +735,18 @@ function volley(p,hold){          // bal uit de lucht op de slof nemen
   ball.vz=vzVoor(2+t*11);
   ball.last=p;ball.touch=.28;p.cool=.3;
   beep(360,.12,"square",.09)}
+function omhaal(p){            // acrobatische haal bij een bal boven je hoofd
+  const gx=foeGoal(p.team), d=D8[p.dir];
+  let mikY=p.y+d[1]*14;
+  mikY=Math.max(W.gy1+5,Math.min(W.gy2-5,mikY));
+  const naarDoel=Math.abs(gx-p.x)<340;
+  const dx=naarDoel?(gx-p.x):d[0]*200, dy=naarDoel?(mikY-p.y):d[1]*60;
+  const l=Math.hypot(dx,dy)||1;
+  p.dir=dirOf(dx,dy);
+  ball.z=Math.min(ball.z,44);
+  ball.vx=dx/l*250;ball.vy=dy/l*250;ball.vz=vzVoor(9);
+  ball.last=p;ball.touch=.3;p.cool=.5;p.dive=.55;       // hij gaat er even bij liggen
+  beep(520,.13,"square",.09)}
 function headShot(p){               // lange klik bij een hoge bal: harde kopstoot
   if(hulpSchot&&inVak(p))return opDoel(p,235,4);            // in de zestien kop je op doel
   const d=D8[p.dir];
@@ -1097,6 +1109,8 @@ function human(p,dt){
     if(p.fireUsed)return;
     const d=dist(p,ball);
     const ruim=inVak(p)?5:0;                          // in het gedrang wat meer speling
+    if(d<20+ruim&&ball.z>=40&&ball.z<62&&p.cool<=0&&hold>=.25){
+      omhaal(p);return}                               // bal hoog boven je: omhaal
     if(d<19+ruim&&ball.z>21&&ball.z<40&&p.cool<=0){   // bal op kophoogte
       if(hold<.25)head(p); else headShot(p);return}
     if(d<20+ruim&&ball.z>4&&ball.z<=21&&p.cool<=0){volley(p,hold);return}   // bal in de lucht
@@ -1390,6 +1404,20 @@ function outOfPlay(){
   for(const side of [0,1]){
     const gx=side===0?W.gx0:W.gx1;
     if(side===0?ball.x>gx:ball.x<gx)continue;
+    /* Paal en lat: binnen twee eenheden van een paal of net onder de lat ketst de
+       bal terug het veld in, met wat snelheidsverlies. */
+    const bijPaal=Math.min(Math.abs(ball.y-W.gy1),Math.abs(ball.y-W.gy2))<2.6&&ball.z<46;
+    /* Lat: alleen als de bal er van onderaf tegenaan komt. Gaat hij er ruim
+       overheen, dan is het gewoon een doeltrap. */
+    const bijLat=ball.z>39&&ball.z<47&&ball.vz<10&&
+                 ball.y>W.gy1+2&&ball.y<W.gy2-2;
+    if((bijPaal||bijLat)&&ball.y>W.gy1-3&&ball.y<W.gy2+3){
+      ball.x=gx+(side===0?3:-3);
+      ball.vx*=-.62;
+      if(bijPaal)ball.vy=(ball.y<midY?-1:1)*Math.max(40,Math.abs(ball.vy))*.8;
+      if(bijLat){ball.vz=-Math.abs(ball.vz)*.5;ball.z=38}
+      ball.touch=.3;beep(150,.09,"square",.07);
+      return}
     if(ball.y>W.gy1&&ball.y<W.gy2&&ball.z<42){goal(ownGoal(0)===gx?1:0);return}
     const def=(ownGoal(0)===gx)?0:1;
     if(ball.last&&ball.last.team===def)setPiece("corner",1-def,gx,ball.y<midY?W.top+4:W.bot-4);
