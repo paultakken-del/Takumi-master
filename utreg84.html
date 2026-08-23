@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v70 utreg";
+const VERSIE="v71 utreg";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -409,8 +409,9 @@ const FORM=[[0.05,0.50,"K"],
             [0.72,0.34,"F"],[0.72,0.66,"F"]];
 /* Namen uit de Utrechtse selectie van die jaren, als eerbetoon. Willy Carbo
    vertrok in 1983 naar Brugge, maar hoort in dit rijtje thuis. */
+/* Alleen veldspelers: Van Ede stond onder de lat, die scoort nooit. */
 const NAMEN=["VAN VEEN","WOUTERS","DE KRUIJK","PLOMP","DE WIT","KRUYS",
-             "ADELAAR","VERRIPS","DU CHATINIER","VAN EDE","VERKUIJL"];
+             "ADELAAR","VERRIPS","DU CHATINIER","VERKUIJL","GODEE"];
 let P=[],ctrl=[null,null];
 const ref={x:0,y:0,dir:0,anim:0,moving:false,walkT:0,z:0,cool:0,dive:0,cel:0,
   team:0,role:"R",fx:.5,fy:.5,ref:true};
