@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v69 utreg";
+const VERSIE="v70 utreg";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -409,8 +409,8 @@ const FORM=[[0.05,0.50,"K"],
             [0.72,0.34,"F"],[0.72,0.66,"F"]];
 /* Namen uit de Utrechtse selectie van die jaren, als eerbetoon. Willy Carbo
    vertrok in 1983 naar Brugge, maar hoort in dit rijtje thuis. */
-const NAMEN=["CARBO","VAN VEEN","WOUTERS","DE KRUIJK","PLOMP","DE WIT",
-             "KRUYS","ADELAAR","VERRIPS","DU CHATINIER","VAN EDE"];
+const NAMEN=["VAN VEEN","WOUTERS","DE KRUIJK","PLOMP","DE WIT","KRUYS",
+             "ADELAAR","VERRIPS","DU CHATINIER","VAN EDE","VERKUIJL"];
 let P=[],ctrl=[null,null];
 const ref={x:0,y:0,dir:0,anim:0,moving:false,walkT:0,z:0,cool:0,dive:0,cel:0,
   team:0,role:"R",fx:.5,fy:.5,ref:true};
@@ -1452,7 +1452,7 @@ const wline=(x1,y1,h1,x2,y2,h2,c)=>line(SX(x1,y1),y1-h1,SX(x2,y2),y2-h2,c);
 const snap=v=>Math.round(v/2)*2;
 
 function crowd(){
-  px(0,0,320,24,"#202020");
+  px(0,0,320,23,"#202020");
   const off=(cam*.3)%6;
   for(let row=0;row<4;row++){const y=row*6;
     for(let i=-1;i<56;i++){const x=Math.round(i*6-off);
@@ -1460,17 +1460,18 @@ function crowd(){
       const col=[C.wht,"#D82820",C.grey,"#F0A0A0"][k];
       px(x+1,y,4,3,col);px(x,y+3,5,4,col===C.blk?C.dgrey:C.blk)}}
   px(0,24,320,8,C.blk);
-  const bo=(cam*.7)%124;
-  for(let i=-1;i<6;i++){const x=Math.round(i*124-bo);
-    const j=Math.abs(i)%3;
-    const col=["#4830B0","#D82820","#C8C020"][j];
-    px(x,24,122,8,col);
-    ctx.font="8px monospace";ctx.textAlign="left";ctx.textBaseline="top";
-    ctx.fillStyle=j===2?C.blk:C.wht;ctx.fillText(["NISSAN","UTREG 84","GALGENWAARD"][j],x+8,25)}
-  px(0,31,320,1,"#004000")}
+  const bo=(cam*.7)%144;
+  for(let i=-1;i<7;i++){const x=Math.round(i*144-bo);
+    const j=((i%4)+4)%4;
+    const col=["#4830B0","#D82820","#C8C020","#186818"][j];
+    px(x,23,142,10,col);
+    ctx.font="9px monospace";ctx.textAlign="center";ctx.textBaseline="top";
+    ctx.fillStyle=j===2?C.blk:C.wht;
+    ctx.fillText(["NISSAN","UTREG 84","ADMIRAL","GALGENWAARD"][j],x+71,24)}
+  px(0,33,320,1,"#004000")}
 
 function pitch(){
-  px(0,32,320,168,C.grass);
+  px(0,34,320,166,C.grass);
   /* Gemaaide banen: stroken van tien meter die met het veld meeschuiven, plus
      kaalgespeelde plekken voor de doelen. Egaal groen oogt plat. */
   const donker="#2E9440";
