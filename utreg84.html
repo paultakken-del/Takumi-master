@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v71 utreg";
+const VERSIE="v72 penalty";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -797,7 +797,8 @@ function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een 
   foe.x+=w*5;clampP(foe);
   overtreding(p,foe)}
 
-let fluitRust=0;                               // niet twee keer kort achter elkaar fluiten
+let fluitRust=0;
+let penT=0;        // klok voor het bewegende mikpunt bij een strafschop                               // niet twee keer kort achter elkaar fluiten
 function overtreding(dader,slachtoffer){       // vrije trap, of strafschop in de zestien
   if(fluitRust>0){dader.cool=.8;return}
   fluitRust=6;
@@ -817,6 +818,16 @@ function overtreding(dader,slachtoffer){       // vrije trap, of strafschop in d
       Math.max(W.top+6,Math.min(W.bot-6,ball.y)));
     msg="VRIJE TRAP";
   }}
+function keeperRuimte(dt){               // bal in de handen van de keeper: zestien vrijmaken
+  const gk=ball.held;
+  if(!gk||gk.role!=="K")return;
+  const b=boxUit(gk.team);
+  for(const p of P){
+    if(p.team===gk.team||p.role==="K")continue;
+    const inBox=(p.x-b.gx)*b.d>=-2&&(p.x-b.rand)*b.d<=0&&p.y>b.y1&&p.y<b.y2;
+    if(!inBox)continue;
+    p.x+=b.d*80*dt;
+    p.moving=true;p.anim+=dt*6;p.walkT=.18;clampP(p)}}
 function setPiece(type,team,x,y){
   setType=type;ball.x=x;ball.y=y;ball.z=0;ball.vx=ball.vy=ball.vz=0;ball.held=null;ball.touch=0;
   let t=null;
@@ -845,65 +856,18 @@ function teDichtbij(p){
   if(!taker)return false;
   if(p===taker||p.role==="K")return false;
   if(setType!=="goalkick"&&setType!=="penalty"&&p.team===taker.team)return false;
-  if(setType==="penalty"){                        // alleen nemer en keeper in de zestien
-    if(p.role==="K")return false;
-    const b=boxUit(taker.team===0?1:0);
-    const inBox=(p.x-b.gx)*b.d>=-2&&(p.x-b.rand)*b.d<=0&&p.y>b.y1&&p.y<b.y2;
-    return inBox||Math.hypot(p.x-ball.x,(p.y-ball.y)*4)<82}
-  if(setType==="goalkick"){                       // bij een doeltrap moet iedereen eruit
-    const b=boxUit(taker.team);
-    return (p.x-b.gx)*b.d>=-2&&(p.x-b.rand)*b.d<=0&&p.y>b.y1&&p.y<b.y2}
-  const need=AFSTAND[setType]||32;
-  return Math.hypot(p.x-ball.x,(p.y-ball.y)*4)<need}
-function keeperRuimte(dt){               // bal in de handen van de keeper: zestien vrijmaken
-  const gk=ball.held;
-  if(!gk||gk.role!=="K")return;
-  const b=boxUit(gk.team);
-  for(const p of P){
-    if(p.team===gk.team||p.role==="K")continue;
-    const inBox=(p.x-b.gx)*b.d>=-2&&(p.x-b.rand)*b.d<=0&&p.y>b.y1&&p.y<b.y2;
-    if(!inBox)continue;
-    p.x+=b.d*80*dt;
-    p.moving=true;p.anim+=dt*6;p.walkT=.18;clampP(p)}}
-function houdAfstand(dt){                // tegenstanders wijken tot ze ver genoeg staan
-  if(state!=="setpiece"||!taker)return true;
-  let vrij=true;
-  for(const p of P){
-    if(!teDichtbij(p))continue;
-    vrij=false;
-    if(setType==="goalkick"||setType==="penalty"){
-      const b=boxUit(setType==="penalty"?(taker.team===0?1:0):taker.team);
-      p.x+=b.d*74*dt;                            // van de doellijn af, het gebied uit
-    }else{
-      let dx=p.x-ball.x, dy=p.y-ball.y;
-      let n=Math.hypot(dx,dy);
-      if(n<7){                                   // pal op de nemer: vaste uitwijkrichting
-        dx=(p.x<=ball.x?-1:1);
-        dy=(ball.y<midY?1:-1)*.6;
-        n=Math.hypot(dx,dy);
-      }
-      p.x+=dx/n*95*dt;p.y+=dy/n*95*dt*.35;
-    }
-    p.moving=true;p.anim+=dt*6;p.walkT=.18;
-    clampP(p);
-  }
-  return vrij}
-function release(p){
   if(setType==="penalty"){
-    /* De bal gaat altijd op doel; met de stick kies je alleen de hoek.
-       Anders schiet je bij omhoog sturen recht naar de zijlijn. */
-    const gx=foeGoal(p.team);
-    let mikY;
-    if(humans().includes(p.team)){
-      const d=D8[p.dir];
-      mikY=midY+d[1]*16;                       // omhoog of omlaag kiest de hoek
-    }else{
-      mikY=midY+(Math.random()-.5)*24;
-    }
-    mikY=Math.max(W.gy1+5,Math.min(W.gy2-5,mikY));
-    const dx=gx-p.x, dy=mikY-p.y, l=Math.hypot(dx,dy)||1;
-    p.dir=dirOf(dx,dy);
-    ball.vx=dx/l*255;ball.vy=dy/l*255;
+    /* Het mikpunt zwiept langs de doellijn; waar het staat op het moment dat je
+       drukt, daar gaat de bal heen. Zo is een strafschop een kwestie van timing. */
+    const gxp=foeGoal(p.team);
+    const mikY=midY+Math.sin(penT*2.2)*((W.gy2-W.gy1)/2-5);
+    /* Reken terug vanaf het doel: de bal moet op mikY over de lijn gaan, dus de
+       zijwaartse snelheid volgt uit de afstand tot het doel. */
+    const dxp=gxp-p.x;
+    const vlucht=Math.abs(dxp)/255;
+    ball.vx=Math.sign(dxp)*255;
+    ball.vy=(mikY-ball.y)/Math.max(.12,vlucht);
+    p.dir=dirOf(dxp,mikY-p.y);
     ball.vz=vzVoor(6);ball.last=p;ball.touch=.3;p.cool=.3;
     beep(430,.11,"square",.08);
     taker=null;state="play";msg="";return}
@@ -1026,6 +990,7 @@ function update(dt){
   if(balDoelT<=0)balDoel=null;
   if(balDoel&&ball.last===balDoel)balDoel=null;   // aangekomen
   fluitRust=Math.max(0,fluitRust-dt);
+  if(state==="setpiece"&&setType==="penalty")penT+=dt;else penT=0;
   for(const t of [0,1])pogingT[t]=Math.max(0,pogingT[t]-dt);
   aftrapVrij=Math.max(0,aftrapVrij-dt);
   for(const t of [0,1])lockT[t]=Math.max(0,lockT[t]-dt);
@@ -1860,6 +1825,15 @@ function ceremonie(){
   px(ax-4,ay-13,9,2,C.wht);
   px(ax-6,ay-18,2,7,C.skin);px(ax+5,ay-18,2,7,C.skin);
   px(ax-3,ay+2,3,3,C.blk);px(ax+2,ay+2,3,3,C.blk)}
+function penMik(){                 // het bewegende mikpunt bij een strafschop
+  if(state!=="setpiece"||setType!=="penalty"||!taker)return;
+  const gx=foeGoal(taker.team);
+  const y=midY+Math.sin(penT*3.1)*((W.gy2-W.gy1)/2-6);
+  const sx=SX(gx,y), sy=Math.round(y);
+  const c=Math.floor(penT*8)%2===0?C.yel:C.wht;
+  px(sx-4,sy-24,9,2,c);px(sx-4,sy-9,9,2,c);
+  px(sx-1,sy-22,3,3,c);px(sx-1,sy-12,3,3,c);
+  px(sx-1,sy-17,3,4,c)}
 function hud(){
   if(state==="herhaling"){
     if(Math.floor(stateT*3)%2===0){             // knippert anderhalf keer per seconde
@@ -1912,6 +1886,7 @@ function frame(ts){
   if(!drawn)drawBall();
   goalpost(0,"frame");goalpost(1,"frame");
   if(state!=="ceremonie"&&state!=="menu"&&deunNu&&deunNu!=="goal")stopMuziek();
+  penMik();
   if(state==="ceremonie")ceremonie();
   hud();
   if(state==="halftime"||state==="fulltime")endBox();
