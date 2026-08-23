@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v68 paal";
+const VERSIE="v69 utreg";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -407,6 +407,10 @@ const FORM=[[0.05,0.50,"K"],
             [0.24,0.32,"D"],[0.24,0.68,"D"],
             [0.48,0.18,"M"],[0.48,0.50,"M"],[0.48,0.82,"M"],
             [0.72,0.34,"F"],[0.72,0.66,"F"]];
+/* Namen uit de Utrechtse selectie van die jaren, als eerbetoon. Willy Carbo
+   vertrok in 1983 naar Brugge, maar hoort in dit rijtje thuis. */
+const NAMEN=["CARBO","VAN VEEN","WOUTERS","DE KRUIJK","PLOMP","DE WIT",
+             "KRUYS","ADELAAR","VERRIPS","DU CHATINIER","VAN EDE"];
 let P=[],ctrl=[null,null];
 const ref={x:0,y:0,dir:0,anim:0,moving:false,walkT:0,z:0,cool:0,dive:0,cel:0,
   team:0,role:"R",fx:.5,fy:.5,ref:true};
@@ -755,12 +759,20 @@ function headShot(p){               // lange klik bij een hoge bal: harde kopsto
   ball.last=p;ball.touch=.25;p.cool=.26;beep(560,.09,"square",.07)}
 function head(p){                   // korte klik: gecontroleerde kopbal
   const d=D8[p.dir], near=Math.abs(foeGoal(p.team)-p.x)<150;
-  const sp=near?235:64;
+  /* Opzwiepen is bedoeld als truc, niet als manier van voortbewegen: de bal komt
+     lager terug en je speler heeft even nodig voordat hij weer kan koppen. */
+  const sp=near?235:44;
+  if(!near)p.cool=.22;
   ball.z=Math.min(ball.z,12);
   ball.vx=d[0]*sp;ball.vy=inward(p,d[1]*sp*.5);
-  ball.vz=near?14:vzVoor(19);          // komt tot in het kopbereik terug
+  ball.vz=near?14:vzVoor(13);          // komt lager terug, minder ver te dribbelen
   ball.last=p;ball.touch=.2;p.cool=.16;beep(760,.07,"triangle",.06)}
-function goal(team){scorer=team;score[team]++;state="goal";stateT=0;msg="GOAL!";
+function goal(team){scorer=team;score[team]++;state="goal";stateT=0;
+  const maker=ball.last&&ball.last.team===team?ball.last:null;
+  if(maker&&team===0){
+    if(!maker.naam)maker.naam=NAMEN[(P.indexOf(maker)*3+2)%NAMEN.length];
+    msg=maker.naam+" SCOORT!";
+  }else msg="GOAL!";
   speelDeun(GOALDEUN,"goal",false);
   ball.held=null;whistle();cheer();for(const p of P)if(p.team===team)p.cel=1}
 function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een overtreding
@@ -1448,13 +1460,13 @@ function crowd(){
       const col=[C.wht,"#D82820",C.grey,"#F0A0A0"][k];
       px(x+1,y,4,3,col);px(x,y+3,5,4,col===C.blk?C.dgrey:C.blk)}}
   px(0,24,320,8,C.blk);
-  const bo=(cam*.7)%100;
-  for(let i=-1;i<6;i++){const x=Math.round(i*100-bo);
+  const bo=(cam*.7)%124;
+  for(let i=-1;i<6;i++){const x=Math.round(i*124-bo);
     const j=Math.abs(i)%3;
     const col=["#4830B0","#D82820","#C8C020"][j];
-    px(x,24,98,8,col);
+    px(x,24,122,8,col);
     ctx.font="8px monospace";ctx.textAlign="left";ctx.textBaseline="top";
-    ctx.fillStyle=j===2?C.blk:C.wht;ctx.fillText(["NISSAN","UTREG 84","NISSAN"][j],x+12,25)}
+    ctx.fillStyle=j===2?C.blk:C.wht;ctx.fillText(["NISSAN","UTREG 84","GALGENWAARD"][j],x+8,25)}
   px(0,31,320,1,"#004000")}
 
 function pitch(){
@@ -1901,6 +1913,7 @@ function frame(ts){
   if(state==="ceremonie")ceremonie();
   hud();
   if(state==="halftime"||state==="fulltime")endBox();
+  if(state==="halftime")txt("TIJD VOOR EEN WARM WORSIE!",160,150,C.tan,10);
   requestAnimationFrame(frame)}
 build();reset(0);
 requestAnimationFrame(frame);
