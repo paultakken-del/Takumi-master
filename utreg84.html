@@ -761,11 +761,11 @@ function head(p){                   // korte klik: gecontroleerde kopbal
   const d=D8[p.dir], near=Math.abs(foeGoal(p.team)-p.x)<150;
   /* Opzwiepen is bedoeld als truc, niet als manier van voortbewegen: de bal komt
      lager terug en je speler heeft even nodig voordat hij weer kan koppen. */
-  const sp=near?235:44;
-  if(!near)p.cool=.22;
+  const sp=near?235:34;
+  if(!near)p.cool=.34;
   ball.z=Math.min(ball.z,12);
   ball.vx=d[0]*sp;ball.vy=inward(p,d[1]*sp*.5);
-  ball.vz=near?14:vzVoor(13);          // komt lager terug, minder ver te dribbelen
+  ball.vz=near?14:vzVoor(10);          // komt lager terug, minder ver te dribbelen
   ball.last=p;ball.touch=.2;p.cool=.16;beep(760,.07,"triangle",.06)}
 function goal(team){scorer=team;score[team]++;state="goal";stateT=0;
   const maker=ball.last&&ball.last.team===team?ball.last:null;
