@@ -49,6 +49,14 @@ jobs:
           python3 - <<'PY'
           import json
           d = json.load(open('/tmp/e.json'))
+          lw = d.get('laatsteWeekronde') or {}
+          print(f"::error title=weekronde-btc::{lw.get('tijd','')[:16]} advies={json.dumps(lw.get('advies'), ensure_ascii=False)[:170]}")
+          print(f"::error title=weekronde-ai::{json.dumps(lw.get('ai'), ensure_ascii=False)[:220]}")
+          etf2 = d.get('etf') or {}
+          for naam in ('laatsteWeekronde','laatsteRonde','verslag'):
+              if etf2.get(naam):
+                  print(f"::error title=etf-ronde::{json.dumps(etf2.get(naam), ensure_ascii=False)[:240]}")
+                  break
           print(f"::error title=structuur::{sorted(d.keys())}")
           for k, v in d.items():
               if isinstance(v, dict):
