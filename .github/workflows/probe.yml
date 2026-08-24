@@ -49,6 +49,12 @@ jobs:
           python3 - <<'PY'
           import json
           d = json.load(open('/tmp/e.json'))
+          print(f"::error title=structuur::{sorted(d.keys())}")
+          for k, v in d.items():
+              if isinstance(v, dict):
+                  print(f"::error title=sub-{k}::{sorted(v.keys())[:12]}")
+              if isinstance(v, list) and v:
+                  print(f"::error title=lijst-{k}::laatste={json.dumps(v[-1], ensure_ascii=False)[:200]}")
           btc = d.get('portfolio') or {}
           print(f"::error title=btc::saldo {btc.get('saldoEUR')} btc {btc.get('btc')} prijs {d.get('prijs')}")
           etf = d.get('etf') or {}
