@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v73 pass";
+const VERSIE="v74 aanloop";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1104,8 +1104,18 @@ function human(p,dt){
   const rooted=(state==="setpiece"&&taker===p);
   const sprint=K["s"+i];
   if(mx||my){const l=Math.hypot(mx,my);p.dir=dirOf(mx/l,my/l);
-    if(!rooted){const sp=hasBall(p)?(sprint?60:46):(sprint?84:66);
+    if(!rooted){
+      /* Op gang komen kost tijd, net als afremmen. Meteen op topsnelheid staan
+         oogt mechanisch; zo krijgt het lopen gewicht. */
+      const top=hasBall(p)?(sprint?60:46):(sprint?84:66);
+      p.v=Math.min(top,(p.v||0)+(sprint?150:190)*dt);
+      const sp=p.v;
       p.anim+=dt*(sp/8);p.moving=true;p.x+=mx/l*sp*dt;p.y+=my/l*sp*dt*.72}}
+  else if(p.v>0&&!rooted){                       // uitlopen na het loslaten
+    p.v=Math.max(0,p.v-260*dt);
+    if(p.v>4){const d0=D8[p.dir];
+      p.x+=d0[0]*p.v*dt;p.y+=inward(p,d0[1]*p.v*dt*.72);
+      p.anim+=dt*(p.v/9);p.moving=true;clampP(p)}}
   if(fireEdge[i]){
     p.fireT=0;p.fireUsed=false;
     if(state==="setpiece"){if(taker&&taker.team===p.team)release(taker);p.fireUsed=true}
