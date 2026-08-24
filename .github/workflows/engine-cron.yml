@@ -33,6 +33,17 @@ jobs:
             -H "content-type: application/json" -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
             -d '{"stap":"etf-diagnose","fase":"trend"}' -o /tmp/t.json -w "voorverwarm HTTP %{http_code}\n" || true
           cut -c1-200 /tmp/t.json; echo
+      - name: Voorverwarmen (trend en koersen, aparte aanroepen)
+        if: github.event.schedule == '53 5 * * 1' || github.event_name == 'workflow_dispatch'
+        run: |
+          for fase in trend herwaardeer; do
+            curl -sS -o /dev/null -w "voorverwarmen $fase HTTP %{http_code}\n" \
+              -X POST https://takumi-master.com/api/engine \
+              -H "content-type: application/json" \
+              -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
+              -d "{\"stap\":\"etf-diagnose\",\"fase\":\"$fase\"}" || true
+            sleep 5
+          done
       - name: Weekronde BTC
         if: github.event.schedule == '53 5 * * 1' || github.event_name == 'workflow_dispatch'
         run: |

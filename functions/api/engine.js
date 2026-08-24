@@ -342,12 +342,22 @@ async function leesMacro(env) {
   return { status: 'ok', ...basis };
 }
 
-async function herwaardeerEtf(portfolio) {
+const KOERS_CACHE_MS = 2 * 3600 * 1000;
+
+async function herwaardeerEtf(env, portfolio) {
   const fouten = [];
   let belegd = 0;
+  const cache = (await env.TAKUMI_USERS.get('engine:cache:koersen', 'json')) || {};
   const versies = await Promise.all(portfolio.posities.map(async (p) => {
-    try { return await stooqKoers(p.symbolen); } catch { return null; }
+    const c = cache[p.naam];
+    if (c && Date.now() - c.t < KOERS_CACHE_MS) return c;
+    try {
+      const vers = await stooqKoers(p.symbolen);
+      if (vers) cache[p.naam] = { ...vers, t: Date.now() };
+      return vers;
+    } catch { return null; }
   }));
+  await env.TAKUMI_USERS.put('engine:cache:koersen', JSON.stringify(cache));
   portfolio.posities.forEach((p, i) => {
     const vers = versies[i];
     if (vers) { p.prijs = vers.koers; p.prijsVan = vers.datum; p.bron = vers.symbool; }
@@ -512,7 +522,7 @@ async function postRonde({ request, env }) {
     }
     if (fase === 'herwaardeer') {
       const p = (await env.TAKUMI_USERS.get('engine:etf:portfolio', 'json')) || structuredClone(ETF_START);
-      const h = await herwaardeerEtf(p);
+      const h = await herwaardeerEtf(env, p);
       return json({ fase, belegd: h.belegd, mislukt: h.fouten });
     }
     if (fase === 'bronnen') {
