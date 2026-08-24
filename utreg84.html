@@ -224,7 +224,7 @@ const KEEP=[
  {shirt:"#A030A8",sleeve:"#A030A8",shorts:"#202020",sock:"#202020",sock2:"#B0B0B0",badge:"#A030A8"}];
 
 /* ===== veld ===== */
-const W={w:1072,top:50,bot:182,gy1:98,gy2:134,gx0:90,gx1:982};
+const W={w:1190,top:46,bot:190,gy1:96,gy2:140,gx0:100,gx1:1090};
 const midX=W.w/2, midY=(W.top+W.bot)/2;
 const SHEAR=0.0;
 /* Perspectief met een verdwijnpunt. Dicht bij de camera staan dingen verder uit
@@ -261,7 +261,7 @@ window.__tik=(sx,sy)=>{
   if(!doelw||bs>170)return false;
   const lijn=speellijn?speellijn(p,doelw):{dekking:0,dichtste:99};
   const afst=Math.hypot(doelw.x-p.x,(doelw.y-p.y)*3.2);
-  const top=lijn.dekking>0?Math.max(16,afst*.11):(afst>200?9:0);
+  const top=lijn.dekking>0?Math.max(18,afst*.12):(afst>300?11:0);
   balDoel=doelw;balDoelT=1.8;
   balNaar(p,doelw.x+(doelw.mvx||0)*.35,doelw.y+(doelw.mvy||0)*.35,vzVoor(top),100);
   return true};
@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v74 aanloop";
+const VERSIE="v75 ruimte";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -697,9 +697,9 @@ function speelBal(p,hold){
       /* Hoogte op maat: over een gedekte lijn heen een boogje, bij een lange bal
          een lichte boog, en bij een vrije korte pass gewoon over het gras. */
       let top;
-      if(keuze.dekking>0)        top=Math.max(15,afst*.10);
-      else if(keuze.dichtste<44) top=11;
-      else if(afst>190)          top=9;
+      if(keuze.dekking>0)        top=Math.max(20,afst*.12);   // er echt overheen
+      else if(keuze.dichtste<40) top=13;
+      else if(afst>300)          top=11;
       else                       top=t<.24?0:(t-.24)*70;
       balDoel=m;balDoelT=1.8;
       return balNaar(p,tx,ty,vzVoor(top),74)}
@@ -934,9 +934,9 @@ function release(p){
     const afst=Math.hypot(mate.x-p.x,(mate.y-p.y)*3.2);
     let top;
     if(setType==="goalkick")      top=32;
-    else if(setType==="corner")   top=Math.max(16,afst*.10);
-    else if(lijn.dekking>0)       top=Math.max(14,afst*.10);
-    else if(afst>190)             top=9;
+    else if(setType==="corner")   top=Math.max(24,afst*.15);
+    else if(lijn.dekking>0)       top=Math.max(22,afst*.14);
+    else if(afst>150)             top=13;
     else                          top=0;
     balNaar(p,mate.x+(mate.mvx||0)*.4,mate.y+(mate.mvy||0)*.4,
             vzVoor(top),setType==="goalkick"?200:88);
@@ -1430,7 +1430,7 @@ function contacts(dt){
     p.passT=1.2;
     const afst=Math.hypot(mate.x-p.x,(mate.y-p.y)*3.2);
     const lijn=speellijn(p,mate);
-    const top=lijn.dekking>0?Math.max(16,afst*.11):(afst>200?9:0);
+    const top=lijn.dekking>0?Math.max(18,afst*.12):(afst>300?11:0);
     balDoel=mate;balDoelT=1.8;
     balNaar(p,mate.x+(mate.mvx||0)*.4,mate.y+(mate.mvy||0)*.4,vzVoor(top),100);
     return}
