@@ -115,9 +115,10 @@ fetch('/api/engine').then(r=>r.json()).then(d=>{
     rij('Gestart',new Date(p.gestartOp).toLocaleDateString('nl-NL')+' @ '+eur(p.startPrijs));
   const log=$('logboek');
   for(const r of d.logboek||[]){
+    const a=r.advies||{actie:r.actie||'INFO',reden:r.melding||r.reden||''};
     const li=document.createElement('li');
-    li.innerHTML='<div class="kop"><b class="'+r.advies.actie+'">'+(r.advies.actie==='GEEN_ACTIE'?'GEEN ACTIE':r.advies.actie)+'</b><span>'+
-      new Date(r.tijd).toLocaleDateString('nl-NL')+'</span></div><p>'+r.advies.reden+'</p>';
+    li.innerHTML='<div class="kop"><b class="'+a.actie+'">'+(a.actie==='GEEN_ACTIE'?'GEEN ACTIE':a.actie)+'</b><span>'+
+      new Date(r.tijd).toLocaleDateString('nl-NL')+'</span></div><p>'+(a.reden||'')+'</p>';
     log.appendChild(li);
   }
   if(!(d.logboek||[]).length)log.innerHTML='<li><p class="stil">Nog geen rondes in het logboek.</p></li>';
@@ -157,14 +158,15 @@ fetch('/api/engine').then(r=>r.json()).then(d=>{
     $('etfPortfolio').innerHTML=rijen;
     const elog=$('etfLogboek');
     for(const r of e.logboek||[]){
+      const a=r.advies||{actie:r.actie||'INFO',reden:r.melding||r.reden||''};
       const li=document.createElement('li');
-      li.innerHTML='<div class="kop"><b class="'+r.advies.actie+'">'+(r.advies.actie==='GEEN_ACTIE'?'GEEN ACTIE':r.advies.actie)+'</b><span>'+
-        new Date(r.tijd).toLocaleDateString('nl-NL')+'</span></div><p>'+r.advies.reden+'</p>';
+      li.innerHTML='<div class="kop"><b class="'+a.actie+'">'+(a.actie==='GEEN_ACTIE'?'GEEN ACTIE':a.actie)+'</b><span>'+
+        (r.tijd?new Date(r.tijd).toLocaleDateString('nl-NL'):'')+'</span></div><p>'+(a.reden||'')+'</p>';
       elog.appendChild(li);
     }
     if(!(e.logboek||[]).length)elog.innerHTML='<li><p class="stil">Nog geen rondes in het logboek.</p></li>';
   }
-}).catch(()=>{$('kVerslag').innerHTML='<p class="stil">Status kon niet geladen worden.</p>'});
+}).catch(e=>{console.error(e);const k=$('kVerslag');if(!k.innerHTML.trim())k.innerHTML='<p class="stil">Status kon niet geladen worden.</p>';});
 </script>
 </body>
 </html>
