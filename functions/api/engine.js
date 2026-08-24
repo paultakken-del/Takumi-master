@@ -641,7 +641,7 @@ async function postRonde({ request, env }) {
     // om niet te handelen: hetzelfde principe als een ontbrekende radarweging.
     let trend = null, trendFout = null;
     try { trend = await haalEtfTrendGecachet(env); } catch (fout) { trendFout = String(fout.message || fout); }
-    const { belegd, fouten } = await herwaardeerEtf(portfolio);
+    const { belegd, fouten } = await herwaardeerEtf(env, portfolio);
     const macro = await leesMacro(env);
 
     // Sloten op macroniveau: groeikansen (vroeg+midden) tegenover krimpkansen (laat+contractie).
