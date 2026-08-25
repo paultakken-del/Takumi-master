@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v78 EA";
+const VERSIE="v79 kopbal";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -768,7 +768,7 @@ function head(p){                   // korte klik: gecontroleerde kopbal
   if(!near)p.cool=.34;
   ball.z=Math.min(ball.z,12);
   ball.vx=d[0]*sp;ball.vy=inward(p,d[1]*sp*.5);
-  ball.vz=near?14:vzVoor(10);          // komt lager terug, minder ver te dribbelen
+  ball.vz=near?14:vzVoor(7);           // komt zo laag terug dat jongleren stopt
   ball.last=p;ball.touch=.2;p.cool=.16;beep(760,.07,"triangle",.06)}
 function goal(team){scorer=team;score[team]++;state="goal";stateT=0;
   const maker=ball.last&&ball.last.team===team?ball.last:null;
@@ -1391,10 +1391,21 @@ function contacts(dt){
     const d=Math.hypot(q.x-ball.x,q.y-ball.y);if(d<bd){bd=d;p=q}}}
   if(!p)return;
   const jij=p===ctrl[p.team]&&humans().includes(p.team);
-  if(bd<15&&ball.z>21&&ball.z<38&&p.role!=="K"&&!jij){   // kophoogte: alleen de computer kopt vanzelf
-    if(!(p===ctrl[p.team]&&humans().includes(p.team)))
-      p.dir=dirOf(foeGoal(p.team)-p.x,midY-p.y);
-    head(p);return}
+  if(bd<15&&ball.z>21&&ball.z<38&&p.role!=="K"&&!jij){
+    /* De computer speelt de bal weg of neemt hem aan; hij houdt hem niet hoog.
+       Een zachte kopbal komt namelijk weer op kophoogte terug, en dan blijft hij
+       eindeloos jongleren. */
+    p.dir=dirOf(foeGoal(p.team)-p.x,midY-p.y);
+    const naarDoel=Math.abs(foeGoal(p.team)-p.x)<300;
+    if(naarDoel){headShot(p);return}
+    const keuze=medespeler(p,260);
+    if(keuze&&Math.random()<.6){
+      const m=keuze.q;
+      balDoel=m;balDoelT=1.8;
+      balNaar(p,m.x+(m.mvx||0)*.4,m.y+(m.mvy||0)*.4,vzVoor(12),130);
+      p.cool=.3;beep(520,.08,"square",.06);return}
+    ball.z=Math.min(ball.z,6);ball.vz=0;          // aannemen: bal komt naar beneden
+    ball.vx*=.2;ball.vy*=.2;ball.last=p;ball.touch=.1;p.cool=.2;return}
   if(p.role==="K"){                             // bal stuit alleen op zijn lichaam
     if(Math.abs(ball.x-p.x)<11&&Math.abs(ball.y-p.y)<7&&ball.z<30){
       const s=Math.sign(ball.x-ownGoal(p.team))||1;
