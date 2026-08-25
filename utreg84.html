@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v75 ruimte";
+const VERSIE="v76 sturing";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1100,7 +1100,10 @@ function human(p,dt){
       p.uit=(p.uit||0)+dt;
       if(p.uit>4)punt(p)}
     return}
-  const mx=(K["r"+i]?1:0)-(K["l"+i]?1:0), my=(K["d"+i]?1:0)-(K["u"+i]?1:0);
+  let mx=(K["r"+i]?1:0)-(K["l"+i]?1:0), my=(K["d"+i]?1:0)-(K["u"+i]?1:0);
+  /* Exacte knuppelrichting als die er is. Alleen vier schakelaars betekent dat je
+     hoek wordt afgerond op achtsten; zo loopt hij precies waar je hem stuurt. */
+  if(i===0&&(K.ax||K.ay)){mx=K.ax;my=K.ay}
   const rooted=(state==="setpiece"&&taker===p);
   const sprint=K["s"+i];
   if(mx||my){const l=Math.hypot(mx,my);p.dir=dirOf(mx/l,my/l);
