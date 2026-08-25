@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v76 sturing";
+const VERSIE="v77 bezit";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1015,7 +1015,7 @@ function update(dt){
   const hum=humans();
   ball.rust=Math.max(0,(ball.rust||0)-dt);
   if(ball.last&&ball.last.team!==bezitTeam){    // net veroverd: even niet terugpakken
-    bezitTeam=ball.last.team;ball.rust=.9}
+    bezitTeam=ball.last.team;ball.rust=.9;balDoel=null;balDoelT=0}
   ball.verbodT=Math.max(0,(ball.verbodT||0)-dt);
   if(ball.verbodT<=0)ball.verbod=null;
   if(ball.verbod&&ball.last&&ball.last!==ball.verbod)ball.verbodT=0;  // ander raakte hem: weer vrij
@@ -1362,7 +1362,12 @@ function contacts(dt){
     /* Aanname: de bal wordt afgeremd én naar de voet getrokken, zodat je meteen
        verder kunt in plaats van er eerst naartoe te moeten lopen. */
     const d=Math.hypot(balDoel.x-ball.x,(balDoel.y-ball.y)*2);
-    if(d<34&&balDoel.cool<=0){
+    /* De kleefhulp geldt alleen als de bal nog van zijn eigen ploeg is. Anders
+       plukt een aangespeelde speler hem terug nadat de tegenpartij hem veroverde,
+       en dan kaatst de bal eindeloos heen en weer tussen twee spelers. */
+    if(d<34&&balDoel.cool<=0&&
+       (!ball.last||ball.last.team===balDoel.team)&&
+       !(ball.rust>0&&houder&&houder.team!==balDoel.team)){
       const dd=D8[balDoel.dir];
       ball.x=balDoel.x+dd[0]*9;ball.y=balDoel.y+dd[1]*6+2;ball.z=0;
       ball.vx*=.14;ball.vy*=.14;ball.vz=0;
