@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v77 bezit";
+const VERSIE="v78 EA";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -628,6 +628,7 @@ function kick(p,power,loft){        // korte druk is vlak, lang vasthouden geeft
 /* De zwaartekracht is 210, dus een bal die met snelheid v omhoog gaat haalt
    een tophoogte van v*v/420. Hieronder rekenen we met de tophoogte in pixels. */
 const vzVoor=top=>Math.sqrt(420*Math.max(0,top));
+let eenTwee=null, eenTweeT=0;      // wie mag de bal terugvragen na zijn eigen pass
 let balDoel=null, balDoelT=0;      // wie is er aangespeeld
 function balNaar(p,tx,ty,hoogte,minSp){
   const dx=tx-p.x, dy=ty-p.y;
@@ -702,6 +703,7 @@ function speelBal(p,hold){
       else if(afst>300)          top=11;
       else                       top=t<.24?0:(t-.24)*70;
       balDoel=m;balDoelT=1.8;
+      if(isHuman(p)){eenTwee=p;eenTweeT=1.1}      // venster om de bal terug te vragen
       return balNaar(p,tx,ty,vzVoor(top),74)}
     return balNaar(p,p.x+d[0]*(60+t*420),p.y+d[1]*(25+t*140),
                    vzVoor(t<.24?0:(t-.24)*70),95)}
@@ -1026,6 +1028,8 @@ function update(dt){
   if(balDoelT<=0)balDoel=null;
   if(balDoel&&ball.last===balDoel)balDoel=null;   // aangekomen
   fluitRust=Math.max(0,fluitRust-dt);
+  eenTweeT=Math.max(0,eenTweeT-dt);
+  if(eenTweeT<=0)eenTwee=null;
   if(state==="setpiece"&&setType==="penalty")penT+=dt;else penT=0;
   for(const t of [0,1])pogingT[t]=Math.max(0,pogingT[t]-dt);
   aftrapVrij=Math.max(0,aftrapVrij-dt);
@@ -1120,6 +1124,11 @@ function human(p,dt){
       p.x+=d0[0]*p.v*dt;p.y+=inward(p,d0[1]*p.v*dt*.72);
       p.anim+=dt*(p.v/9);p.moving=true;clampP(p)}}
   if(fireEdge[i]){
+    /* Een-twee: druk vlak na je eigen pass nog eens en je vraagt de bal terug.
+       Je loopt door in de ruimte, je medespeler legt hem voor je neer. */
+    if(!hasBall(p)&&eenTweeT>0&&eenTwee===p&&balDoel&&balDoel.team===p.team){
+      balDoel.eenTweeNaar=p;balDoel.eenTweeT=2.4;
+      eenTweeT=0;eenTwee=null;beep(700,.06,"square",.05)}
     p.fireT=0;p.fireUsed=false;
     if(state==="setpiece"){if(taker&&taker.team===p.team)release(taker);p.fireUsed=true}
     else if(gk&&inOwnBox(p.team)&&dist(gk,ball)<40&&!ball.held){save(gk);p.fireUsed=true}
@@ -1433,6 +1442,15 @@ function contacts(dt){
     if(punt<mbs){mbs=punt;mate=q}}
   /* Niet meteen weer afspelen: een speler die de bal net kreeg houdt hem eerst
      even, anders tikken twee spelers hem eindeloos heen en weer. */
+  /* Terugleggen bij een een-twee: vóór de loper uit, zodat hij erop kan inlopen. */
+  p.eenTweeT=Math.max(0,(p.eenTweeT||0)-dt);
+  if(p.eenTweeNaar&&p.eenTweeT>0&&hasBall(p)){
+    const m2=p.eenTweeNaar;
+    const tx2=m2.x+attack[p.team]*36, ty2=m2.y+(m2.mvy||0)*.3;
+    balDoel=m2;balDoelT=1.8;
+    balNaar(p,tx2,ty2,vzVoor(0),120);
+    p.eenTweeNaar=null;p.eenTweeT=0;p.passT=1;
+    return}
   p.passT=(p.passT||0)-dt;
   if(mate&&p.passT<=0&&Math.random()<.35+level*.05){
     p.passT=1.2;
@@ -1585,6 +1603,16 @@ function drawPlayer(p){
   const kit=p.ref?SCHEIDS:(gk?KEEP[p.team]:KIT[p.team]);
   const mine=!p.ref&&humans().includes(p.team)&&p===ctrl[p.team];
   const shirt=mine?kit.light:kit.shirt;
+  /* Driehoekje boven de speler die je bestuurt, zoals in moderne voetbalspellen.
+     Zonder zo'n merkteken weet je in het gedrang niet wie je stuurt. */
+  if(mine&&state!=="menu"){
+    const top=y-42;
+    px(X-4,top,9,1,C.wht);px(X-3,top+1,7,1,C.wht);
+    px(X-2,top+2,5,1,C.wht);px(X-1,top+3,3,1,C.wht);px(X,top+4,1,1,C.wht)}
+  /* En een ringetje onder de speler die je aanspeelt, zodat je ziet waar de bal
+     heen gaat voordat hij er is. */
+  if(balDoel===p&&balDoelT>0&&humans().includes(p.team)){
+    px(X-5,gy+1,11,1,C.yel);px(X-6,gy,1,1,C.yel);px(X+5,gy,1,1,C.yel)}
   const d=p.dir, front=(d>=1&&d<=3), back=(d>=5&&d<=7);
   const sideV=(d!==2&&d!==6), face=(d>=3&&d<=5)?-1:1;
   px(X-5,gy,11,2,"rgba(0,0,0,.25)");
