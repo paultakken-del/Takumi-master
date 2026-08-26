@@ -395,7 +395,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v80 analyse";
+const VERSIE="v81 radar";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1971,10 +1971,11 @@ function radar(){
      Je ziet maar een deel van het veld, dus zonder dit weet je niet waar je
      medespelers staan. */
   if(state!=="play"&&state!=="kickoff"&&state!=="setpiece")return;
-  const rw=76, rh=30, rx=5, ry=200-rh-5;
-  px(rx-1,ry-1,rw+2,rh+2,"rgba(0,0,0,.45)");
-  px(rx,ry,rw,rh,"rgba(20,90,20,.55)");
-  px(rx+(rw>>1),ry,1,rh,"rgba(255,255,255,.30)");
+  const rw=61, rh=24, rx=(320-rw)>>1, ry=34;   // midden boven, twintig procent kleiner
+  px(rx-2,ry-2,rw+4,rh+4,"#101810");            // donker kader, anders valt hij weg
+  px(rx-1,ry-1,rw+2,rh+2,"#5A6A5A");
+  px(rx,ry,rw,rh,"#0C2A0C");
+  px(rx+(rw>>1),ry,1,rh,"#3C6A3C");
   const sx=v=>rx+Math.round((v-W.gx0)/(W.gx1-W.gx0)*rw);
   const sy=v=>ry+Math.round((v-W.top)/(W.bot-W.top)*rh);
   for(const q of P){
