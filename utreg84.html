@@ -213,7 +213,8 @@ const KITS=[
 let hulpPass=1;     // 1 = zoekt zelf een medespeler, 0 = precies jouw richting
 let hulpSchot=1;    // 1 = richt in de zestien op doel, 0 = precies jouw richting
 let hulpWissel=1;   // 1 = besturing springt naar wie het dichtst bij de bal is, 0 = alleen op de knop
-let tikPas=1;       // 1 = tikken op het veld speelt naar de medespeler daar in de buurt
+let tikPas=1;
+let spelMuziek=1;   // achtergrondmuziek tijdens de wedstrijd       // 1 = tikken op het veld speelt naar de medespeler daar in de buurt
 let kitA=0, kitB=2;
 let KIT=[KITS[kitA],KITS[kitB]];
 const zetTenues=()=>{KIT[0]=KITS[kitA];KIT[1]=KITS[kitB]};
@@ -338,6 +339,18 @@ function speelDeun(deun,naam,herhaal){
 }
 function maakDeun(tempo,stemmen){const d=stemmen.slice();d.tempo=tempo;return d}
 
+/* Wedstrijddeun: rustige loop in a klein die eindeloos doorspeelt. Zachter en
+   minder druk dan de titeldeun, zodat hij onder het spel door blijft liggen
+   en niet gaat vervelen. Bas, tegenstem en een spaarzame bovenstem. */
+const SPELDEUN=maakDeun(126,[
+ {golf:"triangle",vol:.44,noten:[[-24,2],[-24,1],[-19,1],[-22,2],[-22,1],[-17,1],
+                                [-26,2],[-26,1],[-21,1],[-19,2],[-19,2]]},
+ {golf:"square",vol:.20,detune:6,
+  noten:[[0,1],[3,1],[7,1],[3,1],[2,1],[5,1],[9,1],[5,1],
+         [-2,1],[2,1],[5,1],[2,1],[3,1],[7,1],[10,2]]},
+ {golf:"square",vol:.13,detune:-8,
+  noten:[[null,4],[12,1],[10,1],[7,2],[null,4],[15,1],[12,1],[10,2]]}]);
+
 /* Titeldeun: opgewekt loopje in a klein, met stuiterende bas en arpeggio. */
 const TITELDEUN=maakDeun(150,[
  {golf:"triangle",vol:.5,noten:[[-24,1],[-24,1],[-19,1],[-19,1],[-26,1],[-26,1],[-21,1],[-21,1],
@@ -395,7 +408,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v82 radar";
+const VERSIE="v83 muziek";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -519,12 +532,13 @@ function menuKey(k){
     else if(menuSel===4)hulpPass=1-hulpPass;
     else if(menuSel===5)hulpSchot=1-hulpSchot;
     else if(menuSel===6)hulpWissel=1-hulpWissel;
-    else tikPas=1-tikPas;
+    else if(menuSel===7)tikPas=1-tikPas;
+    else spelMuziek=1-spelMuziek;
     zetTenues();beep(560,.05)};
   if(k==="ArrowLeft")stap(-1);
   else if(k==="ArrowRight")stap(1);
-  else if(k==="ArrowUp"){menuSel=(menuSel+7)%8;beep(400,.04)}
-  else if(k==="ArrowDown"){menuSel=(menuSel+1)%8;beep(400,.04)}
+  else if(k==="ArrowUp"){menuSel=(menuSel+8)%9;beep(400,.04)}
+  else if(k==="ArrowDown"){menuSel=(menuSel+1)%9;beep(400,.04)}
   else if(k===" "||k==="Enter")start()}
 function start(){stopMuziek();film=[];herhaling=null;score=[0,0];clock=0;half=1;attack=[1,-1];build();reset(0);
   P.forEach((p,i)=>{                            // opkomen vanaf buiten het veld
@@ -1032,6 +1046,11 @@ function update(dt){
   if(balDoelT<=0)balDoel=null;
   if(balDoel&&ball.last===balDoel)balDoel=null;   // aangekomen
   if(state==="play"&&ball.last)stat.bezit[ball.last.team]++;
+  /* Achtergrondmuziek: start bij de aftrap, stopt bij een doelpunt of de rust
+     zodat die deuntjes vrij spel hebben, en pakt daarna weer op. */
+  if(spelMuziek&&snd&&(state==="play"||state==="kickoff"||state==="setpiece")){
+    if(deunNu!=="spel")speelDeun(SPELDEUN,"spel",true);
+  }else if(deunNu==="spel"&&state!=="play"&&state!=="kickoff"&&state!=="setpiece")stopMuziek();
   fluitRust=Math.max(0,fluitRust-dt);
   eenTweeT=Math.max(0,eenTweeT-dt);
   if(eenTweeT<=0)eenTwee=null;
@@ -1902,11 +1921,11 @@ function opties(){
   ctx.strokeStyle="#2E7A2E";ctx.lineWidth=1;ctx.strokeRect(24,26,272,132);
   const waarden=[String(level),players2===1?"1 SPELER":"2 SPELERS",KITS[kitA].naam,KITS[kitB].naam,
                  hulpPass?"GERICHT":"VRIJ",hulpSchot?"GERICHT":"VRIJ",hulpWissel?"AUTO":"HANDMATIG",
-                 tikPas?"AAN":"UIT"];
+                 tikPas?"AAN":"UIT",spelMuziek?"AAN":"UIT"];
   const namen=["COMPUTERNIVEAU","AANTAL SPELERS","TENUE THUIS","TENUE UIT",
-               "PASSEN","SCHIETEN","SPELERWISSEL","TIKKEN OM TE PASSEN"];
-  for(let r=0;r<8;r++){
-    const y=32+r*17, aan=menuSel===r;
+               "PASSEN","SCHIETEN","SPELERWISSEL","TIKKEN OM TE PASSEN","MUZIEK IN HET SPEL"];
+  for(let r=0;r<9;r++){
+    const y=30+r*15, aan=menuSel===r;
     if(aan)px(30,y-4,260,16,"#145014");
     ctx.textAlign="left";
     ctx.fillStyle=aan?C.yel:"#7FB27F";ctx.font="10px monospace";
