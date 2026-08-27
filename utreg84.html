@@ -169,6 +169,11 @@
   function veldTik(e){
     const t=e.changedTouches?e.changedTouches[0]:e;
     if(!t)return;
+    const rm=cvv.getBoundingClientRect();
+    if(window.__inMenu&&window.__inMenu()&&rm.width>0){
+      const mx=(t.clientX-rm.left)/rm.width*320, my=(t.clientY-rm.top)/rm.height*200;
+      if(window.__menuTik&&window.__menuTik(mx,my)){e.preventDefault();return}
+    }
     if(t.clientX<window.innerWidth*.46)return;              // linkerhelft is de knuppel
     for(const id of ["fire","sprint","vol","kruis","geluid"]){
       const el2=document.getElementById(id);
@@ -247,6 +252,19 @@ function ac(){
 window.__wek=ac;
 /* Tikken op het veld speelt de bal naar de medespeler het dichtst bij je vinger.
    Je wijst dus aan waar de bal heen moet, in plaats van te mikken met de stick. */
+/* Menubediening met de vinger: tik op een regel om hem te kiezen, tik links of
+   rechts van het midden om de waarde te veranderen. Met alleen de joystick moest
+   je negen keer los tikken om onderaan te komen. */
+window.__menuTik=(sx,sy)=>{
+  if(state!=="menu")return false;
+  if(menuPage!==1){menuFire();return true}
+  const r=Math.floor((sy-30+7)/15);
+  if(r<0||r>8){
+    if(sy>170){menuFire();return true}                 // onderin: starten
+    return false}
+  if(r===menuSel)menuKey(sx>160?"ArrowRight":"ArrowLeft");
+  else{menuSel=r;beep(400,.04)}
+  return true};
 window.__tik=(sx,sy)=>{
   if(!tikPas||state!=="play")return false;
   const p=ctrl[0];
@@ -408,7 +426,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v86 afpakken";
+const VERSIE="v87 menu";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -495,7 +513,7 @@ zone.addEventListener("touchstart",e=>{e.preventDefault();ac();
   const t=e.changedTouches[0];
   zetKnuppel(t);sid=t.identifier;
   const v=stickAt(t);
-  if(state==="menu")menuKey(Math.abs(v.dx)>Math.abs(v.dy)?(v.dx>0?"ArrowRight":"ArrowLeft"):(v.dy>0?"ArrowDown":"ArrowUp"))});
+  });
 zone.addEventListener("touchmove",e=>{e.preventDefault();
   const t=[...e.touches].find(t=>t.identifier===sid);if(t)stickAt(t)});
 zone.addEventListener("touchend",e=>{e.preventDefault();sid=null;
@@ -824,6 +842,7 @@ function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een 
   overtreding(p,foe)}
 
 let stat={bezit:[0,0],schoten:[0,0],corners:[0,0]};   // wedstrijdcijfers voor de rust
+let menuHerhaal=0, menuEerste=true;   // pauze en tempo bij het vasthouden in het menu
 let fluitRust=0;
 let penT=0;        // klok voor het bewegende mikpunt bij een strafschop                               // niet twee keer kort achter elkaar fluiten
 function overtreding(dader,slachtoffer){       // vrije trap, of strafschop in de zestien
@@ -975,7 +994,17 @@ function release(p){
 /* ===== update ===== */
 function update(dt){
   stateT+=dt;
-  if(state==="menu"||state==="halftime"||state==="fulltime"){fireEdge[0]=fireEdge[1]=false;sprintEdge[0]=sprintEdge[1]=false;return}
+  if(state==="menu"){
+    /* Houd je de knuppel of een pijltoets vast, dan herhaalt de keuze. Eerst een
+       pauze, daarna vlot achter elkaar; anders moet je negen keer los tikken. */
+    const r=K.r0||K.ax>.4, l=K.l0||K.ax<-.4, u=K.u0||K.ay<-.4, d=K.d0||K.ay>.4;
+    if(r||l||u||d){
+      menuHerhaal-=dt;
+      if(menuHerhaal<=0){menuHerhaal=menuEerste?.42:.13;menuEerste=false;
+        menuKey(u?"ArrowUp":d?"ArrowDown":r?"ArrowRight":"ArrowLeft")}
+    }else{menuHerhaal=0;menuEerste=true}
+    fireEdge[0]=fireEdge[1]=false;sprintEdge[0]=sprintEdge[1]=false;return}
+  if(state==="halftime"||state==="fulltime"){fireEdge[0]=fireEdge[1]=false;sprintEdge[0]=sprintEdge[1]=false;return}
   if(state==="goal"){
     for(const p of P)if(p.cel){p.anim+=dt*10;p.moving=true;p.x+=attack[p.team]*24*dt;
       p.dir=attack[p.team]>0?0:4;clampP(p)}
