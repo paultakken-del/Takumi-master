@@ -408,7 +408,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v85 geluid";
+const VERSIE="v86 afpakken";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1169,7 +1169,16 @@ function human(p,dt){
     let foe=null,fd=1e9;                              // tweede knop zonder bal: tackle
     for(const q of P){if(q.team===p.team||q.role==="K")continue;
       const dd=Math.hypot(q.x-p.x,(q.y-p.y)*1.8);if(dd<fd){fd=dd;foe=q}}
-    if(foe&&fd<32){tackle(p,foe);return}}
+    if(foe&&fd<40){
+      /* Kun je bij de bal, dan tik je hem gewoon weg zonder sliding. Alleen als
+         je er niet bij kunt wordt het een glijpartij met kans op een overtreding. */
+      const bijBal=Math.hypot(p.x-ball.x,(p.y-ball.y)*1.7)<36&&ball.z<16&&!ball.held;
+      if(bijBal){
+        const d0=D8[p.dir];
+        ball.vx=d0[0]*150;ball.vy=inward(p,d0[1]*150);ball.vz=0;
+        ball.last=p;ball.touch=.3;ball.rust=.9;foe.cool=.5;
+        beep(300,.07,"square",.06);return}
+      tackle(p,foe);return}}
   if(K["f"+i]){if(p.fireT!=null)p.fireT+=dt}
   else if(p.fireT!=null){
     const hold=p.fireT;p.fireT=null;
