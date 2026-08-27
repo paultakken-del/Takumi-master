@@ -408,7 +408,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v84 passlijn";
+const VERSIE="v85 geluid";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -625,12 +625,16 @@ function dribble(p,dt){         // bal blijft voor de voet en volgt jouw eigen s
   ball.z=0;ball.vz=0;
   ball.vx=p.mvx||0;ball.vy=p.mvy||0;      // sta je stil, dan ligt de bal stil
   ball.last=p;ball.touch=0;
-  if(!p.tick||p.tick<=0){p.tick=.28;beep(520,.035,"square",.025)}
-  p.tick-=dt}
+  /* Balcontact hoor je alleen bij een echte aanraking, niet als klokje dat elke
+     0,28 seconde doortikt. Dat werd bij lang opdrijven een ratel. Alleen als je
+     op snelheid bent en dan hooguit twee keer per seconde, heel zacht. */
+  const snel=Math.hypot(p.mvx||0,p.mvy||0);
+  p.tick=(p.tick||0)-dt;
+  if(snel>30&&p.tick<=0){p.tick=.55;beep(430,.02,"triangle",.012)}}
 function nudge(p,speed){
   const d=D8[p.dir];
   ball.vx=d[0]*speed;ball.vy=inward(p,d[1]*speed*.55);ball.vz=0;
-  ball.last=p;ball.touch=.1;beep(520,.04,"square",.03)}
+  ball.last=p;ball.touch=.1;beep(430,.03,"triangle",.02)}
 function kick(p,power,loft){        // korte druk is vlak, lang vasthouden geeft een hoge bal
   const centraal=Math.abs(p.y-midY)<34;              // vanaf de flank een voorzet, centraal een schot
   const dichtbij=Math.abs(foeGoal(p.team)-p.x)<230&&centraal;
