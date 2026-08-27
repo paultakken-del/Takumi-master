@@ -408,7 +408,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v83 muziek";
+const VERSIE="v84 passlijn";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -666,14 +666,17 @@ function balNaar(p,tx,ty,hoogte,minSp){
    daar niemand, dan de best bereikbare medespeler waar dan ook. Hij meldt er ook
    bij hoe gedekt de speellijn is, want daar wordt de hoogte van de pass op gekozen. */
 function speellijn(p,q){
+  /* Een tegenstander blokkeert de pass alleen als hij er echt voor staat. De
+     diepte telde drie keer zo zwaar mee, waardoor iemand die tien pixels naast
+     de lijn liep al als blokkade gold en bijna elke pass "gedekt" was. */
   const dx=q.x-p.x, dy=q.y-p.y, l=Math.hypot(dx,dy)||1;
   let dekking=0, dichtste=1e9;
   for(const o of P){
     if(o.team===p.team||o.role==="K")continue;
     const s=((o.x-p.x)*dx+(o.y-p.y)*dy)/(l*l);
-    if(s<=.08||s>=1.05)continue;
-    const afw=Math.hypot(o.x-(p.x+dx*s),(o.y-(p.y+dy*s))*3.2);
-    if(afw<28)dekking++;
+    if(s<=.14||s>=.94)continue;                 // pal bij de speler telt niet mee
+    const afw=Math.hypot(o.x-(p.x+dx*s),(o.y-(p.y+dy*s))*1.9);
+    if(afw<15)dekking++;
     if(afw<dichtste)dichtste=afw}
   return {dekking,dichtste}}
 function medespeler(p,maxAfst){
@@ -715,7 +718,7 @@ function speelBal(p,hold){
          een lichte boog, en bij een vrije korte pass gewoon over het gras. */
       let top;
       if(keuze.dekking>0)        top=Math.max(20,afst*.12);   // er echt overheen
-      else if(keuze.dichtste<40) top=13;
+      else if(keuze.dichtste<20) top=13;
       else if(afst>300)          top=11;
       else                       top=t<.24?0:(t-.24)*70;
       balDoel=m;balDoelT=1.8;
