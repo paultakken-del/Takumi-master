@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href='data:application/manifest+json,{"name":"Utreg 84","short_name":"Utreg 84","start_url":".","display":"fullscreen","orientation":"landscape","background_color":"%23000000","theme_color":"%23000000","icons":[{"src":"icon.png","sizes":"180x180","type":"image/png"}]}'>
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Utreg 84">
 <link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAACc0lEQVR42u3dPU7CYBzAYTFMJjqY6ICDOok6eAtnPQEzF9LZE+jsLRiIOBkGHDRx0MSJpA4mb4yQUPr5tnmeyUFKW3/51wKlnUn/aAOW2bQLEAfiQByIA3EgDsSBOBAH4gBxIA7EgTioQydJEnsBk4M1J0fv5iznIrpb3ZxLmH/PrUOE62By4LCCOBAH4kAciANxIA7EgThAHIgDcSAOxIE4EAfiQByIA8SBOBAH4kAciANxIA7EgThAHIiDDLpFLWg6GDVu4w/vLlb+zmw4Xvk7B7fnla1zmvVJs10mB+Ig8sNKE308vP7+sHvVy7Ocz8e3QpYT23aZHIgDcSAOxIE4EAfioC0qfRFs+3qvsuf6un/31zU5EAftPqwE/17zj+EmNJgciANxIA7EgTgQB+KgvSp97ait73e0dbtMDsSBOBAH4kAciANxIA7EgThggetWVgjf9xW+oaVeVb6PY3IgDiI/rARNvG5l53K/7HXIvx9MDsSBOBAH4kAciANxwDKuW8HkQByIA3EgDsSBOBAH4kAcIA7SK+y9lXD/9HDHW8pQ5XU0JgfioMbDSpDh/unut5LB0utoit0PJgfiQByIA3EgDsSBOGgL9+qN1Gw4zvCo8A6XyYHDCuJAHIgDZysUYjoYlbScPOcvJgfiQByIA3HgbMW5SZXPlf78xeRAHIgDcSAOxIE4EAfiQByIA8SBOBAH4kAciIOG8EmwGix+Fqu8z4a5bgWHFcSBOBAHzlbIf07x9wYBvhOMqHWSJLEXMDlYc3JM+kf2QoROnl4yPOr59NjkwOTA/xyIA3EgDsSBOEAciANxIA7EgTgQB033A9qjbdKIrDb+AAAAAElFTkSuQmCC">
@@ -489,7 +491,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v96 elftal";
+const VERSIE="v97 app";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -2016,6 +2018,15 @@ const BALL=[
 "GWWWWWWWG",
 ".GWWWWWG.",
 "..GGGGG.."];
+function alsApp(){                  // draait het al als app op het beginscherm?
+  return (window.navigator&&window.navigator.standalone)||
+         (window.matchMedia&&window.matchMedia("(display-mode: fullscreen)").matches)||
+         (window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)}
+function installTekst(){
+  const ua=navigator.userAgent||"";
+  if(/iPhone|iPad|iPod/i.test(ua))return "TIP: DEEL-KNOP > ZET OP BEGINSCHERM";
+  if(/Android/i.test(ua))return "TIP: MENU > APP INSTALLEREN";
+  return "TIP: INSTALLEER VIA HET MENU VAN JE BROWSER"}
 function title(){
   if(menuPage===1)return opties();
   px(0,0,320,200,"#7BD07B");
@@ -2038,6 +2049,11 @@ function title(){
   ctx.fillStyle=C.wht;ctx.font="10px monospace";ctx.fillText("DRUK KICK",218,149);
   ctx.fillStyle="#2E7A2E";ctx.font="8px monospace";
   ctx.fillText("EERBETOON AAN INTERNATIONAL SOCCER 1983",160,186);
+  /* Uitleg om het spel als app op je beginscherm te zetten. Alleen tonen als hij
+     nog in de browser draait, want als app is de tip overbodig. */
+  if(!alsApp()){
+    ctx.fillStyle=C.yel;ctx.font="8px monospace";
+    ctx.fillText(installTekst(),160,174)}
   ctx.textAlign="right";
   ctx.fillStyle="#2E7A2E";ctx.fillText(VERSIE,314,190);
   const st=AC?AC.state:"geen";
