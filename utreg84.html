@@ -489,7 +489,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v92 namen";
+const VERSIE="v93 kracht";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -756,7 +756,10 @@ function balNaar(p,tx,ty,hoogte,minSp){
   }else{                                            // rollende bal: snelheid past bij de afstand
     /* Gemeten: een bal met beginsnelheid v rolt ongeveer (v-77)*2,1 ver.
        Omgekeerd is de snelheid voor afstand d dus ruwweg 80 + d*0,49. */
-    sp=Math.max(minSp||90,Math.min(285,82+l*.5));
+    /* Geijkt op de rolwrijving, met een hogere bovengrens: een bal van 285 rolt
+       ongeveer 440 ver, en het veld is 990 lang. Zonder die ruimte kwam een lange
+       pass simpelweg niet aan. */
+    sp=Math.max(minSp||120,Math.min(330,86+l*.58));
   }
   p.dir=dirOf(dx,dy);
   ball.vx=dx/l*sp;ball.vy=inward(p,dy/l*sp);ball.vz=hoogte;
@@ -791,7 +794,7 @@ function medespeler(p,maxAfst){
     const richting=(dx/l)*d[0]+(dy/l)*d[1];
     const lijn=speellijn(p,q);
     const punt=af*(1.9-richting)*(1+lijn.dekking*.9);
-    if(af<=maxAfst*1.6&&richting>-.4&&punt<noodBs){   // terugvaloptie, ook opzij of achter
+    if(af<=maxAfst*2.6&&richting>-.4&&punt<noodBs){   // terugvaloptie, ook opzij of achter
       noodBs=punt;noodBest={q,dekking:lijn.dekking,dichtste:lijn.dichtste,af}}
     if(af>maxAfst||richting<.25)continue;             // voor je uit telt eerst
     if(punt<bs){bs=punt;best={q,dekking:lijn.dekking,dichtste:lijn.dichtste,af}}}
@@ -803,7 +806,7 @@ function speelBal(p,hold){
   const centraal=Math.abs(p.y-midY)<34;
   const d=D8[p.dir];
   if(t<.5){                                         // pass: zoekt een medespeler
-    const keuze=hulpPass?medespeler(p,140+t*560):null;
+    const keuze=hulpPass?medespeler(p,190+t*620):null;
     if(keuze){
       const m=keuze.q;
       /* In de loop spelen: hij komt de bal tegemoet, dus mikken we een stuk
