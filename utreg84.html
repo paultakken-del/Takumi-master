@@ -205,14 +205,21 @@ const C={blk:"#000000",wht:"#FFFFFF",grass:"#00A000",
   skin:"#F09070",skin2:"#B06048",yel:"#F0E060",lgrey:"#D0D0D0",tan:"#B8A080"};
 
 /* ===== tenues: FC Utrecht 1984 tegen de gasten ===== */
+/* Ploegen uit de Eredivisie van 1983/84, met hun eigen tenue. Zo speel je tegen
+   de clubs van dat seizoen in plaats van tegen een kleur. */
 const KITS=[
  {naam:"UTRECHT",kraag:"#FFFFFF",  shirt:"#D82820",light:"#FF8878",sleeve:"#D82820",shorts:"#FFFFFF",sock:"#D82820",sock2:"#FFFFFF",badge:"#FFFFFF"},
- {naam:"WIT",kraag:"#202020",      shirt:"#F0F0F0",light:"#FFFFFF",sleeve:"#F0F0F0",shorts:"#202020",sock:"#F0F0F0",sock2:"#202020",badge:"#202020"},
- {naam:"BLAUW",kraag:"#FFFFFF",    shirt:"#2038B8",light:"#7890FF",sleeve:"#2038B8",shorts:"#FFFFFF",sock:"#2038B8",sock2:"#FFFFFF",badge:"#FFFFFF"},
- {naam:"GEEL",kraag:"#202048",     shirt:"#E0C830",light:"#FFF090",sleeve:"#E0C830",shorts:"#202048",sock:"#E0C830",sock2:"#202048",badge:"#202048"},
- {naam:"GROEN",kraag:"#FFFFFF",    shirt:"#188838",light:"#60D080",sleeve:"#188838",shorts:"#FFFFFF",sock:"#188838",sock2:"#FFFFFF",badge:"#FFFFFF"},
- {naam:"ORANJE",kraag:"#FFFFFF",   shirt:"#E07018",light:"#FFA860",sleeve:"#E07018",shorts:"#202020",sock:"#E07018",sock2:"#FFFFFF",badge:"#202020"},
- {naam:"PAARS",kraag:"#F0F0F0",    shirt:"#8828A0",light:"#C878E0",sleeve:"#8828A0",shorts:"#F0F0F0",sock:"#8828A0",sock2:"#F0F0F0",badge:"#F0F0F0"}];
+ {naam:"AJAX",kraag:"#D82820",     shirt:"#F0F0F0",light:"#FFFFFF",sleeve:"#D82820",shorts:"#F0F0F0",sock:"#D82820",sock2:"#F0F0F0",badge:"#D82820"},
+ {naam:"FEYENOORD",kraag:"#FFFFFF",shirt:"#D82820",light:"#FF8878",sleeve:"#202020",shorts:"#202020",sock:"#202020",sock2:"#D82820",badge:"#FFFFFF"},
+ {naam:"PSV",kraag:"#FFFFFF",      shirt:"#D82820",light:"#FF8878",sleeve:"#F0F0F0",shorts:"#202020",sock:"#D82820",sock2:"#202020",badge:"#FFFFFF"},
+ {naam:"AZ 67",kraag:"#D82820",    shirt:"#F0F0F0",light:"#FFFFFF",sleeve:"#D82820",shorts:"#D82820",sock:"#F0F0F0",sock2:"#D82820",badge:"#D82820"},
+ {naam:"TWENTE",kraag:"#F0F0F0",   shirt:"#D82820",light:"#FF8878",sleeve:"#D82820",shorts:"#D82820",sock:"#F0F0F0",sock2:"#D82820",badge:"#F0F0F0"},
+ {naam:"SPARTA",kraag:"#202020",   shirt:"#F0F0F0",light:"#FFFFFF",sleeve:"#D82820",shorts:"#202020",sock:"#202020",sock2:"#F0F0F0",badge:"#202020"},
+ {naam:"GRONINGEN",kraag:"#FFFFFF",shirt:"#188838",light:"#60D080",sleeve:"#F0F0F0",shorts:"#F0F0F0",sock:"#188838",sock2:"#FFFFFF",badge:"#FFFFFF"},
+ {naam:"RODA JC",kraag:"#202020",  shirt:"#E0C830",light:"#FFF090",sleeve:"#202020",shorts:"#202020",sock:"#E0C830",sock2:"#202020",badge:"#202020"},
+ {naam:"DEN HAAG",kraag:"#E0C830", shirt:"#188838",light:"#60D080",sleeve:"#E0C830",shorts:"#F0F0F0",sock:"#188838",sock2:"#E0C830",badge:"#E0C830"},
+ {naam:"WILLEM II",kraag:"#FFFFFF",shirt:"#2038B8",light:"#7890FF",sleeve:"#D82820",shorts:"#F0F0F0",sock:"#2038B8",sock2:"#FFFFFF",badge:"#FFFFFF"},
+ {naam:"VOLENDAM",kraag:"#202020", shirt:"#E07018",light:"#FFA860",sleeve:"#E07018",shorts:"#202020",sock:"#E07018",sock2:"#202020",badge:"#202020"}];
 /* Hoeveel doet het spel voor je? Zoals moderne voetbalspellen dat per onderdeel
    laten kiezen, in plaats van dat ik voor je gok wat prettig speelt. */
 let hulpPass=1;     // 1 = zoekt zelf een medespeler, 0 = precies jouw richting
@@ -220,7 +227,7 @@ let hulpSchot=1;    // 1 = richt in de zestien op doel, 0 = precies jouw richtin
 let hulpWissel=1;   // 1 = besturing springt naar wie het dichtst bij de bal is, 0 = alleen op de knop
 let tikPas=1;
 let spelMuziek=1;   // achtergrondmuziek tijdens de wedstrijd       // 1 = tikken op het veld speelt naar de medespeler daar in de buurt
-let kitA=0, kitB=2;
+let kitA=0, kitB=1;
 let KIT=[KITS[kitA],KITS[kitB]];
 const zetTenues=()=>{KIT[0]=KITS[kitA];KIT[1]=KITS[kitB]};
 const SCHEIDS={naam:"SCHEIDS",shirt:"#181818",light:"#181818",sleeve:"#181818",
@@ -481,7 +488,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v90 cucaracha";
+const VERSIE="v91 clubs";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
