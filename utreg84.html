@@ -453,30 +453,38 @@ const SPELDEUN=maakDeun(126,[
  {golf:"square",vol:.13,detune:-8,
   noten:[[null,4],[12,1],[10,1],[7,2],[null,4],[15,1],[12,1],[10,2]]}]);
 
-/* Titeldeun: opgewekt loopje in a klein, met stuiterende bas en arpeggio. */
-/* Titeldeun: een marsachtige melodie in a klein met een herkenbare kop die twee
-   keer terugkomt, plus de snelle arpeggio die de SID zo eigen is. De hoofdzin
-   stijgt en de tweede zin antwoordt, zodat je hem na één keer meeneuriet. */
-const TITELDEUN=maakDeun(152,[
+/* Titeldeun: eigen oempa-wijsje in majeur, in de stijl van een kermisdeun. De bas
+   stampt op de tel, de begeleiding valt op de tegentel als een accordeon, en de
+   melodie is expres simpel en springerig zodat je hem meteen meeneuriet.
+   Vier zinnen: kop, herhaling, brug, en een slot dat terugkeert naar de kop. */
+const TITELDEUN=maakDeun(160,[
  {golf:"square",vol:.34,noten:[
-   [0,.5],[0,.5],[3,1],[7,1],[5,.5],[3,.5],[0,1],
-   [0,.5],[0,.5],[3,1],[7,1],[10,1.5],[null,.5],
-   [12,.5],[10,.5],[7,1],[8,.5],[7,.5],[3,1],[null,1],
-   [5,.5],[7,.5],[10,1],[12,1],[7,1.5],[null,.5]]},
+   [4,.5],[4,.5],[7,.5],[9,.5],[7,1],[4,1],
+   [2,.5],[4,.5],[5,.5],[4,.5],[2,1],[0,1],
+   [4,.5],[4,.5],[7,.5],[9,.5],[11,1],[12,1],
+   [9,.5],[7,.5],[4,.5],[2,.5],[0,2],
+   [7,.5],[7,.5],[9,.5],[11,.5],[9,1],[7,1],
+   [5,.5],[5,.5],[7,.5],[9,.5],[7,1],[4,1],
+   [4,.5],[4,.5],[7,.5],[9,.5],[11,1],[12,1],
+   [9,.5],[7,.5],[4,.5],[2,.5],[0,2]]},
  {golf:"triangle",vol:.5,noten:[
-   [-24,1],[-17,1],[-24,1],[-17,1],[-24,1],
-   [-24,1],[-17,1],[-24,1],[-17,1],[-19,1],
-   [-17,1],[-12,1],[-17,1],[-12,1],[-20,1],
-   [-19,1],[-12,1],[-19,1],[-12,1],[-24,1]]},
- {golf:"square",vol:.13,detune:9,noten:[
-   [null,5],
-   [12,.25],[15,.25],[19,.25],[24,.25],[12,.25],[15,.25],[19,.25],[24,.25],
-   [12,.25],[15,.25],[19,.25],[24,.25],[12,.25],[15,.25],[19,.25],[24,.25],
-   [12,.25],[15,.25],[19,.25],[24,.25],
-   [null,5],
-   [14,.25],[17,.25],[22,.25],[26,.25],[14,.25],[17,.25],[22,.25],[26,.25],
-   [12,.25],[15,.25],[19,.25],[24,.25],[12,.25],[15,.25],[19,.25],[24,.25],
-   [12,.25],[15,.25],[19,.25],[24,.25]]}]);
+   [-20,1],[-13,1],[-20,1],[-13,1],
+   [-25,1],[-18,1],[-20,1],[-13,1],
+   [-20,1],[-13,1],[-20,1],[-13,1],
+   [-15,1],[-8,1],[-20,2],
+   [-13,1],[-6,1],[-13,1],[-6,1],
+   [-15,1],[-8,1],[-15,1],[-8,1],
+   [-20,1],[-13,1],[-20,1],[-13,1],
+   [-15,1],[-8,1],[-20,2]]},
+ {golf:"square",vol:.15,detune:8,noten:[
+   [null,.5],[16,.5],[null,.5],[16,.5],[null,.5],[16,.5],[null,.5],[16,.5],
+   [null,.5],[14,.5],[null,.5],[14,.5],[null,.5],[12,.5],[null,.5],[12,.5],
+   [null,.5],[16,.5],[null,.5],[16,.5],[null,.5],[19,.5],[null,.5],[19,.5],
+   [null,.5],[16,.5],[null,.5],[14,.5],[null,2],
+   [null,.5],[19,.5],[null,.5],[19,.5],[null,.5],[18,.5],[null,.5],[18,.5],
+   [null,.5],[17,.5],[null,.5],[17,.5],[null,.5],[16,.5],[null,.5],[16,.5],
+   [null,.5],[16,.5],[null,.5],[16,.5],[null,.5],[19,.5],[null,.5],[19,.5],
+   [null,.5],[16,.5],[null,.5],[14,.5],[null,2]]}]);
 
 /* Korte juichdeun bij een doelpunt. */
 /* Doelpunt: La Cucaracha, het Mexicaanse volksdeuntje uit de negentiende eeuw dat
@@ -494,8 +502,8 @@ const GOALDEUN=maakDeun(200,[
    [-19,1],[-12,.5],[-19,1],[-12,.5],
    [-24,1],[-17,.5],[-24,2]]},
  {golf:"square",vol:.14,detune:7,noten:[
-   [null,3],[12,.5],[16,1],[null,3],
-   [12,.5],[16,1.5],[null,3],[12,2]]}]);
+   [null,3],[12,.5],[16,1],[null,2],
+   [12,.5],[16,1.5],[null,2],[12,2]]}]);
 
 /* Tegendoelpunt: twee dalende tonen, kort en dof. */
 const TEGENDEUN=maakDeun(150,[
@@ -548,7 +556,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v101 muziek";
+const VERSIE="v102 oempa";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
