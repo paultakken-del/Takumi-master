@@ -427,9 +427,16 @@ function speelDeun(deun,naam,herhaal){
         if(n!==null){
           o.frequency.setValueAtTime(toon(n),t);
           g.gain.setValueAtTime(0,t);
-          g.gain.linearRampToValueAtTime(stem.vol,t+.012);          // scherpe aanslag
-          g.gain.setValueAtTime(stem.vol*.8,t+dur*.55);
-          g.gain.linearRampToValueAtTime(0,t+dur*.92);
+          if(stem.klok){
+            /* Klokklank: harde aanslag en daarna een lange, exponentiële nagalm die
+               over de volgende noot heen doorloopt, zoals brons dat doet. */
+            g.gain.linearRampToValueAtTime(stem.vol,t+.006);
+            g.gain.exponentialRampToValueAtTime(Math.max(.0006,stem.vol*.06),t+dur*1.8);
+          }else{
+            g.gain.linearRampToValueAtTime(stem.vol,t+.012);        // scherpe aanslag
+            g.gain.setValueAtTime(stem.vol*.8,t+dur*.55);
+            g.gain.linearRampToValueAtTime(0,t+dur*.92);
+          }
         }
         t+=dur;
       }
@@ -453,38 +460,29 @@ const SPELDEUN=maakDeun(126,[
  {golf:"square",vol:.13,detune:-8,
   noten:[[null,4],[12,1],[10,1],[7,2],[null,4],[15,1],[12,1],[10,2]]}]);
 
-/* Titeldeun: eigen oempa-wijsje in majeur, in de stijl van een kermisdeun. De bas
-   stampt op de tel, de begeleiding valt op de tegentel als een accordeon, en de
-   melodie is expres simpel en springerig zodat je hem meteen meeneuriet.
-   Vier zinnen: kop, herhaling, brug, en een slot dat terugkeert naar de kop. */
-const TITELDEUN=maakDeun(160,[
- {golf:"square",vol:.34,noten:[
-   [4,.5],[4,.5],[7,.5],[9,.5],[7,1],[4,1],
-   [2,.5],[4,.5],[5,.5],[4,.5],[2,1],[0,1],
-   [4,.5],[4,.5],[7,.5],[9,.5],[11,1],[12,1],
-   [9,.5],[7,.5],[4,.5],[2,.5],[0,2],
-   [7,.5],[7,.5],[9,.5],[11,.5],[9,1],[7,1],
-   [5,.5],[5,.5],[7,.5],[9,.5],[7,1],[4,1],
-   [4,.5],[4,.5],[7,.5],[9,.5],[11,1],[12,1],
-   [9,.5],[7,.5],[4,.5],[2,.5],[0,2]]},
- {golf:"triangle",vol:.5,noten:[
-   [-20,1],[-13,1],[-20,1],[-13,1],
-   [-25,1],[-18,1],[-20,1],[-13,1],
-   [-20,1],[-13,1],[-20,1],[-13,1],
-   [-15,1],[-8,1],[-20,2],
-   [-13,1],[-6,1],[-13,1],[-6,1],
-   [-15,1],[-8,1],[-15,1],[-8,1],
-   [-20,1],[-13,1],[-20,1],[-13,1],
-   [-15,1],[-8,1],[-20,2]]},
- {golf:"square",vol:.15,detune:8,noten:[
-   [null,.5],[16,.5],[null,.5],[16,.5],[null,.5],[16,.5],[null,.5],[16,.5],
-   [null,.5],[14,.5],[null,.5],[14,.5],[null,.5],[12,.5],[null,.5],[12,.5],
-   [null,.5],[16,.5],[null,.5],[16,.5],[null,.5],[19,.5],[null,.5],[19,.5],
-   [null,.5],[16,.5],[null,.5],[14,.5],[null,2],
-   [null,.5],[19,.5],[null,.5],[19,.5],[null,.5],[18,.5],[null,.5],[18,.5],
-   [null,.5],[17,.5],[null,.5],[17,.5],[null,.5],[16,.5],[null,.5],[16,.5],
-   [null,.5],[16,.5],[null,.5],[16,.5],[null,.5],[19,.5],[null,.5],[19,.5],
-   [null,.5],[16,.5],[null,.5],[14,.5],[null,2]]}]);
+/* Titeldeun in de stijl van het Domtoren-carillon: klokken die overlappen en
+   uitklinken in plaats van een stampende deun. Zelf geschreven, geen bestaand
+   beiaardstuk. Driehoeksgolven, want die liggen het dichtst bij een klokklank;
+   een blokgolf klinkt te scherp voor brons. Rustig tempo, want klokken hebben
+   tijd nodig om uit te zingen. */
+const TITELDEUN=maakDeun(96,[
+ {golf:"triangle",vol:.46,klok:1,noten:[
+   [12,1],[7,1],[9,1],[4,1],
+   [5,1],[9,1],[7,1],[0,1],
+   [12,1],[7,1],[9,1],[4,1],
+   [5,1],[2,1],[0,2]]},
+ {golf:"triangle",vol:.3,klok:1,noten:[
+   [0,2],[-3,2],
+   [-7,2],[-12,2],
+   [0,2],[-3,2],
+   [-5,2],[-12,2]]},
+ {golf:"triangle",vol:.16,detune:5,klok:1,noten:[
+   [null,2],[19,1],[16,1],
+   [null,2],[21,1],[16,1],
+   [null,2],[19,1],[16,1],
+   [null,1],[17,1],[16,2]]},
+ {golf:"triangle",vol:.2,klok:1,noten:[
+   [-24,4],[-24,4],[-24,4],[-24,4]]}]);
 
 /* Korte juichdeun bij een doelpunt. */
 /* Doelpunt: La Cucaracha, het Mexicaanse volksdeuntje uit de negentiende eeuw dat
@@ -556,7 +554,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v102 oempa";
+const VERSIE="v103 dom";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
