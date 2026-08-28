@@ -489,7 +489,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v94 ajax";
+const VERSIE="v95 duel";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -669,7 +669,9 @@ function ctrlFor(t){
     const dVeld=veld?Math.hypot(veld.x-ball.x,(veld.y-ball.y)*3):1e9;
     if(dGk<dVeld)return gk;
   }
-  if(lockT[t]>0&&ctrl[t]&&ctrl[t].role!=="K")return ctrl[t];
+  /* Na een handmatige wissel bleef je twee seconden aan die speler vastzitten,
+     ook als de bal allang bij een ander lag. Een halve seconde is genoeg. */
+  if(lockT[t]>1.5&&ctrl[t]&&ctrl[t].role!=="K")return ctrl[t];
   if(!hulpWissel&&ctrl[t]&&ctrl[t].role!=="K")return ctrl[t];   // handmatig: jij houdt je speler
   return veld||ctrl[t]}
 function wissel(t){                       // korte klik zonder bal: volgende speler pakken
@@ -1180,7 +1182,7 @@ function update(dt){
   aftrapVrij=Math.max(0,aftrapVrij-dt);
   for(const t of [0,1])lockT[t]=Math.max(0,lockT[t]-dt);
   for(const t of hum)if(state!=="setpiece")ctrl[t]=ctrlFor(t);
-  const aiSpd=46+level*2.2, kpSpd=19+level*2.7, spread=48-level*4.4;
+  const aiSpd=42+level*1.9, kpSpd=19+level*2.7, spread=48-level*4.4;
   aiPace=aiSpd*.72;
 
   for(const p of P){
