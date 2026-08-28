@@ -420,9 +420,23 @@ const TITELDEUN=maakDeun(150,[
          [12,.25],[16,.25],[19,.25],[24,.25],[12,.25],[16,.25],[19,.25],[24,.25]]}]);
 
 /* Korte juichdeun bij een doelpunt. */
-const GOALDEUN=maakDeun(190,[
- {golf:"square",vol:.4,noten:[[0,.25],[4,.25],[7,.25],[12,.25],[7,.25],[12,.5],[16,1]]},
- {golf:"triangle",vol:.45,noten:[[-24,.5],[-17,.5],[-12,.5],[-12,1]]}]);
+/* Doelpunt: La Cucaracha, het Mexicaanse volksdeuntje uit de negentiende eeuw dat
+   je op elke tribune hoort toeteren. Vrij van rechten, en precies het soort
+   melodietje dat bij een stadion uit 1984 past. Halve toonafstanden vanaf de
+   grondtoon: 0 is de grondtoon, 7 de kwint, 12 de octaaf. */
+const GOALDEUN=maakDeun(200,[
+ {golf:"square",vol:.4,noten:[
+   [0,.5],[0,.5],[0,.5],[5,1],[9,1],[null,.5],
+   [0,.5],[0,.5],[0,.5],[5,1],[9,1.5],
+   [null,.5],[9,.5],[7,.5],[5,.5],[4,.5],[2,.5],[0,1.5]]},
+ {golf:"triangle",vol:.42,noten:[
+   [-24,1],[-17,.5],[-24,1],[-17,.5],
+   [-24,1],[-17,.5],[-24,1],[-17,.5],
+   [-19,1],[-12,.5],[-19,1],[-12,.5],
+   [-24,1],[-17,.5],[-24,1.5]]},
+ {golf:"square",vol:.14,detune:7,noten:[
+   [null,3],[12,.5],[16,1],[null,3],
+   [12,.5],[16,1.5],[null,3],[12,1.5]]}]);
 
 /* Zegedeun bij de huldiging. */
 const ZEGEDEUN=maakDeun(120,[
@@ -462,7 +476,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v88 tikken";
+const VERSIE="v89 cucaracha";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
