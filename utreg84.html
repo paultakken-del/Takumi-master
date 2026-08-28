@@ -565,7 +565,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v108 bediening";
+const VERSIE="v109 armen";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1919,7 +1919,9 @@ function drawPlayer(p){
   const ty=y+(walk&&Math.abs(co)>.85?-1:0);
   const hipY=ty-12, shY=ty-23;
   const AL=air?2:(sideV?7:3.2);                  // pas iets korter bij de kleinere speler
-  const AA=(sideV?5.5:2.4)*(sideV?face:1);       // armen zwaaien bijna even ver mee
+  /* Kleinere armuitslag: bij 5,5 pixels zwaaide de hand zo ver van de romp dat
+     hij als los blokje leek te zweven. */
+  const AA=(sideV?3.2:1.6)*(sideV?face:1);
   const leg=(base,a,skin)=>{
     const sw=Math.sin(a);
     const back=air?.4:Math.max(0,-sw);           // achterste been buigt scherp, hiel komt hoog
@@ -1934,10 +1936,12 @@ function drawPlayer(p){
   const armsUp=air||p.cel||(state==="setpiece"&&setType==="throwin"&&taker===p);
   const arm=(base,a,skin)=>{
     if(armsUp){limb(base,shY+4,base+(base<X?-3:3),shY-8,skin,3);return}
+    /* De arm begint in de mouw, niet eronder: eerder zat er een gat van twee
+       pixels tussen mouw en arm, waardoor de arm los van het lichaam leek. */
     const sw=Math.sin(a), bend=Math.max(0,-Math.cos(a))*1.8;   // elleboog buigt naar voren
     const ey=shY+7-bend, hy=shY+12-bend*1.4;                   // hand net onder de heup
     const ex=base+sw*AA*.45+bend*.6, hx=base+sw*AA+bend*1.1;
-    limb(base,shY+4,ex,ey,skin,3);                             // dunner dan de benen
+    limb(base,shY+1,ex,ey,skin,3);                             // schouder in de mouw
     limb(ex,ey,hx,hy,skin,3);
     if(gk)px(snap(hx)-2,Math.round(hy)-1,6,4,C.yel)};
   // silhouet verschilt per richting: smal van opzij, breed van voren en achteren
@@ -1958,9 +1962,11 @@ function drawPlayer(p){
   px(bx,ty-15,bw,4,kit.shorts);                                 // broek
   if(gk)px(bx,ty-24,bw,2,C.yel);
   const sl=mine?kit.light:kit.sleeve;
-  if(sideV){const mx=X+face*((bw>>1)-1)-1;px(mx,ty-24,2,6,sl);px(mx,ty-24,2,1,kr)}
-  else{px(bx-2,ty-24,2,6,sl);px(bx+bw,ty-24,2,6,sl);
-       px(bx-2,ty-24,2,1,kr);px(bx+bw,ty-24,2,1,kr)}          // biesje op de mouwen
+  /* Mouwen drie breed en zeven hoog, zodat ze de schouder van de arm bedekken en
+     er geen naad tussen mouw en arm zichtbaar blijft. */
+  if(sideV){const mx=X+face*((bw>>1)-1)-1;px(mx,ty-24,3,7,sl);px(mx,ty-24,3,1,kr)}
+  else{px(bx-3,ty-24,3,7,sl);px(bx+bw,ty-24,3,7,sl);
+       px(bx-3,ty-24,3,1,kr);px(bx+bw,ty-24,3,1,kr)}          // biesje op de mouwen
   if(!gk&&front)px(X-2,ty-21,5,2,kit.badge);                     // sponsor alleen op de borst
   px(X-1+(sideV?face:0),ty-26,3,3,C.skin);                      // nek
   px(hx,ty-33,7,7,C.skin);                                      // hoofd
