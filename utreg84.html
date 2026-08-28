@@ -332,7 +332,7 @@ window.__tik=(sx,sy)=>{
     const top=lijn.dekking>0?Math.max(18,afst*.12):(afst>300?11:0);
     balDoel=doelw;balDoelT=1.8;
     if(isHuman(p)){eenTwee=p;eenTweeT=1.1}
-    balNaar(p,doelw.x+(doelw.mvx||0)*.35,doelw.y+(doelw.mvy||0)*.35,vzVoor(top),110);
+    balNaar(p,doelw.x+(doelw.mvx||0)*.35,doelw.y+(doelw.mvy||0)*.35,vzVoor(top),165);
     return true}
 
   /* Tik in de ruimte: speel de bal daarheen, en laat de medespeler die er het
@@ -572,7 +572,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v111 menu";
+const VERSIE="v112 spreiding";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -852,7 +852,8 @@ function balNaar(p,tx,ty,hoogte,minSp){
        pass simpelweg niet aan. */
     /* Iets zachter dan de rolafstand vraagt, zodat de bal bij de ontvanger
        uitrolt in plaats van er net voorbij. De kleefhulp doet de rest. */
-    sp=Math.max(minSp||110,Math.min(330,74+l*.50));
+    /* Stevige ondergrens: ook een kort tikje moet een echte pass zijn. */
+    sp=Math.max(minSp||165,Math.min(360,104+l*.56));
   }
   p.dir=dirOf(dx,dy);
   ball.vx=dx/l*sp;ball.vy=inward(p,dy/l*sp);ball.vz=hoogte;
@@ -921,7 +922,7 @@ function speelBal(p,hold){
       top=t<.35?0:(t-.35)*90;
       balDoel=m;balDoelT=1.8;
       if(isHuman(p)){eenTwee=p;eenTweeT=1.1}      // venster om de bal terug te vragen
-      return balNaar(p,tx,ty,vzVoor(top),74)}
+      return balNaar(p,tx,ty,vzVoor(top),165)}
     return balNaar(p,p.x+d[0]*(60+t*420),p.y+d[1]*(25+t*140),
                    vzVoor(t<.24?0:(t-.24)*70),95)}
   if(!centraal&&naarDoel<420){                      // voorzet: landt voor het doel
@@ -1503,10 +1504,13 @@ function formatiePlek(p){          // basispositie, met de vleugels aan de zijli
   const maxDiep=p.role==="D"?veld*.62:p.role==="M"?veld*.82:veld;
   const kl=Math.max(minDiep,Math.min(maxDiep,diep));
   tx=eigenD+(midX>eigenD?1:-1)*kl;
-  let ty=homeY(p)+(ball.y-midY)*.12;
+  /* Breder spelen: de basisplekken worden uitgerekt naar de zijlijnen, zodat de
+     ploeg de volle veldbreedte gebruikt in plaats van in het midden te klitten. */
+  let ty=midY+(homeY(p)-midY)*1.34+(ball.y-midY)*.12;
+  ty=Math.max(W.top+9,Math.min(W.bot-9,ty));
   const buiten=p.fy<.35||p.fy>.65;
   const aanvallend=(ball.x-midX)*attack[p.team]>-60;
-  if(buiten&&aanvallend)ty=p.fy<.5?W.top+10:W.bot-10;
+  if(buiten)ty=p.fy<.5?W.top+8:W.bot-8;      // vleugels altijd aan de lijn
   return [tx,ty]}
 
 /* Vrijlopen: rond de eigen formatieplek worden een paar plekken afgewogen.
