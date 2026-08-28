@@ -565,7 +565,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v109 armen";
+const VERSIE="v110 greep";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -839,7 +839,9 @@ function balNaar(p,tx,ty,hoogte,minSp){
     /* Geijkt op de rolwrijving, met een hogere bovengrens: een bal van 285 rolt
        ongeveer 440 ver, en het veld is 990 lang. Zonder die ruimte kwam een lange
        pass simpelweg niet aan. */
-    sp=Math.max(minSp||120,Math.min(330,86+l*.58));
+    /* Iets zachter dan de rolafstand vraagt, zodat de bal bij de ontvanger
+       uitrolt in plaats van er net voorbij. De kleefhulp doet de rest. */
+    sp=Math.max(minSp||110,Math.min(330,74+l*.50));
   }
   p.dir=dirOf(dx,dy);
   ball.vx=dx/l*sp;ball.vy=inward(p,dy/l*sp);ball.vz=hoogte;
@@ -1383,10 +1385,13 @@ function human(p,dt){
     const ruim=inVak(p)?5:0;                          // in het gedrang wat meer speling
     if(d<20+ruim&&ball.z>=40&&ball.z<62&&p.cool<=0&&hold>=.25){
       omhaal(p);return}                               // bal hoog boven je: omhaal
-    if(d<19+ruim&&ball.z>21&&ball.z<40&&p.cool<=0){   // bal op kophoogte
+    /* Spelen mag zodra je de bal hebt. Je pakt hem op binnen dertig eenheden,
+       maar spelen kon pas binnen achttien: daartussen had je de bal wel maar
+       gebeurde er niets als je drukte. */
+    if(d<30+ruim&&ball.z>21&&ball.z<40&&p.cool<=0){   // bal op kophoogte
       if(hold<.25)head(p); else headShot(p);return}
-    if(d<20+ruim&&ball.z>4&&ball.z<=21&&p.cool<=0){volley(p,hold);return}   // bal in de lucht
-    if(d<18+ruim&&ball.z<=6&&p.cool<=0){speelBal(p,hold);return}
+    if(d<30+ruim&&ball.z>4&&ball.z<=21&&p.cool<=0){volley(p,hold);return}   // bal in de lucht
+    if(d<30+ruim&&ball.z<=8&&p.cool<=0){speelBal(p,hold);return}
     wissel(i)}                                        // geen bal in de buurt: wisselen
 }
 function save(gk){
@@ -1647,7 +1652,7 @@ function contacts(dt){
        (!ball.last||ball.last.team===balDoel.team)&&
        !(ball.rust>0&&houder&&houder.team!==balDoel.team)){
       const dd=D8[balDoel.dir];
-      ball.x=balDoel.x+dd[0]*9;ball.y=balDoel.y+dd[1]*6+2;ball.z=0;
+      ball.x=balDoel.x+dd[0]*8;ball.y=balDoel.y+dd[1]*5+2;ball.z=0;
       ball.vx*=.14;ball.vy*=.14;ball.vz=0;
       ball.last=balDoel;ball.touch=.05;
       balDoel.passT=Math.max(balDoel.passT||0,.9);   // even zelf doorlopen
