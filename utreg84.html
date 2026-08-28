@@ -438,6 +438,11 @@ const GOALDEUN=maakDeun(200,[
    [null,3],[12,.5],[16,1],[null,3],
    [12,.5],[16,1.5],[null,3],[12,1.5]]}]);
 
+/* Tegendoelpunt: twee dalende tonen, kort en dof. */
+const TEGENDEUN=maakDeun(150,[
+ {golf:"triangle",vol:.34,noten:[[-5,1],[-9,1.5]]},
+ {golf:"square",vol:.14,detune:-6,noten:[[-17,1],[-21,1.5]]}]);
+
 /* Zegedeun bij de huldiging. */
 const ZEGEDEUN=maakDeun(120,[
  {golf:"triangle",vol:.5,noten:[[-24,1],[-24,1],[-19,1],[-17,1],[-24,1],[-24,1],[-15,2]]},
@@ -476,7 +481,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v89 cucaracha";
+const VERSIE="v90 cucaracha";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -868,7 +873,10 @@ function goal(team){scorer=team;score[team]++;state="goal";stateT=0;
     if(!maker.naam)maker.naam=NAMEN[(P.indexOf(maker)*3+2)%NAMEN.length];
     msg=maker.naam+" SCOORT!";
   }else msg="GOAL!";
-  speelDeun(GOALDEUN,"goal",false);
+  /* La Cucaracha klinkt alleen als Utrecht scoort; bij een tegendoelpunt hoor je
+     een korte, doffe toon. Feestmuziek bij een tegentreffer is wrang. */
+  if(team===0)speelDeun(GOALDEUN,"goal",false);
+  else speelDeun(TEGENDEUN,"tegen",false);
   ball.held=null;whistle();cheer();for(const p of P)if(p.team===team)p.cel=1}
 function tackle(p,foe){        // sliding: op tijd is balafname, te laat is een overtreding
   p.cool=.55;
