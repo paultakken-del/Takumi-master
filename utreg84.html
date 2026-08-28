@@ -489,7 +489,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v95 duel";
+const VERSIE="v96 elftal";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -499,10 +499,12 @@ const ball={x:midX,y:midY,z:0,vx:0,vy:0,vz:0,held:null,last:null,touch:0};
 
 /* Meer diepte in de opstelling: verdedigers laag, spitsen hoog. Zo trekt de
    ploeg het veld open in plaats van als kluitje mee te schuiven. */
+/* Elf tegen elf in 4-3-3, de formatie die Ajax en Feyenoord in 1983/84 speelden.
+   Het veld is inmiddels 990 bij 144, ruim genoeg voor een volle bezetting. */
 const FORM=[[0.05,0.50,"K"],
-            [0.19,0.30,"D"],[0.19,0.70,"D"],
-            [0.46,0.16,"M"],[0.46,0.50,"M"],[0.46,0.84,"M"],
-            [0.80,0.32,"F"],[0.80,0.68,"F"]];
+            [0.18,0.14,"D"],[0.16,0.38,"D"],[0.16,0.62,"D"],[0.18,0.86,"D"],
+            [0.44,0.22,"M"],[0.42,0.50,"M"],[0.44,0.78,"M"],
+            [0.76,0.16,"F"],[0.80,0.50,"F"],[0.76,0.84,"F"]];
 /* Namen per club uit het seizoen 1983/84, alleen veldspelers. Feyenoord werd dat
    jaar kampioen met Cruijff in zijn laatste seizoen als voetballer; Van Basten
    werd topscorer bij Ajax met 28 goals. */
