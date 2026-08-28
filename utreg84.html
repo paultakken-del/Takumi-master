@@ -350,14 +350,18 @@ function maakPuls(a){
     re[n]=2/(n*Math.PI)*Math.sin(Math.PI*n*w);
     im[n]=0;
   }
-  pulsGolf=a.createPeriodicWave(re,im,{disableNormalization:false});
+  /* Oudere browsers, zoals die in een Tesla, kennen het optie-object bij
+     createPeriodicWave niet. Val dan terug op de eenvoudige aanroep. */
+  try{pulsGolf=a.createPeriodicWave(re,im,{disableNormalization:false})}
+  catch(e){try{pulsGolf=a.createPeriodicWave(re,im)}catch(e2){pulsGolf=null}}
   return pulsGolf}
 function beep(f,d,t,v){if(!snd)return;try{
   const a=ac(),o=a.createOscillator(),g=a.createGain(),flt=a.createBiquadFilter();
   const nu=a.currentTime;
   if(t==="triangle")o.type="triangle";
   else if(t==="sawtooth")o.type="sawtooth";
-  else o.setPeriodicWave(maakPuls(a));           // standaard: pulsgolf
+  else{const pw=maakPuls(a);
+    if(pw)o.setPeriodicWave(pw);else o.type="square"}   // standaard: pulsgolf
   o.frequency.value=f;
   o.detune.value=(Math.random()-.5)*14;          // de SID stemde nooit helemaal zuiver
   flt.type="lowpass";
@@ -413,7 +417,8 @@ function speelDeun(deun,naam,herhaal){
     let eind=0;
     for(const stem of deun){
       const o=a.createOscillator();
-      if((stem.golf||"square")==="square")o.setPeriodicWave(maakPuls(a));
+      if((stem.golf||"square")==="square"){const pw=maakPuls(a);
+        if(pw)o.setPeriodicWave(pw);else o.type="square"}
       else o.type=stem.golf;
       const g=a.createGain();g.gain.value=0;
       o.detune.value=(stem.detune||0)+(Math.random()-.5)*8;
@@ -554,7 +559,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v106 onderschep";
+const VERSIE="v107 compat";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -2104,11 +2109,16 @@ const BALL=[
 ".GWWWWWG.",
 "..GGGGG.."];
 function alsApp(){                  // draait het al als app op het beginscherm?
-  return (window.navigator&&window.navigator.standalone)||
-         (window.matchMedia&&window.matchMedia("(display-mode: fullscreen)").matches)||
-         (window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)}
+  /* Alles in een try: oudere browsers, zoals die in een auto, struikelen over
+     onbekende media-vragen en dan zou het hele titelscherm niet meer tekenen. */
+  try{
+    if(window.navigator&&window.navigator.standalone)return true;
+    if(!window.matchMedia)return false;
+    return window.matchMedia("(display-mode: fullscreen)").matches||
+           window.matchMedia("(display-mode: standalone)").matches;
+  }catch(e){return false}}
 function installTekst(){
-  const ua=navigator.userAgent||"";
+  const ua=(window.navigator&&window.navigator.userAgent)||"";
   if(/iPhone|iPad|iPod/i.test(ua))return "TIP: DEEL-KNOP > ZET OP BEGINSCHERM";
   if(/Android/i.test(ua))return "TIP: MENU > APP INSTALLEREN";
   return "TIP: INSTALLEER VIA HET MENU VAN JE BROWSER"}
