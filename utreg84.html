@@ -572,7 +572,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v113 linies";
+const VERSIE="v114 hervatting";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -771,6 +771,7 @@ function wissel(t){                       // korte klik zonder bal: volgende spe
   ctrl[t]=veld[(i+1)%veld.length];
   lockT[t]=2;beep(660,.05,"square",.05)}
 function losseBal(dt){
+  if(state!=="play")return;      // bij een hervatting blijft iedereen staan
   /* Ligt de bal ergens vrij, dan gaat de dichtstbijzijnde speler van elke ploeg
      hem halen. Zonder dit blijft hij liggen tot iemand er toevallig langs loopt. */
   if(state!=="play"||ball.held)return;
@@ -1135,24 +1136,61 @@ function release(p){
     beep(430,.11,"square",.08);
     taker=null;state="play";msg="";return}
   // de bal komt automatisch in het spel, naar de best geplaatste medespeler
-  const ver=setType==="goalkick";               // een doeltrap gaat het veld in, niet naar de dichtstbijzijnde
+  const ver=setType==="goalkick";               // een doeltrap gaat het veld in
+  const hoek=setType==="corner";                // vanuit de hoek staat iedereen achter je
   let mate=null,md=ver?-1:1e9;
   for(const q of P){if(q.team!==p.team||q===p||q.role==="K")continue;
     const vooruit=(q.x-p.x)*attack[p.team];
-    if(vooruit<-30)continue;
+    /* Bij een corner geldt de eis "voor je uit" niet: je staat in de hoek en al je
+       medespelers staan achter of naast je. Zonder deze uitzondering vond hij
+       niemand en bleef de bal gewoon liggen tot de klok afliep. */
+    if(!hoek&&vooruit<-30)continue;
     const d=dist(p,q);
     if(ver){if(vooruit>md){md=vooruit;mate=q}}
+    else if(hoek){const naarDoel=Math.hypot(q.x-foeGoal(p.team),(q.y-midY)*2);
+      if(naarDoel<md){md=naarDoel;mate=q}}          // wie het dichtst bij het doel staat
     else if(d<md&&d>25){md=d;mate=q}}
+  if(!mate){                                     // niemand gevonden: speel hem het veld in
+    let bd=1e9;
+    for(const q of P){if(q.team!==p.team||q===p||q.role==="K")continue;
+      const d=dist(p,q);if(d<bd&&d>20){bd=d;mate=q}}}
   const tx=setType==="corner"?foeGoal(p.team):(mate?mate.x:p.x+attack[p.team]*120);
   const ty=setType==="corner"?midY:(mate?mate.y:midY);
   p.dir=dirOf(tx-p.x,ty-p.y);
   if(setType==="throwin"){
     ball.verbod=p;ball.verbodT=2.2;              // de inwerper mag hem niet zelf terugpakken
-    const d=D8[p.dir], inw=p.y<midY?1:-1;
-    let dy=d[1];if(dy*inw<.2)dy=inw*.5;
-    const l=Math.hypot(d[0],dy)||1;
+    /* Gooi naar de best vrijstaande medespeler het veld in. Werpen in de
+       kijkrichting kwam vrijwel altijd bij een tegenstander terecht. */
+    const inw=p.y<midY?1:-1;
+    let doel=null,bs=1e9;
+    for(const q of P){
+      if(q.team!==p.team||q===p||q.role==="K")continue;
+      if((q.y-p.y)*inw<10)continue;              // hij moet het veld in staan
+      const af=Math.hypot(q.x-p.x,(q.y-p.y)*2);
+      if(af<30||af>240)continue;
+      const lijn=speellijn(p,q);
+      /* Een gedekte lijn kost zoveel punten dat hij die medespeler nooit kiest:
+         de bal werd anders steevast onderschept. */
+      if(lijn.dekking>0)continue;
+      const punt=Math.abs(af-120)+(lijn.dichtste<30?60:0);
+      if(punt<bs){bs=punt;doel=q}}
     ball.x=p.x;ball.y=p.y;ball.z=32;
-    ball.vx=d[0]/l*62;ball.vy=dy/l*62;ball.vz=34;   // een worp, geen trap
+    if(doel){
+      const dx=doel.x-p.x, dy=doel.y-p.y, l=Math.hypot(dx,dy)||1;
+      const af=Math.hypot(dx,dy*2);
+      const kracht=Math.max(95,Math.min(215,55+af*.72));
+      p.dir=dirOf(dx,dy);
+      /* Vlak inwerpen: met vz 28 hing de bal op kophoogte als hij de ontvanger
+         passeerde en zeilde hij eroverheen. Nu komt hij bij hem naar beneden. */
+      /* Vlak inwerpen: de bal komt meteen op de grond en rolt naar je medespeler.
+         Een hoge worp zeilde over hem heen en kwam bij de tegenpartij. */
+      ball.z=6;
+      ball.vx=dx/l*kracht;ball.vy=dy/l*kracht;ball.vz=0;
+      balDoel=doel;balDoelT=1.8;
+    }else{
+      const d=D8[p.dir];let dy=d[1];if(dy*inw<.2)dy=inw*.6;
+      const l=Math.hypot(d[0],dy)||1;
+      ball.vx=d[0]/l*130;ball.vy=dy/l*130;ball.vz=30}
     ball.last=p;ball.touch=.4;p.cool=.7;beep(300,.1,"triangle",.05)}
   else if(mate){
     /* Een vrije trap, corner of inworp is gewoon een pass: kracht op de afstand,
@@ -1595,7 +1633,8 @@ function ai(p,dt,spd,spread){
   else if(state==="play"&&aftrapVrij<=0&&ball.last&&ball.last.team===p.team&&!ball.held){
     const v=vrijloop(p,dt);tx=v[0];ty=v[1];       // eigen ploeg aan de bal: vrijlopen
   }else{const f=formatiePlek(p);tx=f[0];ty=f[1]}
-  if(state==="setpiece"&&teDichtbij(p)){        // uit de buurt blijven bij een hervatting
+  if(state==="setpiece"&&taker===p){tx=p.x;ty=p.y}   // de nemer blijft op zijn plek
+  else if(state==="setpiece"&&teDichtbij(p)){   // uit de buurt blijven bij een hervatting
     tx=p.x+(p.x-ball.x);ty=p.y+(p.y-ball.y)*.3}
   const dx=tx-p.x,dy=ty-p.y,l=Math.hypot(dx,dy);
   const sp=hasBall(p)?spd*.72:spd;             // met bal aan de voet trager
