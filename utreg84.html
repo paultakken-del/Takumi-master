@@ -554,7 +554,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v105 rookworst";
+const VERSIE="v106 onderschep";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -889,10 +889,12 @@ function speelBal(p,hold){
       /* Hoogte op maat: over een gedekte lijn heen een boogje, bij een lange bal
          een lichte boog, en bij een vrije korte pass gewoon over het gras. */
       let top;
-      if(keuze.dekking>0)        top=Math.max(20,afst*.12);   // er echt overheen
-      else if(keuze.dichtste<20) top=13;
-      else if(afst>300)          top=11;
-      else                       top=t<.24?0:(t-.24)*70;
+      /* Alleen omhoog als er echt iemand voor staat. Een boog over iedereen heen
+         maakt onderscheppen onmogelijk en dat voelt als door spelers heen spelen. */
+      /* Over een verdediger heen stiften doe je zelf, door langer te drukken.
+         Automatisch omhoog betekende dat elke pass over iedereen heen zeilde en
+         onderscheppen onmogelijk werd. */
+      top=t<.35?0:(t-.35)*90;
       balDoel=m;balDoelT=1.8;
       if(isHuman(p)){eenTwee=p;eenTweeT=1.1}      // venster om de bal terug te vragen
       return balNaar(p,tx,ty,vzVoor(top),74)}
@@ -1569,8 +1571,27 @@ function ballPhysics(dt){
   if(state==="setpiece"&&taker){
     if(setType==="throwin"){ball.x=taker.x;ball.y=taker.y-1;ball.z=36}
     ball.vx=ball.vy=ball.vz=0;return}
-  ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;
+  /* Onderscheppen: een rollende bal legt per frame vijf eenheden af, dus met
+     alleen een afstandstoets schiet hij dwars door een verdediger heen. Kijk of
+     de baan van dit frame iemand kruist en stuit hem dan af. */
+  const vx0=ball.vx*dt, vy0=ball.vy*dt;
+  ball.x+=vx0;ball.y+=vy0;
   ball.z+=ball.vz*dt;ball.vz-=210*dt;
+  const bsp0=Math.hypot(ball.vx,ball.vy);
+  if(bsp0>60&&ball.z<20&&!ball.held&&state==="play"){
+    const l2=vx0*vx0+vy0*vy0;
+    for(const q of P){
+      if(q===ball.last||q.cool>0||q.dive>0)continue;
+      /* De rustperiode beschermt tegen meteen terugpakken, maar een bal die
+         tegen je lichaam aan komt moet je wel raken. Die uitzondering geldt dus
+         niet voor onderscheppen. */
+      const s=Math.max(0,Math.min(1,((q.x-(ball.x-vx0))*vx0+(q.y-(ball.y-vy0))*vy0)/(l2||1)));
+      const px2=(ball.x-vx0)+vx0*s, py2=(ball.y-vy0)+vy0*s;
+      if(Math.hypot(q.x-px2,(q.y-py2)*1.9)<13){
+        ball.x=px2;ball.y=py2;
+        ball.vx*=-.28;ball.vy*=-.28;              // stuit terug van het lichaam
+        ball.last=q;ball.touch=.2;ball.rust=.6;
+        beep(240,.05,"square",.04);break}}}
   if(ball.z<=0){ball.z=0;
     if(ball.vz<-6){ball.vz*=-.82;beep(180,.04,"triangle",.03)}else ball.vz=0;
     const sp=Math.hypot(ball.vx,ball.vy);
@@ -1626,6 +1647,7 @@ function contacts(dt){
     if(d<23&&d<bd){bd=d;p=q}}
   if(!p){for(const q of P){if(q.cool>0||!vers(q))continue;
     const d=Math.hypot(q.x-ball.x,q.y-ball.y);if(d<bd){bd=d;p=q}}}
+
   if(!p)return;
   const jij=p===ctrl[p.team]&&humans().includes(p.team);
   if(bd<15&&ball.z>21&&ball.z<38&&p.role!=="K"&&!jij){
