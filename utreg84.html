@@ -51,11 +51,13 @@
        left:calc(env(safe-area-inset-left,0px) + 10px);z-index:11;pointer-events:auto;
        background:rgba(0,0,0,.55);color:#ddd;border:1px solid #aa5a5a;border-radius:6px;
        font:11px monospace;padding:6px 9px;opacity:.75}
+  /* Duidelijk leesbare knop in plaats van een vaag kruisje: tijdens het spel
+     brengt hij je terug naar het menu, in het menu sluit hij het venster. */
   #kruis{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);
        right:calc(env(safe-area-inset-right,0px) + 8px);z-index:12;pointer-events:auto;
-       width:34px;height:34px;line-height:1;font:16px monospace;
-       background:rgba(0,0,0,.32);color:rgba(255,255,255,.72);
-       border:1px solid rgba(255,255,255,.35);border-radius:8px;opacity:.55}
+       min-width:56px;height:30px;line-height:1;font:bold 12px monospace;padding:0 8px;
+       background:rgba(0,0,0,.55);color:#fff;
+       border:2px solid rgba(255,255,255,.6);border-radius:8px;opacity:.8}
   #kruis:active{opacity:.95;background:rgba(0,0,0,.6)}
   #vol{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);
        right:calc(env(safe-area-inset-right,0px) + 50px);z-index:11;pointer-events:auto;
@@ -91,7 +93,7 @@
     <button id="sprint">SPRINT</button>
     <button id="fire">KICK</button>
   </div>
-  <button id="kruis" aria-label="sluiten">&#10005;</button>
+  <button id="kruis" aria-label="terug naar het menu">MENU</button>
   <button id="vol">SCHERMVULLEND</button>
   <button id="geluid">GELUID AANZETTEN</button>
   <div id="draai">
@@ -170,6 +172,11 @@
   }
   kruis.addEventListener("click",sluitOfTerug);
   kruis.addEventListener("touchend",sluitOfTerug);
+  setInterval(()=>{                              // in het menu heet hij SLUITEN
+    const inM=window.__inMenu&&window.__inMenu();
+    const wil=inM?"SLUITEN":"MENU";
+    if(kruis.textContent!==wil)kruis.textContent=wil;
+  },400);
 
   /* Tikken op het veld speelt naar de medespeler daar. Alleen in de rechterhelft,
      want links ligt het bedieningsvlak van de knuppel, en niet op de knoppen zelf. */
@@ -565,7 +572,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v110 greep";
+const VERSIE="v111 menu";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -650,7 +657,11 @@ addEventListener("keydown",e=>{ac();const k=MAP[e.key]||MAP[e.key.toLowerCase()]
   if(!AC)ac();
   if(state==="menu")menuKey(e.key);
   else if((e.key===" "||e.key==="Enter")&&(state==="halftime"||state==="fulltime"))advance();
-  if(e.key==="m"||e.key==="M"){snd=!snd;if(!snd)stopMuziek()}});
+  if(e.key==="m"||e.key==="M"){snd=!snd;if(!snd)stopMuziek()}
+  if(e.key==="Escape"&&state!=="menu"){e.preventDefault();
+    stopMuziek();state="menu";menuPage=0;menuSel=0;
+    fireEdge[0]=fireEdge[1]=false;sprintEdge[0]=sprintEdge[1]=false;
+    for(const k of Object.keys(K))K[k]=false}});
 addEventListener("keyup",e=>{const k=MAP[e.key]||MAP[e.key.toLowerCase()];if(k){e.preventDefault();K[k]=false}});
 const stick=document.getElementById("stick"),knob=document.getElementById("knob");
 let sid=null;
