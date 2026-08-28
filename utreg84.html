@@ -334,10 +334,43 @@ window.__naarMenu=()=>{stopMuziek();state="menu";menuPage=0;menuSel=0;
   fireEdge[0]=fireEdge[1]=false;sprintEdge[0]=sprintEdge[1]=false;for(const k of Object.keys(K))K[k]=false};
 window.__inMenu=()=>state==="menu";
 window.__audioStand=()=>AC?AC.state:"geen";
-function beep(f,d,t,v){if(!snd)return;try{const a=ac(),o=a.createOscillator(),g=a.createGain();
-  o.type=t||"square";o.frequency.value=f;g.gain.value=v||.05;o.connect(g);g.connect(a.destination);
-  o.start();o.frequency.exponentialRampToValueAtTime(Math.max(40,f*.5),a.currentTime+d);
-  g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.stop(a.currentTime+d)}catch(e){}}
+/* Geluid in SID-stijl. Drie dingen maken de klank van een C64, en die zaten er
+   niet in: een pulsgolf met smalle pulsbreedte in plaats van een nette blokgolf,
+   een resonante laagdoorlaatfilter waar alles doorheen gaat, en een harde ADSR
+   met een aanslag van bijna niets. Een gewone blokgolf zonder filter klinkt als
+   een arcadekast uit de jaren zeventig, niet als een SID. */
+let pulsGolf=null;
+function maakPuls(a){
+  /* Pulsgolf met ongeveer een kwart pulsbreedte, opgebouwd uit harmonischen.
+     Dat geeft de holle, nasale toon die de SID kenmerkt. */
+  if(pulsGolf)return pulsGolf;
+  const N=28, re=new Float32Array(N), im=new Float32Array(N);
+  const w=.25;                                   // pulsbreedte
+  for(let n=1;n<N;n++){
+    re[n]=2/(n*Math.PI)*Math.sin(Math.PI*n*w);
+    im[n]=0;
+  }
+  pulsGolf=a.createPeriodicWave(re,im,{disableNormalization:false});
+  return pulsGolf}
+function beep(f,d,t,v){if(!snd)return;try{
+  const a=ac(),o=a.createOscillator(),g=a.createGain(),flt=a.createBiquadFilter();
+  const nu=a.currentTime;
+  if(t==="triangle")o.type="triangle";
+  else if(t==="sawtooth")o.type="sawtooth";
+  else o.setPeriodicWave(maakPuls(a));           // standaard: pulsgolf
+  o.frequency.value=f;
+  o.detune.value=(Math.random()-.5)*14;          // de SID stemde nooit helemaal zuiver
+  flt.type="lowpass";
+  flt.frequency.setValueAtTime(Math.min(9000,f*7),nu);
+  flt.frequency.exponentialRampToValueAtTime(Math.max(220,f*1.6),nu+d);
+  flt.Q.value=7;                                 // resonantie: het typische SID-fluitje
+  const vol=v||.05;
+  g.gain.setValueAtTime(0,nu);
+  g.gain.linearRampToValueAtTime(vol,nu+.004);   // aanslag van vier milliseconden
+  g.gain.linearRampToValueAtTime(vol*.55,nu+d*.35);
+  g.gain.exponentialRampToValueAtTime(.0008,nu+d);
+  o.connect(flt);flt.connect(g);g.connect(a.destination);
+  o.start(nu);o.stop(nu+d+.02)}catch(e){}}
 function whistle(){if(!snd)return;try{const a=ac(),t=a.currentTime,dur=.55;
   const n=(a.sampleRate*dur)|0,b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);
   for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
@@ -379,10 +412,15 @@ function speelDeun(deun,naam,herhaal){
     const uit=a.createGain();uit.gain.value=.075;uit.connect(a.destination);
     let eind=0;
     for(const stem of deun){
-      const o=a.createOscillator();o.type=stem.golf||"square";
+      const o=a.createOscillator();
+      if((stem.golf||"square")==="square")o.setPeriodicWave(maakPuls(a));
+      else o.type=stem.golf;
       const g=a.createGain();g.gain.value=0;
-      if(stem.detune)o.detune.value=stem.detune;
-      o.connect(g);g.connect(uit);
+      o.detune.value=(stem.detune||0)+(Math.random()-.5)*8;
+      /* Ook de muziek door de resonante filter: op de C64 ging alles daar doorheen. */
+      const flt=a.createBiquadFilter();
+      flt.type="lowpass";flt.frequency.value=2600;flt.Q.value=5;
+      o.connect(flt);flt.connect(g);g.connect(uit);
       let t=t0;
       for(const [n,d] of stem.noten){
         const dur=d*(60/deun.tempo);
@@ -491,7 +529,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v98 worsie";
+const VERSIE="v99 sid";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
