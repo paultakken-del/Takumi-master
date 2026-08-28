@@ -572,7 +572,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v112 spreiding";
+const VERSIE="v113 linies";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1492,7 +1492,7 @@ function formatiePlek(p){          // basispositie, met de vleugels aan de zijli
      blijven achter, spitsen lopen door. Zonder dat verschil komt de hele ploeg
      mee naar voren, klit alles rond één doel en wordt de helft van het veld
      nooit gebruikt. */
-  const rol=p.role==="D"?.28:p.role==="M"?.5:.72;
+  const rol=p.role==="D"?.42:p.role==="M"?.6:.78;   // linies schuiven steviger mee
   const push=Math.max(-170,Math.min(210,(ball.x-midX)*(.34+rol*.5)*attack[p.team]))*rem;
   let tx=homeX(p)+attack[p.team]*push;
   /* Verdedigers komen nooit ver over de middenlijn, spitsen zakken nooit ver terug.
@@ -1500,8 +1500,14 @@ function formatiePlek(p){          // basispositie, met de vleugels aan de zijli
   const eigenD=ownGoal(p.team);
   const diep=(tx-eigenD)*(midX>eigenD?1:-1);
   const veld=Math.abs(W.gx1-W.gx0);
-  const minDiep=p.role==="D"?0:p.role==="M"?veld*.18:veld*.34;
-  const maxDiep=p.role==="D"?veld*.62:p.role==="M"?veld*.82:veld;
+  /* Ook verdedigers houden afstand tot hun eigen doel: met een ondergrens van nul
+     plakten ze tegen de achterlijn en was er niet langs te komen. Alleen als de
+     bal echt in de buurt is zakken ze verder terug. */
+  const balDiep=Math.abs(ball.x-eigenD);
+  const nood=balDiep<veld*.3;                   // gevaar bij het eigen doel
+  const minDiep=p.role==="D"?(nood?veld*.06:veld*.20)
+               :p.role==="M"?veld*.30:veld*.46;
+  const maxDiep=p.role==="D"?veld*.66:p.role==="M"?veld*.86:veld;
   const kl=Math.max(minDiep,Math.min(maxDiep,diep));
   tx=eigenD+(midX>eigenD?1:-1)*kl;
   /* Breder spelen: de basisplekken worden uitgerekt naar de zijlijnen, zodat de
