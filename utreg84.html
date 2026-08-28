@@ -460,29 +460,29 @@ const SPELDEUN=maakDeun(126,[
  {golf:"square",vol:.13,detune:-8,
   noten:[[null,4],[12,1],[10,1],[7,2],[null,4],[15,1],[12,1],[10,2]]}]);
 
-/* Titeldeun in de stijl van het Domtoren-carillon: klokken die overlappen en
-   uitklinken in plaats van een stampende deun. Zelf geschreven, geen bestaand
-   beiaardstuk. Driehoeksgolven, want die liggen het dichtst bij een klokklank;
-   een blokgolf klinkt te scherp voor brons. Rustig tempo, want klokken hebben
-   tijd nodig om uit te zingen. */
-const TITELDEUN=maakDeun(96,[
- {golf:"triangle",vol:.46,klok:1,noten:[
-   [12,1],[7,1],[9,1],[4,1],
-   [5,1],[9,1],[7,1],[0,1],
-   [12,1],[7,1],[9,1],[4,1],
-   [5,1],[2,1],[0,2]]},
- {golf:"triangle",vol:.3,klok:1,noten:[
-   [0,2],[-3,2],
-   [-7,2],[-12,2],
-   [0,2],[-3,2],
-   [-5,2],[-12,2]]},
- {golf:"triangle",vol:.16,detune:5,klok:1,noten:[
-   [null,2],[19,1],[16,1],
-   [null,2],[21,1],[16,1],
-   [null,2],[19,1],[16,1],
-   [null,1],[17,1],[16,2]]},
- {golf:"triangle",vol:.2,klok:1,noten:[
-   [-24,4],[-24,4],[-24,4],[-24,4]]}]);
+/* Titeldeun: La Cucaracha, hetzelfde volksdeuntje als bij een doelpunt maar dan
+   voluit. Twee coupletten met een oempa-bas en een hoge bovenstem die in het
+   tweede couplet meedoet. Negentiende-eeuws volksgoed, dus vrij te gebruiken. */
+const TITELDEUN=maakDeun(184,[
+ {golf:"square",vol:.36,noten:[
+   [0,.5],[0,.5],[0,.5],[5,1],[9,1],[null,.5],
+   [0,.5],[0,.5],[0,.5],[5,1],[9,1.5],
+   [null,.5],[9,.5],[7,.5],[5,.5],[4,.5],[2,.5],[0,1.5],
+   [0,.5],[0,.5],[0,.5],[5,1],[9,1],[null,.5],
+   [0,.5],[0,.5],[0,.5],[5,1],[9,1.5],
+   [null,.5],[9,.5],[7,.5],[5,.5],[4,.5],[2,.5],[0,1.5]]},
+ {golf:"triangle",vol:.46,noten:[
+   [-24,1],[-17,0.5],[-24,1],[-17,0.5],[-24,1],[-17,0.5],
+   [-24,1],[-17,0.5],[-24,1],[-17,0.5],[-24,1],[-17,0.5],
+   [-24,1],[-17,0.5],[-24,1],[-17,0.5],[-24,1],[-17,0.5],
+   [-24,1],[-17,0.5],[-24,1],[-17,0.5],[-24,1],[-17,0.5],
+   [-24,1],[-17,0.5],[-24,1],[-17,0.5],[-24,1],[-17,0.5],
+   [-24,1],[-17,0.5],[-24,1]]},
+ {golf:"square",vol:.15,detune:8,noten:[
+   [null,12.5],
+   [12,.5],[12,.5],[12,.5],[17,1],[21,1],[null,.5],
+   [12,.5],[12,.5],[12,.5],[17,1],[21,1.5],
+   [null,.5],[21,.5],[19,.5],[17,.5],[16,.5],[14,.5],[12,1.5]]}]);
 
 /* Korte juichdeun bij een doelpunt. */
 /* Doelpunt: La Cucaracha, het Mexicaanse volksdeuntje uit de negentiende eeuw dat
@@ -554,7 +554,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v103 dom";
+const VERSIE="v104 cucaracha";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
