@@ -71,9 +71,15 @@
   @media (orientation:portrait) and (pointer:coarse){ #draai{display:flex} }
 
   /* op een computer geen aanraakbediening */
+  /* Met een muis blijft de bediening staan, maar kleiner en doorzichtiger. Hem
+     helemaal verbergen betekende dat je op een computer geen knoppen zag en niet
+     wist dat het toetsenbord werkt. */
   @media (hover:hover) and (pointer:fine){
-    #pad,#vol{display:none}
-    canvas{width:auto;height:100%;max-width:100%}
+    #pad{opacity:.45}
+    #pad:hover{opacity:.9}
+    #fire{width:84px;height:84px;font-size:12px}
+    #sprint{width:60px;height:60px;font-size:10px;
+      right:calc(env(safe-area-inset-right,0px) + 104px)}
   }
 </style>
 </head>
@@ -559,7 +565,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v107 compat";
+const VERSIE="v108 bediening";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -2108,6 +2114,9 @@ const BALL=[
 "GWWWWWWWG",
 ".GWWWWWG.",
 "..GGGGG.."];
+function muisBediening(){          // computer met muis in plaats van een aanraakscherm
+  try{return !!(window.matchMedia&&
+    window.matchMedia("(hover:hover) and (pointer:fine)").matches)}catch(e){return false}}
 function alsApp(){                  // draait het al als app op het beginscherm?
   /* Alles in een try: oudere browsers, zoals die in een auto, struikelen over
      onbekende media-vragen en dan zou het hele titelscherm niet meer tekenen. */
@@ -2146,7 +2155,12 @@ function title(){
   ctx.fillText("EERBETOON AAN INTERNATIONAL SOCCER 1983",160,186);
   /* Uitleg om het spel als app op je beginscherm te zetten. Alleen tonen als hij
      nog in de browser draait, want als app is de tip overbodig. */
-  if(!alsApp()){
+  if(muisBediening()){
+    /* Op een computer de toetsen benoemen: zonder aanwijzing weet niemand dat
+       pijltjes, spatie en X werken. */
+    ctx.fillStyle=C.lgrey;ctx.font="8px monospace";
+    ctx.fillText("PIJLTJES LOPEN   SPATIE SPELEN   X SPRINT",160,174);
+  }else if(!alsApp()){
     ctx.fillStyle=C.yel;ctx.font="8px monospace";
     ctx.fillText(installTekst(),160,174)}
   ctx.textAlign="right";
