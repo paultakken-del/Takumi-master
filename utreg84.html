@@ -572,7 +572,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v114 hervatting";
+const VERSIE="v115 namen";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -994,7 +994,17 @@ function goal(team){scorer=team;score[team]++;state="goal";stateT=0;
   const maker=ball.last&&ball.last.team===team?ball.last:null;
   if(maker&&maker.role!=="K"){
     const lijst=clubNamen(team);
-    if(!maker.naam)maker.naam=lijst[(P.indexOf(maker)*3+2)%lijst.length];
+    /* Naam per rol: aanvallers krijgen de eerste namen uit de lijst, dan de
+       middenvelders en dan de verdedigers. Eerder werd de naam uit de plek in de
+       spelerslijst berekend, waardoor je spitsen altijd dezelfde drie namen
+       hadden en je in de praktijk steeds dezelfde naam zag. */
+    if(!maker.naam){
+      const eigen=P.filter(q=>q.team===team&&q.role!=="K");
+      const orde={F:0,M:1,D:2};
+      eigen.sort((a2,b2)=>(orde[a2.role]-orde[b2.role])||(P.indexOf(a2)-P.indexOf(b2)));
+      const plek=eigen.indexOf(maker);
+      maker.naam=lijst[(plek+(plek<0?0:0))%lijst.length];
+    }
     msg=maker.naam+" SCOORT!";
   }else msg="GOAL!";
   /* La Cucaracha klinkt alleen als Utrecht scoort; bij een tegendoelpunt hoor je
