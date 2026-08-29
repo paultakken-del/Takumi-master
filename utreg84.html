@@ -572,7 +572,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v115 namen";
+const VERSIE="v116 beeldbuis";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -1850,7 +1850,33 @@ function outOfPlay(){
     return}}
 
 /* ===== tekenen ===== */
-const px=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x|0,y|0,w,h)};
+/* Zwart-wit-stand: een filter op de tekenfunctie zelf, zodat alles er in één keer
+   doorheen gaat. De grijswaarde volgt de helderheid die het oog waarneemt, met
+   rood en groen zwaarder dan blauw, precies zoals een oude buis dat deed. */
+let zwartWit=0;
+const grijsCache={};
+function grijs(c){
+  if(!zwartWit||typeof c!=="string")return c;
+  if(grijsCache[c])return grijsCache[c];
+  let r,g,b,a=1;
+  if(c[0]==="#"){
+    const s=c.slice(1);
+    if(s.length===3){r=parseInt(s[0]+s[0],16);g=parseInt(s[1]+s[1],16);b=parseInt(s[2]+s[2],16)}
+    else{r=parseInt(s.slice(0,2),16);g=parseInt(s.slice(2,4),16);b=parseInt(s.slice(4,6),16)}
+  }else if(c.indexOf("rgba")===0){
+    const d=c.slice(5,-1).split(",");r=+d[0];g=+d[1];b=+d[2];a=+d[3];
+  }else if(c.indexOf("rgb")===0){
+    const d=c.slice(4,-1).split(",");r=+d[0];g=+d[1];b=+d[2];
+  }else return c;
+  /* Een echte buis maakte rood lichter dan groen. Met de gewone weging kwamen
+     een rood shirt en het gras allebei op dezelfde grijstint uit en zag je de
+     spelers niet meer. Rood telt daarom zwaarder, groen lichter. */
+  let y=Math.round(.46*r+.42*g+.12*b);
+  y=Math.max(0,Math.min(255,Math.round((y-118)*1.25+112)));   // meer contrast, iets donkerder
+  const uit=a<1?"rgba("+y+","+y+","+y+","+a+")"
+                :"#"+((1<<24)+(y<<16)+(y<<8)+y).toString(16).slice(1);
+  grijsCache[c]=uit;return uit}
+const px=(x,y,w,h,c)=>{ctx.fillStyle=grijs(c);ctx.fillRect(x|0,y|0,w,h)};
 function line(x1,y1,x2,y2,c){
   x1|=0;y1|=0;x2|=0;y2|=0;
   const dx=Math.abs(x2-x1),sx=x1<x2?1:-1,dy=-Math.abs(y2-y1),sy=y1<y2?1:-1;
@@ -2087,7 +2113,7 @@ function drawBall(){
   for(const [c,r] of vlek)px(x-4+c,b-1+r,1,1,"#282828");
   px(x-2,b,1,1,"#FFFFFF")}                      // glans linksboven
 
-function txt(s,x,y,c,sz,al){ctx.font=(sz||8)+"px monospace";ctx.textAlign=al||"center";
+function txt(s,x,y,c,sz,al){c=grijs(c);ctx.font=(sz||8)+"px monospace";ctx.textAlign=al||"center";
   ctx.textBaseline="top";ctx.fillStyle=C.blk;ctx.fillText(s,x+1,y+1);
   ctx.fillStyle=c;ctx.fillText(s,x,y)}
 const DIG3=["111 101 101 101 111","010 110 010 010 010","111 001 111 100 111",
