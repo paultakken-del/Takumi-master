@@ -69,7 +69,7 @@ DEMO.push({ id: 99, name: "Olivier M", prefs: ["LM", "VM", "MM"], keeper: true, 
       nooit twee blokken achter elkaar op de bank zolang dat kan.
    2. Voorkeurspositie: per blok een greedy matching op score
       (1e voorkeur > 2e > 3e), met bonus voor dezelfde positie als vorig blok. */
-function generateSchedule(players, seed, vasteBasis) {
+function generateSchedule(players, seed, vasteBasis, seizoenTot) {
   const field = players.filter((p) => p.aanwezig && !p.keeper);
   const P = field.length;
   if (P < 10) return { error: `Te weinig veldspelers: ${P} aanwezig, 10 nodig.` };
@@ -85,6 +85,7 @@ function generateSchedule(players, seed, vasteBasis) {
     const j = s % (i + 1);
     [order[i], order[j]] = [order[j], order[i]];
   }
+  order.sort((a, z) => (seizoenTot?.[z.id] || 0) - (seizoenTot?.[a.id] || 0));
 
   let benchByBlock;
   if (vasteBasis) {
@@ -107,6 +108,8 @@ function generateSchedule(players, seed, vasteBasis) {
         if (benchCount[a] !== benchCount[z]) return benchCount[a] - benchCount[z];
         const pa = prevBench.has(a) ? 1 : 0, pz = prevBench.has(z) ? 1 : 0;
         if (pa !== pz) return pa - pz;
+        const sa = seizoenTot?.[a] || 0, sz = seizoenTot?.[z] || 0;
+        if (sa !== sz) return sz - sa;
         return ((rank[a] + b * 3) % P) - ((rank[z] + b * 3) % P);
       });
       const bench = sorted.slice(0, benchPerBlock);
@@ -233,6 +236,15 @@ function HockeyWisselCoach() {
   const [kwartMin, setKwartMin] = useState(17.5);
   const [uitvalId, setUitvalId] = useState("");
   const [basis, setBasis] = useState({});
+  const [matches, setMatches] = useState([]);
+  const [activeMatchId, setActiveMatchId] = useState("");
+  const [turf, setTurf] = useState({});
+  const [turfSpeler, setTurfSpeler] = useState("");
+  const [scoreVoor, setScoreVoor] = useState(0);
+  const [scoreTegen, setScoreTegen] = useState(0);
+  const [nmDatum, setNmDatum] = useState("");
+  const [nmTegen, setNmTegen] = useState("");
+  const [nmThuis, setNmThuis] = useState(true);
   const [uitvalNote, setUitvalNote] = useState(null);
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0); // zuivere speeltijd in seconden
@@ -242,7 +254,7 @@ function HockeyWisselCoach() {
 
   const [sync, setSync] = useState({ code: "", pin: "" });
 
-  const maakPayload = () => JSON.stringify({ players, kwartMin, result, seed, basis });
+  const maakPayload = () => JSON.stringify({ players, kwartMin, result, seed, basis, matches, activeMatchId, turf, scoreVoor, scoreTegen });
   const normCode = (c) => (c || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
 
   const hydrate = (value) => {
@@ -252,6 +264,11 @@ function HockeyWisselCoach() {
     if (s.result?.blocks) setResult(s.result);
     if (s.seed) setSeed(s.seed);
     if (s.basis && typeof s.basis === "object") setBasis(s.basis);
+    if (Array.isArray(s.matches)) setMatches(s.matches);
+    if (s.activeMatchId !== undefined) setActiveMatchId(s.activeMatchId);
+    if (s.turf && typeof s.turf === "object") setTurf(s.turf);
+    if (typeof s.scoreVoor === "number") setScoreVoor(s.scoreVoor);
+    if (typeof s.scoreTegen === "number") setScoreTegen(s.scoreTegen);
   };
 
   const STORAGE_KEY = "wisselcoach-state";
@@ -337,8 +354,8 @@ function HockeyWisselCoach() {
     })();
   }, []);
 
-  const opslaan = async () => {
-    const payload = maakPayload();
+  const opslaan = async (payloadOverride) => {
+    const payload = typeof payloadOverride === "string" ? payloadOverride : maakPayload();
     let prefix = "";
     if (normCode(sync.code) && sync.pin) {
       try {
@@ -389,6 +406,13 @@ function HockeyWisselCoach() {
   const aanwezigVeld = players.filter((p) => p.aanwezig && !p.keeper).length;
   const keeper = players.find((p) => p.keeper && p.aanwezig);
 
+  const seizoenTot = useMemo(() => {
+    const t = {};
+    matches.filter((m) => m.gesloten).forEach((m) =>
+      Object.entries(m.stats || {}).forEach(([id, s]) => { t[id] = (t[id] || 0) + (s.b || 0); }));
+    return t;
+  }, [matches]);
+
   const actieveBasis = () => {
     const gekozen = Object.fromEntries(Object.entries(basis).filter(([, v]) => v));
     return Object.keys(gekozen).length ? gekozen : undefined;
@@ -397,7 +421,7 @@ function HockeyWisselCoach() {
   const genereer = (newSeed) => {
     const s = newSeed ?? seed;
     setSeed(s);
-    setResult(generateSchedule(players, s, actieveBasis()));
+    setResult(generateSchedule(players, s, actieveBasis(), seizoenTot));
     setTab("schema");
     setOpenBlock(0);
     setUitvalNote(null);
@@ -496,6 +520,43 @@ function HockeyWisselCoach() {
     setUitvalNote({ name: playersById[playerId]?.name, from: BLOCKS[fromBlock], issues: [], terug: true });
   };
 
+  const turfDoelpunt = () => {
+    const id = Number(turfSpeler); if (!id) return;
+    const t = turf[id] || {};
+    setTurf({ ...turf, [id]: { ...t, d: (t.d || 0) + 1 } });
+    setScoreVoor(scoreVoor + 1);
+  };
+  const turfKaart = (kleur) => {
+    const id = Number(turfSpeler); if (!id) return;
+    const t = turf[id] || {};
+    setTurf({ ...turf, [id]: { ...t, [kleur]: (t[kleur] || 0) + 1 } });
+  };
+  const addMatch = () => {
+    if (!nmDatum || !nmTegen.trim()) return;
+    const next = [...matches, { id: Date.now(), datum: nmDatum, tegenstander: nmTegen.trim(), thuis: nmThuis, gesloten: false }]
+      .sort((a, z) => (a.datum > z.datum ? 1 : -1));
+    setMatches(next);
+    setNmTegen("");
+  };
+
+  /* Wedstrijd afsluiten: werkelijke blokken (incl. uitval en ingelaste wissels)
+     plus doelpunten en kaarten bevriezen bij de gekozen wedstrijd, en direct
+     naar de gedeelde opslag schrijven. */
+  const sluitWedstrijd = () => {
+    if (!activeMatchId) return;
+    const stats = {};
+    players.forEach((p) => {
+      const t = turf[p.id] || {};
+      const b = p.keeper ? 0 : (result?.stats?.[p.id]?.played || 0);
+      if (b || t.d || t.gr || t.ge || t.ro) stats[p.id] = { b, d: t.d || 0, gr: t.gr || 0, ge: t.ge || 0, ro: t.ro || 0 };
+    });
+    const next = matches.map((m) => m.id === Number(activeMatchId)
+      ? { ...m, gesloten: true, voor: scoreVoor, tegen: scoreTegen, stats } : m);
+    setMatches(next);
+    setTurf({}); setTurfSpeler(""); setScoreVoor(0); setScoreTegen(0); setActiveMatchId("");
+    opslaan(JSON.stringify({ players, kwartMin, result, seed, basis, matches: next, activeMatchId: "", turf: {}, scoreVoor: 0, scoreTegen: 0 }));
+  };
+
   /* Ingelaste wissel: alleen het huidige blok wordt aangepast — de erin-speler
      neemt de positie van de eruit-speler over, die naar de bank gaat. De
      geplande blokken erna blijven ongewijzigd; de wisselkaart naar het
@@ -567,9 +628,9 @@ function HockeyWisselCoach() {
 
       {/* Tabs */}
       <nav style={{ display: "flex", gap: 8, padding: "14px 14px 4px" }}>
-        {[["selectie", "Selectie"], ["schema", "Opstelling"], ["live", "Live"], ["speeltijd", "Speeltijd"]].map(([key, label]) => (
+        {[["selectie", "Selectie"], ["schema", "Opstelling"], ["live", "Live"], ["speeltijd", "Speeltijd"], ["seizoen", "Seizoen"]].map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)} style={{
-            ...S.ghost, flex: 1, padding: "10px 4px",
+            ...S.ghost, flex: 1, padding: "10px 2px", fontSize: 12.5,
             background: tab === key ? C.black : "transparent",
             color: tab === key ? "#fff" : C.black,
           }}>{label}</button>
@@ -836,6 +897,54 @@ function HockeyWisselCoach() {
                 <div style={{ fontSize: 11.5, opacity: 0.7, marginTop: 8 }}>Pauzeer bij kwartrust — de klok telt alleen speeltijd.</div>
               </div>
 
+              {/* Wedstrijd, score en turven */}
+              <div style={S.card}>
+                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>WEDSTRIJD</div>
+                {matches.filter((m) => !m.gesloten).length === 0 ? (
+                  <div style={{ fontSize: 13.5, color: C.inkSoft }}>Nog geen wedstrijd gepland \u2014 voeg er een toe op de Seizoen-tab.</div>
+                ) : (
+                  <>
+                    <select value={activeMatchId} onChange={(e) => setActiveMatchId(e.target.value)}
+                      style={{ ...S.select, width: "100%", boxSizing: "border-box" }} aria-label="Wedstrijd">
+                      <option value="">Kies wedstrijd\u2026</option>
+                      {matches.filter((m) => !m.gesloten).map((m) => (
+                        <option key={m.id} value={m.id}>{m.datum} \u00b7 {m.thuis ? "thuis" : "uit"} \u00b7 {m.tegenstander}</option>
+                      ))}
+                    </select>
+                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 14, margin: "10px 0 8px" }}>
+                      <span style={{ ...S.display, fontSize: 34 }}>{scoreVoor}</span>
+                      <span style={{ color: C.inkSoft, fontSize: 20 }}>\u2014</span>
+                      <span style={{ ...S.display, color: C.ink, fontSize: 34 }}>{scoreTegen}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center" }}>
+                      <select value={turfSpeler} onChange={(e) => setTurfSpeler(e.target.value)} style={S.select} aria-label="Speler voor doelpunt of kaart">
+                        <option value="">Speler\u2026</option>
+                        {players.filter((p) => p.aanwezig).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                      <button onClick={turfDoelpunt} disabled={!turfSpeler} style={{ ...S.ghost, fontSize: 13, opacity: turfSpeler ? 1 : 0.45 }}>+ ⚽</button>
+                      <button onClick={() => turfKaart("gr")} disabled={!turfSpeler} style={{ ...S.ghost, fontSize: 13, opacity: turfSpeler ? 1 : 0.45 }}>🟩</button>
+                      <button onClick={() => turfKaart("ge")} disabled={!turfSpeler} style={{ ...S.ghost, fontSize: 13, opacity: turfSpeler ? 1 : 0.45 }}>🟨</button>
+                      <button onClick={() => turfKaart("ro")} disabled={!turfSpeler} style={{ ...S.ghost, fontSize: 13, opacity: turfSpeler ? 1 : 0.45 }}>🟥</button>
+                      <button onClick={() => setScoreTegen(scoreTegen + 1)} style={{ ...S.ghost, fontSize: 13 }}>+ tegen</button>
+                    </div>
+                    {Object.keys(turf).length > 0 && (
+                      <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 8 }}>
+                        {Object.entries(turf).map(([id, t]) => (
+                          <span key={id} style={{ marginRight: 10, whiteSpace: "nowrap" }}>
+                            <b style={{ color: C.ink }}>{playersById[id]?.name}</b>
+                            {t.d ? ` ${t.d}⚽` : ""}{t.gr ? ` ${t.gr}🟩` : ""}{t.ge ? ` ${t.ge}🟨` : ""}{t.ro ? ` ${t.ro}🟥` : ""}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <button onClick={sluitWedstrijd} disabled={!activeMatchId}
+                      style={{ ...S.ghost, fontSize: 13, marginTop: 10, color: C.bib, borderColor: C.bib, opacity: activeMatchId ? 1 : 0.45 }}>
+                      Wedstrijd afsluiten en opslaan
+                    </button>
+                  </>
+                )}
+              </div>
+
               {/* Ingelaste wissel */}
               <div style={S.card}>
                 <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>INGELASTE WISSEL</div>
@@ -942,7 +1051,67 @@ function HockeyWisselCoach() {
         </main>
       )}
 
-      {/* ── PRINTBLAD (alleen zichtbaar bij afdrukken) ── */}
+      {/* \u2500\u2500 SEIZOEN \u2500\u2500 */}
+      {tab === "seizoen" && (
+        <main style={{ padding: 14, display: "grid", gap: 10 }}>
+          <div style={S.card}>
+            <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>WEDSTRIJDSCHEMA</div>
+            {matches.length === 0 && <div style={{ fontSize: 13.5, color: C.inkSoft, marginBottom: 8 }}>Nog geen wedstrijden ingevoerd.</div>}
+            {matches.map((m) => (
+              <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: `1px solid ${C.line}`, fontSize: 14 }}>
+                <span style={{ color: C.inkSoft, minWidth: 86 }}>{m.datum}</span>
+                <span style={{ flex: 1 }}><b>{m.tegenstander}</b> <span style={{ color: C.inkSoft }}>({m.thuis ? "thuis" : "uit"})</span></span>
+                {m.gesloten
+                  ? <b style={{ color: C.bib }}>{m.voor}\u2013{m.tegen}</b>
+                  : <span style={{ color: C.inkSoft, fontSize: 12.5 }}>open</span>}
+                <button onClick={() => setMatches(matches.filter((x) => x.id !== m.id))}
+                  style={{ ...S.ghost, padding: "4px 9px", fontSize: 12, color: C.out, borderColor: C.out }}
+                  aria-label={`Verwijder wedstrijd tegen ${m.tegenstander}`}>\u2715</button>
+              </div>
+            ))}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+              <input type="date" value={nmDatum} onChange={(e) => setNmDatum(e.target.value)} style={S.select} aria-label="Datum" />
+              <input value={nmTegen} onChange={(e) => setNmTegen(e.target.value)} placeholder="Tegenstander" style={{ ...S.select, flex: 1, minWidth: 110 }} aria-label="Tegenstander" />
+              <button onClick={() => setNmThuis(!nmThuis)} style={{ ...S.ghost, fontSize: 13 }}>{nmThuis ? "Thuis" : "Uit"}</button>
+              <button onClick={addMatch} disabled={!nmDatum || !nmTegen.trim()}
+                style={{ ...S.ghost, fontSize: 13, opacity: !nmDatum || !nmTegen.trim() ? 0.45 : 1 }}>+ Wedstrijd</button>
+            </div>
+          </div>
+
+          <div style={S.card}>
+            <div style={{ ...S.display, fontSize: 13, marginBottom: 4 }}>SEIZOENSTOTALEN</div>
+            <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 10 }}>
+              Over {matches.filter((m) => m.gesloten).length} afgesloten wedstrijd(en). Wie achterloopt in blokken krijgt bij het genereren vanzelf voorrang.
+            </div>
+            {(() => {
+              const rows = players.map((p) => {
+                let b = 0, d = 0, gr = 0, ge = 0, ro = 0;
+                matches.filter((m) => m.gesloten).forEach((m) => {
+                  const s2 = m.stats?.[p.id]; if (!s2) return;
+                  b += s2.b || 0; d += s2.d || 0; gr += s2.gr || 0; ge += s2.ge || 0; ro += s2.ro || 0;
+                });
+                return { p, b, d, gr, ge, ro };
+              }).sort((a, z) => z.b - a.b);
+              const max = Math.max(1, ...rows.map((r) => r.b));
+              return rows.map(({ p, b, d, gr, ge, ro }) => (
+                <div key={p.id} style={{ marginBottom: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                    <b>{p.name}{p.keeper ? " (K)" : ""}</b>
+                    <span style={{ color: C.inkSoft }}>
+                      {b} blok{b === 1 ? "" : "ken"}{d ? ` \u00b7 ${d}⚽` : ""}{gr ? ` \u00b7 ${gr}🟩` : ""}{ge ? ` \u00b7 ${ge}🟨` : ""}{ro ? ` \u00b7 ${ro}🟥` : ""}
+                    </span>
+                  </div>
+                  <div style={{ background: C.line, borderRadius: 99, height: 7, marginTop: 3 }}>
+                    <div style={{ width: `${(b / max) * 100}%`, background: C.black, height: 7, borderRadius: 99 }} />
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
+        </main>
+      )}
+
+      {/* \u2500\u2500 PRINTBLAD (alleen zichtbaar bij afdrukken) ── */}
       {result?.blocks && (
         <section className="print-sheet" style={{ padding: 16, color: "#000", fontSize: 12, fontFamily: "system-ui, sans-serif" }}>
           <div style={{ fontWeight: 800, fontSize: 18 }}>Wisselschema</div>
@@ -980,7 +1149,7 @@ function HockeyWisselCoach() {
         )}
         <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
           <button onClick={() => genereer(seed)} style={{ ...S.btn, flex: 1, maxWidth: 200, padding: "13px 14px" }}>Genereer schema</button>
-          <button onClick={opslaan} style={{ ...S.ghost, alignSelf: "stretch", padding: "10px 14px" }}>Opslaan</button>
+          <button onClick={() => opslaan()} style={{ ...S.ghost, alignSelf: "stretch", padding: "10px 14px" }}>Opslaan</button>
           {result?.blocks && (
             <>
               <button onClick={() => genereer(seed + 1)} style={{ ...S.ghost, alignSelf: "stretch", padding: "10px 12px" }}>↻</button>
