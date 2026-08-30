@@ -199,7 +199,6 @@ function HockeyWisselCoach() {
   const [elapsed, setElapsed] = useState(0); // zuivere speeltijd in seconden
   const [adhocOut, setAdhocOut] = useState("");
   const [adhocIn, setAdhocIn] = useState("");
-  const [peek, setPeek] = useState(null);
   const [saveMsg, setSaveMsg] = useState("");
 
   const [sync, setSync] = useState({ code: "", pin: "" });
@@ -490,6 +489,23 @@ function HockeyWisselCoach() {
       {/* ── SELECTIE ── */}
       {tab === "selectie" && (
         <main style={{ padding: 14, display: "grid", gap: 10 }}>
+          {/* Team openen: teamcode + pincode, gedeeld over apparaten en coaches */}
+          <div style={S.card}>
+            <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}>OPEN TEAM</div>
+            <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 8 }}>
+              Teamcode en pincode gelden op elk apparaat en voor elke mede-coach. Opslaan bewaart alles op de server onder deze code.
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <input value={sync.code} onChange={(e) => updateSync({ code: e.target.value })}
+                placeholder="Teamcode, bijv. o16-5" autoCapitalize="none"
+                style={{ ...S.select, flex: 1, minWidth: 130 }} aria-label="Teamcode" />
+              <input value={sync.pin} onChange={(e) => updateSync({ pin: e.target.value })}
+                placeholder="Pincode" type="password"
+                style={{ ...S.select, width: 90 }} aria-label="Pincode" />
+              <button onClick={laadVanCode} style={{ ...S.ghost, fontSize: 13 }}>Open</button>
+            </div>
+          </div>
+
           <div style={{ ...S.card, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
             <div>
               <div style={{ fontWeight: 700 }}>{aanwezigVeld} veldspelers aanwezig</div>
@@ -539,23 +555,6 @@ function HockeyWisselCoach() {
           ))}
 
           <button onClick={addPlayer} style={S.ghost}>+ Speler toevoegen</button>
-
-          {/* Delen tussen apparaten en coaches (werkt op de webserver) */}
-          <div style={S.card}>
-            <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}>DELEN TUSSEN APPARATEN</div>
-            <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 8 }}>
-              Kies een teamcode en pincode. Elke coach die dezelfde code en pin invult — op telefoon of laptop — werkt met hetzelfde team en schema. Opslaan gaat dan naar de server.
-            </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <input value={sync.code} onChange={(e) => updateSync({ code: e.target.value })}
-                placeholder="Teamcode, bijv. o16-5" autoCapitalize="none"
-                style={{ ...S.select, flex: 1, minWidth: 130 }} aria-label="Teamcode" />
-              <input value={sync.pin} onChange={(e) => updateSync({ pin: e.target.value })}
-                placeholder="Pincode" type="password"
-                style={{ ...S.select, width: 90 }} aria-label="Pincode" />
-              <button onClick={laadVanCode} style={{ ...S.ghost, fontSize: 13 }}>Laad</button>
-            </div>
-          </div>
 
         </main>
       )}
@@ -674,96 +673,6 @@ function HockeyWisselCoach() {
                   <button onClick={() => { setRunning(false); setElapsed(0); }} style={{ ...S.ghost, borderColor: C.chalk, color: C.chalk }}>Reset</button>
                 </div>
                 <div style={{ fontSize: 11.5, opacity: 0.7, marginTop: 8 }}>Pauzeer bij kwartrust — de klok telt alleen speeltijd.</div>
-              </div>
-
-              {/* Tijdbalk: officiële wedstrijdindeling — 2 helften, 4 kwarten, 8 blokken */}
-              <div style={S.card}>
-                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>WEDSTRIJDVERLOOP</div>
-                {(() => {
-                  const Blok = ({ i }) => {
-                    const bl = result.blocks[i];
-                    const nSubs = i === 0 ? 0 : subsBetween(result.blocks[i - 1], bl, playersById).length;
-                    const done = i < liveBlock || elapsed >= totalSec;
-                    const cur = i === liveBlock && elapsed < totalSec;
-                    const frac = cur ? (elapsed - liveBlock * blockSec) / blockSec : 0;
-                    return (
-                      <button onClick={() => setPeek(peek === i ? null : i)} aria-label={`Blok ${bl.label} bekijken`}
-                        style={{ flex: 1, minWidth: 0, border: "none", background: "transparent", padding: 0, cursor: "pointer", fontFamily: "inherit" }}>
-                        <div style={{ fontSize: 10.5, color: C.inkSoft, textAlign: "center", height: 15 }}>{nSubs > 0 ? `▲${nSubs}` : ""}</div>
-                        <div style={{ position: "relative", height: 16, borderRadius: 5, background: done ? C.pitch : C.line, overflow: "hidden", boxShadow: peek === i ? `0 0 0 2px ${C.bib}` : "none" }}>
-                          {cur && <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${frac * 100}%`, background: C.pitch }} />}
-                        </div>
-                        <div style={{ fontSize: 10, textAlign: "center", marginTop: 2, color: i === liveBlock ? C.ink : C.inkSoft, fontWeight: i === liveBlock ? 800 : 400 }}>{bl.label}</div>
-                      </button>
-                    );
-                  };
-                  const Kwart = ({ q }) => (
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 10.5, fontWeight: 800, color: C.inkSoft, textAlign: "center", marginBottom: 3, letterSpacing: ".5px" }}>KWART {q + 1}</div>
-                      <div style={{ display: "flex", gap: 3, borderTop: `2px solid ${C.line}`, paddingTop: 4 }}>
-                        <Blok i={q * 2} />
-                        <Blok i={q * 2 + 1} />
-                      </div>
-                    </div>
-                  );
-                  return (
-                    <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
-                      <div style={{ flex: 2, minWidth: 0 }}>
-                        <div style={{ fontSize: 11.5, fontWeight: 800, textAlign: "center", color: C.ink, marginBottom: 5 }}>1E HELFT</div>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <Kwart q={0} />
-                          <Kwart q={1} />
-                        </div>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <div style={{ writingMode: "vertical-rl", fontSize: 9.5, fontWeight: 800, letterSpacing: "2px", color: C.inkSoft, background: C.chalk, border: `1px solid ${C.line}`, borderRadius: 6, padding: "8px 2px" }}>RUST</div>
-                      </div>
-                      <div style={{ flex: 2, minWidth: 0 }}>
-                        <div style={{ fontSize: 11.5, fontWeight: 800, textAlign: "center", color: C.ink, marginBottom: 5 }}>2E HELFT</div>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <Kwart q={2} />
-                          <Kwart q={3} />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-                <div style={{ fontSize: 11.5, color: C.inkSoft, marginTop: 8 }}>
-                  ▲ = wissels bij de start van dat blok · tik een blok voor de details.
-                </div>
-                {peek !== null && (
-                  <div style={{ marginTop: 10, borderTop: `1px solid ${C.line}`, paddingTop: 10 }}>
-                    <div style={{ ...S.display, fontSize: 12.5, marginBottom: 4 }}>
-                      {peek === 0 ? "STARTOPSTELLING 1/8" : `WISSELS BIJ START ${result.blocks[peek].label}`}
-                    </div>
-                    {peek === 0 ? (
-                      <div style={{ fontSize: 13.5, lineHeight: 1.7 }}>
-                        {POSITIONS.map((pos) => {
-                          const pl = playersById[result.blocks[0].assign[pos.code]];
-                          return <span key={pos.code} style={{ marginRight: 10, whiteSpace: "nowrap" }}>
-                            <span style={{ color: C.inkSoft }}>{pos.code}</span> <b>{pl?.name ?? "—"}</b>
-                          </span>;
-                        })}
-                      </div>
-                    ) : (
-                      (() => {
-                        const subs = subsBetween(result.blocks[peek - 1], result.blocks[peek], playersById);
-                        return subs.length === 0
-                          ? <div style={{ fontSize: 13.5, color: C.inkSoft }}>Geen wissels.</div>
-                          : subs.map((sub, j) => (
-                            <div key={j} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 14.5, padding: "2px 0" }}>
-                              <span style={{ fontWeight: 800, color: C.in }}>▲ {playersById[sub.inId]?.name}</span>
-                              <span style={{ color: C.inkSoft }}>op {POS_BY_CODE[sub.pos].name}</span>
-                              <span style={{ fontWeight: 800, color: C.out }}>▼ {playersById[sub.voorId]?.name}</span>
-                            </div>
-                          ));
-                      })()
-                    )}
-                    <div style={{ fontSize: 12.5, color: C.inkSoft, marginTop: 4 }}>
-                      Bank in {result.blocks[peek].label}: {result.blocks[peek].bench.map((id) => playersById[id]?.name).join(", ") || "niemand"}
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Ingelaste wissel */}
