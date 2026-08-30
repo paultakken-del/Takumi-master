@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Wisselcoach</title>
 <link rel="icon" type="image/png" href="/wisselcoach-icon-192.png">
 <link rel="apple-touch-icon" href="/wisselcoach-icon-180.png">
@@ -604,7 +604,7 @@ function HockeyWisselCoach() {
     card: { background: C.card, border: `1px solid ${C.line}`, borderRadius: 14, padding: 14 },
     btn: { background: C.black, color: "#fff", border: "none", borderRadius: 999, padding: "13px 22px", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" },
     ghost: { background: "transparent", color: C.black, border: `1.5px solid ${C.black}`, borderRadius: 999, padding: "10px 18px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: 14 },
-    select: { fontFamily: "inherit", fontSize: 13, padding: "6px 4px", borderRadius: 8, border: `1px solid ${C.line}`, background: C.chalk, color: C.ink, maxWidth: "100%" },
+    select: { fontFamily: "inherit", fontSize: 16, padding: "6px 4px", borderRadius: 8, border: `1px solid ${C.line}`, background: C.chalk, color: C.ink, maxWidth: "100%" },
   };
 
   return (
@@ -676,7 +676,7 @@ function HockeyWisselCoach() {
             <div key={p.id} style={{ ...S.card, opacity: p.aanwezig ? 1 : 0.45 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <input value={p.name} onChange={(e) => upd(p.id, { name: e.target.value })}
-                  style={{ ...S.select, fontWeight: 700, fontSize: 15, flex: 1, minWidth: 100 }} aria-label="Naam" />
+                  style={{ ...S.select, fontWeight: 700, flex: 1, minWidth: 100 }} aria-label="Naam" />
                 <button onClick={() => setKeeper(p.id)} style={{
                   ...S.ghost, padding: "6px 12px", fontSize: 12,
                   background: p.keeper ? C.bib : "transparent",
@@ -1141,13 +1141,13 @@ function HockeyWisselCoach() {
       )}
 
       {/* Vaste actiebalk */}
-      <div className="actionbar" style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "12px 14px 18px", background: `linear-gradient(transparent, ${C.chalk} 35%)` }}>
+      <div className="actionbar" style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "12px 14px 18px", background: `linear-gradient(transparent, ${C.chalk} 35%)`, pointerEvents: "none" }}>
         {saveMsg && (
           <div style={{ textAlign: "center", fontSize: 13, fontWeight: 700, color: saveMsg.includes("✓") ? C.in : C.out, marginBottom: 6 }}>
             {saveMsg}
           </div>
         )}
-        <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+        <div style={{ display: "flex", gap: 8, justifyContent: "center", pointerEvents: "auto" }}>
           <button onClick={() => genereer(seed)} style={{ ...S.btn, flex: 1, maxWidth: 200, padding: "13px 14px" }}>Genereer schema</button>
           <button onClick={() => opslaan()} style={{ ...S.ghost, alignSelf: "stretch", padding: "10px 14px" }}>Opslaan</button>
           {result?.blocks && (
