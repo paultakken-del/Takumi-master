@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v21";
+const APP_VERSIE = "v22";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -740,8 +740,8 @@ function HockeyWisselCoach() {
     page: { minHeight: "100vh", background: C.chalk, color: C.ink, fontFamily: "'Barlow', system-ui, -apple-system, sans-serif", paddingBottom: 90 },
     display: { fontFamily: "'Archivo Black', 'Barlow', system-ui, sans-serif", color: C.bib },
     card: { background: C.card, border: `1px solid ${C.line}`, borderRadius: 14, padding: 14 },
-    btn: { background: C.black, color: "#fff", border: "none", borderRadius: 999, padding: "13px 22px", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" },
-    ghost: { background: "transparent", color: C.black, border: `1.5px solid ${C.black}`, borderRadius: 999, padding: "10px 18px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: 14 },
+    btn: { background: C.black, color: "#fff", border: "none", borderRadius: 999, padding: "13px 22px", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" },
+    ghost: { background: "transparent", color: C.black, border: `1.5px solid ${C.black}`, borderRadius: 999, padding: "10px 18px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: 14, whiteSpace: "nowrap" },
     select: { fontFamily: "inherit", fontSize: 16, padding: "6px 4px", borderRadius: 8, border: `1px solid ${C.line}`, background: C.chalk, color: C.ink, maxWidth: "100%" },
   };
 
@@ -771,12 +771,12 @@ function HockeyWisselCoach() {
 
       {/* Tabs */}
       <nav style={{ display: "flex", gap: 8, padding: "14px 14px 4px" }}>
-        {[["selectie", "Selectie"], ["schema", "Opstelling"], ["live", "Live"], ["speeltijd", "Speeltijd"], ["seizoen", "Seizoen"]].map(([key, label]) => (
+        {[["selectie", "Selectie", "spelers"], ["schema", "Opstelling", "veld"], ["live", "Live", "klok"], ["speeltijd", "Speeltijd", "grafiek"], ["seizoen", "Seizoen", "kalender"]].map(([key, label, icoon]) => (
           <button key={key} onClick={() => setTab(key)} style={{
             ...S.ghost, flex: 1, padding: "10px 2px", fontSize: 12.5,
             background: tab === key ? C.black : "transparent",
             color: tab === key ? "#fff" : C.black,
-          }}>{label}</button>
+          }}><Ico kind={icoon} m={5} />{label}</button>
         ))}
       </nav>
 
@@ -1388,7 +1388,7 @@ function HockeyWisselCoach() {
           </div>
         )}
         <div style={{ display: "flex", gap: 8, justifyContent: "center", pointerEvents: "auto" }}>
-          <button onClick={() => genereer(seed)} style={{ ...S.btn, flex: 1, maxWidth: 200, padding: "13px 14px" }}><Ico kind="wissel" />Genereer schema</button>
+          <button onClick={() => genereer(seed)} style={{ ...S.btn, flex: 1, maxWidth: 200, padding: "13px 14px" }}><Ico kind="wissel" />Genereer</button>
           <button onClick={() => opslaan()} style={{ ...S.ghost, alignSelf: "stretch", padding: "10px 14px" }}><Ico kind="opslaan" />Opslaan</button>
           {result?.blocks && (
             <>
