@@ -63,13 +63,15 @@ DEMO.push({ id: 99, name: "Olivier M", prefs: ["LM", "VM", "MM"], keeper: true, 
       nooit twee blokken achter elkaar op de bank zolang dat kan.
    2. Voorkeurspositie: per blok een greedy matching op score
       (1e voorkeur > 2e > 3e), met bonus voor dezelfde positie als vorig blok. */
-function generateSchedule(players, seed) {
+function generateSchedule(players, seed, vasteBasis) {
   const field = players.filter((p) => p.aanwezig && !p.keeper);
   const P = field.length;
   if (P < 10) return { error: `Te weinig veldspelers: ${P} aanwezig, 10 nodig.` };
 
   const benchPerBlock = P - 10;
-  // Round-robin volgorde, licht gehusseld op seed zodat "Opnieuw" een variant geeft
+  const fieldIds = new Set(field.map((p) => p.id));
+
+  // Per-seed geroteerde volgorde voor variatie bij gelijke gevallen
   const order = [...field];
   let s = seed;
   for (let i = order.length - 1; i > 0; i--) {
@@ -78,21 +80,56 @@ function generateSchedule(players, seed) {
     [order[i], order[j]] = [order[j], order[i]];
   }
 
-  const benchByBlock = BLOCKS.map(() => []);
-  let cursor = 0;
-  for (let b = 0; b < BLOCKS.length; b++) {
-    for (let k = 0; k < benchPerBlock; k++) {
-      benchByBlock[b].push(order[cursor % P].id);
-      cursor++;
+  let benchByBlock;
+  if (vasteBasis) {
+    // Handmatige basis: blok 1/8 ligt vast, de bankbeurten van de rest van de
+    // wedstrijd worden er eerlijk omheen verdeeld (spreiding blijft max 1 blok).
+    const vals = Object.values(vasteBasis);
+    if (vals.length !== 10 || new Set(vals).size !== 10 || !vals.every((id) => fieldIds.has(id))) {
+      return { error: "Basisopstelling onvolledig: kies 10 verschillende aanwezige veldspelers (of wis de basis)." };
+    }
+    const benchCount = {};
+    field.forEach((p) => (benchCount[p.id] = 0));
+    const bench0 = field.filter((p) => !vals.includes(p.id)).map((p) => p.id);
+    bench0.forEach((id) => (benchCount[id] = 1));
+    benchByBlock = [bench0];
+    let prevBench = new Set(bench0);
+    const rank = {};
+    order.forEach((p, i) => (rank[p.id] = i));
+    for (let b = 1; b < 8; b++) {
+      const sorted = field.map((p) => p.id).sort((a, z) => {
+        if (benchCount[a] !== benchCount[z]) return benchCount[a] - benchCount[z];
+        const pa = prevBench.has(a) ? 1 : 0, pz = prevBench.has(z) ? 1 : 0;
+        if (pa !== pz) return pa - pz;
+        return ((rank[a] + b * 3) % P) - ((rank[z] + b * 3) % P);
+      });
+      const bench = sorted.slice(0, benchPerBlock);
+      bench.forEach((id) => benchCount[id]++);
+      benchByBlock.push(bench);
+      prevBench = new Set(bench);
+    }
+  } else {
+    benchByBlock = BLOCKS.map(() => []);
+    let cursor = 0;
+    for (let b = 0; b < BLOCKS.length; b++) {
+      for (let k = 0; k < benchPerBlock; k++) {
+        benchByBlock[b].push(order[cursor % P].id);
+        cursor++;
+      }
     }
   }
 
   const blocks = [];
   let prevAssign = {};
   for (let b = 0; b < BLOCKS.length; b++) {
+    if (b === 0 && vasteBasis) {
+      const assign = { ...vasteBasis };
+      blocks.push({ label: BLOCKS[0], assign, bench: benchByBlock[0] });
+      prevAssign = assign;
+      continue;
+    }
     const benchSet = new Set(benchByBlock[b]);
     const onField = field.filter((p) => !benchSet.has(p.id));
-    // Scorematrix
     const pairs = [];
     for (const p of onField) {
       for (const pos of POSITIONS) {
@@ -114,7 +151,6 @@ function generateSchedule(players, seed) {
     prevAssign = assign;
   }
 
-  // Statistieken
   const stats = {};
   for (const p of field) stats[p.id] = { played: 0, prefHits: 0 };
   for (const bl of blocks) {
@@ -190,6 +226,7 @@ function HockeyWisselCoach() {
   const [openBlock, setOpenBlock] = useState(0);
   const [kwartMin, setKwartMin] = useState(17.5);
   const [uitvalId, setUitvalId] = useState("");
+  const [basis, setBasis] = useState({});
   const [uitvalNote, setUitvalNote] = useState(null);
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0); // zuivere speeltijd in seconden
@@ -199,7 +236,7 @@ function HockeyWisselCoach() {
 
   const [sync, setSync] = useState({ code: "", pin: "" });
 
-  const maakPayload = () => JSON.stringify({ players, kwartMin, result, seed });
+  const maakPayload = () => JSON.stringify({ players, kwartMin, result, seed, basis });
   const normCode = (c) => (c || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
 
   const hydrate = (value) => {
@@ -208,6 +245,7 @@ function HockeyWisselCoach() {
     if (s.kwartMin) setKwartMin(s.kwartMin);
     if (s.result?.blocks) setResult(s.result);
     if (s.seed) setSeed(s.seed);
+    if (s.basis && typeof s.basis === "object") setBasis(s.basis);
   };
 
   const STORAGE_KEY = "wisselcoach-state";
@@ -345,10 +383,15 @@ function HockeyWisselCoach() {
   const aanwezigVeld = players.filter((p) => p.aanwezig && !p.keeper).length;
   const keeper = players.find((p) => p.keeper && p.aanwezig);
 
+  const actieveBasis = () => {
+    const gekozen = Object.fromEntries(Object.entries(basis).filter(([, v]) => v));
+    return Object.keys(gekozen).length ? gekozen : undefined;
+  };
+
   const genereer = (newSeed) => {
     const s = newSeed ?? seed;
     setSeed(s);
-    setResult(generateSchedule(players, s));
+    setResult(generateSchedule(players, s, actieveBasis()));
     setTab("schema");
     setOpenBlock(0);
     setUitvalNote(null);
@@ -606,6 +649,39 @@ function HockeyWisselCoach() {
       {/* ── SCHEMA ── */}
       {tab === "schema" && (
         <main style={{ padding: 14, display: "grid", gap: 10 }}>
+          {/* Handmatige basisopstelling voor blok 1/8 */}
+          <div style={S.card}>
+            <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}>BASISOPSTELLING (1/8)</div>
+            <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 8 }}>
+              Laat posities op "automatisch" staan of kies zelf wie er start. Bij <b>Genereer schema</b> wordt de rest van de wedstrijd om jouw basis heen doorgerekend — gelijke speeltijd blijft gelden.
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 12px" }}>
+              {POSITIONS.map((pos) => (
+                <label key={pos.code} style={{ fontSize: 12.5, color: C.inkSoft, display: "grid", gap: 2 }}>
+                  {pos.name}
+                  <select value={basis[pos.code] || ""} aria-label={`Basis ${pos.name}`}
+                    onChange={(e) => setBasis({ ...basis, [pos.code]: e.target.value ? Number(e.target.value) : undefined })}
+                    style={S.select}>
+                    <option value="">— automatisch —</option>
+                    {players.filter((p) => p.aanwezig && !p.keeper).map((p) => {
+                      const elders = Object.entries(basis).some(([c, v]) => c !== pos.code && v === p.id);
+                      return <option key={p.id} value={p.id}>{p.name}{elders ? " (al gekozen)" : ""}</option>;
+                    })}
+                  </select>
+                </label>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+              <button onClick={() => {
+                if (!result?.blocks) return;
+                const b = {};
+                POSITIONS.forEach((pos) => { b[pos.code] = result.blocks[0].assign[pos.code]; });
+                setBasis(b);
+              }} style={{ ...S.ghost, fontSize: 13 }} disabled={!result?.blocks}>Neem huidige 1/8 over</button>
+              <button onClick={() => setBasis({})} style={{ ...S.ghost, fontSize: 13 }}>Wis basis</button>
+            </div>
+          </div>
+
           {!result && <div style={S.card}>Nog geen schema. Druk op <b>Genereer schema</b>.</div>}
           {result?.error && <div style={{ ...S.card, borderColor: C.out, color: C.out, fontWeight: 700 }}>{result.error}</div>}
           {result?.blocks && (
