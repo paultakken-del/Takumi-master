@@ -1,0 +1,21 @@
+{
+  "name": "Wisselcoach",
+  "short_name": "Wisselcoach",
+  "start_url": "/wisselcoach.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FAF9F6",
+  "theme_color": "#D6001C",
+  "icons": [
+    {
+      "src": "/wisselcoach-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/wisselcoach-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
