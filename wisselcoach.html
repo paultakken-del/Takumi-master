@@ -15,15 +15,17 @@
 const { useState, useMemo, useEffect } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
+/* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
-  chalk: "#F7F6F0",
-  line: "#E3E0D4",
+  chalk: "#FAF9F6",
+  line: "#E7E4DE",
   pitch: "#1E5B41",
   pitchDark: "#164733",
-  ink: "#17241E",
-  inkSoft: "#5A6A61",
-  bib: "#F5C518",
-  bibInk: "#3D3000",
+  ink: "#191919",
+  inkSoft: "#5F5B57",
+  bib: "#D6001C",
+  bibInk: "#FFFFFF",
+  black: "#131313",
   out: "#C2452D",
   in: "#2E7D4F",
   card: "#FFFFFF",
@@ -446,10 +448,10 @@ function HockeyWisselCoach() {
 
   const S = {
     page: { minHeight: "100vh", background: C.chalk, color: C.ink, fontFamily: "'Barlow', system-ui, -apple-system, sans-serif", paddingBottom: 90 },
-    display: { fontFamily: "'Archivo Black', 'Barlow', system-ui, sans-serif" },
+    display: { fontFamily: "'Archivo Black', 'Barlow', system-ui, sans-serif", color: C.bib },
     card: { background: C.card, border: `1px solid ${C.line}`, borderRadius: 14, padding: 14 },
-    btn: { background: C.pitch, color: "#fff", border: "none", borderRadius: 999, padding: "13px 22px", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" },
-    ghost: { background: "transparent", color: C.pitch, border: `1.5px solid ${C.pitch}`, borderRadius: 999, padding: "10px 18px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: 14 },
+    btn: { background: C.black, color: "#fff", border: "none", borderRadius: 999, padding: "13px 22px", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" },
+    ghost: { background: "transparent", color: C.black, border: `1.5px solid ${C.black}`, borderRadius: 999, padding: "10px 18px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: 14 },
     select: { fontFamily: "inherit", fontSize: 13, padding: "6px 4px", borderRadius: 8, border: `1px solid ${C.line}`, background: C.chalk, color: C.ink, maxWidth: "100%" },
   };
 
@@ -468,8 +470,8 @@ function HockeyWisselCoach() {
       `}</style>
 
       {/* Kop */}
-      <header style={{ background: C.pitch, color: C.chalk, padding: "22px 18px 18px", borderRadius: "0 0 22px 22px" }}>
-        <div style={{ ...S.display, fontSize: 26, lineHeight: 1.05, letterSpacing: "-0.5px" }}>WISSELCOACH</div>
+      <header style={{ background: C.bib, color: "#fff", padding: "22px 18px 18px", borderRadius: "0 0 22px 22px" }}>
+        <div style={{ ...S.display, color: "#fff", fontSize: 26, lineHeight: 1.05, letterSpacing: "-0.5px" }}>WISSELCOACH</div>
         <div style={{ fontSize: 14, opacity: 0.85, marginTop: 4 }}>
           11-tal · keeper vast · 8 blokken van {halfMin} min · gelijke speeltijd voorop
         </div>
@@ -480,8 +482,8 @@ function HockeyWisselCoach() {
         {[["selectie", "Selectie"], ["schema", "Opstelling"], ["live", "Live"], ["speeltijd", "Speeltijd"]].map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)} style={{
             ...S.ghost, flex: 1, padding: "10px 4px",
-            background: tab === key ? C.pitch : "transparent",
-            color: tab === key ? "#fff" : C.pitch,
+            background: tab === key ? C.black : "transparent",
+            color: tab === key ? "#fff" : C.black,
           }}>{label}</button>
         ))}
       </nav>
@@ -529,8 +531,8 @@ function HockeyWisselCoach() {
                 <button onClick={() => setKeeper(p.id)} style={{
                   ...S.ghost, padding: "6px 12px", fontSize: 12,
                   background: p.keeper ? C.bib : "transparent",
-                  color: p.keeper ? C.bibInk : C.pitch,
-                  borderColor: p.keeper ? C.bib : C.pitch,
+                  color: p.keeper ? C.bibInk : C.black,
+                  borderColor: p.keeper ? C.bib : C.black,
                 }}>K</button>
                 <button onClick={() => upd(p.id, { aanwezig: !p.aanwezig })} style={{ ...S.ghost, padding: "6px 12px", fontSize: 12 }}>
                   {p.aanwezig ? "Aanwezig" : "Afwezig"}
@@ -570,8 +572,8 @@ function HockeyWisselCoach() {
                 {result.blocks.map((bl, i) => (
                   <button key={bl.label} onClick={() => setOpenBlock(i)} style={{
                     ...S.ghost, padding: "8px 13px", fontSize: 13, flexShrink: 0,
-                    background: openBlock === i ? C.pitch : "transparent",
-                    color: openBlock === i ? "#fff" : C.pitch,
+                    background: openBlock === i ? C.black : "transparent",
+                    color: openBlock === i ? "#fff" : C.black,
                   }}>{bl.label}{bl.patched ? " •" : ""}</button>
                 ))}
               </div>
@@ -610,9 +612,9 @@ function HockeyWisselCoach() {
                     </div>
                     {subs.map((sub, i) => (
                       <div key={i} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 15, color: C.bibInk, padding: "3px 0" }}>
-                        <span style={{ fontWeight: 800, color: C.in }}>▲ {playersById[sub.inId]?.name}</span>
+                        <span style={{ fontWeight: 800, color: "#fff" }}>▲ {playersById[sub.inId]?.name}</span>
                         <span>op {POS_BY_CODE[sub.pos].name}</span>
-                        <span style={{ fontWeight: 800, color: C.out }}>▼ {playersById[sub.voorId]?.name}</span>
+                        <span style={{ fontWeight: 800, color: "#fff" }}>▼ {playersById[sub.voorId]?.name}</span>
                       </div>
                     ))}
                   </div>
@@ -655,10 +657,39 @@ function HockeyWisselCoach() {
           {!result?.blocks && <div style={S.card}>Genereer eerst een schema, dan kun je hier de wedstrijd bijhouden.</div>}
           {result?.blocks && (
             <>
-              <div style={{ ...S.card, background: C.pitch, border: "none", color: C.chalk, textAlign: "center", padding: "20px 14px" }}>
-                <div style={{ fontSize: 13, opacity: 0.8 }}>Zuivere speeltijd · blok {BLOCKS[liveBlock]}</div>
-                <div style={{ ...S.display, fontSize: 52, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>
-                  {fmtClock(elapsed)}
+              <div style={{ ...S.card, background: C.black, border: "none", color: "#fff", textAlign: "center", padding: "20px 14px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 22 }}>
+                  <svg viewBox="0 0 100 100" style={{ width: 108, flexShrink: 0 }} role="img"
+                    aria-label={`Kwart ${Math.min(4, Math.floor(liveBlock / 2) + 1)} van 4`}>
+                    {(() => {
+                      const frac = Math.min(1, elapsed / totalSec);
+                      const ang = frac * 2 * Math.PI - Math.PI / 2;
+                      const px = 50 + 44 * Math.cos(ang), py = 50 + 44 * Math.sin(ang);
+                      const large = frac > 0.5 ? 1 : 0;
+                      const kwartNu = Math.min(4, Math.floor(liveBlock / 2) + 1);
+                      return (
+                        <>
+                          <circle cx="50" cy="50" r="44" fill="rgba(255,255,255,.15)" />
+                          {frac >= 1
+                            ? <circle cx="50" cy="50" r="44" fill={C.bib} />
+                            : frac > 0 && <path d={`M50,50 L50,6 A44,44 0 ${large} 1 ${px},${py} Z`} fill={C.bib} />}
+                          <line x1="50" y1="6" x2="50" y2="94" stroke={C.black} strokeWidth="2.5" />
+                          <line x1="6" y1="50" x2="94" y2="50" stroke={C.black} strokeWidth="2.5" />
+                          <circle cx="50" cy="50" r="44" fill="none" stroke="#fff" strokeWidth="2.5" />
+                          {[["K1", 70, 34], ["K2", 70, 74], ["K3", 30, 74], ["K4", 30, 34]].map(([t, tx, ty]) => (
+                            <text key={t} x={tx} y={ty} textAnchor="middle" fontSize="11.5" fontWeight="800"
+                              fill={kwartNu === Number(String(t).slice(1)) && elapsed < totalSec ? "#fff" : "rgba(255,255,255,.5)"}>{t}</text>
+                          ))}
+                        </>
+                      );
+                    })()}
+                  </svg>
+                  <div>
+                    <div style={{ fontSize: 13, opacity: 0.85 }}>Kwart {Math.min(4, Math.floor(liveBlock / 2) + 1)} · blok {BLOCKS[liveBlock]}</div>
+                    <div style={{ ...S.display, color: "#fff", fontSize: 52, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>
+                      {fmtClock(elapsed)}
+                    </div>
+                  </div>
                 </div>
                 <div style={{ background: "rgba(255,255,255,.25)", borderRadius: 99, height: 8, margin: "10px 0 6px" }}>
                   <div style={{ width: `${((elapsed - liveBlock * blockSec) / blockSec) * 100}%`, background: C.bib, height: 8, borderRadius: 99, transition: "width 1s linear" }} />
@@ -667,7 +698,7 @@ function HockeyWisselCoach() {
                   {elapsed >= totalSec ? "Einde wedstrijd" : liveBlock < 7 ? `Volgende wissel over ${fmtClock(restInBlock)}` : `Laatste blok — nog ${fmtClock(restInBlock)}`}
                 </div>
                 <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
-                  <button onClick={() => setRunning(!running)} style={{ ...S.btn, background: running ? C.bib : C.chalk, color: running ? C.bibInk : C.pitch, minWidth: 120 }}>
+                  <button onClick={() => setRunning(!running)} style={{ ...S.btn, background: running ? C.bib : "#fff", color: running ? C.bibInk : C.black, minWidth: 120 }}>
                     {running ? "Pauze" : elapsed > 0 ? "Hervat" : "Start"}
                   </button>
                   <button onClick={() => { setRunning(false); setElapsed(0); }} style={{ ...S.ghost, borderColor: C.chalk, color: C.chalk }}>Reset</button>
@@ -714,9 +745,9 @@ function HockeyWisselCoach() {
                     {subs.length === 0 && <div style={{ fontSize: 14, color: C.inkSoft }}>Geen wissels bij het volgende blok.</div>}
                     {subs.map((sub, i) => (
                       <div key={i} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 16, padding: "3px 0", color: bijna ? C.bibInk : C.ink }}>
-                        <span style={{ fontWeight: 800, color: C.in }}>▲ {playersById[sub.inId]?.name}</span>
+                        <span style={{ fontWeight: 800, color: bijna ? "#fff" : C.in }}>▲ {playersById[sub.inId]?.name}</span>
                         <span>op {POS_BY_CODE[sub.pos].name}</span>
-                        <span style={{ fontWeight: 800, color: C.out }}>▼ {playersById[sub.voorId]?.name}</span>
+                        <span style={{ fontWeight: 800, color: bijna ? "#fff" : C.out }}>▼ {playersById[sub.voorId]?.name}</span>
                       </div>
                     ))}
                   </div>
@@ -764,7 +795,7 @@ function HockeyWisselCoach() {
                       </span>
                     </div>
                     <div style={{ background: C.line, borderRadius: 99, height: 8, marginTop: 3 }}>
-                      <div style={{ width: `${(st.played / 8) * 100}%`, background: C.pitch, height: 8, borderRadius: 99 }} />
+                      <div style={{ width: `${(st.played / 8) * 100}%`, background: C.bib, height: 8, borderRadius: 99 }} />
                     </div>
                   </div>
                 );
