@@ -19,3 +19,8 @@
 /utreg84.html
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store, must-revalidate
+
+# Wisselcoach: niet indexeren en altijd verse versie
+/wisselcoach.html
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store, must-revalidate
