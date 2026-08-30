@@ -200,7 +200,6 @@ function HockeyWisselCoach() {
   const [adhocOut, setAdhocOut] = useState("");
   const [adhocIn, setAdhocIn] = useState("");
   const [saveMsg, setSaveMsg] = useState("");
-  const [backupText, setBackupText] = useState("");
 
   const [sync, setSync] = useState({ code: "", pin: "" });
 
@@ -213,28 +212,6 @@ function HockeyWisselCoach() {
     if (s.kwartMin) setKwartMin(s.kwartMin);
     if (s.result?.blocks) setResult(s.result);
     if (s.seed) setSeed(s.seed);
-  };
-
-  const kopieerBackup = async () => {
-    const txt = maakPayload();
-    setBackupText(txt);
-    try {
-      await navigator.clipboard.writeText(txt);
-      setSaveMsg("Backup gekopieerd ✓ — plak hem in bijv. je notities");
-    } catch {
-      setSaveMsg("Kopieer de tekst hieronder handmatig");
-    }
-    setTimeout(() => setSaveMsg(""), 4000);
-  };
-
-  const herstelBackup = () => {
-    try {
-      hydrate(backupText);
-      setSaveMsg("Backup hersteld ✓");
-    } catch {
-      setSaveMsg("Backup niet leesbaar — plak de volledige tekst");
-    }
-    setTimeout(() => setSaveMsg(""), 4000);
   };
 
   const STORAGE_KEY = "wisselcoach-state";
@@ -337,8 +314,7 @@ function HockeyWisselCoach() {
     if (gelukt) {
       setSaveMsg(prefix + "opgeslagen ✓ op dit apparaat");
     } else {
-      setSaveMsg(prefix + "gebruik Backup onderaan de Selectie-tab");
-      setBackupText(payload);
+      setSaveMsg(prefix + "lokaal opslaan is ook niet gelukt — controleer je verbinding");
     }
     setTimeout(() => setSaveMsg(""), 5000);
   };
@@ -580,22 +556,6 @@ function HockeyWisselCoach() {
             </div>
           </div>
 
-          {/* Backup als vangnet wanneer de ingebouwde opslag niet werkt */}
-          <div style={S.card}>
-            <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}>BACKUP</div>
-            <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 8 }}>
-              Kopieer je team en schema als tekst en bewaar die ergens (notities, WhatsApp naar jezelf). Terugzetten: plak de tekst hieronder en druk op Herstel.
-            </div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-              <button onClick={kopieerBackup} style={{ ...S.ghost, fontSize: 13 }}>Kopieer backup</button>
-              <button onClick={herstelBackup} style={{ ...S.ghost, fontSize: 13 }} disabled={!backupText}>Herstel</button>
-            </div>
-            <textarea value={backupText} onChange={(e) => setBackupText(e.target.value)}
-              placeholder="Plak hier een eerder gekopieerde backup…"
-              rows={3}
-              style={{ ...S.select, width: "100%", boxSizing: "border-box", fontFamily: "monospace", fontSize: 11 }}
-              aria-label="Backup-tekst" />
-          </div>
         </main>
       )}
 
