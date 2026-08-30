@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v20";
+const APP_VERSIE = "v21";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -52,9 +52,15 @@ const ICO = {
   kaart: <rect x="7.5" y="4" width="9.5" height="14" rx="1.8" transform="rotate(8 12 11)" />,
   lamp: <><path d="M12 3.8a5.8 5.8 0 0 1 3.4 10.5c-.8.6-1.1 1.4-1.1 2.2H9.7c0-.8-.3-1.6-1.1-2.2A5.8 5.8 0 0 1 12 3.8z" /><path d="M9.9 19.8h4.2" /></>,
   potlood: <path d="M4.5 19.5l.9-3.6L16.6 4.7a2 2 0 0 1 2.8 2.8L8.1 18.6z" />,
+  ai: <><path d="M11 4l1.7 4.6L17.3 10l-4.6 1.7L11 16.3l-1.7-4.6L4.7 10l4.6-1.7z" /><path d="M18 14.5l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z" strokeWidth="1.7" /></>,
+  opslaan: <><path d="M7.5 18.5H6a3.8 3.8 0 0 1-.6-7.6 5.5 5.5 0 0 1 10.7-1.6A4.3 4.3 0 0 1 16.8 18.5h-.3" /><path d="M12 20.5v-7.5" /><path d="M9.2 15.6 12 12.8l2.8 2.8" /></>,
+  ververs: <><path d="M19.5 11.5a7.5 7.5 0 1 0-1.8 5.4" /><path d="M19.8 12.2V7.4M19.8 12.2H15" /></>,
+  print: <><path d="M7 8V4.5h10V8" /><rect x="4" y="8" width="16" height="7.5" rx="2" /><path d="M7.5 13h9v7h-9z" /></>,
+  speel: <path d="M8.5 5.8v12.4L18.5 12z" fill="currentColor" strokeWidth="1.6" />,
+  pauze: <path d="M9.2 6v12M14.8 6v12" strokeWidth="3" />,
 };
-const Ico = ({ kind }) => (
-  <svg viewBox="0 0 24 24" width="15" height="15" style={{ marginRight: 7, verticalAlign: "-2px" }}
+const Ico = ({ kind, m = 7 }) => (
+  <svg viewBox="0 0 24 24" width="15" height="15" style={{ marginRight: m, verticalAlign: "-2px" }}
     fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     {ICO[kind]}
   </svg>
@@ -1045,9 +1051,9 @@ function HockeyWisselCoach() {
                 </div>
                 <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
                   <button onClick={() => setRunning(!running)} style={{ ...S.btn, background: running ? C.bib : "#fff", color: running ? C.bibInk : C.black, minWidth: 120 }}>
-                    {running ? "Pauze" : elapsed > 0 ? "Hervat" : "Start"}
+                    {running ? <><Ico kind="pauze" />Pauze</> : elapsed > 0 ? <><Ico kind="speel" />Hervat</> : <><Ico kind="speel" />Start</>}
                   </button>
-                  <button onClick={() => { setRunning(false); setElapsed(0); }} style={{ ...S.ghost, borderColor: C.chalk, color: C.chalk }}>Reset</button>
+                  <button onClick={() => { setRunning(false); setElapsed(0); }} style={{ ...S.ghost, borderColor: C.chalk, color: C.chalk }}><Ico kind="ververs" />Reset</button>
                 </div>
                 <div style={{ fontSize: 11.5, opacity: 0.7, marginTop: 8 }}>Pauzeer bij kwartrust — de klok telt alleen speeltijd.</div>
               </div>
@@ -1102,7 +1108,7 @@ function HockeyWisselCoach() {
 
               {/* Coach-tips via Claude */}
               <div style={S.card}>
-                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}><Ico kind="lamp" />COACH-TIP</div>
+                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}><Ico kind="ai" />COACH-TIP</div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
                   {["Geen druk vooruit", "Achter de bal aan", "Corner tegen", "Te ver uit elkaar"].map((chip) => (
                     <button key={chip} onClick={() => setTipTekst((t) => (t ? t + ", " + chip.toLowerCase() : chip))}
@@ -1116,7 +1122,7 @@ function HockeyWisselCoach() {
                     style={{ ...S.select, flex: 1, minWidth: 0 }} aria-label="Waarneming voor coachtip" />
                   <button onClick={vraagTips} disabled={tipsBezig || !tipTekst.trim()}
                     style={{ ...S.btn, padding: "10px 18px", fontSize: 15, opacity: tipsBezig || !tipTekst.trim() ? 0.5 : 1 }}>
-                    {tipsBezig ? "…" : "Tips"}
+                    {tipsBezig ? "…" : <><Ico kind="ai" />Tips</>}
                   </button>
                 </div>
                 {tipFout && <div style={{ fontSize: 13, color: C.out, fontWeight: 700, marginTop: 8 }}>{tipFout}</div>}
@@ -1382,12 +1388,12 @@ function HockeyWisselCoach() {
           </div>
         )}
         <div style={{ display: "flex", gap: 8, justifyContent: "center", pointerEvents: "auto" }}>
-          <button onClick={() => genereer(seed)} style={{ ...S.btn, flex: 1, maxWidth: 200, padding: "13px 14px" }}>Genereer schema</button>
-          <button onClick={() => opslaan()} style={{ ...S.ghost, alignSelf: "stretch", padding: "10px 14px" }}>Opslaan</button>
+          <button onClick={() => genereer(seed)} style={{ ...S.btn, flex: 1, maxWidth: 200, padding: "13px 14px" }}><Ico kind="wissel" />Genereer schema</button>
+          <button onClick={() => opslaan()} style={{ ...S.ghost, alignSelf: "stretch", padding: "10px 14px" }}><Ico kind="opslaan" />Opslaan</button>
           {result?.blocks && (
             <>
-              <button onClick={() => genereer(seed + 1)} style={{ ...S.ghost, alignSelf: "stretch", padding: "10px 12px" }}>↻</button>
-              <button onClick={() => window.print()} style={{ ...S.ghost, alignSelf: "stretch", padding: "10px 12px" }}>Print</button>
+              <button onClick={() => genereer(seed + 1)} style={{ ...S.ghost, alignSelf: "stretch", padding: "10px 12px" }} aria-label="Nieuwe variant"><Ico kind="ververs" m={0} /></button>
+              <button onClick={() => window.print()} style={{ ...S.ghost, alignSelf: "stretch", padding: "10px 12px" }}><Ico kind="print" />Print</button>
             </>
           )}
         </div>
