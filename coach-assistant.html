@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v18";
+const APP_VERSIE = "v19";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -300,6 +300,33 @@ function HockeyWisselCoach() {
   const wisTekening = () => {
     const el = canvasRef.current;
     if (el) el.getContext("2d").clearRect(0, 0, el.width, el.height);
+  };
+
+  const [tipTekst, setTipTekst] = useState("");
+  const [tips, setTips] = useState(null);
+  const [tipsBezig, setTipsBezig] = useState(false);
+  const [tipFout, setTipFout] = useState("");
+
+  const vraagTips = async () => {
+    if (!tipTekst.trim() || tipsBezig) return;
+    setTipsBezig(true); setTipFout(""); setTips(null);
+    try {
+      const r = await fetch("/api/coach-tip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: normCode(sync.code), pin: sync.pin, tekst: tipTekst.trim(),
+          context: { kwart: Math.min(4, Math.floor(liveBlock / 2) + 1), blok: BLOCKS[liveBlock], voor: scoreVoor, tegen: scoreTegen },
+        }),
+      });
+      if (r.status === 403) throw new Error("vul eerst je teamcode en pincode in (Selectie)");
+      if (!r.ok) throw new Error("tips ophalen mislukt — probeer nog eens");
+      const d = await r.json();
+      setTips(d.tips);
+    } catch (err) {
+      setTipFout(err.message);
+    }
+    setTipsBezig(false);
   };
   const [uitvalNote, setUitvalNote] = useState(null);
   const [running, setRunning] = useState(false);
@@ -1039,6 +1066,39 @@ function HockeyWisselCoach() {
                       Wedstrijd afsluiten en opslaan
                     </button>
                   </>
+                )}
+              </div>
+
+              {/* Coach-tips via Claude */}
+              <div style={S.card}>
+                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>COACH-TIP</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                  {["Geen druk vooruit", "Achter de bal aan", "Corner tegen", "Te ver uit elkaar"].map((chip) => (
+                    <button key={chip} onClick={() => setTipTekst((t) => (t ? t + ", " + chip.toLowerCase() : chip))}
+                      style={{ ...S.ghost, fontSize: 12.5, padding: "6px 11px" }}>{chip}</button>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input value={tipTekst} onChange={(e) => setTipTekst(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") vraagTips(); }}
+                    placeholder="Steekwoorden… (dicteren kan met 🎤 op je toetsenbord)"
+                    style={{ ...S.select, flex: 1, minWidth: 0 }} aria-label="Waarneming voor coachtip" />
+                  <button onClick={vraagTips} disabled={tipsBezig || !tipTekst.trim()}
+                    style={{ ...S.btn, padding: "10px 18px", fontSize: 15, opacity: tipsBezig || !tipTekst.trim() ? 0.5 : 1 }}>
+                    {tipsBezig ? "…" : "Tips"}
+                  </button>
+                </div>
+                {tipFout && <div style={{ fontSize: 13, color: C.out, fontWeight: 700, marginTop: 8 }}>{tipFout}</div>}
+                {tips && (
+                  <div style={{ marginTop: 10 }}>
+                    {tips.map((t, i) => (
+                      <div key={i} style={{ display: "flex", gap: 10, alignItems: "baseline", fontSize: 16.5, fontWeight: 600, padding: "5px 0", borderTop: i ? `1px solid ${C.line}` : "none" }}>
+                        <span style={{ color: C.bib, fontWeight: 800 }}>{i + 1}</span>
+                        <span>{t}</span>
+                      </div>
+                    ))}
+                    <button onClick={() => { setTips(null); setTipTekst(""); }} style={{ ...S.ghost, fontSize: 12.5, marginTop: 8, padding: "6px 12px" }}>Wis</button>
+                  </div>
                 )}
               </div>
 
