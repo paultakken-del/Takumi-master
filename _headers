@@ -24,3 +24,8 @@
 /wisselcoach.html
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store, must-revalidate
+
+# Coachbord: niet indexeren en altijd verse versie
+/coachbord.html
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store, must-revalidate
