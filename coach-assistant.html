@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v15";
+const APP_VERSIE = "v16";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -357,7 +357,25 @@ function HockeyWisselCoach() {
   }, []);
 
   const opslaan = async (payloadOverride) => {
-    const payload = typeof payloadOverride === "string" ? payloadOverride : maakPayload();
+    let payload;
+    if (typeof payloadOverride === "string") {
+      payload = payloadOverride;
+    } else {
+      let matchesVoorOpslag = matches;
+      if (normCode(sync.code) && sync.pin && matches.length === 0) {
+        try {
+          const v = await cloudGet(sync);
+          if (v) {
+            const s = JSON.parse(v);
+            if (Array.isArray(s.matches) && s.matches.length) {
+              matchesVoorOpslag = s.matches;
+              setMatches(s.matches); // wedstrijdschema van de server behouden
+            }
+          }
+        } catch { /* server niet bereikbaar — gewoon lokaal beeld opslaan */ }
+      }
+      payload = JSON.stringify({ players, kwartMin, result, seed, basis, matches: matchesVoorOpslag, activeMatchId, turf, scoreVoor, scoreTegen });
+    }
     let prefix = "";
     if (normCode(sync.code) && sync.pin) {
       try {
