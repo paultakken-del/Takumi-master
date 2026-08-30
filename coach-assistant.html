@@ -21,6 +21,8 @@
 const { useState, useMemo, useEffect } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
+const APP_VERSIE = "v15";
+
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
   chalk: "#FAF9F6",
@@ -622,8 +624,13 @@ function HockeyWisselCoach() {
       `}</style>
 
       {/* Kop */}
-      <header style={{ background: C.bib, color: "#fff", padding: "22px 18px 18px", borderRadius: "0 0 22px 22px" }}>
-        <div style={{ ...S.display, color: "#fff", fontSize: 26, lineHeight: 1.05, letterSpacing: "-0.5px" }}>COACH ASSISTANT</div>
+      <header style={{ background: C.bib, color: "#fff", padding: "18px 18px 16px", borderRadius: "0 0 22px 22px", display: "flex", alignItems: "center", gap: 12 }}>
+        <img src="/coach-assistant-icon-192.png" alt="" width="42" height="42"
+          style={{ borderRadius: 11, display: "block", flexShrink: 0 }} />
+        <div style={{ ...S.display, color: "#fff", fontSize: 24, lineHeight: 1.05, letterSpacing: "-0.5px", flex: 1 }}>
+          COACH ASSISTANT
+        </div>
+        <div style={{ fontSize: 11.5, opacity: 0.75, alignSelf: "flex-end", paddingBottom: 3, fontVariantNumeric: "tabular-nums" }}>{APP_VERSIE}</div>
       </header>
 
       {/* Tabs */}
