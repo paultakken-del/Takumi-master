@@ -29,3 +29,8 @@
 /coachbord.html
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store, must-revalidate
+
+# Coach Assistant: niet indexeren en altijd verse versie
+/coach-assistant.html
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store, must-revalidate

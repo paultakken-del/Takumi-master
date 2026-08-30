@@ -1,0 +1,21 @@
+{
+  "name": "Coach Assistant",
+  "short_name": "Coach Assist",
+  "start_url": "/coach-assistant.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FAF9F6",
+  "theme_color": "#D6001C",
+  "icons": [
+    {
+      "src": "/coach-assistant-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/coach-assistant-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
