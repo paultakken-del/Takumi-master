@@ -405,6 +405,54 @@ function HockeyWisselCoach() {
     setUitvalNote({ name: playersById[playerId]?.name, from: BLOCKS[fromBlock], issues });
   };
 
+  /* Speler keert terug (bijv. na blessurebehandeling) vanaf blok X. Zelfde
+     minimale impact als uitvallen: alleen de terugkeerder krijgt plekken,
+     en steeds van de veldspeler die tot dan toe de meeste blokken speelt —
+     zo trekt de speeltijd vanzelf weer recht. Lege posities (ontstaan bij
+     uitval zonder vervanger) worden als eerste weer gevuld. */
+  const keerTerug = (playerId, fromBlock) => {
+    if (!result?.blocks || !playerId) return;
+    const blocks = result.blocks.map((b) => ({ ...b, assign: { ...b.assign }, bench: [...b.bench] }));
+    const totals = {};
+    blocks.forEach((b) => Object.values(b.assign).forEach((id) => { totals[id] = (totals[id] || 0) + 1; }));
+    for (let b = fromBlock; b < blocks.length; b++) {
+      const bl = blocks[b];
+      const onField = new Set(Object.values(bl.assign));
+      if (onField.has(playerId)) continue;
+      if (!bl.bench.includes(playerId)) bl.bench.push(playerId);
+      bl.patched = true;
+      const leeg = POSITIONS.find((p) => bl.assign[p.code] === undefined);
+      if (leeg) {
+        bl.assign[leeg.code] = playerId;
+        bl.bench = bl.bench.filter((id) => id !== playerId);
+        totals[playerId] = (totals[playerId] || 0) + 1;
+        continue;
+      }
+      let best = null;
+      for (const [pos, id] of Object.entries(bl.assign)) {
+        const t = totals[id] || 0;
+        const prefRank = playersById[playerId]?.prefs.indexOf(pos) ?? -1;
+        const score = t * 10 + (prefRank >= 0 ? 3 - prefRank : 0);
+        if (!best || score > best.score) best = { pos, id, t, score };
+      }
+      if (best && best.t > (totals[playerId] || 0) + 1) {
+        bl.assign[best.pos] = playerId;
+        bl.bench = bl.bench.filter((id) => id !== playerId);
+        bl.bench.push(best.id);
+        totals[best.id]--;
+        totals[playerId] = (totals[playerId] || 0) + 1;
+      }
+    }
+    const stats = {};
+    blocks.forEach((bl2) => Object.entries(bl2.assign).forEach(([pos, id]) => {
+      if (!stats[id]) stats[id] = { played: 0, prefHits: 0 };
+      stats[id].played++;
+      if (playersById[id]?.prefs.includes(pos)) stats[id].prefHits++;
+    }));
+    setResult({ ...result, blocks, stats });
+    setUitvalNote({ name: playersById[playerId]?.name, from: BLOCKS[fromBlock], issues: [], terug: true });
+  };
+
   /* Ingelaste wissel: alleen het huidige blok wordt aangepast — de erin-speler
      neemt de positie van de eruit-speler over, die naar de bank gaat. De
      geplande blokken erna blijven ongewijzigd; de wisselkaart naar het
@@ -580,7 +628,7 @@ function HockeyWisselCoach() {
 
               {/* Uitval tijdens de wedstrijd */}
               <div style={S.card}>
-                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>SPELER VALT UIT</div>
+                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>SPELER VALT UIT / KEERT TERUG</div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   <select value={uitvalId} onChange={(e) => setUitvalId(e.target.value)} style={S.select} aria-label="Uitvallende speler">
                     <option value="">Kies speler…</option>
@@ -589,12 +637,17 @@ function HockeyWisselCoach() {
                     ))}
                   </select>
                   <button onClick={() => valUit(Number(uitvalId), openBlock)} style={{ ...S.ghost, fontSize: 13 }}>
-                    Uit vanaf {BLOCKS[openBlock]}
+                    ▼ Uit vanaf {BLOCKS[openBlock]}
+                  </button>
+                  <button onClick={() => keerTerug(Number(uitvalId), openBlock)} style={{ ...S.ghost, fontSize: 13 }}>
+                    ▲ Terug vanaf {BLOCKS[openBlock]}
                   </button>
                 </div>
                 {uitvalNote && (
                   <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 8 }}>
-                    <b style={{ color: C.ink }}>{uitvalNote.name}</b> is uit het schema gehaald vanaf {uitvalNote.from}; alleen zijn/haar plekken zijn opnieuw ingevuld (blokken met •). 
+                    <b style={{ color: C.ink }}>{uitvalNote.name}</b> {uitvalNote.terug
+                      ? <>is vanaf {uitvalNote.from} weer in het schema opgenomen; de speeltijd trekt zich vanzelf recht (blokken met •).</>
+                      : <>is uit het schema gehaald vanaf {uitvalNote.from}; alleen zijn/haar plekken zijn opnieuw ingevuld (blokken met •).</>} 
                     {uitvalNote.issues.map((msg, i) => (
                       <div key={i} style={{ color: C.out, fontWeight: 700 }}>{msg}</div>
                     ))}
