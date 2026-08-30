@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v16";
+const APP_VERSIE = "v17";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -196,7 +196,7 @@ function subsBetween(prev, curr, playersById) {
 }
 
 /* ── Miniveld ── */
-function Pitch({ block, playersById, small }) {
+function Pitch({ block, playersById, keeper }) {
   const w = 300, h = 380;
   return (
     <svg viewBox={`0 0 ${w} ${h}`} style={{ width: "100%", borderRadius: 14, display: "block" }} role="img" aria-label={`Opstelling ${block.label}`}>
@@ -209,6 +209,15 @@ function Pitch({ block, playersById, small }) {
         <line x1="10" y1={h * 0.24} x2={w - 10} y2={h * 0.24} strokeDasharray="4 6" />
         <line x1="10" y1={h * 0.76} x2={w - 10} y2={h * 0.76} strokeDasharray="4 6" />
       </g>
+      {keeper && (
+        <g>
+          <circle cx={w / 2} cy={h - 30} r="17" fill="#F2C230" stroke={C.pitchDark} strokeWidth="1.5" />
+          <text x={w / 2} y={h - 32} textAnchor="middle" fontSize="9" fontWeight="800" fill={C.ink}>K</text>
+          <text x={w / 2} y={h - 21} textAnchor="middle" fontSize="8.5" fill={C.ink}>
+            {keeper.name.slice(0, 7)}
+          </text>
+        </g>
+      )}
       {POSITIONS.map((pos) => {
         const id = block.assign[pos.code];
         const pl = playersById[id];
@@ -837,7 +846,7 @@ function HockeyWisselCoach() {
                 );
               })()}
 
-              <Pitch block={result.blocks[openBlock]} playersById={playersById} />
+              <Pitch block={result.blocks[openBlock]} playersById={playersById} keeper={keeper} />
 
               <div style={S.card}>
                 <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 4 }}>
