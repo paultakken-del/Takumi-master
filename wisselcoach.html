@@ -92,7 +92,7 @@ function generateSchedule(players, seed, vasteBasis) {
     // wedstrijd worden er eerlijk omheen verdeeld (spreiding blijft max 1 blok).
     const vals = Object.values(vasteBasis);
     if (vals.length !== 10 || new Set(vals).size !== 10 || !vals.every((id) => fieldIds.has(id))) {
-      return { error: "Basisopstelling onvolledig: kies 10 verschillende aanwezige veldspelers (of wis de basis)." };
+      return { error: "Beginopstelling onvolledig: kies 10 verschillende aanwezige veldspelers (of wis de beginopstelling)." };
     }
     const benchCount = {};
     field.forEach((p) => (benchCount[p.id] = 0));
@@ -563,9 +563,6 @@ function HockeyWisselCoach() {
       {/* Kop */}
       <header style={{ background: C.bib, color: "#fff", padding: "22px 18px 18px", borderRadius: "0 0 22px 22px" }}>
         <div style={{ ...S.display, color: "#fff", fontSize: 26, lineHeight: 1.05, letterSpacing: "-0.5px" }}>WISSELCOACH</div>
-        <div style={{ fontSize: 14, opacity: 0.85, marginTop: 4 }}>
-          11-tal · keeper vast · 8 blokken van {halfMin} min · gelijke speeltijd voorop
-        </div>
       </header>
 
       {/* Tabs */}
@@ -657,15 +654,15 @@ function HockeyWisselCoach() {
         <main style={{ padding: 14, display: "grid", gap: 10 }}>
           {/* Handmatige basisopstelling voor blok 1/8 */}
           <div style={S.card}>
-            <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}>BASISOPSTELLING (1/8)</div>
+            <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}>BEGINOPSTELLING (1/8)</div>
             <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 8 }}>
-              Laat posities op "automatisch" staan of kies zelf wie er start. Bij <b>Genereer schema</b> wordt de rest van de wedstrijd om jouw basis heen doorgerekend — gelijke speeltijd blijft gelden.
+              Laat posities op "automatisch" staan of kies zelf wie er start. Bij <b>Genereer schema</b> wordt de rest van de wedstrijd om jouw beginopstelling heen doorgerekend — gelijke speeltijd blijft gelden.
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 12px" }}>
               {POSITIONS.map((pos) => (
                 <label key={pos.code} style={{ fontSize: 12.5, color: C.inkSoft, display: "grid", gap: 2 }}>
                   {pos.name}
-                  <select value={basis[pos.code] || ""} aria-label={`Basis ${pos.name}`}
+                  <select value={basis[pos.code] || ""} aria-label={`Beginopstelling ${pos.name}`}
                     onChange={(e) => setBasis({ ...basis, [pos.code]: e.target.value ? Number(e.target.value) : undefined })}
                     style={S.select}>
                     <option value="">— automatisch —</option>
@@ -684,7 +681,7 @@ function HockeyWisselCoach() {
                 POSITIONS.forEach((pos) => { b[pos.code] = result.blocks[0].assign[pos.code]; });
                 setBasis(b);
               }} style={{ ...S.ghost, fontSize: 13 }} disabled={!result?.blocks}>Neem huidige 1/8 over</button>
-              <button onClick={() => setBasis({})} style={{ ...S.ghost, fontSize: 13 }}>Wis basis</button>
+              <button onClick={() => setBasis({})} style={{ ...S.ghost, fontSize: 13 }}>Wis beginopstelling</button>
             </div>
           </div>
 
