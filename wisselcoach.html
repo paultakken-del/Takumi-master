@@ -901,24 +901,24 @@ function HockeyWisselCoach() {
               <div style={S.card}>
                 <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>WEDSTRIJD</div>
                 {matches.filter((m) => !m.gesloten).length === 0 ? (
-                  <div style={{ fontSize: 13.5, color: C.inkSoft }}>Nog geen wedstrijd gepland \u2014 voeg er een toe op de Seizoen-tab.</div>
+                  <div style={{ fontSize: 13.5, color: C.inkSoft }}>Nog geen wedstrijd gepland — voeg er een toe op de Seizoen-tab.</div>
                 ) : (
                   <>
                     <select value={activeMatchId} onChange={(e) => setActiveMatchId(e.target.value)}
                       style={{ ...S.select, width: "100%", boxSizing: "border-box" }} aria-label="Wedstrijd">
-                      <option value="">Kies wedstrijd\u2026</option>
+                      <option value="">Kies wedstrijd…</option>
                       {matches.filter((m) => !m.gesloten).map((m) => (
-                        <option key={m.id} value={m.id}>{m.datum} \u00b7 {m.thuis ? "thuis" : "uit"} \u00b7 {m.tegenstander}</option>
+                        <option key={m.id} value={m.id}>{m.datum} · {m.thuis ? "thuis" : "uit"} · {m.tegenstander}</option>
                       ))}
                     </select>
                     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 14, margin: "10px 0 8px" }}>
                       <span style={{ ...S.display, fontSize: 34 }}>{scoreVoor}</span>
-                      <span style={{ color: C.inkSoft, fontSize: 20 }}>\u2014</span>
+                      <span style={{ color: C.inkSoft, fontSize: 20 }}>—</span>
                       <span style={{ ...S.display, color: C.ink, fontSize: 34 }}>{scoreTegen}</span>
                     </div>
                     <div style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center" }}>
                       <select value={turfSpeler} onChange={(e) => setTurfSpeler(e.target.value)} style={S.select} aria-label="Speler voor doelpunt of kaart">
-                        <option value="">Speler\u2026</option>
+                        <option value="">Speler…</option>
                         {players.filter((p) => p.aanwezig).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                       </select>
                       <button onClick={turfDoelpunt} disabled={!turfSpeler} style={{ ...S.ghost, fontSize: 13, opacity: turfSpeler ? 1 : 0.45 }}>+ ⚽</button>
@@ -1051,7 +1051,7 @@ function HockeyWisselCoach() {
         </main>
       )}
 
-      {/* \u2500\u2500 SEIZOEN \u2500\u2500 */}
+      {/* ── SEIZOEN ── */}
       {tab === "seizoen" && (
         <main style={{ padding: 14, display: "grid", gap: 10 }}>
           <div style={S.card}>
@@ -1062,11 +1062,11 @@ function HockeyWisselCoach() {
                 <span style={{ color: C.inkSoft, minWidth: 86 }}>{m.datum}</span>
                 <span style={{ flex: 1 }}><b>{m.tegenstander}</b> <span style={{ color: C.inkSoft }}>({m.thuis ? "thuis" : "uit"})</span></span>
                 {m.gesloten
-                  ? <b style={{ color: C.bib }}>{m.voor}\u2013{m.tegen}</b>
+                  ? <b style={{ color: C.bib }}>{m.voor}–{m.tegen}</b>
                   : <span style={{ color: C.inkSoft, fontSize: 12.5 }}>open</span>}
                 <button onClick={() => setMatches(matches.filter((x) => x.id !== m.id))}
                   style={{ ...S.ghost, padding: "4px 9px", fontSize: 12, color: C.out, borderColor: C.out }}
-                  aria-label={`Verwijder wedstrijd tegen ${m.tegenstander}`}>\u2715</button>
+                  aria-label={`Verwijder wedstrijd tegen ${m.tegenstander}`}>✕</button>
               </div>
             ))}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
@@ -1098,7 +1098,7 @@ function HockeyWisselCoach() {
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                     <b>{p.name}{p.keeper ? " (K)" : ""}</b>
                     <span style={{ color: C.inkSoft }}>
-                      {b} blok{b === 1 ? "" : "ken"}{d ? ` \u00b7 ${d}⚽` : ""}{gr ? ` \u00b7 ${gr}🟩` : ""}{ge ? ` \u00b7 ${ge}🟨` : ""}{ro ? ` \u00b7 ${ro}🟥` : ""}
+                      {b} blok{b === 1 ? "" : "ken"}{d ? ` · ${d}⚽` : ""}{gr ? ` · ${gr}🟩` : ""}{ge ? ` · ${ge}🟨` : ""}{ro ? ` · ${ro}🟥` : ""}
                     </span>
                   </div>
                   <div style={{ background: C.line, borderRadius: 99, height: 7, marginTop: 3 }}>
@@ -1111,7 +1111,7 @@ function HockeyWisselCoach() {
         </main>
       )}
 
-      {/* \u2500\u2500 PRINTBLAD (alleen zichtbaar bij afdrukken) ── */}
+      {/* ── PRINTBLAD (alleen zichtbaar bij afdrukken) ── */}
       {result?.blocks && (
         <section className="print-sheet" style={{ padding: 16, color: "#000", fontSize: 12, fontFamily: "system-ui, sans-serif" }}>
           <div style={{ fontWeight: 800, fontSize: 18 }}>Wisselschema</div>
