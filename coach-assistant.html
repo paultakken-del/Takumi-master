@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v19";
+const APP_VERSIE = "v20";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -40,6 +40,37 @@ const C = {
 };
 
 /* ── Posities 11-tal (4-3-3), met veldcoördinaten voor het miniveld ── */
+/* ── Iconen: strak getekende SVG's, geen emoji ── */
+const ICO = {
+  spelers: <><circle cx="9" cy="8" r="3.2" /><path d="M3.8 19.5c0-3.1 2.3-5.2 5.2-5.2s5.2 2.1 5.2 5.2" /><circle cx="17" cy="9" r="2.5" /><path d="M15.8 19c.4-2.4 2-3.8 4.4-3.8" /></>,
+  veld: <><rect x="3" y="4.5" width="18" height="15" rx="2" /><path d="M3 12h18" /><circle cx="12" cy="12" r="2.6" /></>,
+  klok: <><circle cx="12" cy="12" r="8.3" /><path d="M12 7.8V12l2.8 1.9" /></>,
+  wissel: <><path d="M8 19.5V7.5" /><path d="M5 10.3 8 7.3l3 3" /><path d="M16 4.5v12" /><path d="M13 13.7l3 3 3-3" /></>,
+  kalender: <><rect x="3.5" y="5.5" width="17" height="15" rx="2" /><path d="M3.5 10.5h17M8 3.5v4M16 3.5v4" /></>,
+  grafiek: <><path d="M5 20v-7M12 20V6M19 20v-10" /></>,
+  beker: <><path d="M8 4.5h8V9a4 4 0 0 1-8 0z" /><path d="M8 5.5H4.8c.1 2.7 1.4 4.2 3.4 4.6M16 5.5h3.2c-.1 2.7-1.4 4.2-3.4 4.6" /><path d="M12 13v3.5M8.8 19.5h6.4" /></>,
+  kaart: <rect x="7.5" y="4" width="9.5" height="14" rx="1.8" transform="rotate(8 12 11)" />,
+  lamp: <><path d="M12 3.8a5.8 5.8 0 0 1 3.4 10.5c-.8.6-1.1 1.4-1.1 2.2H9.7c0-.8-.3-1.6-1.1-2.2A5.8 5.8 0 0 1 12 3.8z" /><path d="M9.9 19.8h4.2" /></>,
+  potlood: <path d="M4.5 19.5l.9-3.6L16.6 4.7a2 2 0 0 1 2.8 2.8L8.1 18.6z" />,
+};
+const Ico = ({ kind }) => (
+  <svg viewBox="0 0 24 24" width="15" height="15" style={{ marginRight: 7, verticalAlign: "-2px" }}
+    fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {ICO[kind]}
+  </svg>
+);
+const MiniBal = () => (
+  <svg viewBox="0 0 24 24" width="12" height="12" style={{ verticalAlign: "-1px", marginLeft: 3 }}
+    fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
+    <circle cx="12" cy="12" r="8.5" /><path d="M12 3.5c2.6 2.6 2.6 14.4 0 17M3.5 12h17" opacity=".55" />
+  </svg>
+);
+const MiniKaart = ({ kleur }) => (
+  <svg viewBox="0 0 24 24" width="12" height="12" style={{ verticalAlign: "-1px", marginLeft: 3 }} aria-hidden="true">
+    <rect x="7" y="3.5" width="10" height="15" rx="1.8" fill={kleur} stroke="#131313" strokeWidth="1.4" transform="rotate(8 12 11)" />
+  </svg>
+);
+
 const POSITIONS = [
   { code: "LM", name: "Laatste man", x: 50, y: 88 },
   { code: "VM", name: "Voorlaatste man", x: 50, y: 74 },
@@ -748,7 +779,7 @@ function HockeyWisselCoach() {
         <main style={{ padding: 14, display: "grid", gap: 10 }}>
           {/* Team openen: teamcode + pincode, gedeeld over apparaten en coaches */}
           <div style={S.card}>
-            <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}>OPEN TEAM</div>
+            <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}><Ico kind="spelers" />OPEN TEAM</div>
             <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 8 }}>
               Teamcode en pincode gelden op elk apparaat en voor elke mede-coach. Opslaan bewaart alles op de server onder deze code.
             </div>
@@ -821,7 +852,7 @@ function HockeyWisselCoach() {
         <main style={{ padding: 14, display: "grid", gap: 10 }}>
           {/* Handmatige basisopstelling voor blok 1/8 */}
           <div style={S.card}>
-            <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}>BEGINOPSTELLING (1/8)</div>
+            <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}><Ico kind="veld" />BEGINOPSTELLING (1/8)</div>
             <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 8 }}>
               Laat posities op "automatisch" staan of kies zelf wie er start. Bij <b>Genereer schema</b> wordt de rest van de wedstrijd om jouw beginopstelling heen doorgerekend — gelijke speeltijd blijft gelden.
             </div>
@@ -868,7 +899,7 @@ function HockeyWisselCoach() {
 
               {/* Uitval tijdens de wedstrijd */}
               <div style={S.card}>
-                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>SPELER VALT UIT / KEERT TERUG</div>
+                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}><Ico kind="wissel" />SPELER VALT UIT / KEERT TERUG</div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   <select value={uitvalId} onChange={(e) => setUitvalId(e.target.value)} style={S.select} aria-label="Uitvallende speler">
                     <option value="">Kies speler…</option>
@@ -901,7 +932,7 @@ function HockeyWisselCoach() {
                 return subs.length > 0 && (
                   <div style={{ ...S.card, background: C.bib, border: "none" }}>
                     <div style={{ ...S.display, fontSize: 13, color: C.bibInk, marginBottom: 6 }}>
-                      WISSELS BIJ START {result.blocks[openBlock].label}
+                      <Ico kind="wissel" />WISSELS BIJ START {result.blocks[openBlock].label}
                     </div>
                     {subs.map((sub, i) => (
                       <div key={i} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 15, color: C.bibInk, padding: "3px 0", flexWrap: "wrap" }}>
@@ -929,7 +960,7 @@ function HockeyWisselCoach() {
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <button onClick={() => setTekenen(!tekenen)}
                   style={{ ...S.ghost, fontSize: 13, background: tekenen ? C.black : "transparent", color: tekenen ? "#fff" : C.black }}>
-                  ✏️ Tekenen {tekenen ? "aan" : "uit"}
+                  <Ico kind="potlood" />Tekenen {tekenen ? "aan" : "uit"}
                 </button>
                 {tekenen && ["#F2C230", "#FFFFFF", "#131313", "#D6001C"].map((k) => (
                   <button key={k} onClick={() => setPenKleur(k)} aria-label={`Penkleur ${k}`}
@@ -1023,7 +1054,7 @@ function HockeyWisselCoach() {
 
               {/* Wedstrijd, score en turven */}
               <div style={S.card}>
-                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>WEDSTRIJD</div>
+                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}><Ico kind="klok" />WEDSTRIJD</div>
                 {matches.filter((m) => !m.gesloten).length === 0 ? (
                   <div style={{ fontSize: 13.5, color: C.inkSoft }}>Nog geen wedstrijd gepland — voeg er een toe op de Seizoen-tab.</div>
                 ) : (
@@ -1045,10 +1076,10 @@ function HockeyWisselCoach() {
                         <option value="">Speler…</option>
                         {players.filter((p) => p.aanwezig).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                       </select>
-                      <button onClick={turfDoelpunt} disabled={!turfSpeler} style={{ ...S.ghost, fontSize: 13, opacity: turfSpeler ? 1 : 0.45 }}>+ ⚽</button>
-                      <button onClick={() => turfKaart("gr")} disabled={!turfSpeler} style={{ ...S.ghost, fontSize: 13, opacity: turfSpeler ? 1 : 0.45 }}>🟩</button>
-                      <button onClick={() => turfKaart("ge")} disabled={!turfSpeler} style={{ ...S.ghost, fontSize: 13, opacity: turfSpeler ? 1 : 0.45 }}>🟨</button>
-                      <button onClick={() => turfKaart("ro")} disabled={!turfSpeler} style={{ ...S.ghost, fontSize: 13, opacity: turfSpeler ? 1 : 0.45 }}>🟥</button>
+                      <button onClick={turfDoelpunt} disabled={!turfSpeler} style={{ ...S.ghost, fontSize: 13, opacity: turfSpeler ? 1 : 0.45 }} aria-label="Doelpunt">+<MiniBal /></button>
+                      <button onClick={() => turfKaart("gr")} disabled={!turfSpeler} style={{ ...S.ghost, fontSize: 13, opacity: turfSpeler ? 1 : 0.45 }} aria-label="Groene kaart"><MiniKaart kleur="#2E9E4F" /></button>
+                      <button onClick={() => turfKaart("ge")} disabled={!turfSpeler} style={{ ...S.ghost, fontSize: 13, opacity: turfSpeler ? 1 : 0.45 }} aria-label="Gele kaart"><MiniKaart kleur="#F2C230" /></button>
+                      <button onClick={() => turfKaart("ro")} disabled={!turfSpeler} style={{ ...S.ghost, fontSize: 13, opacity: turfSpeler ? 1 : 0.45 }} aria-label="Rode kaart"><MiniKaart kleur="#D6001C" /></button>
                       <button onClick={() => setScoreTegen(scoreTegen + 1)} style={{ ...S.ghost, fontSize: 13 }}>+ tegen</button>
                     </div>
                     {Object.keys(turf).length > 0 && (
@@ -1056,7 +1087,7 @@ function HockeyWisselCoach() {
                         {Object.entries(turf).map(([id, t]) => (
                           <span key={id} style={{ marginRight: 10, whiteSpace: "nowrap" }}>
                             <b style={{ color: C.ink }}>{playersById[id]?.name}</b>
-                            {t.d ? ` ${t.d}⚽` : ""}{t.gr ? ` ${t.gr}🟩` : ""}{t.ge ? ` ${t.ge}🟨` : ""}{t.ro ? ` ${t.ro}🟥` : ""}
+                            {t.d ? <> {t.d}<MiniBal /></> : null}{t.gr ? <> {t.gr}<MiniKaart kleur="#2E9E4F" /></> : null}{t.ge ? <> {t.ge}<MiniKaart kleur="#F2C230" /></> : null}{t.ro ? <> {t.ro}<MiniKaart kleur="#D6001C" /></> : null}
                           </span>
                         ))}
                       </div>
@@ -1071,7 +1102,7 @@ function HockeyWisselCoach() {
 
               {/* Coach-tips via Claude */}
               <div style={S.card}>
-                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>COACH-TIP</div>
+                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}><Ico kind="lamp" />COACH-TIP</div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
                   {["Geen druk vooruit", "Achter de bal aan", "Corner tegen", "Te ver uit elkaar"].map((chip) => (
                     <button key={chip} onClick={() => setTipTekst((t) => (t ? t + ", " + chip.toLowerCase() : chip))}
@@ -1081,7 +1112,7 @@ function HockeyWisselCoach() {
                 <div style={{ display: "flex", gap: 8 }}>
                   <input value={tipTekst} onChange={(e) => setTipTekst(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") vraagTips(); }}
-                    placeholder="Steekwoorden… (dicteren kan met 🎤 op je toetsenbord)"
+                    placeholder="Steekwoorden… (dicteren kan met de microfoontoets)"
                     style={{ ...S.select, flex: 1, minWidth: 0 }} aria-label="Waarneming voor coachtip" />
                   <button onClick={vraagTips} disabled={tipsBezig || !tipTekst.trim()}
                     style={{ ...S.btn, padding: "10px 18px", fontSize: 15, opacity: tipsBezig || !tipTekst.trim() ? 0.5 : 1 }}>
@@ -1104,7 +1135,7 @@ function HockeyWisselCoach() {
 
               {/* Ingelaste wissel */}
               <div style={S.card}>
-                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>INGELASTE WISSEL</div>
+                <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}><Ico kind="wissel" />INGELASTE WISSEL</div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   <select value={adhocOut} onChange={(e) => setAdhocOut(e.target.value)} style={S.select} aria-label="Speler eruit">
                     <option value="">▼ Eruit…</option>
@@ -1136,7 +1167,7 @@ function HockeyWisselCoach() {
                 return (
                   <div style={{ ...S.card, background: bijna ? C.bib : C.card, border: bijna ? "none" : `1px solid ${C.line}` }}>
                     <div style={{ ...S.display, fontSize: 13, marginBottom: 6, color: bijna ? C.bibInk : C.ink }}>
-                      {bijna ? `ZO WISSELEN — NOG ${fmtClock(restInBlock)}` : `KLAARZETTEN VOOR ${BLOCKS[liveBlock + 1]}`}
+                      <Ico kind="wissel" />{bijna ? `ZO WISSELEN — NOG ${fmtClock(restInBlock)}` : `KLAARZETTEN VOOR ${BLOCKS[liveBlock + 1]}`}
                     </div>
                     {subs.length === 0 && <div style={{ fontSize: 14, color: C.inkSoft }}>Geen wissels bij het volgende blok.</div>}
                     {subs.map((sub, i) => (
@@ -1156,7 +1187,7 @@ function HockeyWisselCoach() {
 
               {/* Huidige opstelling */}
               <div style={S.card}>
-                <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}>NU OP HET VELD ({BLOCKS[liveBlock]})</div>
+                <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}><Ico kind="veld" />NU OP HET VELD ({BLOCKS[liveBlock]})</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 14px", fontSize: 14 }}>
                   {POSITIONS.map((pos) => {
                     const pl = playersById[result.blocks[liveBlock].assign[pos.code]];
@@ -1183,7 +1214,7 @@ function HockeyWisselCoach() {
           {!result?.stats && <div style={S.card}>Genereer eerst een schema.</div>}
           {result?.stats && (
             <div style={S.card}>
-              <div style={{ ...S.display, fontSize: 14, marginBottom: 10 }}>BLOKKEN PER SPELER</div>
+              <div style={{ ...S.display, fontSize: 14, marginBottom: 10 }}><Ico kind="grafiek" />BLOKKEN PER SPELER</div>
               {players.filter((p) => p.aanwezig && !p.keeper).map((p) => {
                 const st = result.stats[p.id] || { played: 0, prefHits: 0 };
                 return (
@@ -1212,7 +1243,7 @@ function HockeyWisselCoach() {
       {tab === "seizoen" && (
         <main style={{ padding: 14, display: "grid", gap: 10 }}>
           <div style={S.card}>
-            <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>WEDSTRIJDSCHEMA</div>
+            <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}><Ico kind="kalender" />WEDSTRIJDSCHEMA</div>
             {matches.length === 0 && <div style={{ fontSize: 13.5, color: C.inkSoft, marginBottom: 8 }}>Nog geen wedstrijden ingevoerd.</div>}
             {matches.map((m) => (
               <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: `1px solid ${C.line}`, fontSize: 14 }}>
@@ -1236,7 +1267,7 @@ function HockeyWisselCoach() {
           </div>
 
           <div style={S.card}>
-            <div style={{ ...S.display, fontSize: 13, marginBottom: 4 }}>SEIZOENSTOTALEN</div>
+            <div style={{ ...S.display, fontSize: 13, marginBottom: 4 }}><Ico kind="grafiek" />SEIZOENSTOTALEN</div>
             <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 10 }}>
               Over {matches.filter((m) => m.gesloten).length} afgesloten wedstrijd(en). Wie achterloopt in blokken krijgt bij het genereren vanzelf voorrang.
             </div>
@@ -1255,7 +1286,7 @@ function HockeyWisselCoach() {
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                     <b>{p.name}{p.keeper ? " (K)" : ""}</b>
                     <span style={{ color: C.inkSoft }}>
-                      {b} blok{b === 1 ? "" : "ken"}{d ? ` · ${d}⚽` : ""}{gr ? ` · ${gr}🟩` : ""}{ge ? ` · ${ge}🟨` : ""}{ro ? ` · ${ro}🟥` : ""}
+                      {b} blok{b === 1 ? "" : "ken"}{d ? <> · {d}<MiniBal /></> : null}{gr ? <> · {gr}<MiniKaart kleur="#2E9E4F" /></> : null}{ge ? <> · {ge}<MiniKaart kleur="#F2C230" /></> : null}{ro ? <> · {ro}<MiniKaart kleur="#D6001C" /></> : null}
                     </span>
                   </div>
                   <div style={{ background: C.line, borderRadius: 99, height: 7, marginTop: 3 }}>
@@ -1283,13 +1314,13 @@ function HockeyWisselCoach() {
             return (
               <>
                 <div style={S.card}>
-                  <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>TOPSCORERS</div>
+                  <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}><Ico kind="beker" />TOPSCORERS</div>
                   {scorers.length === 0 && <div style={{ fontSize: 13.5, color: C.inkSoft }}>Nog geen doelpunten geturfd.</div>}
                   {scorers.map(({ p, d }, i) => (
                     <div key={p.id} style={{ marginBottom: 8 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                         <span><span style={{ color: C.inkSoft, marginRight: 8 }}>{i + 1}.</span><b>{p.name}</b></span>
-                        <b>{d} ⚽</b>
+                        <b>{d}<MiniBal /></b>
                       </div>
                       <div style={{ background: C.line, borderRadius: 99, height: 7, marginTop: 3 }}>
                         <div style={{ width: `${(d / maxD) * 100}%`, background: C.bib, height: 7, borderRadius: 99 }} />
@@ -1299,12 +1330,12 @@ function HockeyWisselCoach() {
                 </div>
 
                 <div style={S.card}>
-                  <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>KAARTEN</div>
+                  <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}><Ico kind="kaart" />KAARTEN</div>
                   {kaarten.length === 0 && <div style={{ fontSize: 13.5, color: C.inkSoft }}>Nog geen kaarten — zo houden.</div>}
                   {kaarten.map(({ p, gr, ge, ro }) => (
                     <div key={p.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 14, padding: "4px 0", borderBottom: `1px solid ${C.line}` }}>
                       <b>{p.name}</b>
-                      <span>{ro ? `${ro} 🟥 ` : ""}{ge ? `${ge} 🟨 ` : ""}{gr ? `${gr} 🟩` : ""}</span>
+                      <span>{ro ? <>{ro}<MiniKaart kleur="#D6001C" /> </> : null}{ge ? <>{ge}<MiniKaart kleur="#F2C230" /> </> : null}{gr ? <>{gr}<MiniKaart kleur="#2E9E4F" /></> : null}</span>
                     </div>
                   ))}
                 </div>

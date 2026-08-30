@@ -1,0 +1,29 @@
+name: tip-test
+on: workflow_dispatch
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::add-mask::2026"
+          node -e '
+          (async () => {
+            const verboden = ["aftrap", "doeltrap", "penalty", "buitenspel", "ingooi", "voetbal"];
+            let fouten = 0;
+            for (const tekst of ["geen druk vooruit, we beginnen slap", "corner tegen, cirkel te leeg", "achterhoede slaat lange ballen zomaar weg"]) {
+              const r = await fetch("https://takumi-master.com/api/coach-tip", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: "jo16-5", pin: process.env.WC_PIN, tekst, context: { kwart: 1, blok: "1/8", voor: 0, tegen: 0 } })
+              });
+              const d = r.ok ? await r.json() : {};
+              const alles = (d.tips || []).join(" ").toLowerCase();
+              const fout = verboden.filter(w => alles.includes(w));
+              console.log("RESULTAAT:", r.status, "tips:", (d.tips || []).length, fout.length ? "VOETBALJARGON: " + fout : "hockeytaal OK");
+              (d.tips || []).forEach(t => console.log("  -", t));
+              if (!r.ok || (d.tips || []).length !== 3 || fout.length) fouten++;
+            }
+            if (fouten) process.exit(1);
+          })();
+          '
+        env:
+          WC_PIN: "2026"
