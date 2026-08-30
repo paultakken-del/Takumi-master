@@ -1108,6 +1108,52 @@ function HockeyWisselCoach() {
               ));
             })()}
           </div>
+
+          {/* Topscorers en kaarten over het seizoen */}
+          {(() => {
+            const rows = players.map((p) => {
+              let d = 0, gr = 0, ge = 0, ro = 0;
+              matches.filter((m) => m.gesloten).forEach((m) => {
+                const s2 = m.stats?.[p.id]; if (!s2) return;
+                d += s2.d || 0; gr += s2.gr || 0; ge += s2.ge || 0; ro += s2.ro || 0;
+              });
+              return { p, d, gr, ge, ro };
+            });
+            const scorers = rows.filter((r) => r.d > 0).sort((a, z) => z.d - a.d);
+            const kaarten = rows.filter((r) => r.gr + r.ge + r.ro > 0)
+              .sort((a, z) => (z.ro * 100 + z.ge * 10 + z.gr) - (a.ro * 100 + a.ge * 10 + a.gr));
+            const maxD = Math.max(1, ...scorers.map((r) => r.d));
+            return (
+              <>
+                <div style={S.card}>
+                  <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>TOPSCORERS</div>
+                  {scorers.length === 0 && <div style={{ fontSize: 13.5, color: C.inkSoft }}>Nog geen doelpunten geturfd.</div>}
+                  {scorers.map(({ p, d }, i) => (
+                    <div key={p.id} style={{ marginBottom: 8 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                        <span><span style={{ color: C.inkSoft, marginRight: 8 }}>{i + 1}.</span><b>{p.name}</b></span>
+                        <b>{d} ⚽</b>
+                      </div>
+                      <div style={{ background: C.line, borderRadius: 99, height: 7, marginTop: 3 }}>
+                        <div style={{ width: `${(d / maxD) * 100}%`, background: C.bib, height: 7, borderRadius: 99 }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={S.card}>
+                  <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}>KAARTEN</div>
+                  {kaarten.length === 0 && <div style={{ fontSize: 13.5, color: C.inkSoft }}>Nog geen kaarten — zo houden.</div>}
+                  {kaarten.map(({ p, gr, ge, ro }) => (
+                    <div key={p.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 14, padding: "4px 0", borderBottom: `1px solid ${C.line}` }}>
+                      <b>{p.name}</b>
+                      <span>{ro ? `${ro} 🟥 ` : ""}{ge ? `${ge} 🟨 ` : ""}{gr ? `${gr} 🟩` : ""}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </main>
       )}
 
