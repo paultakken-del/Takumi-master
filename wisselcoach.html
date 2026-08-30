@@ -128,30 +128,24 @@ function generateSchedule(players, seed) {
 }
 
 function subsBetween(prev, curr, playersById) {
-  const subs = [];
-  const prevPosById = {};
-  for (const [pos, id] of Object.entries(prev.assign)) prevPosById[id] = pos;
-  for (const [pos, id] of Object.entries(curr.assign)) {
-    if (prevPosById[id] === undefined) {
-      // Speler komt erin — wie stond hiervoor op deze positie en zit nu op de bank?
-      const wasHere = prev.assign[pos];
-      const outNow = Object.values(prev.assign).filter(
-        (pid) => curr.assign[pos] !== undefined && !Object.values(curr.assign).includes(pid)
-      );
-      const voor = outNow.includes(wasHere) ? wasHere : outNow[0];
-      subs.push({ inId: id, pos, voorId: voor });
-    }
-  }
-  return subs.map((sub, i, arr) => {
-    const used = arr.slice(0, i).map((x) => x.voorId);
-    if (used.includes(sub.voorId)) {
-      const outs = Object.values(prev.assign).filter(
-        (pid) => !Object.values(curr.assign).includes(pid) && !used.includes(pid)
-      );
-      return { ...sub, voorId: outs[0] };
-    }
-    return sub;
+  // Sluitende koppeling: elke inkomer krijgt precies één unieke uitgaande
+  // speler (liefst degene die op dezelfde positie stond), en uitgaande
+  // spelers zonder vervanger (mogelijk na uitval) worden apart benoemd.
+  const prevIds = new Set(Object.values(prev.assign));
+  const currIds = new Set(Object.values(curr.assign));
+  const outs = Object.entries(prev.assign)
+    .filter(([, id]) => !currIds.has(id))
+    .map(([pos, id]) => ({ pos, id }));
+  const ins = Object.entries(curr.assign).filter(([, id]) => !prevIds.has(id));
+  const used = new Set();
+  const subs = ins.map(([pos, id]) => {
+    let voor = outs.find((o) => o.pos === pos && !used.has(o.id));
+    if (!voor) voor = outs.find((o) => !used.has(o.id));
+    if (voor) used.add(voor.id);
+    return { inId: id, pos, voorId: voor ? voor.id : undefined };
   });
+  outs.filter((o) => !used.has(o.id)).forEach((o) => subs.push({ voorId: o.id, pos: o.pos }));
+  return subs;
 }
 
 /* ── Miniveld ── */
@@ -664,10 +658,14 @@ function HockeyWisselCoach() {
                       WISSELS BIJ START {result.blocks[openBlock].label}
                     </div>
                     {subs.map((sub, i) => (
-                      <div key={i} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 15, color: C.bibInk, padding: "3px 0" }}>
-                        <span style={{ fontWeight: 800, color: "#fff" }}>▲ {playersById[sub.inId]?.name}</span>
-                        <span>op {POS_BY_CODE[sub.pos].name}</span>
-                        <span style={{ fontWeight: 800, color: "#fff" }}>▼ {playersById[sub.voorId]?.name}</span>
+                      <div key={i} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 15, color: C.bibInk, padding: "3px 0", flexWrap: "wrap" }}>
+                        {sub.inId !== undefined && <>
+                          <span style={{ fontWeight: 800, color: "#fff" }}>▲ {playersById[sub.inId]?.name}</span>
+                          <span>op {POS_BY_CODE[sub.pos].name}</span>
+                        </>}
+                        {sub.voorId !== undefined && (
+                          <span style={{ fontWeight: 800, color: "#fff" }}>▼ {playersById[sub.voorId]?.name}{sub.inId === undefined ? " eruit (niet vervangen)" : ""}</span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -797,10 +795,14 @@ function HockeyWisselCoach() {
                     </div>
                     {subs.length === 0 && <div style={{ fontSize: 14, color: C.inkSoft }}>Geen wissels bij het volgende blok.</div>}
                     {subs.map((sub, i) => (
-                      <div key={i} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 16, padding: "3px 0", color: bijna ? C.bibInk : C.ink }}>
-                        <span style={{ fontWeight: 800, color: bijna ? "#fff" : C.in }}>▲ {playersById[sub.inId]?.name}</span>
-                        <span>op {POS_BY_CODE[sub.pos].name}</span>
-                        <span style={{ fontWeight: 800, color: bijna ? "#fff" : C.out }}>▼ {playersById[sub.voorId]?.name}</span>
+                      <div key={i} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 16, padding: "3px 0", color: bijna ? C.bibInk : C.ink, flexWrap: "wrap" }}>
+                        {sub.inId !== undefined && <>
+                          <span style={{ fontWeight: 800, color: bijna ? "#fff" : C.in }}>▲ {playersById[sub.inId]?.name}</span>
+                          <span>op {POS_BY_CODE[sub.pos].name}</span>
+                        </>}
+                        {sub.voorId !== undefined && (
+                          <span style={{ fontWeight: 800, color: bijna ? "#fff" : C.out }}>▼ {playersById[sub.voorId]?.name}{sub.inId === undefined ? " eruit (niet vervangen)" : ""}</span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -877,7 +879,10 @@ function HockeyWisselCoach() {
                   <div>Geen wissels</div>
                 ) : (
                   subs.map((sub, j) => (
-                    <div key={j}>▲ IN: {playersById[sub.inId]?.name} op {POS_BY_CODE[sub.pos].name} — ▼ UIT: {playersById[sub.voorId]?.name}</div>
+                    <div key={j}>
+                      {sub.inId !== undefined && <>▲ IN: {playersById[sub.inId]?.name} op {POS_BY_CODE[sub.pos].name} </>}
+                      {sub.voorId !== undefined && <>— ▼ UIT: {playersById[sub.voorId]?.name}{sub.inId === undefined ? " (niet vervangen)" : ""}</>}
+                    </div>
                   ))
                 )}
                 <div style={{ color: "#444" }}>Bank: {bl.bench.map((id) => playersById[id]?.name).join(", ") || "—"}</div>
