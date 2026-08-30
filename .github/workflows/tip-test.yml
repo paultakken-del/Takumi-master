@@ -1,0 +1,26 @@
+name: tip-test
+on: workflow_dispatch
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::add-mask::2026"
+          node -e '
+          (async () => {
+            const r = await fetch("https://takumi-master.com/api/coach-tip", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ code: "jo16-5", pin: process.env.WC_PIN, tekst: "geen druk vooruit, middenveld te ver uit elkaar", context: { kwart: 2, blok: "3/8", voor: 0, tegen: 1 } })
+            });
+            const fout = await fetch("https://takumi-master.com/api/coach-tip", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ code: "jo16-5", pin: "0000", tekst: "x" })
+            });
+            const d = r.ok ? await r.json() : {};
+            console.log("RESULTAAT:", r.status, "tips:", (d.tips || []).length, "| foute pin:", fout.status);
+            if (!r.ok || (d.tips || []).length !== 3 || fout.status !== 403) process.exit(1);
+            d.tips.forEach((t, i) => console.log(" tip", i + 1 + ":", t));
+          })();
+          ' 
+        env:
+          WC_PIN: "2026"
