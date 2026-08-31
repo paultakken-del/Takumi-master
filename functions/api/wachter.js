@@ -78,7 +78,70 @@ function pulsTekst(b) {
   return r.join('\n');
 }
 
-async function mail(env, onderwerp, tekst) {
+/* ---------------- opmaak: huisstijl-mail ---------------- */
+const KLEUR = {
+  bg: '#f7f4ec', kaart: '#ffffff', rand: '#e5e0d4', inkt: '#2c2a26',
+  gedempt: '#8a8477', blauw: '#2c5c7a', groen: '#2e7d32', amber: '#a66a2e', spoor: '#ece7da',
+};
+
+function slotRij(label, open, tekstWaarde, vulPct, positief) {
+  const kleur = open ? KLEUR.groen : KLEUR.amber;
+  const stip = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${kleur};margin-right:8px;vertical-align:middle"></span>`;
+  const vul = Math.max(4, Math.min(100, Math.round(vulPct)));
+  return `<tr><td style="padding:7px 0 2px;font:13px Georgia,serif;color:${KLEUR.inkt}">${stip}${label}
+      <span style="float:right;font:12px 'Courier New',monospace;color:${kleur}">${tekstWaarde}</span></td></tr>
+    <tr><td style="padding:0 0 6px 18px"><div style="background:${KLEUR.spoor};border-radius:4px;height:7px;width:100%">
+      <div style="background:${positief ? KLEUR.groen : KLEUR.amber};border-radius:4px;height:7px;width:${vul}%"></div></div></td></tr>`;
+}
+
+function kaart(titel, ondertitel, rijenHtml) {
+  return `<div style="background:${KLEUR.kaart};border:1px solid ${KLEUR.rand};border-radius:12px;padding:16px 18px;margin:0 0 14px">
+    <div style="font:600 15px Georgia,serif;color:${KLEUR.inkt}">${titel}
+      <span style="font:400 12px Georgia,serif;color:${KLEUR.gedempt}"> · ${ondertitel}</span></div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px">${rijenHtml}</table></div>`;
+}
+
+function pulsHtml(b, delta) {
+  const d = new Date().toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' });
+  let kantel = '';
+  if (delta && delta.length) {
+    kantel = `<div style="background:#fdf6e3;border:1px solid ${KLEUR.blauw};border-radius:12px;padding:14px 18px;margin:0 0 14px">
+      <div style="font:600 14px Georgia,serif;color:${KLEUR.blauw}">Gekanteld sinds de vorige stand</div>
+      <ul style="margin:8px 0 0;padding-left:18px;font:13px Georgia,serif;color:${KLEUR.inkt}">
+      ${delta.map((v) => '<li style="margin:3px 0">' + v + '</li>').join('')}</ul></div>`;
+  }
+  const btcRijen =
+    (b.btcSeizoenGap === null ? '' : slotRij('Seizoenslot koop', b.btcSeizoenGap > 0,
+      (b.btcSeizoenGap > 0 ? '+' : '') + pct(b.btcSeizoenGap) + ' punt', Math.abs(b.btcSeizoenGap) * 2, b.btcSeizoenGap > 0)) +
+    (b.btcMarktAfstand === null ? '' : slotRij('Marktslot (30-weeks trend)', b.btcMarktAfstand > 0,
+      (b.btcMarktAfstand > 0 ? '+' : '') + pct(b.btcMarktAfstand) + '%', Math.abs(b.btcMarktAfstand) * 3.3, b.btcMarktAfstand > 0));
+  const etfRijen =
+    (b.etfSeizoenGap === null ? '' : slotRij('Seizoen (groei − krimp)', b.etfSeizoenGap > 0,
+      (b.etfSeizoenGap > 0 ? '+' : '') + pct(b.etfSeizoenGap) + ' punt', Math.abs(b.etfSeizoenGap), b.etfSeizoenGap > 0)) +
+    (b.etfMarktAfstand === null ? '' : slotRij('Markt (IWDA vs trend)', b.etfMarktAfstand > 0,
+      (b.etfMarktAfstand > 0 ? '+' : '') + pct(b.etfMarktAfstand) + '%', Math.abs(b.etfMarktAfstand) * 3.3, b.etfMarktAfstand > 0));
+  const ladderRij = Number.isFinite(b.ladderGedaan)
+    ? `<tr><td style="padding:6px 0;font:13px Georgia,serif;color:${KLEUR.inkt}">Tranches uitgevoerd
+        <span style="float:right;font:12px 'Courier New',monospace;color:${KLEUR.gedempt}">${b.ladderGedaan} / 4</span></td></tr>` : '';
+  return `<!doctype html><html><body style="margin:0;padding:0;background:${KLEUR.bg}">
+  <div style="max-width:480px;margin:0 auto;padding:26px 16px">
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font:28px Georgia,serif;color:#b08a3e">環</div>
+      <div style="font:600 17px Georgia,serif;color:${KLEUR.inkt}">Takumi · dagpuls</div>
+      <div style="font:12px Georgia,serif;color:${KLEUR.gedempt}">${d} · afstand tot actie</div>
+    </div>
+    ${kantel}
+    ${kaart('BTC-envelop', (b.btcPositie ? 'positie' : 'cash') + ' · regime ' + (b.regime || '?'), btcRijen)}
+    ${kaart('ETF-envelop', 'stand ' + (b.etfStand || '?') + ' · fase ' + (b.fase || '?'), etfRijen)}
+    ${kaart('Koopladder', 'wacht op koopseizoen', ladderRij)}
+    <div style="text-align:center;font:11px Georgia,serif;color:${KLEUR.gedempt};margin-top:6px">
+      Kansverdelingen, geen voorspellingen · Takumi weegt, het handelt niet<br>
+      <a href="https://takumi-master.com/engine" style="color:${KLEUR.blauw}">engine</a> ·
+      <a href="https://takumi-master.com/radar" style="color:${KLEUR.blauw}">radar</a></div>
+  </div></body></html>`;
+}
+
+async function mail(env, onderwerp, tekst, html) {
   if (!env.RESEND_API_KEY || !env.CONTACT_TO) return { verstuurd: false, reden: 'mailconfig ontbreekt' };
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -88,6 +151,7 @@ async function mail(env, onderwerp, tekst) {
       to: env.CONTACT_TO,
       subject: onderwerp,
       text: tekst,
+      ...(html ? { html } : {}),
     }),
   });
   return { verstuurd: r.ok, status: r.status };
@@ -117,9 +181,9 @@ export async function onRequestPost({ request, env }) {
 
     let post = null;
     if (delta.length) {
-      post = await mail(env, 'Takumi \u00b7 ' + delta[0], 'Er is iets gekanteld:\n\n- ' + delta.join('\n- ') + '\n\n' + pulsTekst(beeld));
+      post = await mail(env, 'Takumi \u00b7 ' + delta[0], 'Er is iets gekanteld:\n\n- ' + delta.join('\n- ') + '\n\n' + pulsTekst(beeld), pulsHtml(beeld, delta));
     } else if (body.puls) {
-      post = await mail(env, 'Takumi \u00b7 dagpuls', pulsTekst(beeld));
+      post = await mail(env, 'Takumi \u00b7 dagpuls', pulsTekst(beeld), pulsHtml(beeld, []));
     }
     return json({ ok: true, veranderingen: delta, gemaild: post ? post.verstuurd : false, beeld });
   } catch (e) {
