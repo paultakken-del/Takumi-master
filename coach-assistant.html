@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v23";
+const APP_VERSIE = "v24";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -540,6 +540,33 @@ function HockeyWisselCoach() {
   const restInBlock = Math.max(0, Math.ceil(blockSec * (liveBlock + 1) - elapsed));
   const fmtClock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
+  const audioRef = useRef(null);
+  const vorigeRestRef = useRef(null);
+  const piep = (n) => {
+    try {
+      const ctx = audioRef.current;
+      if (ctx) for (let i = 0; i < n; i++) {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = "sine"; o.frequency.value = 880;
+        g.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.28);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.28 + 0.2);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(ctx.currentTime + i * 0.28); o.stop(ctx.currentTime + i * 0.28 + 0.22);
+      }
+      if (navigator.vibrate) navigator.vibrate(n === 1 ? 250 : [200, 120, 200]);
+    } catch { /* geen audio beschikbaar */ }
+  };
+  useEffect(() => {
+    if (!running) { vorigeRestRef.current = null; return; }
+    const vorige = vorigeRestRef.current;
+    if (vorige !== null) {
+      if (vorige > 60 && restInBlock <= 60) piep(1);              // nog 1 minuut
+      if (restInBlock > vorige) piep(2);                          // nieuw blok: wisselen
+      if (vorige > 0 && restInBlock === 0 && elapsed >= totalSec) piep(3); // eindsignaal
+    }
+    vorigeRestRef.current = restInBlock;
+  }, [restInBlock, running]);
+
   const playersById = useMemo(() => Object.fromEntries(players.map((p) => [p.id, p])), [players]);
   const aanwezigVeld = players.filter((p) => p.aanwezig && !p.keeper).length;
   const keeper = players.find((p) => p.keeper && p.aanwezig);
@@ -669,6 +696,39 @@ function HockeyWisselCoach() {
     const t = turf[id] || {};
     setTurf({ ...turf, [id]: { ...t, [kleur]: (t[kleur] || 0) + 1 } });
   };
+  const [verslagOpenId, setVerslagOpenId] = useState(null);
+  const [verslagWoorden, setVerslagWoorden] = useState("");
+  const [verslagBezig, setVerslagBezig] = useState(false);
+  const [verslagFout, setVerslagFout] = useState("");
+
+  const maakVerslag = async (m) => {
+    if (verslagBezig) return;
+    setVerslagBezig(true); setVerslagFout("");
+    try {
+      const scorers = Object.entries(m.stats || {})
+        .filter(([, s]) => (s.d || 0) > 0)
+        .map(([id, s]) => ({ naam: playersById[id]?.name || "een speler", n: s.d }));
+      const r = await fetch("/api/verslag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: normCode(sync.code), pin: sync.pin,
+          wedstrijd: { datum: m.datum, tegenstander: m.tegenstander, thuis: m.thuis, voor: m.voor, tegen: m.tegen },
+          scorers, steekwoorden: verslagWoorden.trim(),
+        }),
+      });
+      if (r.status === 403) throw new Error("vul eerst je teamcode en pincode in (Selectie)");
+      if (!r.ok) throw new Error("verslag maken mislukt — probeer nog eens");
+      const d = await r.json();
+      const next = matches.map((x) => (x.id === m.id ? { ...x, verslag: d.verslag } : x));
+      setMatches(next);
+      opslaan(JSON.stringify({ players, kwartMin, result, seed, basis, matches: next, activeMatchId, turf, scoreVoor, scoreTegen }));
+    } catch (err) {
+      setVerslagFout(err.message);
+    }
+    setVerslagBezig(false);
+  };
+
   const addMatch = () => {
     if (!nmDatum || !nmTegen.trim()) return;
     const next = [...matches, { id: Date.now(), datum: nmDatum, tegenstander: nmTegen.trim(), thuis: nmThuis, gesloten: false }]
@@ -689,7 +749,7 @@ function HockeyWisselCoach() {
       if (b || t.d || t.gr || t.ge || t.ro) stats[p.id] = { b, d: t.d || 0, gr: t.gr || 0, ge: t.ge || 0, ro: t.ro || 0 };
     });
     const next = matches.map((m) => m.id === Number(activeMatchId)
-      ? { ...m, gesloten: true, voor: scoreVoor, tegen: scoreTegen, stats } : m);
+      ? { ...m, gesloten: true, voor: scoreVoor, tegen: scoreTegen, stats, afwezig: players.filter((p) => !p.aanwezig).map((p) => p.name) } : m);
     setMatches(next);
     setTurf({}); setTurfSpeler(""); setScoreVoor(0); setScoreTegen(0); setActiveMatchId("");
     opslaan(JSON.stringify({ players, kwartMin, result, seed, basis, matches: next, activeMatchId: "", turf: {}, scoreVoor: 0, scoreTegen: 0 }));
@@ -1050,12 +1110,16 @@ function HockeyWisselCoach() {
                   {elapsed >= totalSec ? "Einde wedstrijd" : liveBlock < 7 ? `Volgende wissel over ${fmtClock(restInBlock)}` : `Laatste blok — nog ${fmtClock(restInBlock)}`}
                 </div>
                 <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
-                  <button onClick={() => setRunning(!running)} style={{ ...S.btn, background: running ? C.bib : "#fff", color: running ? C.bibInk : C.black, minWidth: 120 }}>
+                  <button onClick={() => {
+                    if (!audioRef.current) { try { audioRef.current = new (window.AudioContext || window.webkitAudioContext)(); } catch { /* geen audio */ } }
+                    if (audioRef.current?.resume) audioRef.current.resume();
+                    setRunning(!running);
+                  }} style={{ ...S.btn, background: running ? C.bib : "#fff", color: running ? C.bibInk : C.black, minWidth: 120 }}>
                     {running ? <><Ico kind="pauze" />Pauze</> : elapsed > 0 ? <><Ico kind="speel" />Hervat</> : <><Ico kind="speel" />Start</>}
                   </button>
                   <button onClick={() => { setRunning(false); setElapsed(0); }} style={{ ...S.ghost, borderColor: C.chalk, color: C.chalk }}><Ico kind="ververs" />Reset</button>
                 </div>
-                <div style={{ fontSize: 11.5, opacity: 0.7, marginTop: 8 }}>Pauzeer bij kwartrust — de klok telt alleen speeltijd.</div>
+                <div style={{ fontSize: 11.5, opacity: 0.7, marginTop: 8 }}>Pauzeer bij kwartrust — de klok telt alleen speeltijd. Piep bij 1 minuut, op het wisselmoment en bij het eindsignaal.</div>
               </div>
 
               {/* Wedstrijd, score en turven */}
@@ -1252,15 +1316,45 @@ function HockeyWisselCoach() {
             <div style={{ ...S.display, fontSize: 13, marginBottom: 8 }}><Ico kind="kalender" />WEDSTRIJDSCHEMA</div>
             {matches.length === 0 && <div style={{ fontSize: 13.5, color: C.inkSoft, marginBottom: 8 }}>Nog geen wedstrijden ingevoerd.</div>}
             {matches.map((m) => (
-              <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: `1px solid ${C.line}`, fontSize: 14 }}>
-                <span style={{ color: C.inkSoft, minWidth: 86 }}>{m.datum}</span>
-                <span style={{ flex: 1 }}><b>{m.tegenstander}</b> <span style={{ color: C.inkSoft }}>({m.thuis ? "thuis" : "uit"})</span></span>
-                {m.gesloten
-                  ? <b style={{ color: C.bib }}>{m.voor}–{m.tegen}</b>
-                  : <span style={{ color: C.inkSoft, fontSize: 12.5 }}>open</span>}
-                <button onClick={() => setMatches(matches.filter((x) => x.id !== m.id))}
-                  style={{ ...S.ghost, padding: "4px 9px", fontSize: 12, color: C.out, borderColor: C.out }}
-                  aria-label={`Verwijder wedstrijd tegen ${m.tegenstander}`}>✕</button>
+              <div key={m.id} style={{ borderBottom: `1px solid ${C.line}` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", fontSize: 14 }}>
+                  <span style={{ color: C.inkSoft, minWidth: 86 }}>{m.datum}</span>
+                  <span style={{ flex: 1 }}><b>{m.tegenstander}</b> <span style={{ color: C.inkSoft }}>({m.thuis ? "thuis" : "uit"})</span></span>
+                  {m.gesloten
+                    ? <b style={{ color: C.bib }}>{m.voor}–{m.tegen}</b>
+                    : <span style={{ color: C.inkSoft, fontSize: 12.5 }}>open</span>}
+                  {m.gesloten && (
+                    <button onClick={() => { setVerslagOpenId(verslagOpenId === m.id ? null : m.id); setVerslagWoorden(""); setVerslagFout(""); }}
+                      style={{ ...S.ghost, padding: "4px 10px", fontSize: 12 }}><Ico kind="ai" m={4} />Verslag</button>
+                  )}
+                  <button onClick={() => setMatches(matches.filter((x) => x.id !== m.id))}
+                    style={{ ...S.ghost, padding: "4px 9px", fontSize: 12, color: C.out, borderColor: C.out }}
+                    aria-label={`Verwijder wedstrijd tegen ${m.tegenstander}`}>✕</button>
+                </div>
+                {m.gesloten && verslagOpenId === m.id && (
+                  <div style={{ padding: "2px 0 12px" }}>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input value={verslagWoorden} onChange={(e) => setVerslagWoorden(e.target.value)}
+                        placeholder="Steekwoorden voor het verslag… (mag leeg)"
+                        style={{ ...S.select, flex: 1, minWidth: 0 }} aria-label="Steekwoorden voor het verslag" />
+                      <button onClick={() => maakVerslag(m)} disabled={verslagBezig}
+                        style={{ ...S.ghost, fontSize: 13, opacity: verslagBezig ? 0.5 : 1 }}>
+                        {verslagBezig ? "…" : "Schrijf"}
+                      </button>
+                    </div>
+                    {verslagFout && <div style={{ fontSize: 13, color: C.out, fontWeight: 700, marginTop: 8 }}>{verslagFout}</div>}
+                    {m.verslag && (
+                      <>
+                        <div style={{ fontSize: 14, lineHeight: 1.55, marginTop: 10, whiteSpace: "pre-wrap" }}>{m.verslag}</div>
+                        <button onClick={async () => {
+                          try { await navigator.clipboard.writeText(m.verslag); setSaveMsg("Verslag gekopieerd ✓ — plak hem in de ouderapp"); }
+                          catch { setSaveMsg("Kopiëren lukte niet — selecteer de tekst handmatig"); }
+                          setTimeout(() => setSaveMsg(""), 4000);
+                        }} style={{ ...S.ghost, fontSize: 12.5, marginTop: 8, padding: "6px 12px" }}>Kopieer</button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
@@ -1292,7 +1386,10 @@ function HockeyWisselCoach() {
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                     <b>{p.name}{p.keeper ? " (K)" : ""}</b>
                     <span style={{ color: C.inkSoft }}>
-                      {b} blok{b === 1 ? "" : "ken"}{d ? <> · {d}<MiniBal /></> : null}{gr ? <> · {gr}<MiniKaart kleur="#2E9E4F" /></> : null}{ge ? <> · {ge}<MiniKaart kleur="#F2C230" /></> : null}{ro ? <> · {ro}<MiniKaart kleur="#D6001C" /></> : null}
+                      {b} blok{b === 1 ? "" : "ken"}{d ? <> · {d}<MiniBal /></> : null}{gr ? <> · {gr}<MiniKaart kleur="#2E9E4F" /></> : null}{ge ? <> · {ge}<MiniKaart kleur="#F2C230" /></> : null}{ro ? <> · {ro}<MiniKaart kleur="#D6001C" /></> : null}{(() => {
+                        const gemist = matches.filter((m2) => m2.gesloten && m2.afwezig?.includes(p.name)).length;
+                        return gemist ? <> · {gemist}x afwezig</> : null;
+                      })()}
                     </span>
                   </div>
                   <div style={{ background: C.line, borderRadius: 99, height: 7, marginTop: 3 }}>
