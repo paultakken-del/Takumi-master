@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v24";
+const APP_VERSIE = "v25";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -556,6 +556,11 @@ function HockeyWisselCoach() {
       if (navigator.vibrate) navigator.vibrate(n === 1 ? 250 : [200, 120, 200]);
     } catch { /* geen audio beschikbaar */ }
   };
+  const springNaarKwart = (q) => {
+    vorigeRestRef.current = null;
+    setElapsed((q - 1) * blockSec * 2);
+  };
+
   useEffect(() => {
     if (!running) { vorigeRestRef.current = null; return; }
     const vorige = vorigeRestRef.current;
@@ -1092,6 +1097,16 @@ function HockeyWisselCoach() {
                             <text key={t} x={tx} y={ty} textAnchor="middle" fontSize="11.5" fontWeight="800"
                               fill={kwartNu === Number(String(t).slice(1)) && elapsed < totalSec ? "#fff" : "rgba(255,255,255,.5)"}>{t}</text>
                           ))}
+                          {[
+                            [1, "M50,50 L50,6 A44,44 0 0 1 94,50 Z"],
+                            [2, "M50,50 L94,50 A44,44 0 0 1 50,94 Z"],
+                            [3, "M50,50 L50,94 A44,44 0 0 1 6,50 Z"],
+                            [4, "M50,50 L6,50 A44,44 0 0 1 50,6 Z"],
+                          ].map(([q, pad]) => (
+                            <path key={q} d={pad} fill="transparent" style={{ cursor: "pointer" }}
+                              onClick={() => springNaarKwart(q)} role="button"
+                              aria-label={`Spring naar kwart ${q}`} />
+                          ))}
                         </>
                       );
                     })()}
@@ -1119,7 +1134,7 @@ function HockeyWisselCoach() {
                   </button>
                   <button onClick={() => { setRunning(false); setElapsed(0); }} style={{ ...S.ghost, borderColor: C.chalk, color: C.chalk }}><Ico kind="ververs" />Reset</button>
                 </div>
-                <div style={{ fontSize: 11.5, opacity: 0.7, marginTop: 8 }}>Pauzeer bij kwartrust — de klok telt alleen speeltijd. Piep bij 1 minuut, op het wisselmoment en bij het eindsignaal.</div>
+                <div style={{ fontSize: 11.5, opacity: 0.7, marginTop: 8 }}>Pauzeer bij kwartrust — de klok telt alleen speeltijd. Piep bij 1 minuut, op het wisselmoment en bij het eindsignaal. Tik een kwart in de cirkel om de klok daarnaartoe te zetten.</div>
               </div>
 
               {/* Wedstrijd, score en turven */}
