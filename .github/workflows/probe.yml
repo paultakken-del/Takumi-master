@@ -5,10 +5,19 @@ on:
       klimaatForceer:
         type: boolean
         default: false
+      pulsTest:
+        type: boolean
+        default: false
 jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
+      - name: Dagpuls testen (alleen op verzoek)
+        if: inputs.pulsTest
+        run: |
+          curl -sS -X POST https://takumi-master.com/api/wachter             -H "content-type: application/json" -H "x-radar-key: ${{ secrets.RADAR_KEY }}"             -d '{"puls":true}' -o /tmp/w.json -w "puls HTTP %{http_code}
+"
+          echo "::error title=puls::$(cut -c1-300 /tmp/w.json)"
       - name: Klimaat opnieuw meten (alleen op verzoek)
         if: inputs.klimaatForceer
         run: |
