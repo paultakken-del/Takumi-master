@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v25";
+const APP_VERSIE = "v26";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -58,6 +58,7 @@ const ICO = {
   print: <><path d="M7 8V4.5h10V8" /><rect x="4" y="8" width="16" height="7.5" rx="2" /><path d="M7.5 13h9v7h-9z" /></>,
   speel: <path d="M8.5 5.8v12.4L18.5 12z" fill="currentColor" strokeWidth="1.6" />,
   pauze: <path d="M9.2 6v12M14.8 6v12" strokeWidth="3" />,
+  chat: <><rect x="3" y="4.5" width="18" height="12" rx="2.5" /><path d="M8 16.5v4l5-4" /></>,
 };
 const Ico = ({ kind, m = 7 }) => (
   <svg viewBox="0 0 24 24" width="15" height="15" style={{ marginRight: m, verticalAlign: "-2px" }}
@@ -734,6 +735,57 @@ function HockeyWisselCoach() {
     setVerslagBezig(false);
   };
 
+  const [waTekst, setWaTekst] = useState("");
+  const [waBezig, setWaBezig] = useState(false);
+  const [waFout, setWaFout] = useState("");
+  const [waResultaat, setWaResultaat] = useState(null);
+
+  const WA_VRAAG = "Mannen, voor het wisselschema: stuur je top 3 favoriete posities (1 = liefst spelen). Kies uit: Laatste man, Voorlaatste man, Linksachter, Rechtsachter, Linkshalf, Middenmid, Rechtshalf, Linksbuiten, Spits, Rechtsbuiten. Bijvoorbeeld: 1. Spits 2. Rechtsbuiten 3. Middenmid";
+
+  const kopieerVraag = async () => {
+    try { await navigator.clipboard.writeText(WA_VRAAG); setSaveMsg("Vraag gekopieerd ✓ — plak hem in de groepsapp"); }
+    catch { setSaveMsg("Kopiëren lukte niet"); }
+    setTimeout(() => setSaveMsg(""), 4000);
+  };
+
+  const pasVoorkeurenToe = (lijst) => {
+    const perNaam = Object.fromEntries(lijst.map((v) => [v.speler, v.posities]));
+    setPlayers(players.map((p) => {
+      const nieuw = perNaam[p.name];
+      if (!nieuw || !nieuw.length || p.keeper) return p;
+      const codes = nieuw.filter((c) => POS_BY_CODE[c]).slice(0, 3);
+      const rest = p.prefs.filter((c) => !codes.includes(c));
+      while (codes.length < 3) codes.push(rest.shift() || POSITIONS.find((x) => !codes.includes(x.code)).code);
+      return { ...p, prefs: codes };
+    }));
+  };
+
+  const verwerkVoorkeuren = async () => {
+    if (!waTekst.trim() || waBezig) return;
+    setWaBezig(true); setWaFout(""); setWaResultaat(null);
+    try {
+      const r = await fetch("/api/voorkeuren", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: normCode(sync.code), pin: sync.pin,
+          tekst: waTekst.slice(0, 6000),
+          spelers: players.filter((p) => !p.keeper).map((p) => p.name),
+          posities: POSITIONS.map((p) => ({ code: p.code, naam: p.name })),
+        }),
+      });
+      if (r.status === 403) throw new Error("vul eerst je teamcode en pincode in (bovenaan)");
+      if (!r.ok) throw new Error("verwerken mislukt — probeer nog eens");
+      const d = await r.json();
+      pasVoorkeurenToe(d.voorkeuren || []);
+      setWaResultaat(d);
+      setWaTekst("");
+    } catch (err) {
+      setWaFout(err.message);
+    }
+    setWaBezig(false);
+  };
+
   const addMatch = () => {
     if (!nmDatum || !nmTegen.trim()) return;
     const next = [...matches, { id: Date.now(), datum: nmDatum, tegenstander: nmTegen.trim(), thuis: nmThuis, gesloten: false }]
@@ -914,6 +966,37 @@ function HockeyWisselCoach() {
           ))}
 
           <button onClick={addPlayer} style={S.ghost}>+ Speler toevoegen</button>
+
+          {/* Voorkeursposities uitvragen via WhatsApp en importeren */}
+          <div style={S.card}>
+            <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}><Ico kind="chat" />VOORKEUREN VIA WHATSAPP</div>
+            <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 8 }}>
+              Stap 1: zet de vraag in de groepsapp. Stap 2: kopieer de antwoorden (heel het gesprek mag), plak ze hieronder en druk op Verwerk — de voorkeuren worden per speler ingevuld. Controleer daarna en druk op Opslaan.
+            </div>
+            <button onClick={kopieerVraag} style={{ ...S.ghost, fontSize: 13, marginBottom: 8 }}>Kopieer vraag voor de groepsapp</button>
+            <textarea value={waTekst} onChange={(e) => setWaTekst(e.target.value)} rows={4}
+              placeholder="Plak hier de WhatsApp-antwoorden…"
+              style={{ ...S.select, width: "100%", boxSizing: "border-box", fontSize: 16 }}
+              aria-label="WhatsApp-antwoorden" />
+            <button onClick={verwerkVoorkeuren} disabled={waBezig || !waTekst.trim()}
+              style={{ ...S.ghost, fontSize: 13, marginTop: 8, opacity: waBezig || !waTekst.trim() ? 0.5 : 1 }}>
+              {waBezig ? "…" : <><Ico kind="ai" />Verwerk</>}
+            </button>
+            {waFout && <div style={{ fontSize: 13, color: C.out, fontWeight: 700, marginTop: 8 }}>{waFout}</div>}
+            {waResultaat && (
+              <div style={{ fontSize: 13.5, marginTop: 10 }}>
+                {(waResultaat.voorkeuren || []).map((v) => (
+                  <div key={v.speler} style={{ padding: "2px 0" }}>
+                    <b>{v.speler}</b> <span style={{ color: C.inkSoft }}>→ {v.posities.map((c) => POS_BY_CODE[c]?.name || c).join(", ")}</span>
+                  </div>
+                ))}
+                {(waResultaat.voorkeuren || []).length === 0 && <div style={{ color: C.inkSoft }}>Geen voorkeuren herkend in de tekst.</div>}
+                {(waResultaat.nietHerkend || []).length > 0 && (
+                  <div style={{ color: C.inkSoft, marginTop: 4 }}>Niet aan een speler te koppelen: {waResultaat.nietHerkend.join(", ")}</div>
+                )}
+              </div>
+            )}
+          </div>
 
         </main>
       )}

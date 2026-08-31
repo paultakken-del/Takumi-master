@@ -1,0 +1,37 @@
+name: vk-test
+on: workflow_dispatch
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::add-mask::2026"
+          node -e '
+          (async () => {
+            const tekst = [
+              "[20:11] Sam Berends: 1 spits 2 rechtsbuiten 3 middenmid",
+              "[20:12] Teun vK: doe mij maar mid, en anders laatste man",
+              "[20:13] Pim: LINKSBUITEN!! en spits, derde maakt me niet uit",
+              "[20:14] Mama van Fons: Fons zegt: linksachter, linkshalf, linksbuiten",
+              "[20:15] Viggo: hahaha mooi man",
+            ].join("\n");
+            const r = await fetch("https://takumi-master.com/api/voorkeuren", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ code: "jo16-5", pin: process.env.WC_PIN, tekst,
+                spelers: ["Sam","Fons","Thijmen","Joep","Teun","Viggo","Pieter","Nathan","Philip","Levi","Olivier T","Pim","Roef"],
+                posities: [["LM","Laatste man"],["VM","Voorlaatste man"],["LA","Linksachter"],["RA","Rechtsachter"],["LH","Linkshalf"],["MM","Middenmid"],["RH","Rechtshalf"],["LB","Linksbuiten"],["SP","Spits"],["RB","Rechtsbuiten"]].map(([code, naam]) => ({ code, naam })) })
+            });
+            const d = r.ok ? await r.json() : {};
+            const per = Object.fromEntries((d.voorkeuren || []).map(v => [v.speler, v.posities.join(",")]));
+            console.log("RESULTAAT:", r.status, JSON.stringify(per), "| nietHerkend:", d.nietHerkend);
+            const ok = r.ok
+              && per.Sam === "SP,RB,MM"
+              && per.Teun && per.Teun.startsWith("MM,LM")
+              && per.Pim && per.Pim.startsWith("LB,SP")
+              && per.Fons === "LA,LH,LB"
+              && !per.Viggo;
+            if (!ok) process.exit(1);
+          })();
+          '
+        env:
+          WC_PIN: "2026"
