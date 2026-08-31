@@ -573,7 +573,7 @@ function zetBeeldje(idx){
   cam=camWens(ball.x)}
 
 /* ===== staat ===== */
-const VERSIE="v118 minikaart";
+const VERSIE="v119 middenveld";
 let level=5,players2=1,menuSel=0,menuPage=0,scorer=0,setType="",taker=null,takerT=0,winnaar=0;
 let score=[0,0],clock=0,half=1,state="menu",stateT=0,msg="";
 const HALFREAL=200, MPS=200/HALFREAL;
@@ -585,10 +585,13 @@ const ball={x:midX,y:midY,z:0,vx:0,vy:0,vz:0,held:null,last:null,touch:0};
    ploeg het veld open in plaats van als kluitje mee te schuiven. */
 /* Elf tegen elf in 4-3-3, de formatie die Ajax en Feyenoord in 1983/84 speelden.
    Het veld is inmiddels 990 bij 144, ruim genoeg voor een volle bezetting. */
+/* 4-3-3 met gelijke afstanden tussen de linies. Het middenveld stond op 42 tot 44
+   procent, waardoor het gat naar de aanval half zo groot was als naar de
+   verdediging en er een leeg vak lag waar niemand aanspeelbaar was. */
 const FORM=[[0.05,0.50,"K"],
-            [0.18,0.14,"D"],[0.16,0.38,"D"],[0.16,0.62,"D"],[0.18,0.86,"D"],
-            [0.44,0.22,"M"],[0.42,0.50,"M"],[0.44,0.78,"M"],
-            [0.76,0.16,"F"],[0.80,0.50,"F"],[0.76,0.84,"F"]];
+            [0.19,0.14,"D"],[0.17,0.38,"D"],[0.17,0.62,"D"],[0.19,0.86,"D"],
+            [0.485,0.20,"M"],[0.455,0.50,"M"],[0.485,0.80,"M"],
+            [0.78,0.16,"F"],[0.82,0.50,"F"],[0.78,0.84,"F"]];
 /* Namen per club uit het seizoen 1983/84, alleen veldspelers. Feyenoord werd dat
    jaar kampioen met Cruijff in zijn laatste seizoen als voetballer; Van Basten
    werd topscorer bij Ajax met 28 goals. */
@@ -1543,7 +1546,7 @@ function formatiePlek(p){          // basispositie, met de vleugels aan de zijli
      blijven achter, spitsen lopen door. Zonder dat verschil komt de hele ploeg
      mee naar voren, klit alles rond één doel en wordt de helft van het veld
      nooit gebruikt. */
-  const rol=p.role==="D"?.42:p.role==="M"?.6:.78;   // linies schuiven steviger mee
+  const rol=p.role==="D"?.42:p.role==="M"?.66:.78;   // linies schuiven steviger mee
   const push=Math.max(-170,Math.min(210,(ball.x-midX)*(.34+rol*.5)*attack[p.team]))*rem;
   let tx=homeX(p)+attack[p.team]*push;
   /* Verdedigers komen nooit ver over de middenlijn, spitsen zakken nooit ver terug.
@@ -1557,7 +1560,7 @@ function formatiePlek(p){          // basispositie, met de vleugels aan de zijli
   const balDiep=Math.abs(ball.x-eigenD);
   const nood=balDiep<veld*.3;                   // gevaar bij het eigen doel
   const minDiep=p.role==="D"?(nood?veld*.06:veld*.20)
-               :p.role==="M"?veld*.30:veld*.46;
+               :p.role==="M"?veld*.33:veld*.50;
   const maxDiep=p.role==="D"?veld*.66:p.role==="M"?veld*.86:veld;
   const kl=Math.max(minDiep,Math.min(maxDiep,diep));
   tx=eigenD+(midX>eigenD?1:-1)*kl;
