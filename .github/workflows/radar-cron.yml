@@ -22,6 +22,15 @@ jobs:
             -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
             -d '{"stap":"meting"}'
           cut -c1-400 /tmp/uit.json; echo
+      - name: Dagpuls (afstand tot de sloten, per mail)
+        if: github.event.schedule == '23 3 * * *'
+        run: |
+          curl -sS -o /tmp/w.json -w "dagpuls HTTP %{http_code}\n" \
+            -X POST https://takumi-master.com/api/wachter \
+            -H "content-type: application/json" \
+            -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
+            -d '{"puls":true}' || true
+          cut -c1-400 /tmp/w.json; echo
       - name: Klimaatmeting (kwartaal; server beslist)
         run: |
           set -euo pipefail

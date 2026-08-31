@@ -1,7 +1,7 @@
 name: Takumi Engine weekronde
 on:
   schedule:
-    - cron: "23 5 * * *"  # dagelijks ~07:23 NL: dagwacht (alleen bescherming, koopt nooit)
+    - cron: "23 1,5,9,13,17,21 * * *"  # elke 4 uur: dagwacht (alleen bescherming, koopt nooit)
     - cron: "53 5 * * 1"  # maandag ~07:53 NL: weekrondes, na weekclose en zondagweging
   workflow_dispatch: {}
 jobs:
@@ -16,7 +16,7 @@ jobs:
         env:
           RADAR_KEY: ${{ secrets.RADAR_KEY }}
       - name: Dagwacht (stop-bewaking BTC)
-        if: github.event.schedule == '23 5 * * *'
+        if: github.event.schedule == '23 1,5,9,13,17,21 * * *'
         run: |
           set -euo pipefail
           code=$(curl -sS -o /tmp/uit.json -w "%{http_code}" \
@@ -85,3 +85,12 @@ jobs:
           done
           echo "koopladder HTTP $code"; cut -c1-800 /tmp/uit.json; echo
           if [ "$code" != "200" ]; then echo "::error title=koopladder::HTTP $code $(cut -c1-300 /tmp/uit.json)"; exit 1; fi
+      - name: Wachter (meldt kantelingen per mail)
+        if: always()
+        run: |
+          curl -sS -o /tmp/w.json -w "wachter HTTP %{http_code}\n" \
+            -X POST https://takumi-master.com/api/wachter \
+            -H "content-type: application/json" \
+            -H "x-radar-key: ${{ secrets.RADAR_KEY }}" \
+            -d '{}' || true
+          cut -c1-400 /tmp/w.json; echo
