@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v22";
+const APP_VERSIE = "v23";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -776,7 +776,7 @@ function HockeyWisselCoach() {
             ...S.ghost, flex: 1, padding: "10px 2px", fontSize: 12.5,
             background: tab === key ? C.black : "transparent",
             color: tab === key ? "#fff" : C.black,
-          }}><Ico kind={icoon} m={5} />{label}</button>
+          }}>{label}</button>
         ))}
       </nav>
 
