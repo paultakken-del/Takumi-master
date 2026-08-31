@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v26";
+const APP_VERSIE = "v27";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -760,6 +760,40 @@ function HockeyWisselCoach() {
     }));
   };
 
+  const [inzendingen, setInzendingen] = useState(null);
+  const [inzBezig, setInzBezig] = useState(false);
+
+  const kopieerUitnodiging = async () => {
+    const code = normCode(sync.code);
+    if (!code) { setWaFout("vul eerst je teamcode in (bovenaan)"); return; }
+    const bericht = `Mannen, voor het wisselschema: tik op deze veldkaart je 3 favoriete posities aan (1 = liefst spelen). Duurt 20 seconden: https://takumi-master.com/voorkeur.html?team=${code}`;
+    try { await navigator.clipboard.writeText(bericht); setSaveMsg("Uitnodiging gekopieerd ✓ — plak hem in de groepsapp"); }
+    catch { setSaveMsg("Kopiëren lukte niet"); }
+    setTimeout(() => setSaveMsg(""), 4000);
+  };
+
+  const haalInzendingen = async () => {
+    if (inzBezig) return;
+    setInzBezig(true); setWaFout("");
+    try {
+      const r = await fetch(`/api/voorkeur/${normCode(sync.code)}?pin=${encodeURIComponent(sync.pin)}&inzendingen=1`);
+      if (r.status === 403 || r.status === 404) throw new Error("vul eerst je teamcode en pincode in (bovenaan)");
+      if (!r.ok) throw new Error("ophalen mislukt — probeer nog eens");
+      const d = await r.json();
+      setInzendingen(d.inzendingen || {});
+    } catch (err) {
+      setWaFout(err.message);
+    }
+    setInzBezig(false);
+  };
+
+  const neemInzendingenOver = () => {
+    if (!inzendingen) return;
+    pasVoorkeurenToe(Object.entries(inzendingen).map(([speler, posities]) => ({ speler, posities })));
+    setSaveMsg("Voorkeuren overgenomen ✓ — controleer de dropdowns en druk op Opslaan");
+    setTimeout(() => setSaveMsg(""), 4500);
+  };
+
   const verwerkVoorkeuren = async () => {
     if (!waTekst.trim() || waBezig) return;
     setWaBezig(true); setWaFout(""); setWaResultaat(null);
@@ -967,14 +1001,41 @@ function HockeyWisselCoach() {
 
           <button onClick={addPlayer} style={S.ghost}>+ Speler toevoegen</button>
 
-          {/* Voorkeursposities uitvragen via WhatsApp en importeren */}
+          {/* Voorkeursposities uitvragen: veldkaart-link, met WhatsApp-plak als vangnet */}
           <div style={S.card}>
-            <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}><Ico kind="chat" />VOORKEUREN VIA WHATSAPP</div>
+            <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}><Ico kind="chat" />VOORKEUREN UITVRAGEN</div>
             <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 8 }}>
-              Stap 1: zet de vraag in de groepsapp. Stap 2: kopieer de antwoorden (heel het gesprek mag), plak ze hieronder en druk op Verwerk — de voorkeuren worden per speler ingevuld. Controleer daarna en druk op Opslaan.
+              Deel de link in de groepsapp: elke speler tikt zijn naam en zijn 3 posities aan op de veldkaart. Haal daarna de inzendingen op, neem ze over en druk op Opslaan.
             </div>
-            <button onClick={kopieerVraag} style={{ ...S.ghost, fontSize: 13, marginBottom: 8 }}>Kopieer vraag voor de groepsapp</button>
-            <textarea value={waTekst} onChange={(e) => setWaTekst(e.target.value)} rows={4}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button onClick={kopieerUitnodiging} style={{ ...S.ghost, fontSize: 13 }}>Kopieer uitnodiging + link</button>
+              <button onClick={haalInzendingen} disabled={inzBezig} style={{ ...S.ghost, fontSize: 13, opacity: inzBezig ? 0.5 : 1 }}>
+                {inzBezig ? "…" : "Haal inzendingen op"}
+              </button>
+            </div>
+            {waFout && <div style={{ fontSize: 13, color: C.out, fontWeight: 700, marginTop: 8 }}>{waFout}</div>}
+            {inzendingen && (
+              <div style={{ fontSize: 13.5, marginTop: 10 }}>
+                {Object.keys(inzendingen).length === 0 && <div style={{ color: C.inkSoft }}>Nog geen inzendingen binnen.</div>}
+                {Object.entries(inzendingen).map(([naam, pos]) => (
+                  <div key={naam} style={{ padding: "2px 0" }}>
+                    <b>{naam}</b> <span style={{ color: C.inkSoft }}>→ {pos.map((c) => POS_BY_CODE[c]?.name || c).join(", ")}</span>
+                  </div>
+                ))}
+                {(() => {
+                  const ontbreekt = players.filter((p) => !p.keeper && !inzendingen[p.name]).map((p) => p.name);
+                  return ontbreekt.length ? <div style={{ color: C.inkSoft, marginTop: 4 }}>Nog niet ingevuld: {ontbreekt.join(", ")}</div> : null;
+                })()}
+                {Object.keys(inzendingen).length > 0 && (
+                  <button onClick={neemInzendingenOver} style={{ ...S.ghost, fontSize: 13, marginTop: 8 }}>Neem over in de selectie</button>
+                )}
+              </div>
+            )}
+
+            <div style={{ borderTop: `1px solid ${C.line}`, marginTop: 12, paddingTop: 10, fontSize: 13, color: C.inkSoft, marginBottom: 8 }}>
+              Of plak losse WhatsApp-antwoorden en laat AI ze vertalen:
+            </div>
+            <textarea value={waTekst} onChange={(e) => setWaTekst(e.target.value)} rows={3}
               placeholder="Plak hier de WhatsApp-antwoorden…"
               style={{ ...S.select, width: "100%", boxSizing: "border-box", fontSize: 16 }}
               aria-label="WhatsApp-antwoorden" />
@@ -982,7 +1043,6 @@ function HockeyWisselCoach() {
               style={{ ...S.ghost, fontSize: 13, marginTop: 8, opacity: waBezig || !waTekst.trim() ? 0.5 : 1 }}>
               {waBezig ? "…" : <><Ico kind="ai" />Verwerk</>}
             </button>
-            {waFout && <div style={{ fontSize: 13, color: C.out, fontWeight: 700, marginTop: 8 }}>{waFout}</div>}
             {waResultaat && (
               <div style={{ fontSize: 13.5, marginTop: 10 }}>
                 {(waResultaat.voorkeuren || []).map((v) => (
@@ -997,7 +1057,6 @@ function HockeyWisselCoach() {
               </div>
             )}
           </div>
-
         </main>
       )}
 

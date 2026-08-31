@@ -1,0 +1,30 @@
+name: vk2-test
+on: workflow_dispatch
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::add-mask::2026"
+          node -e '
+          (async () => {
+            const basis = "https://takumi-master.com/api/voorkeur/jo16-5";
+            const info = await (await fetch(basis)).json();
+            console.log("info: spelers =", (info.spelers || []).length, "| posities =", (info.posities || []).length);
+            if ((info.posities || []).length !== 10) process.exit(1);
+            let inzendOk = "overgeslagen (lege spelerslijst)";
+            if ((info.spelers || []).length) {
+              const naam = info.spelers[0];
+              const p = await fetch(basis, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ speler: naam, posities: ["SP","RB","MM"] }) });
+              const lees = await (await fetch(basis + "?pin=" + process.env.WC_PIN + "&inzendingen=1")).json();
+              inzendOk = p.ok && lees.inzendingen && lees.inzendingen[naam] && lees.inzendingen[naam].join(",") === "SP,RB,MM" ? "OK (" + naam + ")" : "FOUT";
+              if (inzendOk === "FOUT") process.exit(1);
+            }
+            const nep = await fetch(basis, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ speler: "Hacker", posities: ["SP"] }) });
+            const foutePin = await fetch(basis + "?pin=0000&inzendingen=1");
+            console.log("RESULTAAT: inzending", inzendOk, "| onbekende speler:", nep.status, "| foute pin:", foutePin.status);
+            if (nep.status !== 400 || foutePin.status !== 403) process.exit(1);
+          })();
+          '
+        env:
+          WC_PIN: "2026"

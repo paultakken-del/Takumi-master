@@ -34,3 +34,8 @@
 /coach-assistant.html
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store, must-revalidate
+
+# Voorkeurspagina spelers: niet indexeren, altijd vers
+/voorkeur.html
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store, must-revalidate
