@@ -1,8 +1,6 @@
 name: Takumi Engine weekronde
 on:
-  schedule:
-    - cron: "23 1,5,9,13,17,21 * * *"  # elke 4 uur: dagwacht (alleen bescherming, koopt nooit)
-    - cron: "53 5 * * 1"  # maandag ~07:53 NL: weekrondes, na weekclose en zondagweging
+  # Planning verhuisd naar de Cloudflare cron-Worker (cron-worker/). Hier alleen nog handmatig.
   workflow_dispatch: {}
 jobs:
   engine:

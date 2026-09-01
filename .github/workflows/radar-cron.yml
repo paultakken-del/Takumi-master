@@ -1,8 +1,6 @@
 name: Cyclusradar metingen en signalen
 on:
-  schedule:
-    - cron: "23 3 * * *"   # dagelijks ~05:23 NL: meting (oneven minuut tegen GitHub-drukte)
-    - cron: "37 18 * * 0"  # zondag ~20:37 NL: weeksignalen, ruim voor de maandagbriefing
+  # Planning verhuisd naar de Cloudflare cron-Worker (cron-worker/). Hier alleen nog handmatig.
   workflow_dispatch:
     inputs:
       signalen:
