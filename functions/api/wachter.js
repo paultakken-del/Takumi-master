@@ -37,6 +37,14 @@ function standBeeld(radarCrypto, radarMacro, engineLaatste, etfLaatste, etfPortf
   b.etfStand = etfPortfolio ? etfPortfolio.stand || 'IN' : null;
 
   b.ladderGedaan = ladder ? ladder.gedaan : null;
+
+  // context: de volledige wegingen, voor de grafieken in de mail
+  const cs = radarCrypto && radarCrypto.sig ? radarCrypto.sig : {};
+  const ms = radarMacro && radarMacro.sig ? radarMacro.sig : {};
+  b.cryptoVerdeling = rv; b.macroVerdeling = fv;
+  b.cryptoSamenvatting = cs.samenvatting || cs.synthese || null;
+  b.macroSamenvatting = ms.samenvatting || ms.synthese || null;
+  b.wegingDatum = radarCrypto && radarCrypto.t ? new Date(radarCrypto.t).toLocaleDateString('nl-NL') : null;
   return b;
 }
 
@@ -64,6 +72,10 @@ function pulsTekst(b) {
   const r = [];
   const slot = (open) => (open ? 'OPEN' : 'dicht');
   r.push('TAKUMI DAGPULS \u00b7 afstand tot actie');
+  r.push('');
+  const regel = (v, volgorde) => volgorde.filter((f) => Number.isFinite(v[f])).map((f) => f + ' ' + v[f] + '%').join(' · ');
+  r.push('Cryptocyclus (' + (b.wegingDatum || '?') + '): ' + regel(b.cryptoVerdeling || {}, ['accumulatie', 'expansie', 'euforie', 'distributie', 'capitulatie']));
+  r.push('Macrocyclus: ' + regel(b.macroVerdeling || {}, ['vroeg', 'midden', 'laat', 'contractie']));
   r.push('');
   r.push('BTC-mandaat (' + (b.btcPositie ? 'positie' : 'cash') + ', regime ' + (b.regime || '?') + ')');
   if (b.btcSeizoenGap !== null) r.push(`- Seizoenslot koop: ${slot(b.btcSeizoenGap > 0)} \u00b7 accumulatie min capitulatie = ${pct(b.btcSeizoenGap)} punt`);
@@ -101,6 +113,38 @@ function kaart(titel, ondertitel, rijenHtml) {
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px">${rijenHtml}</table></div>`;
 }
 
+const FASEKLEUR = {
+  vroeg: '#2e7d32', midden: '#2c5c7a', laat: '#a66a2e', contractie: '#8a3b3b',
+  accumulatie: '#2e7d32', expansie: '#2c5c7a', euforie: '#b08a3e', distributie: '#a66a2e', capitulatie: '#8a3b3b',
+};
+
+function verdelingKaart(titel, verdeling, volgorde, samenvatting, datum) {
+  const fases = volgorde.filter((f) => Number.isFinite(verdeling[f]));
+  if (!fases.length) return '';
+  const top = fases.reduce((a, f) => (verdeling[f] > verdeling[a] ? f : a), fases[0]);
+  const donut = 'https://quickchart.io/chart?v=3&w=130&h=130&bkg=transparent&c=' + encodeURIComponent(JSON.stringify({
+    type: 'doughnut',
+    data: { labels: fases, datasets: [{ data: fases.map((f) => verdeling[f]), backgroundColor: fases.map((f) => FASEKLEUR[f]), borderWidth: 0 }] },
+    options: { cutout: '62%', plugins: { legend: { display: false } } },
+  }));
+  const balken = fases.map((f) => {
+    const p = verdeling[f];
+    const dik = f === top;
+    return `<tr><td style="padding:3px 8px 3px 0;font:${dik ? '600 ' : ''}12px Georgia,serif;color:${dik ? KLEUR.inkt : KLEUR.gedempt};white-space:nowrap">${f}</td>
+      <td style="padding:3px 0;width:100%"><div style="background:${KLEUR.spoor};border-radius:3px;height:8px"><div style="background:${FASEKLEUR[f]};border-radius:3px;height:8px;width:${Math.max(2, p)}%"></div></div></td>
+      <td style="padding:3px 0 3px 8px;font:${dik ? '600 ' : ''}12px 'Courier New',monospace;color:${dik ? KLEUR.inkt : KLEUR.gedempt};text-align:right">${p}%</td></tr>`;
+  }).join('');
+  return `<div style="background:${KLEUR.kaart};border:1px solid ${KLEUR.rand};border-radius:12px;padding:16px 18px;margin:0 0 14px">
+    <div style="font:600 15px Georgia,serif;color:${KLEUR.inkt}">${titel}
+      <span style="font:400 12px Georgia,serif;color:${KLEUR.gedempt}"> · weging ${datum || '?'} · dominant: <b style="color:${FASEKLEUR[top]}">${top}</b></span></div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px"><tr>
+      <td style="width:130px;vertical-align:middle"><img src="${donut}" width="130" height="130" alt="" style="display:block"></td>
+      <td style="vertical-align:middle;padding-left:12px"><table width="100%" cellpadding="0" cellspacing="0">${balken}</table></td>
+    </tr></table>
+    ${samenvatting ? `<p style="margin:10px 0 0;font:13px/1.5 Georgia,serif;color:${KLEUR.inkt}">${samenvatting}</p>` : ''}
+  </div>`;
+}
+
 function pulsHtml(b, delta) {
   const d = new Date().toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' });
   let kantel = '';
@@ -131,7 +175,9 @@ function pulsHtml(b, delta) {
       <div style="font:12px Georgia,serif;color:${KLEUR.gedempt}">${d} · afstand tot actie</div>
     </div>
     ${kantel}
+    ${verdelingKaart('Cryptocyclus', b.cryptoVerdeling || {}, ['accumulatie', 'expansie', 'euforie', 'distributie', 'capitulatie'], b.cryptoSamenvatting, b.wegingDatum)}
     ${kaart('BTC-mandaat', (b.btcPositie ? 'positie' : 'cash') + ' · regime ' + (b.regime || '?'), btcRijen)}
+    ${verdelingKaart('Macrocyclus', b.macroVerdeling || {}, ['vroeg', 'midden', 'laat', 'contractie'], b.macroSamenvatting, b.wegingDatum)}
     ${kaart('ETF-mandaat', 'stand ' + (b.etfStand || '?') + ' · fase ' + (b.fase || '?'), etfRijen)}
     ${kaart('Sluis', 'nieuw geld in doses \u00b7 wacht op koopseizoen', ladderRij)}
     <div style="text-align:center;font:11px Georgia,serif;color:${KLEUR.gedempt};margin-top:6px">
