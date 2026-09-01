@@ -19,8 +19,9 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          set -o pipefail
-          npx wrangler@3.78.12 deploy 2>&1 | tee /tmp/deploy.txt
+          npx wrangler@3.78.12 deploy > /tmp/deploy.txt 2>&1 || status=$?
+          echo "::error title=deploy-log::$(tail -c 700 /tmp/deploy.txt | tr '\n' ' ')"
+          [ "${status:-0}" = "0" ] || exit $status
           url=$(grep -o 'https://[a-z0-9.-]*workers.dev' /tmp/deploy.txt | head -1)
           echo "WORKER_URL=$url" >> "$GITHUB_ENV"
           echo "::error title=worker-url::${url:-geen url gevonden}"
