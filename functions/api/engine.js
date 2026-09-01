@@ -160,8 +160,8 @@ function bepaalAdvies({ radar, trend, portfolio }) {
 }
 
 
-// ================================================================ ETF-ENVELOP
-// Tweede, gescheiden envelop: Pauls werkelijke ETF-mix als één blok, paper.
+// ================================================================ ETF-MANDAAT
+// Tweede, gescheiden mandaat: Pauls werkelijke ETF-mix als één blok, paper.
 // De macroweging (vroeg/midden/laat/contractie) is het seizoenslot, de
 // 30-weeks trend van IWDA (kernpositie, wereldindex) het marktslot.
 // Twee standen: IN (het blok) of UIT (cash). Fractionele aantallen zijn
@@ -367,7 +367,7 @@ async function herwaardeerEtf(env, portfolio) {
   return { belegd: Math.round(belegd * 100) / 100, fouten };
 }
 
-// ------------------------------------------------- koopladder (nieuw geld, papier)
+// ------------------------------------------------- sluis (nieuw geld in doses, papier; stap-id blijft 'koopladder')
 // Drie publieke standaardmixen van gerenommeerde beleggers, EU-uitvoering (UCITS).
 // Bronvermelding in het verslag; de verdeling blijft een persoonlijke keuze.
 const LADDER_MIXEN = {
@@ -552,7 +552,7 @@ async function postRonde({ request, env }) {
     return json({ fout: 'fase moet kv, trend, herwaardeer of macro zijn' }, 400);
   }
 
-  // Koopladder: per open koopsignaal een tranche nieuw (fictief) geld de markt in.
+  // Sluis: per open koopsignaal een tranche nieuw (fictief) geld de markt in.
   if (body.stap === 'koopladder') {
     const staat = (await env.TAKUMI_USERS.get('engine:ladder:staat', 'json')) || structuredClone(LADDER_START);
     const logboek = (await env.TAKUMI_USERS.get('engine:ladder:logboek', 'json')) || [];
@@ -581,7 +581,7 @@ async function postRonde({ request, env }) {
     const krimp = (v.laat || 0) + (v.contractie || 0);
     const sloten = { seizoen: groei > krimp, markt: trend.bovenTrend };
     if (!sloten.seizoen || !sloten.markt) {
-      return klaarMet({ tijd, stap: 'koopladder', actie: 'GEEN_ACTIE', reden: `Koopsloten niet beide open: seizoen ${sloten.seizoen ? 'open' : `dicht (laat+contractie ${krimp}% \u2265 vroeg+midden ${groei}%)`}, markt ${sloten.markt ? 'open' : 'dicht (weekclose onder 30-weeks trend)'}. Tranche ${staat.gedaan + 1}/${staat.tranches} wacht.`, sloten });
+      return klaarMet({ tijd, stap: 'koopladder', actie: 'GEEN_ACTIE', reden: `Koopsloten niet beide open: seizoen ${sloten.seizoen ? 'open' : `dicht (laat+contractie ${krimp}% \u2265 vroeg+midden ${groei}%)`}, markt ${sloten.markt ? 'open' : 'dicht (weekclose onder 30-weeks trend)'}. Sluis dicht; tranche ${staat.gedaan + 1}/${staat.tranches} wacht.`, sloten });
     }
     const bedrag = Math.round((staat.budget / staat.tranches) * 100) / 100;
     const mix = LADDER_MIXEN[staat.mix];
@@ -602,10 +602,10 @@ async function postRonde({ request, env }) {
     staat.gedaan += 1;
     staat.besteed = Math.round((staat.besteed + bedrag) * 100) / 100;
     if (!staat.gestartOp) staat.gestartOp = tijd;
-    return klaarMet({ tijd, stap: 'koopladder', actie: 'KOOP', melding: `Tranche ${staat.gedaan}/${staat.tranches}: \u20ac${bedrag} volgens mix "${staat.mix}" (papier). Beide koopsloten open: vroeg+midden ${groei}% > laat+contractie ${krimp}%, weekclose boven 30-weeks trend.`, orders, sloten, staat });
+    return klaarMet({ tijd, stap: 'koopladder', actie: 'KOOP', melding: `Tranche ${staat.gedaan}/${staat.tranches}: \u20ac${bedrag} via de sluis, mix "${staat.mix}" (papier). Beide koopsloten open: vroeg+midden ${groei}% > laat+contractie ${krimp}%, weekclose boven 30-weeks trend.`, orders, sloten, staat });
   }
 
-  // Import: werkelijke DEGIRO-posities de envelop in (sleutel vereist).
+  // Import: werkelijke DEGIRO-posities het mandaat in (sleutel vereist).
   // Expliciete gebeurtenis in het logboek; stand (IN/UIT) blijft behouden.
   if (body.stap === 'etf-import') {
     const { posities, cash } = body;
@@ -647,7 +647,7 @@ async function postRonde({ request, env }) {
     // Sloten op macroniveau: groeikansen (vroeg+midden) tegenover krimpkansen (laat+contractie).
     let advies;
     if (!trend) {
-      advies = { actie: 'GEEN_ACTIE', reden: `Marktslot onbepaald: geen weekhistorie beschikbaar (${trendFout}). De envelop schakelt niet zonder meting.`, sloten: null };
+      advies = { actie: 'GEEN_ACTIE', reden: `Marktslot onbepaald: geen weekhistorie beschikbaar (${trendFout}). Het mandaat schakelt niet zonder meting.`, sloten: null };
     } else if (macro.status !== 'ok') {
       advies = { actie: 'GEEN_ACTIE', reden: `Macroweging niet bruikbaar (${macro.status}): ${macro.melding} De envelop schakelt niet zonder eerlijke weging.`, sloten: null };
     } else {

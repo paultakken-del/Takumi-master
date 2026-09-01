@@ -53,10 +53,10 @@ function veranderingen(oud, nieuw) {
   kantel('BTC marktslot', oud.btcMarktAfstand, nieuw.btcMarktAfstand);
   kantel('ETF seizoenslot', oud.etfSeizoenGap, nieuw.etfSeizoenGap);
   kantel('ETF marktslot', oud.etfMarktAfstand, nieuw.etfMarktAfstand);
-  if (oud.btcPositie !== nieuw.btcPositie) uit.push(nieuw.btcPositie ? 'BTC-envelop heeft GEKOCHT' : 'BTC-envelop heeft VERKOCHT (positie naar nul)');
-  if (oud.etfStand !== nieuw.etfStand) uit.push(`ETF-envelop: ${oud.etfStand} \u2192 ${nieuw.etfStand}`);
+  if (oud.btcPositie !== nieuw.btcPositie) uit.push(nieuw.btcPositie ? 'BTC-mandaat heeft GEKOCHT' : 'BTC-mandaat heeft VERKOCHT (positie naar nul)');
+  if (oud.etfStand !== nieuw.etfStand) uit.push(`ETF-mandaat: ${oud.etfStand} \u2192 ${nieuw.etfStand}`);
   if (Number.isFinite(oud.ladderGedaan) && Number.isFinite(nieuw.ladderGedaan) && nieuw.ladderGedaan > oud.ladderGedaan)
-    uit.push(`Koopladder: tranche ${nieuw.ladderGedaan} uitgevoerd`);
+    uit.push(`Sluis geopend: tranche ${nieuw.ladderGedaan} doorgelaten`);
   return uit;
 }
 
@@ -65,14 +65,14 @@ function pulsTekst(b) {
   const slot = (open) => (open ? 'OPEN' : 'dicht');
   r.push('TAKUMI DAGPULS \u00b7 afstand tot actie');
   r.push('');
-  r.push('BTC-envelop (' + (b.btcPositie ? 'positie' : 'cash') + ', regime ' + (b.regime || '?') + ')');
+  r.push('BTC-mandaat (' + (b.btcPositie ? 'positie' : 'cash') + ', regime ' + (b.regime || '?') + ')');
   if (b.btcSeizoenGap !== null) r.push(`- Seizoenslot koop: ${slot(b.btcSeizoenGap > 0)} \u00b7 accumulatie min capitulatie = ${pct(b.btcSeizoenGap)} punt`);
   if (b.btcMarktAfstand !== null) r.push(`- Marktslot: ${slot(b.btcMarktAfstand > 0)} \u00b7 weekclose ${pct(b.btcMarktAfstand)}% t.o.v. 30-weeks trend`);
   r.push('');
-  r.push('ETF-envelop (stand ' + (b.etfStand || '?') + ', fase ' + (b.fase || '?') + ')');
+  r.push('ETF-mandaat (stand ' + (b.etfStand || '?') + ', fase ' + (b.fase || '?') + ')');
   if (b.etfSeizoenGap !== null) r.push(`- Seizoen: groei min krimp = ${pct(b.etfSeizoenGap)} punt (${b.etfSeizoenGap > 0 ? 'groei zwaarder' : 'krimp zwaarder'})`);
   if (b.etfMarktAfstand !== null) r.push(`- Markt: IWDA ${pct(b.etfMarktAfstand)}% t.o.v. 30-weeks trend`);
-  if (Number.isFinite(b.ladderGedaan)) r.push(`- Koopladder: tranche ${b.ladderGedaan}/4`);
+  if (Number.isFinite(b.ladderGedaan)) r.push(`- Sluis: tranche ${b.ladderGedaan}/4 doorgelaten`);
   r.push('');
   r.push('Kansverdelingen, geen voorspellingen. Takumi weegt, het handelt niet.');
   return r.join('\n');
@@ -121,7 +121,7 @@ function pulsHtml(b, delta) {
     (b.etfMarktAfstand === null ? '' : slotRij('Markt (IWDA vs trend)', b.etfMarktAfstand > 0,
       (b.etfMarktAfstand > 0 ? '+' : '') + pct(b.etfMarktAfstand) + '%', Math.abs(b.etfMarktAfstand) * 3.3, b.etfMarktAfstand > 0));
   const ladderRij = Number.isFinite(b.ladderGedaan)
-    ? `<tr><td style="padding:6px 0;font:13px Georgia,serif;color:${KLEUR.inkt}">Tranches uitgevoerd
+    ? `<tr><td style="padding:6px 0;font:13px Georgia,serif;color:${KLEUR.inkt}">Tranches doorgelaten
         <span style="float:right;font:12px 'Courier New',monospace;color:${KLEUR.gedempt}">${b.ladderGedaan} / 4</span></td></tr>` : '';
   return `<!doctype html><html><body style="margin:0;padding:0;background:${KLEUR.bg}">
   <div style="max-width:480px;margin:0 auto;padding:26px 16px">
@@ -131,9 +131,9 @@ function pulsHtml(b, delta) {
       <div style="font:12px Georgia,serif;color:${KLEUR.gedempt}">${d} · afstand tot actie</div>
     </div>
     ${kantel}
-    ${kaart('BTC-envelop', (b.btcPositie ? 'positie' : 'cash') + ' · regime ' + (b.regime || '?'), btcRijen)}
-    ${kaart('ETF-envelop', 'stand ' + (b.etfStand || '?') + ' · fase ' + (b.fase || '?'), etfRijen)}
-    ${kaart('Koopladder', 'wacht op koopseizoen', ladderRij)}
+    ${kaart('BTC-mandaat', (b.btcPositie ? 'positie' : 'cash') + ' · regime ' + (b.regime || '?'), btcRijen)}
+    ${kaart('ETF-mandaat', 'stand ' + (b.etfStand || '?') + ' · fase ' + (b.fase || '?'), etfRijen)}
+    ${kaart('Sluis', 'nieuw geld in doses \u00b7 wacht op koopseizoen', ladderRij)}
     <div style="text-align:center;font:11px Georgia,serif;color:${KLEUR.gedempt};margin-top:6px">
       Kansverdelingen, geen voorspellingen · Takumi weegt, het handelt niet<br>
       <a href="https://takumi-master.com/engine" style="color:${KLEUR.blauw}">engine</a> ·

@@ -44,7 +44,7 @@ dt{color:#6B7075}dd{font-family:'IBM Plex Mono',monospace;text-align:right}
 <div class="wrap">
 <header>
   <h1>Takumi Engine</h1>
-  <p>Automatisch paper traden · twee enveloppen: BTC (cryptoweging) en ETF-blok (macroweging) · de radar weegt, de engine handelt — fictief, binnen twee sloten. Weekrondes: elke maandagochtend.</p>
+  <p>Automatisch paper traden · twee mandaten: BTC (cryptoweging) en ETF-blok (macroweging) · de radar weegt, de engine handelt — fictief, binnen twee sloten. Weekrondes: elke maandagochtend.</p>
 </header>
 
 <h2>Laatste weekronde</h2>
@@ -59,10 +59,10 @@ dt{color:#6B7075}dd{font-family:'IBM Plex Mono',monospace;text-align:right}
 <h2>Logboek — BTC</h2>
 <ul class="log" id="logboek"></ul>
 
-<h2>ETF-envelop — laatste ronde</h2>
+<h2>ETF-mandaat — laatste ronde</h2>
 <div class="kaart" id="kEtfVerslag"><p class="stil">Laden…</p></div>
 
-<h2>ETF-envelop — portfolio</h2>
+<h2>ETF-mandaat — portfolio</h2>
 <div class="kaart"><dl id="etfPortfolio"></dl></div>
 
 <h2>Logboek — ETF</h2>
@@ -122,7 +122,7 @@ fetch('/api/engine').then(r=>r.json()).then(d=>{
     log.appendChild(li);
   }
   if(!(d.logboek||[]).length)log.innerHTML='<li><p class="stil">Nog geen rondes in het logboek.</p></li>';
-  // ---- ETF-envelop ----
+  // ---- ETF-mandaat ----
   const e=d.etf;
   if(e){
     const ev=e.laatsteWeekronde;
@@ -152,7 +152,7 @@ fetch('/api/engine').then(r=>r.json()).then(d=>{
     let rijen=rij('Stand',ep.stand==='IN'?'belegd':'cash')+
       rij('Belegd',eur(ep.belegdEUR))+rij('Cash',eur(ep.cashEUR))+
       rij('Totale waarde',eur(ep.totaalEUR))+
-      rij('Rendement envelop',ep.rendementEnvelop+'%')+
+      rij('Rendement mandaat',ep.rendementEnvelop+'%')+
       rij('Gestart',new Date(ep.gestartOp).toLocaleDateString('nl-NL')+' @ '+eur(ep.startWaarde));
     for(const pos of ep.posities) rijen+=rij(pos.naam,pos.aantal+' × '+eur(pos.prijs));
     $('etfPortfolio').innerHTML=rijen;
