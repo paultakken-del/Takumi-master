@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v28";
+const APP_VERSIE = "v29";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -109,6 +109,40 @@ DEMO.push({ id: 99, name: "Olivier M", prefs: ["LM", "VM", "MM"], keeper: true, 
       nooit twee blokken achter elkaar op de bank zolang dat kan.
    2. Voorkeurspositie: per blok een greedy matching op score
       (1e voorkeur > 2e > 3e), met bonus voor dezelfde positie als vorig blok. */
+/* Optimale speler-positietoewijzing (Hongaars algoritme, minimale kosten).
+   Vervangt de gulzige matching: die dumpte de "overgebleven" speler op wat
+   er nog openstond, ook als een ruil iedereen beter had gemaakt. */
+function optimaleToewijzing(a) {
+  const n = a.length;
+  const INF = 1e9;
+  const u = Array(n + 1).fill(0), v = Array(n + 1).fill(0), p = Array(n + 1).fill(0), way = Array(n + 1).fill(0);
+  for (let i = 1; i <= n; i++) {
+    p[0] = i;
+    let j0 = 0;
+    const minv = Array(n + 1).fill(INF);
+    const used = Array(n + 1).fill(false);
+    do {
+      used[j0] = true;
+      const i0 = p[j0];
+      let delta = INF, j1 = -1;
+      for (let j = 1; j <= n; j++) if (!used[j]) {
+        const cur = a[i0 - 1][j - 1] - u[i0] - v[j];
+        if (cur < minv[j]) { minv[j] = cur; way[j] = j0; }
+        if (minv[j] < delta) { delta = minv[j]; j1 = j; }
+      }
+      for (let j = 0; j <= n; j++) {
+        if (used[j]) { u[p[j]] += delta; v[j] -= delta; }
+        else minv[j] -= delta;
+      }
+      j0 = j1;
+    } while (p[j0] !== 0);
+    do { const j1 = way[j0]; p[j0] = p[j1]; j0 = j1; } while (j0);
+  }
+  const res = Array(n).fill(-1);
+  for (let j = 1; j <= n; j++) if (p[j]) res[p[j] - 1] = j - 1;
+  return res;
+}
+
 function generateSchedule(players, seed, vasteBasis, seizoenTot) {
   const field = players.filter((p) => p.aanwezig && !p.keeper);
   const P = field.length;
@@ -178,23 +212,17 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
   for (let b = 0; b < BLOCKS.length; b++) {
     const benchSet = new Set(benchByBlock[b]);
     const onField = field.filter((p) => !benchSet.has(p.id));
-    const pairs = [];
-    for (const p of onField) {
-      for (const pos of POSITIONS) {
-        const pi = p.prefs.indexOf(pos.code);
-        let score = pi === 0 ? 6 : pi === 1 ? 4 : pi === 2 ? 2 : 0;
-        if (prevAssign[pos.code] === p.id) score += 3; // continuïteit
-        pairs.push({ id: p.id, pos: pos.code, score });
-      }
-    }
-    pairs.sort((a, z) => z.score - a.score);
     const assign = b === 0 && vasteBasis ? { ...vasteBasis } : {};
     const placed = new Set(Object.values(assign));
-    for (const pr of pairs) {
-      if (assign[pr.pos] !== undefined || placed.has(pr.id)) continue;
-      assign[pr.pos] = pr.id;
-      placed.add(pr.id);
-    }
+    const vrijePos = POSITIONS.filter((pos) => assign[pos.code] === undefined);
+    const vrijeSpelers = onField.filter((p) => !placed.has(p.id));
+    const kosten = vrijeSpelers.map((p) => vrijePos.map((pos) => {
+      const pi = p.prefs.indexOf(pos.code);
+      let score = pi === 0 ? 6 : pi === 1 ? 4 : pi === 2 ? 2 : 0;
+      if (prevAssign[pos.code] === p.id) score += p.prefs.includes(pos.code) ? 3 : 1;
+      return 20 - score;
+    }));
+    optimaleToewijzing(kosten).forEach((kol, rij) => { assign[vrijePos[kol].code] = vrijeSpelers[rij].id; });
     blocks.push({ label: BLOCKS[b], assign, bench: benchByBlock[b] });
     prevAssign = assign;
   }
