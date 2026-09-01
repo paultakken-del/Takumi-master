@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v27";
+const APP_VERSIE = "v28";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -132,12 +132,17 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
     // Handmatige basis: blok 1/8 ligt vast, de bankbeurten van de rest van de
     // wedstrijd worden er eerlijk omheen verdeeld (spreiding blijft max 1 blok).
     const vals = Object.values(vasteBasis);
-    if (vals.length !== 10 || new Set(vals).size !== 10 || !vals.every((id) => fieldIds.has(id))) {
-      return { error: "Beginopstelling onvolledig: kies 10 verschillende aanwezige veldspelers (of wis de beginopstelling)." };
+    if (new Set(vals).size !== vals.length || !vals.every((id) => fieldIds.has(id))) {
+      return { error: "Beginopstelling ongeldig: een speler staat dubbel of is afwezig — pas de beginopstelling aan." };
     }
+    // Deels invullen mag: vastgezette posities staan vast, de rest wordt
+    // automatisch aangevuld. De bank van blok 1 komt uit de niet-vastgezette
+    // spelers, in de (seizoensgewogen) rotatievolgorde.
+    const vast = new Set(vals);
     const benchCount = {};
     field.forEach((p) => (benchCount[p.id] = 0));
-    const bench0 = field.filter((p) => !vals.includes(p.id)).map((p) => p.id);
+    const bench0 = [];
+    for (const p of order) if (!vast.has(p.id) && bench0.length < benchPerBlock) bench0.push(p.id);
     bench0.forEach((id) => (benchCount[id] = 1));
     benchByBlock = [bench0];
     let prevBench = new Set(bench0);
@@ -171,12 +176,6 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
   const blocks = [];
   let prevAssign = {};
   for (let b = 0; b < BLOCKS.length; b++) {
-    if (b === 0 && vasteBasis) {
-      const assign = { ...vasteBasis };
-      blocks.push({ label: BLOCKS[0], assign, bench: benchByBlock[0] });
-      prevAssign = assign;
-      continue;
-    }
     const benchSet = new Set(benchByBlock[b]);
     const onField = field.filter((p) => !benchSet.has(p.id));
     const pairs = [];
@@ -189,8 +188,8 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
       }
     }
     pairs.sort((a, z) => z.score - a.score);
-    const assign = {};
-    const placed = new Set();
+    const assign = b === 0 && vasteBasis ? { ...vasteBasis } : {};
+    const placed = new Set(Object.values(assign));
     for (const pr of pairs) {
       if (assign[pr.pos] !== undefined || placed.has(pr.id)) continue;
       assign[pr.pos] = pr.id;
@@ -384,7 +383,7 @@ function HockeyWisselCoach() {
     if (s.kwartMin) setKwartMin(s.kwartMin);
     if (s.result?.blocks) setResult(s.result);
     if (s.seed) setSeed(s.seed);
-    if (s.basis && typeof s.basis === "object") setBasis(s.basis);
+    if (s.basis && typeof s.basis === "object") { stilRef.current = true; setBasis(s.basis); }
     if (Array.isArray(s.matches)) setMatches(s.matches);
     if (s.activeMatchId !== undefined) setActiveMatchId(s.activeMatchId);
     if (s.turf && typeof s.turf === "object") setTurf(s.turf);
@@ -583,6 +582,14 @@ function HockeyWisselCoach() {
       Object.entries(m.stats || {}).forEach(([id, s]) => { t[id] = (t[id] || 0) + (s.b || 0); }));
     return t;
   }, [matches]);
+
+  const stilRef = useRef(false);
+  useEffect(() => {
+    if (stilRef.current) { stilRef.current = false; return; }
+    if (!result?.blocks) return;
+    setResult(generateSchedule(players, seed, actieveBasis(), seizoenTot));
+    setUitvalNote(null);
+  }, [basis]);
 
   const actieveBasis = () => {
     const gekozen = Object.fromEntries(Object.entries(basis).filter(([, v]) => v));
@@ -1067,7 +1074,7 @@ function HockeyWisselCoach() {
           <div style={S.card}>
             <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}><Ico kind="veld" />BEGINOPSTELLING (1/8)</div>
             <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 8 }}>
-              Laat posities op "automatisch" staan of kies zelf wie er start. Bij <b>Genereer schema</b> wordt de rest van de wedstrijd om jouw beginopstelling heen doorgerekend — gelijke speeltijd blijft gelden.
+              Laat posities op "automatisch" staan of kies zelf wie er start — ook een paar posities vastzetten mag. Staat er al een schema, dan rekenen wissels en speeltijd bij elke wijziging direct mee.
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 12px" }}>
               {POSITIONS.map((pos) => (
