@@ -1,0 +1,37 @@
+name: Deploy cron-Worker
+on:
+  push:
+    paths: ["cron-worker/**", ".github/workflows/cron-worker.yml"]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      test:
+        description: "Na deploy een taak proefdraaien (leeg = geen)"
+        type: string
+        default: ""
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy Worker
+        working-directory: cron-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -o pipefail
+          npx wrangler@3.78.12 deploy 2>&1 | tee /tmp/deploy.txt
+          url=$(grep -o 'https://[a-z0-9.-]*workers.dev' /tmp/deploy.txt | head -1)
+          echo "WORKER_URL=$url" >> "$GITHUB_ENV"
+          echo "::error title=worker-url::${url:-geen url gevonden}"
+      - name: Sleutel als Worker-secret
+        working-directory: cron-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          RADAR_KEY: ${{ secrets.RADAR_KEY }}
+        run: echo "$RADAR_KEY" | npx wrangler@3.78.12 secret put RADAR_KEY --name takumi-cron
+      - name: Proefdraaien
+        if: inputs.test != ''
+        run: |
+          code=$(curl -sS -o /tmp/t.json -w "%{http_code}" -X POST "$WORKER_URL" -H "content-type: application/json" -H "x-radar-key: ${{ secrets.RADAR_KEY }}" -d "{\"taak\":\"${{ inputs.test }}\"}")
+          echo "::error title=proef-${{ inputs.test }}::HTTP $code $(cut -c1-600 /tmp/t.json)"

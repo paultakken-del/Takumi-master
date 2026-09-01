@@ -1,0 +1,12 @@
+name = "takumi-cron"
+main = "src/index.js"
+compatibility_date = "2024-09-01"
+
+# Stipte planning, onafhankelijk van GitHub's wachtrij. Tijden in UTC.
+[triggers]
+crons = [
+  "23 3 * * *",              # dagelijks 05:23 NL: meting, klimaat (kwartaal), dagpuls
+  "37 18 * * 0",             # zondag 20:37 NL: weeksignalen macro + crypto
+  "23 1,5,9,13,17,21 * * *", # elke 4 uur: dagwacht (stop-bewaking BTC)
+  "53 5 * * 1",              # maandag 07:53 NL: weekrondes + sluis
+]
