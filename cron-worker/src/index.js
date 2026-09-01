@@ -53,9 +53,9 @@ const TAKEN = {
 
 const CRON_NAAR_TAAK = {
   '23 3 * * *': 'meting',
-  '37 18 * * 0': 'weging',
+  '37 18 * * SUN': 'weging',
   '23 1,5,9,13,17,21 * * *': 'dagwacht',
-  '53 5 * * 1': 'weekronde',
+  '53 5 * * MON': 'weekronde',
 };
 
 export default {
