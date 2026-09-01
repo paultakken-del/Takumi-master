@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v29";
+const APP_VERSIE = "v30";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -561,8 +561,13 @@ function HockeyWisselCoach() {
   const totalSec = blockSec * 8;
   useEffect(() => {
     if (!running) return;
-    const t = setInterval(() => setElapsed((e) => Math.min(totalSec, e + 1)), 1000);
-    return () => clearInterval(t);
+    klokStartRef.current = Date.now();
+    klokBasisRef.current = elapsed;
+    const tik = () => setElapsed(Math.min(totalSec, Math.round(klokBasisRef.current + (Date.now() - klokStartRef.current) / 1000)));
+    const t = setInterval(tik, 500);
+    const zichtbaar = () => { if (!document.hidden) tik(); };
+    document.addEventListener("visibilitychange", zichtbaar);
+    return () => { clearInterval(t); document.removeEventListener("visibilitychange", zichtbaar); };
   }, [running, totalSec]);
   const liveBlock = Math.min(7, Math.floor(elapsed / blockSec));
   const restInBlock = Math.max(0, Math.ceil(blockSec * (liveBlock + 1) - elapsed));
@@ -570,6 +575,8 @@ function HockeyWisselCoach() {
 
   const audioRef = useRef(null);
   const vorigeRestRef = useRef(null);
+  const klokStartRef = useRef(null);
+  const klokBasisRef = useRef(0);
   const piep = (n) => {
     try {
       const ctx = audioRef.current;
@@ -586,6 +593,8 @@ function HockeyWisselCoach() {
   };
   const springNaarKwart = (q) => {
     vorigeRestRef.current = null;
+    klokBasisRef.current = (q - 1) * blockSec * 2;
+    klokStartRef.current = Date.now();
     setElapsed((q - 1) * blockSec * 2);
   };
 
@@ -1309,7 +1318,7 @@ function HockeyWisselCoach() {
                   }} style={{ ...S.btn, background: running ? C.bib : "#fff", color: running ? C.bibInk : C.black, minWidth: 120 }}>
                     {running ? <><Ico kind="pauze" />Pauze</> : elapsed > 0 ? <><Ico kind="speel" />Hervat</> : <><Ico kind="speel" />Start</>}
                   </button>
-                  <button onClick={() => { setRunning(false); setElapsed(0); }} style={{ ...S.ghost, borderColor: C.chalk, color: C.chalk }}><Ico kind="ververs" />Reset</button>
+                  <button onClick={() => { setRunning(false); klokBasisRef.current = 0; klokStartRef.current = null; setElapsed(0); }} style={{ ...S.ghost, borderColor: C.chalk, color: C.chalk }}><Ico kind="ververs" />Reset</button>
                 </div>
                 <div style={{ fontSize: 11.5, opacity: 0.7, marginTop: 8 }}>Pauzeer bij kwartrust — de klok telt alleen speeltijd. Piep bij 1 minuut, op het wisselmoment en bij het eindsignaal. Tik een kwart in de cirkel om de klok daarnaartoe te zetten.</div>
               </div>
