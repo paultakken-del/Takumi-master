@@ -58,7 +58,7 @@ export async function onRequestPost({ request, env, params }){
   if (!roster.includes(speler) || posities.length === 0) return json({ error: 'ongeldige inzending' }, 400);
   const sleutel = `wisselcoach:inzend:${code}`;
   const inz = JSON.parse((await env.TAKUMI_USERS.get(sleutel)) || '{}');
-  inz[speler] = posities;
+  inz[speler] = { posities, tijd: Date.now() };
   if (Object.keys(inz).length > 40) return json({ error: 'te veel inzendingen' }, 429);
   await env.TAKUMI_USERS.put(sleutel, JSON.stringify(inz));
   return json({ ok: true });

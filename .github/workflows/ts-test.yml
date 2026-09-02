@@ -1,0 +1,25 @@
+name: ts-test
+on: workflow_dispatch
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::add-mask::2026"
+          node -e '
+          (async () => {
+            const basis = "https://takumi-master.com/api/voorkeur/jo16-5";
+            const info = await (await fetch(basis)).json();
+            if (!(info.spelers || []).length) { console.log("RESULTAAT: lege spelerslijst, test overgeslagen"); return; }
+            const naam = info.spelers[info.spelers.length - 1];
+            const voor = Date.now();
+            const p = await fetch(basis, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ speler: naam, posities: ["MM","LM"] }) });
+            const lees = await (await fetch(basis + "?pin=" + process.env.WC_PIN + "&inzendingen=1")).json();
+            const inz = lees.inzendingen[naam];
+            const tijdOk = inz && !Array.isArray(inz) && typeof inz.tijd === "number" && inz.tijd >= voor - 5000 && inz.tijd <= Date.now() + 5000;
+            console.log("RESULTAAT:", p.status, "| tijdstip aanwezig en actueel:", tijdOk, "| posities:", inz && (inz.posities || inz).join(","));
+            if (!p.ok || !tijdOk) process.exit(1);
+          })();
+          '
+        env:
+          WC_PIN: "2026"

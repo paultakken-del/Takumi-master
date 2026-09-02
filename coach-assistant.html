@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v30";
+const APP_VERSIE = "v31";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -831,9 +831,16 @@ function HockeyWisselCoach() {
     setInzBezig(false);
   };
 
+  const inzPosities = (v) => (Array.isArray(v) ? v : v?.posities || []);
+  const inzTijd = (v) => {
+    if (Array.isArray(v) || !v?.tijd) return null;
+    const d = new Date(v.tijd);
+    return d.toLocaleString("nl-NL", { weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
+
   const neemInzendingenOver = () => {
     if (!inzendingen) return;
-    pasVoorkeurenToe(Object.entries(inzendingen).map(([speler, posities]) => ({ speler, posities })));
+    pasVoorkeurenToe(Object.entries(inzendingen).map(([speler, v]) => ({ speler, posities: inzPosities(v) })));
     setSaveMsg("Voorkeuren overgenomen ✓ — controleer de dropdowns en druk op Opslaan");
     setTimeout(() => setSaveMsg(""), 4500);
   };
@@ -1061,9 +1068,10 @@ function HockeyWisselCoach() {
             {inzendingen && (
               <div style={{ fontSize: 13.5, marginTop: 10 }}>
                 {Object.keys(inzendingen).length === 0 && <div style={{ color: C.inkSoft }}>Nog geen inzendingen binnen.</div>}
-                {Object.entries(inzendingen).map(([naam, pos]) => (
+                {Object.entries(inzendingen).map(([naam, v]) => (
                   <div key={naam} style={{ padding: "2px 0" }}>
-                    <b>{naam}</b> <span style={{ color: C.inkSoft }}>→ {pos.map((c) => POS_BY_CODE[c]?.name || c).join(", ")}</span>
+                    <b>{naam}</b> <span style={{ color: C.inkSoft }}>→ {inzPosities(v).map((c) => POS_BY_CODE[c]?.name || c).join(", ")}</span>
+                    {inzTijd(v) && <span style={{ color: C.inkSoft, fontSize: 12 }}> · {inzTijd(v)}</span>}
                   </div>
                 ))}
                 {(() => {
