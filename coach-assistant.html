@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v32";
+const APP_VERSIE = "v33";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -90,6 +90,7 @@ const POSITIONS = [
   { code: "SP", name: "Spits", x: 50, y: 18 },
   { code: "RB", name: "Rechtsbuiten", x: 82, y: 24 },
 ];
+const LIJN_VAN = { LM: "achter", VM: "achter", LA: "achter", RA: "achter", LH: "midden", MM: "midden", RH: "midden", LB: "voor", SP: "voor", RB: "voor" };
 const POS_BY_CODE = Object.fromEntries(POSITIONS.map((p) => [p.code, p]));
 const BLOCKS = ["1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8", "8/8"];
 
@@ -220,12 +221,16 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
     const placed = new Set(Object.values(assign));
     const vrijePos = POSITIONS.filter((pos) => assign[pos.code] === undefined);
     const vrijeSpelers = onField.filter((p) => !placed.has(p.id));
-    const kosten = vrijeSpelers.map((p) => vrijePos.map((pos) => {
-      const pi = p.prefs.indexOf(pos.code);
-      let score = pi === 0 ? 6 : pi === 1 ? 4 : pi === 2 ? 2 : 0;
-      if (prevAssign[pos.code] === p.id) score += p.prefs.includes(pos.code) ? 3 : 1;
-      return 20 - score;
-    }));
+    const kosten = vrijeSpelers.map((p) => {
+      const lijnen = new Set(p.prefs.map((c) => LIJN_VAN[c]));
+      return vrijePos.map((pos) => {
+        const pi = p.prefs.indexOf(pos.code);
+        let score = pi === 0 ? 6 : pi === 1 ? 4 : pi === 2 ? 2 : 0;
+        if (!lijnen.has(LIJN_VAN[pos.code])) score -= 100; // lijn niet aangegeven: alleen bij overmacht
+        if (prevAssign[pos.code] === p.id) score += p.prefs.includes(pos.code) ? 3 : 1;
+        return 120 - score;
+      });
+    });
     optimaleToewijzing(kosten).forEach((kol, rij) => { assign[vrijePos[kol].code] = vrijeSpelers[rij].id; });
     blocks.push({ label: BLOCKS[b], assign, bench: benchByBlock[b] });
     prevAssign = assign;
