@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v34";
+const APP_VERSIE = "v35";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -148,11 +148,17 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
   const field = players.filter((p) => p.aanwezig && !p.keeper);
   const P = field.length;
   if (P < 10) return { error: `Te weinig veldspelers: ${P} aanwezig, 10 nodig.` };
-
   const benchPerBlock = P - 10;
   const fieldIds = new Set(field.map((p) => p.id));
 
-  // Per-seed geroteerde volgorde voor variatie bij gelijke gevallen
+  if (vasteBasis) {
+    const vals = Object.values(vasteBasis);
+    if (new Set(vals).size !== vals.length || !vals.every((id) => fieldIds.has(id))) {
+      return { error: "Beginopstelling ongeldig: een speler staat dubbel of is afwezig \u2014 pas de beginopstelling aan." };
+    }
+  }
+
+  // Per-seed geroteerde volgorde, stabiel gesorteerd op seizoensblokken
   const order = [...field];
   let s = seed;
   for (let i = order.length - 1; i > 0; i--) {
@@ -161,78 +167,121 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
     [order[i], order[j]] = [order[j], order[i]];
   }
   order.sort((a, z) => (seizoenTot?.[z.id] || 0) - (seizoenTot?.[a.id] || 0));
+  const rank = {};
+  order.forEach((p, i) => (rank[p.id] = i));
+  const byId = {};
+  field.forEach((p) => (byId[p.id] = p));
+  const lijnenVan = (p) => new Set(p.prefs.map((c) => LIJN_VAN[c]));
 
-  let benchByBlock;
-  if (vasteBasis) {
-    // Handmatige basis: blok 1/8 ligt vast, de bankbeurten van de rest van de
-    // wedstrijd worden er eerlijk omheen verdeeld (spreiding blijft max 1 blok).
-    const vals = Object.values(vasteBasis);
-    if (new Set(vals).size !== vals.length || !vals.every((id) => fieldIds.has(id))) {
-      return { error: "Beginopstelling ongeldig: een speler staat dubbel of is afwezig — pas de beginopstelling aan." };
+  const benchCount = {};
+  field.forEach((p) => (benchCount[p.id] = 0));
+  let prevBench = new Set(), prev2Bench = new Set(), prevAssign = {};
+  const blocks = [];
+
+  // Combinaties in prioriteitsvolgorde (begrensd)
+  const combosEerste = function* (arr, k) {
+    if (k === 0) { yield []; return; }
+    if (k > arr.length) return;
+    const idx = [...Array(k).keys()];
+    let teller = 0;
+    while (teller < 400) {
+      yield idx.map((i) => arr[i]);
+      teller++;
+      let i = k - 1;
+      while (i >= 0 && idx[i] === arr.length - k + i) i--;
+      if (i < 0) return;
+      idx[i]++;
+      for (let j = i + 1; j < k; j++) idx[j] = idx[j - 1] + 1;
     }
-    // Deels invullen mag: vastgezette posities staan vast, de rest wordt
-    // automatisch aangevuld. De bank van blok 1 komt uit de niet-vastgezette
-    // spelers, in de (seizoensgewogen) rotatievolgorde.
-    const vast = new Set(vals);
-    const benchCount = {};
-    field.forEach((p) => (benchCount[p.id] = 0));
-    const bench0 = [];
-    for (const p of order) if (!vast.has(p.id) && bench0.length < benchPerBlock) bench0.push(p.id);
-    bench0.forEach((id) => (benchCount[id] = 1));
-    benchByBlock = [bench0];
-    let prevBench = new Set(bench0);
-    let prev2Bench = new Set();
-    const rank = {};
-    order.forEach((p, i) => (rank[p.id] = i));
-    for (let b = 1; b < 8; b++) {
-      const sorted = field.map((p) => p.id).sort((a, z) => {
-        if (benchCount[a] !== benchCount[z]) return benchCount[a] - benchCount[z];
-        const pa = prevBench.has(a) ? 1 : 0, pz = prevBench.has(z) ? 1 : 0;
-        if (pa !== pz) return pa - pz; // niet 2x achtereen bank
-        const qa = prev2Bench.has(a) ? 1 : 0, qz = prev2Bench.has(z) ? 1 : 0;
-        if (qa !== qz) return qa - qz; // geen jojo: minimaal 2 veldblokken tussen bankbeurten
-        const sa = seizoenTot?.[a] || 0, sz = seizoenTot?.[z] || 0;
-        if (sa !== sz) return sz - sa;
-        return ((rank[a] + b * 3) % P) - ((rank[z] + b * 3) % P);
-      });
-      const bench = sorted.slice(0, benchPerBlock);
-      bench.forEach((id) => benchCount[id]++);
-      benchByBlock.push(bench);
-      prev2Bench = prevBench;
-      prevBench = new Set(bench);
-    }
-  } else {
-    benchByBlock = BLOCKS.map(() => []);
-    let cursor = 0;
-    for (let b = 0; b < BLOCKS.length; b++) {
-      for (let k = 0; k < benchPerBlock; k++) {
-        benchByBlock[b].push(order[cursor % P].id);
-        cursor++;
+  };
+
+  /* Vooruitkijken bij de bankkeuze: kunnen de inkomers (bank van vorig blok)
+     de plekken die deze bankkeuze vrijmaakt bezetten binnen hun eigen linies? */
+  const lijnHaalbaar = (benchSet) => {
+    const inkomers = [...prevBench].filter((id) => !benchSet.has(id));
+    const vrijgekomen = [...benchSet]
+      .filter((id) => !prevBench.has(id))
+      .map((id) => Object.keys(prevAssign).find((c) => prevAssign[c] === id))
+      .filter(Boolean);
+    if (inkomers.length === 0) return true;
+    if (inkomers.length !== vrijgekomen.length) return false;
+    const kosten = inkomers.map((id) => vrijgekomen.map((pos) => (lijnenVan(byId[id]).has(LIJN_VAN[pos]) ? 0 : 1)));
+    const toe = optimaleToewijzing(kosten);
+    return toe.reduce((som, kol, rij) => som + kosten[rij][kol], 0) === 0;
+  };
+
+  for (let b = 0; b < 8; b++) {
+    let bench;
+    if (b === 0) {
+      if (vasteBasis) {
+        const vast = new Set(Object.values(vasteBasis));
+        bench = [];
+        for (const p of order) if (!vast.has(p.id) && bench.length < benchPerBlock) bench.push(p.id);
+      } else {
+        bench = order.slice(0, benchPerBlock).map((p) => p.id);
+      }
+    } else {
+      const cmpK = (a, z) => (a[0] - z[0]) || (a[1] - z[1]) || (a[2] - z[2]);
+      const zoekBank = (metJojo) => {
+        const sleutel = (id) => [benchCount[id], prevBench.has(id) ? 1 : 0, metJojo && prev2Bench.has(id) ? 1 : 0];
+        const sorted = field.map((p) => p.id).sort((a, z) => {
+          const d = cmpK(sleutel(a), sleutel(z));
+          if (d) return d;
+          const sa = seizoenTot?.[a] || 0, sz = seizoenTot?.[z] || 0;
+          if (sa !== sz) return sz - sa;
+          return ((rank[a] + b * 3) % P) - ((rank[z] + b * 3) % P);
+        });
+        // Harde regels bepalen wie sowieso moet zitten; binnen de laatste
+        // gelijkwaardige groep zoeken we de combinatie die qua linies past.
+        const grens = sleutel(sorted[benchPerBlock - 1]);
+        const verplicht = sorted.filter((id) => cmpK(sleutel(id), grens) < 0);
+        const groep = sorted.filter((id) => cmpK(sleutel(id), grens) === 0);
+        const kiesN = benchPerBlock - verplicht.length;
+        for (const keuze of combosEerste(groep, kiesN)) {
+          const kandidaat = new Set([...verplicht, ...keuze]);
+          if (lijnHaalbaar(kandidaat)) return [...verplicht, ...keuze];
+        }
+        return null;
+      };
+      // Eerst met alle regels; lukt het qua linies niet, dan weegt de juiste
+      // linie zwaarder dan de jojo-regel voor dit ene blok.
+      bench = zoekBank(true) || zoekBank(false);
+      if (!bench) {
+        const sleutel = (id) => [benchCount[id], prevBench.has(id) ? 1 : 0, prev2Bench.has(id) ? 1 : 0];
+        const sorted = field.map((p) => p.id).sort((a, z) => cmpK(sleutel(a), sleutel(z)) || (((rank[a] + b * 3) % P) - ((rank[z] + b * 3) % P)));
+        bench = sorted.slice(0, benchPerBlock);
       }
     }
-  }
-
-  const blocks = [];
-  let prevAssign = {};
-  for (let b = 0; b < BLOCKS.length; b++) {
-    const benchSet = new Set(benchByBlock[b]);
+    bench.forEach((id) => benchCount[id]++);
+    const benchSet = new Set(bench);
     const onField = field.filter((p) => !benchSet.has(p.id));
+
     const assign = b === 0 && vasteBasis ? { ...vasteBasis } : {};
+    if (b > 0) {
+      // Positie wisselen kan alleen via een wissel: wie doorspeelt blijft staan.
+      for (const [pos, id] of Object.entries(prevAssign)) {
+        if (!benchSet.has(id)) assign[pos] = id;
+      }
+    }
     const placed = new Set(Object.values(assign));
     const vrijePos = POSITIONS.filter((pos) => assign[pos.code] === undefined);
     const vrijeSpelers = onField.filter((p) => !placed.has(p.id));
-    const kosten = vrijeSpelers.map((p) => {
-      const lijnen = new Set(p.prefs.map((c) => LIJN_VAN[c]));
-      return vrijePos.map((pos) => {
-        const pi = p.prefs.indexOf(pos.code);
-        let score = pi === 0 ? 6 : pi === 1 ? 4 : pi === 2 ? 2 : 0;
-        if (!lijnen.has(LIJN_VAN[pos.code])) score -= 100; // lijn niet aangegeven: alleen bij overmacht
-        if (prevAssign[pos.code] === p.id) score += p.prefs.includes(pos.code) ? 3 : 1;
-        return 120 - score;
+    if (vrijeSpelers.length) {
+      const kosten = vrijeSpelers.map((p) => {
+        const lijnen = lijnenVan(p);
+        return vrijePos.map((pos) => {
+          const pi = p.prefs.indexOf(pos.code);
+          let score = pi === 0 ? 6 : pi === 1 ? 4 : pi === 2 ? 2 : 0;
+          if (!lijnen.has(LIJN_VAN[pos.code])) score -= 100; // lijn niet aangegeven: alleen bij overmacht
+          if (prevAssign[pos.code] === p.id) score += p.prefs.includes(pos.code) ? 3 : 1;
+          return 120 - score;
+        });
       });
-    });
-    optimaleToewijzing(kosten).forEach((kol, rij) => { assign[vrijePos[kol].code] = vrijeSpelers[rij].id; });
-    blocks.push({ label: BLOCKS[b], assign, bench: benchByBlock[b] });
+      optimaleToewijzing(kosten).forEach((kol, rij) => { assign[vrijePos[kol].code] = vrijeSpelers[rij].id; });
+    }
+    blocks.push({ label: BLOCKS[b], assign, bench });
+    prev2Bench = prevBench;
+    prevBench = benchSet;
     prevAssign = assign;
   }
 
@@ -241,13 +290,11 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
   for (const bl of blocks) {
     for (const [pos, id] of Object.entries(bl.assign)) {
       stats[id].played++;
-      const pl = field.find((f) => f.id === id);
-      if (pl.prefs.includes(pos)) stats[id].prefHits++;
+      if (byId[id].prefs.includes(pos)) stats[id].prefHits++;
     }
   }
   return { blocks, stats, benchPerBlock };
 }
-
 function subsBetween(prev, curr, playersById) {
   // Sluitende koppeling: elke inkomer krijgt precies één unieke uitgaande
   // speler (liefst degene die op dezelfde positie stond), en uitgaande
