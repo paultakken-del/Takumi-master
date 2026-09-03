@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v31";
+const APP_VERSIE = "v32";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -180,13 +180,16 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
     bench0.forEach((id) => (benchCount[id] = 1));
     benchByBlock = [bench0];
     let prevBench = new Set(bench0);
+    let prev2Bench = new Set();
     const rank = {};
     order.forEach((p, i) => (rank[p.id] = i));
     for (let b = 1; b < 8; b++) {
       const sorted = field.map((p) => p.id).sort((a, z) => {
         if (benchCount[a] !== benchCount[z]) return benchCount[a] - benchCount[z];
         const pa = prevBench.has(a) ? 1 : 0, pz = prevBench.has(z) ? 1 : 0;
-        if (pa !== pz) return pa - pz;
+        if (pa !== pz) return pa - pz; // niet 2x achtereen bank
+        const qa = prev2Bench.has(a) ? 1 : 0, qz = prev2Bench.has(z) ? 1 : 0;
+        if (qa !== qz) return qa - qz; // geen jojo: minimaal 2 veldblokken tussen bankbeurten
         const sa = seizoenTot?.[a] || 0, sz = seizoenTot?.[z] || 0;
         if (sa !== sz) return sz - sa;
         return ((rank[a] + b * 3) % P) - ((rank[z] + b * 3) % P);
@@ -194,6 +197,7 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
       const bench = sorted.slice(0, benchPerBlock);
       bench.forEach((id) => benchCount[id]++);
       benchByBlock.push(bench);
+      prev2Bench = prevBench;
       prevBench = new Set(bench);
     }
   } else {
