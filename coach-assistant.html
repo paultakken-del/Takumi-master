@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v35";
+const APP_VERSIE = "v36";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -257,24 +257,26 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
     const onField = field.filter((p) => !benchSet.has(p.id));
 
     const assign = b === 0 && vasteBasis ? { ...vasteBasis } : {};
-    if (b > 0) {
-      // Positie wisselen kan alleen via een wissel: wie doorspeelt blijft staan.
-      for (const [pos, id] of Object.entries(prevAssign)) {
-        if (!benchSet.has(id)) assign[pos] = id;
-      }
-    }
     const placed = new Set(Object.values(assign));
     const vrijePos = POSITIONS.filter((pos) => assign[pos.code] === undefined);
     const vrijeSpelers = onField.filter((p) => !placed.has(p.id));
     if (vrijeSpelers.length) {
+      /* Kostenhiërarchie: lijnfout (1000) > doorschuif van een blijver (30)
+         > voorkeur (max 9). Een blijver staat gratis op zijn eigen plek en
+         schuift dus alleen door als dat ergens een lijnfout voorkomt —
+         en dat is dan zichtbaar op de wisselkaart. */
       const kosten = vrijeSpelers.map((p) => {
         const lijnen = lijnenVan(p);
+        const eigenPos = b > 0 ? Object.keys(prevAssign).find((c) => prevAssign[c] === p.id) : undefined;
         return vrijePos.map((pos) => {
           const pi = p.prefs.indexOf(pos.code);
-          let score = pi === 0 ? 6 : pi === 1 ? 4 : pi === 2 ? 2 : 0;
-          if (!lijnen.has(LIJN_VAN[pos.code])) score -= 100; // lijn niet aangegeven: alleen bij overmacht
-          if (prevAssign[pos.code] === p.id) score += p.prefs.includes(pos.code) ? 3 : 1;
-          return 120 - score;
+          const pref = pi === 0 ? 6 : pi === 1 ? 4 : pi === 2 ? 2 : 0;
+          const lijnFout = lijnen.has(LIJN_VAN[pos.code]) ? 0 : 1000;
+          if (eigenPos !== undefined) {
+            if (pos.code === eigenPos) return 0;
+            return 10 * (30 + lijnFout) + (9 - pref);
+          }
+          return 10 * lijnFout + (9 - pref) * 10;
         });
       });
       optimaleToewijzing(kosten).forEach((kol, rij) => { assign[vrijePos[kol].code] = vrijeSpelers[rij].id; });
@@ -313,6 +315,13 @@ function subsBetween(prev, curr, playersById) {
     return { inId: id, pos, voorId: voor ? voor.id : undefined };
   });
   outs.filter((o) => !used.has(o.id)).forEach((o) => subs.push({ voorId: o.id, pos: o.pos }));
+  // Doorschuivers: op het veld gebleven maar (om een lijnfout te voorkomen) van positie gewisseld
+  const prevPosById = {};
+  Object.entries(prev.assign).forEach(([pos, id]) => (prevPosById[id] = pos));
+  for (const [pos, id] of Object.entries(curr.assign)) {
+    const was = prevPosById[id];
+    if (was !== undefined && was !== pos) subs.push({ schuifId: id, van: was, naar: pos });
+  }
   return subs;
 }
 
@@ -1265,6 +1274,9 @@ function HockeyWisselCoach() {
                     </div>
                     {subs.map((sub, i) => (
                       <div key={i} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 15, color: C.bibInk, padding: "3px 0", flexWrap: "wrap" }}>
+                        {sub.schuifId !== undefined && (
+                          <span style={{ fontWeight: 800, color: "#fff" }}>⇄ {playersById[sub.schuifId]?.name}: {POS_BY_CODE[sub.van].name} → {POS_BY_CODE[sub.naar].name}</span>
+                        )}
                         {sub.inId !== undefined && <>
                           <span style={{ fontWeight: 800, color: "#fff" }}>▲ {playersById[sub.inId]?.name}</span>
                           <span>op {POS_BY_CODE[sub.pos].name}</span>
@@ -1518,6 +1530,9 @@ function HockeyWisselCoach() {
                     {subs.length === 0 && <div style={{ fontSize: 14, color: C.inkSoft }}>Geen wissels bij het volgende blok.</div>}
                     {subs.map((sub, i) => (
                       <div key={i} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 16, padding: "3px 0", color: bijna ? C.bibInk : C.ink, flexWrap: "wrap" }}>
+                        {sub.schuifId !== undefined && (
+                          <span style={{ fontWeight: 800, color: bijna ? "#fff" : C.ink }}>⇄ {playersById[sub.schuifId]?.name}: {POS_BY_CODE[sub.van].name} → {POS_BY_CODE[sub.naar].name}</span>
+                        )}
                         {sub.inId !== undefined && <>
                           <span style={{ fontWeight: 800, color: bijna ? "#fff" : C.in }}>▲ {playersById[sub.inId]?.name}</span>
                           <span>op {POS_BY_CODE[sub.pos].name}</span>
@@ -1741,6 +1756,7 @@ function HockeyWisselCoach() {
                 ) : (
                   subs.map((sub, j) => (
                     <div key={j}>
+                      {sub.schuifId !== undefined && <>⇄ {playersById[sub.schuifId]?.name}: {POS_BY_CODE[sub.van].name} → {POS_BY_CODE[sub.naar].name}</>}
                       {sub.inId !== undefined && <>▲ IN: {playersById[sub.inId]?.name} op {POS_BY_CODE[sub.pos].name} </>}
                       {sub.voorId !== undefined && <>— ▼ UIT: {playersById[sub.voorId]?.name}{sub.inId === undefined ? " (niet vervangen)" : ""}</>}
                     </div>
