@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v33";
+const APP_VERSIE = "v34";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -270,7 +270,7 @@ function subsBetween(prev, curr, playersById) {
 }
 
 /* ── Miniveld ── */
-function Pitch({ block, playersById, keeper }) {
+function Pitch({ block, playersById, keeper, wisselIn }) {
   const w = 300, h = 380;
   return (
     <svg viewBox={`0 0 ${w} ${h}`} style={{ width: "100%", borderRadius: 14, display: "block" }} role="img" aria-label={`Opstelling ${block.label}`}>
@@ -297,9 +297,17 @@ function Pitch({ block, playersById, keeper }) {
         const pl = playersById[id];
         const cx = (pos.x / 100) * (w - 40) + 20;
         const cy = (pos.y / 100) * (h - 60) + 20;
+        const nieuw = wisselIn && wisselIn.has(id);
         return (
           <g key={pos.code}>
+            {nieuw && <circle cx={cx} cy={cy} r="21.5" fill="none" stroke={C.bib} strokeWidth="2.5" />}
             <circle cx={cx} cy={cy} r="17" fill={C.chalk} stroke={C.pitchDark} strokeWidth="1.5" />
+            {nieuw && (
+              <g>
+                <circle cx={cx + 15} cy={cy - 15} r="7.5" fill={C.bib} />
+                <path d={`M ${cx + 15} ${cy - 19} l 4.2 6.8 h -8.4 z`} fill="#fff" />
+              </g>
+            )}
             <text x={cx} y={cy - 2} textAnchor="middle" fontSize="9" fontWeight="800" fill={C.ink}>{pos.code}</text>
             <text x={cx} y={cy + 9} textAnchor="middle" fontSize="8.5" fill={C.inkSoft}>
               {pl ? pl.name.slice(0, 7) : "—"}
@@ -1224,7 +1232,10 @@ function HockeyWisselCoach() {
               })()}
 
               <div style={{ position: "relative" }}>
-                <Pitch block={result.blocks[openBlock]} playersById={playersById} keeper={keeper} />
+                <Pitch block={result.blocks[openBlock]} playersById={playersById} keeper={keeper}
+                  wisselIn={openBlock > 0
+                    ? new Set(subsBetween(result.blocks[openBlock - 1], result.blocks[openBlock], playersById).filter((s) => s.inId !== undefined).map((s) => s.inId))
+                    : new Set()} />
                 <canvas ref={canvasKlaar}
                   onPointerDown={penStart} onPointerMove={penBeweeg}
                   onPointerUp={penStop} onPointerLeave={penStop} onPointerCancel={penStop}
