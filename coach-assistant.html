@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v36";
+const APP_VERSIE = "v37";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -176,6 +176,7 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
   const benchCount = {};
   field.forEach((p) => (benchCount[p.id] = 0));
   let prevBench = new Set(), prev2Bench = new Set(), prevAssign = {};
+  const thuisPos = {}; // positie uit de beginopstelling (blok 1/8) per speler
   const blocks = [];
 
   // Combinaties in prioriteitsvolgorde (begrensd)
@@ -197,6 +198,18 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
 
   /* Vooruitkijken bij de bankkeuze: kunnen de inkomers (bank van vorig blok)
      de plekken die deze bankkeuze vrijmaakt bezetten binnen hun eigen linies? */
+  const thuisWinst = (benchSet) => {
+    let winst = 0;
+    for (const inId of prevBench) {
+      if (benchSet.has(inId)) continue;
+      const thuisplek = thuisPos[inId];
+      if (!thuisplek) continue;
+      const bezetter = prevAssign[thuisplek];
+      if (bezetter !== undefined && benchSet.has(bezetter)) winst++;
+    }
+    return winst;
+  };
+
   const lijnHaalbaar = (benchSet) => {
     const inkomers = [...prevBench].filter((id) => !benchSet.has(id));
     const vrijgekomen = [...benchSet]
@@ -237,11 +250,14 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
         const verplicht = sorted.filter((id) => cmpK(sleutel(id), grens) < 0);
         const groep = sorted.filter((id) => cmpK(sleutel(id), grens) === 0);
         const kiesN = benchPerBlock - verplicht.length;
+        let beste = null, besteWinst = -1;
         for (const keuze of combosEerste(groep, kiesN)) {
           const kandidaat = new Set([...verplicht, ...keuze]);
-          if (lijnHaalbaar(kandidaat)) return [...verplicht, ...keuze];
+          if (!lijnHaalbaar(kandidaat)) continue;
+          const winst = thuisWinst(kandidaat);
+          if (winst > besteWinst) { besteWinst = winst; beste = [...verplicht, ...keuze]; }
         }
-        return null;
+        return beste;
       };
       // Eerst met alle regels; lukt het qua linies niet, dan weegt de juiste
       // linie zwaarder dan de jojo-regel voor dit ene blok.
@@ -276,11 +292,19 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
             if (pos.code === eigenPos) return 0;
             return 10 * (30 + lijnFout) + (9 - pref);
           }
-          return 10 * lijnFout + (9 - pref) * 10;
+          // Inkomer: voorkeur (zwaarst) > eigen beginpositie > lijn van de hoogste voorkeur
+          const prefW = pi === 0 ? 18 : pi === 1 ? 12 : pi === 2 ? 6 : 0;
+          const lijnW = pref > 0 ? 0
+            : LIJN_VAN[p.prefs[0]] === LIJN_VAN[pos.code] ? 3
+            : LIJN_VAN[p.prefs[1]] === LIJN_VAN[pos.code] ? 2
+            : LIJN_VAN[p.prefs[2]] === LIJN_VAN[pos.code] ? 1 : 0;
+          const thuis = thuisPos[p.id] === pos.code ? 5 : 0;
+          return 10 * lijnFout + (24 - prefW - lijnW - thuis) * 10;
         });
       });
       optimaleToewijzing(kosten).forEach((kol, rij) => { assign[vrijePos[kol].code] = vrijeSpelers[rij].id; });
     }
+    if (b === 0) Object.entries(assign).forEach(([pos, id]) => { thuisPos[id] = pos; });
     blocks.push({ label: BLOCKS[b], assign, bench });
     prev2Bench = prevBench;
     prevBench = benchSet;
