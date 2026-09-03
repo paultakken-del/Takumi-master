@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v37";
+const APP_VERSIE = "v38";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -350,7 +350,7 @@ function subsBetween(prev, curr, playersById) {
 }
 
 /* ── Miniveld ── */
-function Pitch({ block, playersById, keeper, wisselIn }) {
+function Pitch({ block, playersById, keeper, wisselIn, onSpeler }) {
   const w = 300, h = 380;
   return (
     <svg viewBox={`0 0 ${w} ${h}`} style={{ width: "100%", borderRadius: 14, display: "block" }} role="img" aria-label={`Opstelling ${block.label}`}>
@@ -379,7 +379,10 @@ function Pitch({ block, playersById, keeper, wisselIn }) {
         const cy = (pos.y / 100) * (h - 60) + 20;
         const nieuw = wisselIn && wisselIn.has(id);
         return (
-          <g key={pos.code}>
+          <g key={pos.code} onClick={onSpeler && pl ? () => onSpeler(id) : undefined}
+            style={onSpeler ? { cursor: "pointer" } : undefined}
+            role={onSpeler && pl ? "button" : undefined}
+            aria-label={onSpeler && pl ? `Nieuwe positie voor ${pl.name}` : undefined}>
             {nieuw && <circle cx={cx} cy={cy} r="21.5" fill="none" stroke={C.bib} strokeWidth="2.5" />}
             <circle cx={cx} cy={cy} r="17" fill={C.chalk} stroke={C.pitchDark} strokeWidth="1.5" />
             {nieuw && (
@@ -830,6 +833,52 @@ function HockeyWisselCoach() {
     }));
     setResult({ ...result, blocks, stats });
     setUitvalNote({ name: playersById[playerId]?.name, from: BLOCKS[fromBlock], issues: [], terug: true });
+  };
+
+  const herplaatsRef = useRef({});
+  const herplaatsSpeler = (spelerId) => {
+    if (!result?.blocks) return;
+    const bl = result.blocks[openBlock];
+    const posP = Object.keys(bl.assign).find((c) => bl.assign[c] === spelerId);
+    if (!posP) return;
+    const p = playersById[spelerId];
+    const ruilScore = (pl, code) => {
+      const pi = pl.prefs.indexOf(code);
+      const prefW = pi === 0 ? 18 : pi === 1 ? 12 : pi === 2 ? 6 : 0;
+      const lijnen = new Set(pl.prefs.map((c2) => LIJN_VAN[c2]));
+      return (lijnen.has(LIJN_VAN[code]) ? 0 : -1000) + prefW;
+    };
+    const lijnenP = new Set(p.prefs.map((c2) => LIJN_VAN[c2]));
+    const kandidaten = Object.entries(bl.assign)
+      .filter(([, qId]) => qId !== spelerId)
+      .map(([posQ, qId]) => ({
+        posQ, qId,
+        winst: ruilScore(p, posQ) + ruilScore(playersById[qId], posP) - ruilScore(p, posP) - ruilScore(playersById[qId], posQ),
+        geldig: lijnenP.has(LIJN_VAN[posQ]) && new Set(playersById[qId].prefs.map((c2) => LIJN_VAN[c2])).has(LIJN_VAN[posP]),
+      }))
+      .sort((a, z) => z.winst - a.winst);
+    const lijst = kandidaten.filter((k) => k.geldig);
+    if (!lijst.length) {
+      setSaveMsg(`Geen ruil mogelijk binnen de lijnen voor ${p.name}`);
+      setTimeout(() => setSaveMsg(""), 3500);
+      return;
+    }
+    const sleutel = `${openBlock}:${spelerId}`;
+    const idx = (herplaatsRef.current[sleutel] ?? -1) + 1;
+    herplaatsRef.current[sleutel] = idx;
+    const keuze = lijst[idx % lijst.length];
+    // Ruil doorvoeren vanaf dit blok, zolang beiden nog op deze posities staan
+    const blocks = result.blocks.map((b2, i) => {
+      if (i < openBlock) return b2;
+      if (b2.assign[posP] !== spelerId || b2.assign[keuze.posQ] !== keuze.qId) return b2;
+      const assign = { ...b2.assign };
+      assign[posP] = keuze.qId;
+      assign[keuze.posQ] = spelerId;
+      return { ...b2, assign };
+    });
+    setResult({ ...result, blocks });
+    setSaveMsg(`${p.name} → ${POS_BY_CODE[keuze.posQ].name}, ${playersById[keuze.qId]?.name} → ${POS_BY_CODE[posP].name} · tik nogmaals voor de volgende optie`);
+    setTimeout(() => setSaveMsg(""), 4500);
   };
 
   const turfDoelpunt = () => {
@@ -1315,7 +1364,7 @@ function HockeyWisselCoach() {
               })()}
 
               <div style={{ position: "relative" }}>
-                <Pitch block={result.blocks[openBlock]} playersById={playersById} keeper={keeper}
+                <Pitch block={result.blocks[openBlock]} playersById={playersById} keeper={keeper} onSpeler={herplaatsSpeler}
                   wisselIn={openBlock > 0
                     ? new Set(subsBetween(result.blocks[openBlock - 1], result.blocks[openBlock], playersById).filter((s) => s.inId !== undefined).map((s) => s.inId))
                     : new Set()} />
@@ -1335,6 +1384,9 @@ function HockeyWisselCoach() {
                     style={{ width: 30, height: 30, borderRadius: 99, background: k, cursor: "pointer", border: penKleur === k ? `3px solid ${C.in}` : `2px solid ${C.line}` }} />
                 ))}
                 {tekenen && <button onClick={wisTekening} style={{ ...S.ghost, fontSize: 13 }}>Wis</button>}
+              </div>
+              <div style={{ fontSize: 12.5, color: C.inkSoft, marginTop: -2 }}>
+                Tik een speler op het veld voor een andere positie (volgens de regels, geruild vanaf dit blok). Werkt niet terwijl Tekenen aanstaat.
               </div>
 
               <div style={S.card}>
