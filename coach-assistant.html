@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v38";
+const APP_VERSIE = "v39";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -144,7 +144,37 @@ function optimaleToewijzing(a) {
   return res;
 }
 
+function telDoorschuiven(blocks) {
+  let n = 0;
+  for (let b = 1; b < blocks.length; b++) {
+    const pv = {};
+    Object.entries(blocks[b - 1].assign).forEach(([pos, id]) => (pv[id] = pos));
+    for (const [pos, id] of Object.entries(blocks[b].assign)) {
+      if (pv[id] !== undefined && pv[id] !== pos) n++;
+    }
+  }
+  return n;
+}
+
+/* Probeert meerdere geldige schemavarianten en kiest de variant met de
+   minste doorschuiven (bij gelijkspel: de meeste voorkeurstreffers).
+   Doorschuiven worden zo een hoge uitzondering: alleen als géén van de
+   varianten zonder kan. */
 function generateSchedule(players, seed, vasteBasis, seizoenTot) {
+  let beste = null, besteSchuif = Infinity, bestePref = -1;
+  for (let k = 0; k < 12; k++) {
+    const r = bouwSchema(players, seed + k * 7919, vasteBasis, seizoenTot);
+    if (r.error) return r;
+    const schuif = telDoorschuiven(r.blocks);
+    const pref = Object.values(r.stats).reduce((s2, x) => s2 + x.prefHits, 0);
+    if (schuif < besteSchuif || (schuif === besteSchuif && pref > bestePref)) {
+      beste = r; besteSchuif = schuif; bestePref = pref;
+    }
+  }
+  return beste;
+}
+
+function bouwSchema(players, seed, vasteBasis, seizoenTot) {
   const field = players.filter((p) => p.aanwezig && !p.keeper);
   const P = field.length;
   if (P < 10) return { error: `Te weinig veldspelers: ${P} aanwezig, 10 nodig.` };
