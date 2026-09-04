@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v42";
+const APP_VERSIE = "v43";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -952,19 +952,17 @@ function HockeyWisselCoach() {
         winst: ruilScore(p, posQ) + ruilScore(playersById[qId], posNu) - ruilScore(p, posNu) - ruilScore(playersById[qId], posQ),
         geldig: kolomRuilGeldig(openBlock, posNu, posQ),
       }))
-      .filter((k) => k.geldig)
-      .sort((a, z) => z.winst - a.winst);
-    if (!lijst.length) {
-      setSaveMsg(`Geen wissel mogelijk binnen de lijnen voor ${p.name}`);
-      setTimeout(() => setSaveMsg(""), 3500);
-      return;
-    }
+      // Coach beslist: regelconforme ruilen eerst, daarna de rest — nooit een doodlopend pad
+      .sort((a, z) => ((z.geldig ? 1 : 0) - (a.geldig ? 1 : 0)) || z.winst - a.winst);
+    if (!lijst.length) return;
     const idx = (herplaatsRef.current[sleutel] ?? -1) + 1;
     herplaatsRef.current[sleutel] = idx;
     const keuze = lijst[idx % lijst.length];
     const q = playersById[keuze.qId];
     const ok = window.confirm(
-      `Geen echte wissel mogelijk binnen de regels.\nStille wissel doorvoeren?\n${p.name} \u2192 ${POS_BY_CODE[keuze.posQ].name}, ${q?.name} \u2192 ${POS_BY_CODE[posNu].name}\n(Annuleren = volgende optie bij nogmaals tikken)`);
+      `Geen echte wissel mogelijk binnen de regels.\n` +
+      (keuze.geldig ? "" : "\u26a0\ufe0e Let op: deze ruil valt buiten de voorkeurslijn(en).\n") +
+      `Stille wissel doorvoeren?\n${p.name} \u2192 ${POS_BY_CODE[keuze.posQ].name}, ${q?.name} \u2192 ${POS_BY_CODE[posNu].name}\n(Annuleren = volgende optie bij nogmaals tikken)`);
     if (!ok) {
       setSaveMsg("Stille wissel geannuleerd");
       setTimeout(() => setSaveMsg(""), 2500);
