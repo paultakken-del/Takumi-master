@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v46";
+const APP_VERSIE = "v47";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -92,7 +92,8 @@ const POSITIONS = [
 ];
 const LIJN_VAN = { LM: "achter", VM: "achter", LA: "achter", RA: "achter", LH: "midden", MM: "midden", RH: "midden", LB: "voor", SP: "voor", RB: "voor" };
 const POS_BY_CODE = Object.fromEntries(POSITIONS.map((p) => [p.code, p]));
-const BLOCKS = ["1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8", "8/8"];
+const maakBlocks = (n) => Array.from({ length: n }, (_, i) => `${i + 1}/${n}`);
+const BLOCKS = maakBlocks(8);
 
 const DEMO = [
   ["Sam", "LM", "VM", "MM"], ["Fons", "LA", "LH", "LB"], ["Thijmen", "RA", "RH", "RB"],
@@ -186,13 +187,13 @@ function telDoorschuiven(blocks) {
    minste doorschuiven (bij gelijkspel: de meeste voorkeurstreffers).
    Doorschuiven worden zo een hoge uitzondering: alleen als géén van de
    varianten zonder kan. */
-function generateSchedule(players, seed, vasteBasis, seizoenTot) {
+function generateSchedule(players, seed, vasteBasis, seizoenTot, aantalBlokken = 8) {
   const byId = {};
   players.forEach((p) => (byId[p.id] = p));
   const veld = players.filter((p) => p.aanwezig && !p.keeper);
   let beste = null, besteScore = null;
   for (let k = 0; k < 24; k++) {
-    const r = bouwSchema(players, seed + k * 7919, vasteBasis, seizoenTot);
+    const r = bouwSchema(players, seed + k * 7919, vasteBasis, seizoenTot, aantalBlokken);
     if (r.error) return r;
     /* Rangorde: juiste linie > zo min mogelijk doorschuiven > voorkeuren
        > variatie over de aangegeven linies. */
@@ -209,7 +210,8 @@ function generateSchedule(players, seed, vasteBasis, seizoenTot) {
   return beste;
 }
 
-function bouwSchema(players, seed, vasteBasis, seizoenTot) {
+function bouwSchema(players, seed, vasteBasis, seizoenTot, aantalBlokken = 8) {
+  const LABELS = maakBlocks(aantalBlokken);
   const field = players.filter((p) => p.aanwezig && !p.keeper);
   const P = field.length;
   if (P < 10) return { error: `Te weinig veldspelers: ${P} aanwezig, 10 nodig.` };
@@ -315,7 +317,7 @@ function bouwSchema(players, seed, vasteBasis, seizoenTot) {
     return toe.reduce((som, kol, rij) => som + kosten[rij][kol], 0) === 0;
   };
 
-  for (let b = 0; b < 8; b++) {
+  for (let b = 0; b < aantalBlokken; b++) {
     let bench;
     if (b === 0) {
       if (vasteBasis) {
@@ -411,7 +413,7 @@ function bouwSchema(players, seed, vasteBasis, seizoenTot) {
     Object.entries(assign).forEach(([pos, id]) => {
       (lijnGespeeld[id] || (lijnGespeeld[id] = new Set())).add(LIJN_VAN[pos]);
     });
-    blocks.push({ label: BLOCKS[b], assign, bench });
+    blocks.push({ label: LABELS[b], assign, bench });
     prev2Bench = prevBench;
     prevBench = benchSet;
     prevAssign = assign;
@@ -516,6 +518,7 @@ function HockeyWisselCoach() {
   const [result, setResult] = useState(null);
   const [openBlock, setOpenBlock] = useState(0);
   const [kwartMin, setKwartMin] = useState(17.5);
+  const [perKwart, setPerKwart] = useState(2); // wissels per kwart: 2 = halve kwarten, 1 = hele kwarten
   const [uitvalId, setUitvalId] = useState("");
   const [basis, setBasis] = useState({});
   const [matches, setMatches] = useState([]);
@@ -587,7 +590,7 @@ function HockeyWisselCoach() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code: normCode(sync.code), pin: sync.pin, tekst: tipTekst.trim(),
-          context: { kwart: Math.min(4, Math.floor(liveBlock / 2) + 1), blok: BLOCKS[liveBlock], voor: scoreVoor, tegen: scoreTegen },
+          context: { kwart: Math.min(4, Math.floor(liveBlock / perKwart) + 1), blok: LABELS[liveBlock], voor: scoreVoor, tegen: scoreTegen },
         }),
       });
       if (r.status === 403) throw new Error("vul eerst je teamcode en pincode in (Selectie)");
@@ -608,13 +611,14 @@ function HockeyWisselCoach() {
 
   const [sync, setSync] = useState({ code: "", pin: "" });
 
-  const maakPayload = () => JSON.stringify({ players, kwartMin, result, seed, basis, matches, activeMatchId, turf, scoreVoor, scoreTegen });
+  const maakPayload = () => JSON.stringify({ players, kwartMin, perKwart, result, seed, basis, matches, activeMatchId, turf, scoreVoor, scoreTegen });
   const normCode = (c) => (c || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
 
   const hydrate = (value) => {
     const s = JSON.parse(value);
     if (Array.isArray(s.players) && s.players.length) setPlayers(s.players);
     if (s.kwartMin) setKwartMin(s.kwartMin);
+    if (s.perKwart) setPerKwart(s.perKwart);
     if (s.result?.blocks) setResult(s.result);
     if (s.seed) setSeed(s.seed);
     if (s.basis && typeof s.basis === "object") { stilRef.current = true; setBasis(s.basis); }
@@ -726,7 +730,7 @@ function HockeyWisselCoach() {
           }
         } catch { /* server niet bereikbaar — gewoon lokaal beeld opslaan */ }
       }
-      payload = JSON.stringify({ players, kwartMin, result, seed, basis, matches: matchesVoorOpslag, activeMatchId, turf, scoreVoor, scoreTegen });
+      payload = JSON.stringify({ players, kwartMin, perKwart, result, seed, basis, matches: matchesVoorOpslag, activeMatchId, turf, scoreVoor, scoreTegen });
     }
     let prefix = "";
     if (normCode(sync.code) && sync.pin) {
@@ -763,8 +767,11 @@ function HockeyWisselCoach() {
     setTimeout(() => setSaveMsg(""), 4000);
   };
 
-  const blockSec = (kwartMin * 60) / 2;
-  const totalSec = blockSec * 8;
+  const aantalBlokken = perKwart * 4;
+  const LABELS = useMemo(() => maakBlocks(aantalBlokken), [aantalBlokken]);
+  const laatsteBlok = aantalBlokken - 1;
+  const blockSec = (kwartMin * 60) / perKwart;
+  const totalSec = blockSec * aantalBlokken;
   useEffect(() => {
     if (!running) return;
     klokStartRef.current = Date.now();
@@ -775,7 +782,7 @@ function HockeyWisselCoach() {
     document.addEventListener("visibilitychange", zichtbaar);
     return () => { clearInterval(t); document.removeEventListener("visibilitychange", zichtbaar); };
   }, [running, totalSec]);
-  const liveBlock = Math.min(7, Math.floor(elapsed / blockSec));
+  const liveBlock = Math.min(laatsteBlok, Math.floor(elapsed / blockSec));
   const restInBlock = Math.max(0, Math.ceil(blockSec * (liveBlock + 1) - elapsed));
   const fmtClock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
@@ -799,9 +806,9 @@ function HockeyWisselCoach() {
   };
   const springNaarKwart = (q) => {
     vorigeRestRef.current = null;
-    klokBasisRef.current = (q - 1) * blockSec * 2;
+    klokBasisRef.current = (q - 1) * blockSec * perKwart;
     klokStartRef.current = Date.now();
-    setElapsed((q - 1) * blockSec * 2);
+    setElapsed((q - 1) * blockSec * perKwart);
   };
 
   useEffect(() => {
@@ -826,11 +833,20 @@ function HockeyWisselCoach() {
     return t;
   }, [matches]);
 
+  useEffect(() => {
+    // Andere blokindeling = ander schema: opnieuw genereren op dezelfde seed
+    if (!result?.blocks) return;
+    if (result.blocks.length === perKwart * 4) return;
+    setResult(generateSchedule(players, seed, actieveBasis(), seizoenTot, perKwart * 4));
+    setOpenBlock(0);
+    setUitvalNote(null);
+  }, [perKwart]);
+
   const stilRef = useRef(false);
   useEffect(() => {
     if (stilRef.current) { stilRef.current = false; return; }
     if (!result?.blocks) return;
-    setResult(generateSchedule(players, seed, actieveBasis(), seizoenTot));
+    setResult(generateSchedule(players, seed, actieveBasis(), seizoenTot, aantalBlokken));
     setUitvalNote(null);
   }, [basis]);
 
@@ -844,7 +860,7 @@ function HockeyWisselCoach() {
   const genereer = (newSeed) => {
     const nieuw = newSeed ?? (result?.blocks ? seed + 1 : seed);
     setSeed(nieuw);
-    setResult(generateSchedule(players, nieuw, actieveBasis(), seizoenTot));
+    setResult(generateSchedule(players, nieuw, actieveBasis(), seizoenTot, aantalBlokken));
     // Blijf staan waar je kijkt: alleen vanuit de selectie naar het schema springen,
     // en het geopende blok laten staan (anders lijkt alleen 1/8 te vernieuwen).
     if (tab === "selectie") setTab("schema");
@@ -875,7 +891,7 @@ function HockeyWisselCoach() {
         const candidates = bl.bench.filter((id) => !onField.has(id));
         if (candidates.length === 0) {
           delete bl.assign[pos];
-          issues.push(`${BLOCKS[b]}: geen vervanger voor ${POS_BY_CODE[pos].name}`);
+          issues.push(`${LABELS[b]}: geen vervanger voor ${POS_BY_CODE[pos].name}`);
         } else {
           candidates.sort((a, z) => {
             if (playedUpTo[a] !== playedUpTo[z]) return playedUpTo[a] - playedUpTo[z];
@@ -897,7 +913,7 @@ function HockeyWisselCoach() {
       if (playersById[id]?.prefs.includes(pos)) stats[id].prefHits++;
     }));
     setResult({ ...result, blocks, stats });
-    setUitvalNote({ name: playersById[playerId]?.name, from: BLOCKS[fromBlock], issues });
+    setUitvalNote({ name: playersById[playerId]?.name, from: LABELS[fromBlock], issues });
   };
 
   /* Speler keert terug (bijv. na blessurebehandeling) vanaf blok X. Zelfde
@@ -945,7 +961,7 @@ function HockeyWisselCoach() {
       if (playersById[id]?.prefs.includes(pos)) stats[id].prefHits++;
     }));
     setResult({ ...result, blocks, stats });
-    setUitvalNote({ name: playersById[playerId]?.name, from: BLOCKS[fromBlock], issues: [], terug: true });
+    setUitvalNote({ name: playersById[playerId]?.name, from: LABELS[fromBlock], issues: [], terug: true });
   };
 
   const herplaatsRef = useRef({});
@@ -1091,7 +1107,7 @@ function HockeyWisselCoach() {
       const d = await r.json();
       const next = matches.map((x) => (x.id === m.id ? { ...x, verslag: d.verslag } : x));
       setMatches(next);
-      opslaan(JSON.stringify({ players, kwartMin, result, seed, basis, matches: next, activeMatchId, turf, scoreVoor, scoreTegen }));
+      opslaan(JSON.stringify({ players, kwartMin, perKwart, result, seed, basis, matches: next, activeMatchId, turf, scoreVoor, scoreTegen }));
     } catch (err) {
       setVerslagFout(err.message);
     }
@@ -1162,7 +1178,7 @@ function HockeyWisselCoach() {
     if (!inzendingen) return;
     const nieuw = metVoorkeuren(Object.entries(inzendingen).map(([speler, v]) => ({ speler, posities: inzPosities(v) })));
     setPlayers(nieuw);
-    opslaan(JSON.stringify({ players: nieuw, kwartMin, result, seed, basis, matches, activeMatchId, turf, scoreVoor, scoreTegen }));
+    opslaan(JSON.stringify({ players: nieuw, kwartMin, perKwart, result, seed, basis, matches, activeMatchId, turf, scoreVoor, scoreTegen }));
     setSaveMsg("Voorkeuren overgenomen en opgeslagen ✓");
     setTimeout(() => setSaveMsg(""), 4500);
   };
@@ -1186,7 +1202,7 @@ function HockeyWisselCoach() {
       const d = await r.json();
       const nieuw = metVoorkeuren(d.voorkeuren || []);
       setPlayers(nieuw);
-      opslaan(JSON.stringify({ players: nieuw, kwartMin, result, seed, basis, matches, activeMatchId, turf, scoreVoor, scoreTegen }));
+      opslaan(JSON.stringify({ players: nieuw, kwartMin, perKwart, result, seed, basis, matches, activeMatchId, turf, scoreVoor, scoreTegen }));
       setWaResultaat(d);
       setWaTekst("");
     } catch (err) {
@@ -1218,7 +1234,7 @@ function HockeyWisselCoach() {
       ? { ...m, gesloten: true, voor: scoreVoor, tegen: scoreTegen, stats, afwezig: players.filter((p) => !p.aanwezig).map((p) => p.name) } : m);
     setMatches(next);
     setTurf({}); setTurfSpeler(""); setScoreVoor(0); setScoreTegen(0); setActiveMatchId("");
-    opslaan(JSON.stringify({ players, kwartMin, result, seed, basis, matches: next, activeMatchId: "", turf: {}, scoreVoor: 0, scoreTegen: 0 }));
+    opslaan(JSON.stringify({ players, kwartMin, perKwart, result, seed, basis, matches: next, activeMatchId: "", turf: {}, scoreVoor: 0, scoreTegen: 0 }));
   };
 
   /* Ingelaste wissel: alleen het huidige blok wordt aangepast — de erin-speler
@@ -1260,7 +1276,7 @@ function HockeyWisselCoach() {
   const setKeeper = (id) => setPlayers(players.map((p) => ({ ...p, keeper: p.id === id })));
 
   const fmtMin = (m) => String(Math.round(m * 100) / 100).replace(".", ",");
-  const halfMin = fmtMin(kwartMin / 2);
+  const halfMin = fmtMin(kwartMin / perKwart);
 
   const S = {
     page: { minHeight: "100vh", background: C.chalk, color: C.ink, fontFamily: "'Barlow', system-ui, -apple-system, sans-serif", paddingBottom: 90 },
@@ -1333,12 +1349,22 @@ function HockeyWisselCoach() {
                 {keeper ? `Keeper: ${keeper.name}` : "Nog geen keeper aangewezen"} · {Math.max(0, aanwezigVeld - 10)} wissel{aanwezigVeld - 10 === 1 ? "" : "s"} per blok
               </div>
             </div>
-            <label style={{ fontSize: 13, color: C.inkSoft, display: "grid", gap: 2, textAlign: "right" }}>
-              Kwart (min)
-              <input type="number" min="4" max="20" step="0.5" value={kwartMin}
-                onChange={(e) => setKwartMin(Number(e.target.value) || 17.5)}
-                style={{ ...S.select, width: 64, textAlign: "center" }} />
-            </label>
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+              <label style={{ fontSize: 13, color: C.inkSoft, display: "grid", gap: 2, textAlign: "right" }}>
+                Wisselen
+                <select value={perKwart} onChange={(e) => setPerKwart(Number(e.target.value))}
+                  style={{ ...S.select, width: 132 }}>
+                  <option value={2}>halve kwarten</option>
+                  <option value={1}>hele kwarten</option>
+                </select>
+              </label>
+              <label style={{ fontSize: 13, color: C.inkSoft, display: "grid", gap: 2, textAlign: "right" }}>
+                Kwart (min)
+                <input type="number" min="4" max="20" step="0.5" value={kwartMin}
+                  onChange={(e) => setKwartMin(Number(e.target.value) || 17.5)}
+                  style={{ ...S.select, width: 64, textAlign: "center" }} />
+              </label>
+            </div>
           </div>
 
           {players.map((p) => (
@@ -1497,10 +1523,10 @@ function HockeyWisselCoach() {
                     ))}
                   </select>
                   <button onClick={() => valUit(Number(uitvalId), openBlock)} style={{ ...S.ghost, fontSize: 13 }}>
-                    ▼ Uit vanaf {BLOCKS[openBlock]}
+                    ▼ Uit vanaf {LABELS[openBlock]}
                   </button>
                   <button onClick={() => keerTerug(Number(uitvalId), openBlock)} style={{ ...S.ghost, fontSize: 13 }}>
-                    ▲ Terug vanaf {BLOCKS[openBlock]}
+                    ▲ Terug vanaf {LABELS[openBlock]}
                   </button>
                 </div>
                 {uitvalNote && (
@@ -1604,13 +1630,13 @@ function HockeyWisselCoach() {
               <div style={{ ...S.card, background: C.black, border: "none", color: "#fff", textAlign: "center", padding: "20px 14px" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 22 }}>
                   <svg viewBox="0 0 100 100" style={{ width: 108, flexShrink: 0 }} role="img"
-                    aria-label={`Kwart ${Math.min(4, Math.floor(liveBlock / 2) + 1)} van 4`}>
+                    aria-label={`Kwart ${Math.min(4, Math.floor(liveBlock / perKwart) + 1)} van 4`}>
                     {(() => {
                       const frac = Math.min(1, elapsed / totalSec);
                       const ang = frac * 2 * Math.PI - Math.PI / 2;
                       const px = 50 + 44 * Math.cos(ang), py = 50 + 44 * Math.sin(ang);
                       const large = frac > 0.5 ? 1 : 0;
-                      const kwartNu = Math.min(4, Math.floor(liveBlock / 2) + 1);
+                      const kwartNu = Math.min(4, Math.floor(liveBlock / perKwart) + 1);
                       return (
                         <>
                           <circle cx="50" cy="50" r="44" fill="rgba(255,255,255,.15)" />
@@ -1639,7 +1665,7 @@ function HockeyWisselCoach() {
                     })()}
                   </svg>
                   <div>
-                    <div style={{ fontSize: 13, opacity: 0.85 }}>Kwart {Math.min(4, Math.floor(liveBlock / 2) + 1)} · blok {BLOCKS[liveBlock]}</div>
+                    <div style={{ fontSize: 13, opacity: 0.85 }}>Kwart {Math.min(4, Math.floor(liveBlock / perKwart) + 1)} · blok {LABELS[liveBlock]}</div>
                     <div style={{ ...S.display, color: "#fff", fontSize: 52, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>
                       {fmtClock(elapsed)}
                     </div>
@@ -1649,7 +1675,7 @@ function HockeyWisselCoach() {
                   <div style={{ width: `${((elapsed - liveBlock * blockSec) / blockSec) * 100}%`, background: C.bib, height: 8, borderRadius: 99, transition: "width 1s linear" }} />
                 </div>
                 <div style={{ fontSize: 14 }}>
-                  {elapsed >= totalSec ? "Einde wedstrijd" : liveBlock < 7 ? `Volgende wissel over ${fmtClock(restInBlock)}` : `Laatste blok — nog ${fmtClock(restInBlock)}`}
+                  {elapsed >= totalSec ? "Einde wedstrijd" : liveBlock < laatsteBlok ? `Volgende wissel over ${fmtClock(restInBlock)}` : `Laatste blok — nog ${fmtClock(restInBlock)}`}
                 </div>
                 <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
                   <button onClick={() => {
@@ -1773,13 +1799,13 @@ function HockeyWisselCoach() {
               </div>
 
               {/* Aanstaande wissels */}
-              {liveBlock < 7 && elapsed < totalSec && (() => {
+              {liveBlock < laatsteBlok && elapsed < totalSec && (() => {
                 const subs = subsBetween(result.blocks[liveBlock], result.blocks[liveBlock + 1], playersById);
                 const bijna = restInBlock <= 60;
                 return (
                   <div style={{ ...S.card, background: bijna ? C.bib : C.card, border: bijna ? "none" : `1px solid ${C.line}` }}>
                     <div style={{ ...S.display, fontSize: 13, marginBottom: 6, color: bijna ? C.bibInk : C.ink }}>
-                      <Ico kind="wissel" />{bijna ? `ZO WISSELEN — NOG ${fmtClock(restInBlock)}` : `KLAARZETTEN VOOR ${BLOCKS[liveBlock + 1]}`}
+                      <Ico kind="wissel" />{bijna ? `ZO WISSELEN — NOG ${fmtClock(restInBlock)}` : `KLAARZETTEN VOOR ${LABELS[liveBlock + 1]}`}
                     </div>
                     {subs.length === 0 && <div style={{ fontSize: 14, color: C.inkSoft }}>Geen wissels bij het volgende blok.</div>}
                     {subs.map((sub, i) => (
@@ -1802,7 +1828,7 @@ function HockeyWisselCoach() {
 
               {/* Huidige opstelling */}
               <div style={S.card}>
-                <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}><Ico kind="veld" />NU OP HET VELD ({BLOCKS[liveBlock]})</div>
+                <div style={{ ...S.display, fontSize: 13, marginBottom: 6 }}><Ico kind="veld" />NU OP HET VELD ({LABELS[liveBlock]})</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 14px", fontSize: 14 }}>
                   {POSITIONS.map((pos) => {
                     const pl = playersById[result.blocks[liveBlock].assign[pos.code]];
@@ -2007,7 +2033,7 @@ function HockeyWisselCoach() {
                     wisselIn={new Set(subs.filter((s2) => s2.inId !== undefined).map((s2) => s2.inId))} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 800 }}>{bl.label} <span style={{ fontWeight: 400 }}>(vanaf {fmtMin((i * kwartMin) / 2)} min)</span></div>
+                  <div style={{ fontWeight: 800 }}>{bl.label} <span style={{ fontWeight: 400 }}>(vanaf {fmtMin((i * kwartMin) / perKwart)} min)</span></div>
                   {i === 0 ? (
                     <div>Start: {POSITIONS.map((pos) => `${pos.code} ${playersById[bl.assign[pos.code]]?.name ?? "—"}`).join("  ·  ")}</div>
                   ) : subs.length === 0 ? (
