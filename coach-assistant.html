@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v39";
+const APP_VERSIE = "v40";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -968,17 +968,18 @@ function HockeyWisselCoach() {
     setTimeout(() => setSaveMsg(""), 4000);
   };
 
-  const pasVoorkeurenToe = (lijst) => {
+  const metVoorkeuren = (lijst) => {
     const perNaam = Object.fromEntries(lijst.map((v) => [v.speler, v.posities]));
-    setPlayers(players.map((p) => {
+    return players.map((p) => {
       const nieuw = perNaam[p.name];
       if (!nieuw || !nieuw.length || p.keeper) return p;
       const codes = nieuw.filter((c) => POS_BY_CODE[c]).slice(0, 3);
       const rest = p.prefs.filter((c) => !codes.includes(c));
       while (codes.length < 3) codes.push(rest.shift() || POSITIONS.find((x) => !codes.includes(x.code)).code);
       return { ...p, prefs: codes };
-    }));
+    });
   };
+  const pasVoorkeurenToe = (lijst) => setPlayers(metVoorkeuren(lijst));
 
   const [inzendingen, setInzendingen] = useState(null);
   const [inzBezig, setInzBezig] = useState(false);
@@ -1016,8 +1017,10 @@ function HockeyWisselCoach() {
 
   const neemInzendingenOver = () => {
     if (!inzendingen) return;
-    pasVoorkeurenToe(Object.entries(inzendingen).map(([speler, v]) => ({ speler, posities: inzPosities(v) })));
-    setSaveMsg("Voorkeuren overgenomen ✓ — controleer de dropdowns en druk op Opslaan");
+    const nieuw = metVoorkeuren(Object.entries(inzendingen).map(([speler, v]) => ({ speler, posities: inzPosities(v) })));
+    setPlayers(nieuw);
+    opslaan(JSON.stringify({ players: nieuw, kwartMin, result, seed, basis, matches, activeMatchId, turf, scoreVoor, scoreTegen }));
+    setSaveMsg("Voorkeuren overgenomen en opgeslagen ✓");
     setTimeout(() => setSaveMsg(""), 4500);
   };
 
@@ -1038,7 +1041,9 @@ function HockeyWisselCoach() {
       if (r.status === 403) throw new Error("vul eerst je teamcode en pincode in (bovenaan)");
       if (!r.ok) throw new Error("verwerken mislukt — probeer nog eens");
       const d = await r.json();
-      pasVoorkeurenToe(d.voorkeuren || []);
+      const nieuw = metVoorkeuren(d.voorkeuren || []);
+      setPlayers(nieuw);
+      opslaan(JSON.stringify({ players: nieuw, kwartMin, result, seed, basis, matches, activeMatchId, turf, scoreVoor, scoreTegen }));
       setWaResultaat(d);
       setWaTekst("");
     } catch (err) {
