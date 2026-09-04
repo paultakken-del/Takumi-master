@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v45";
+const APP_VERSIE = "v46";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -845,8 +845,9 @@ function HockeyWisselCoach() {
     const nieuw = newSeed ?? (result?.blocks ? seed + 1 : seed);
     setSeed(nieuw);
     setResult(generateSchedule(players, nieuw, actieveBasis(), seizoenTot));
-    setTab("schema");
-    setOpenBlock(0);
+    // Blijf staan waar je kijkt: alleen vanuit de selectie naar het schema springen,
+    // en het geopende blok laten staan (anders lijkt alleen 1/8 te vernieuwen).
+    if (tab === "selectie") setTab("schema");
     setUitvalNote(null);
     if (newSeed === undefined && result?.blocks) {
       setSaveMsg("Nieuw wisselschema gegenereerd \u2713");
