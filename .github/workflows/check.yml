@@ -1,0 +1,33 @@
+name: check
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo "::add-mask::2026"
+          node -e '
+          const fs = require("fs");
+          (async () => {
+            const uit = [];
+            const r = await fetch("https://takumi-master.com/api/team/jo16-5?pin=" + process.env.WC_PIN);
+            const s = JSON.parse((await r.json()).state);
+            for (const naam of ["Sam","Fons","Thijmen","Joep","Viggo"]) {
+              const p = (s.players || []).find(x => x.name === naam);
+              uit.push(naam + " -> " + (p ? p.prefs.join(",") : "ONTBREEKT"));
+            }
+            uit.push("spelers: " + (s.players || []).length);
+            const app = await (await fetch("https://takumi-master.com/coach-assistant.html", { headers: { "Cache-Control": "no-cache" } })).text();
+            const m = app.match(/APP_VERSIE = \"(v\\d+)\"/);
+            uit.push("live versie: " + (m && m[1]) + " | auto-opslag aanwezig: " + app.includes("overgenomen en opgeslagen"));
+            fs.writeFileSync("check-result.txt", uit.join("\n") + "\n");
+          })();
+          '
+        env:
+          WC_PIN: "2026"
+      - run: |
+          git config user.email "check@local" && git config user.name "check"
+          git add check-result.txt && git commit -m "checkresultaat" && git push
