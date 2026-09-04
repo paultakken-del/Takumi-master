@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v43";
+const APP_VERSIE = "v44";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -144,6 +144,32 @@ function optimaleToewijzing(a) {
   return res;
 }
 
+function telLijnVariatie(blocks, players) {
+  const gespeeld = {};
+  for (const bl of blocks) {
+    for (const [pos, id] of Object.entries(bl.assign)) {
+      (gespeeld[id] || (gespeeld[id] = new Set())).add(LIJN_VAN[pos]);
+    }
+  }
+  let n = 0;
+  for (const p of players) {
+    const wil = new Set(p.prefs.map((c) => LIJN_VAN[c]));
+    if (wil.size > 1 && gespeeld[p.id] && gespeeld[p.id].size > 1) n++;
+  }
+  return n;
+}
+
+function telLijnFouten(blocks, byId) {
+  let n = 0;
+  for (const bl of blocks) {
+    for (const [pos, id] of Object.entries(bl.assign)) {
+      const p = byId[id];
+      if (p && !new Set(p.prefs.map((c) => LIJN_VAN[c])).has(LIJN_VAN[pos])) n++;
+    }
+  }
+  return n;
+}
+
 function telDoorschuiven(blocks) {
   let n = 0;
   for (let b = 1; b < blocks.length; b++) {
@@ -161,14 +187,23 @@ function telDoorschuiven(blocks) {
    Doorschuiven worden zo een hoge uitzondering: alleen als géén van de
    varianten zonder kan. */
 function generateSchedule(players, seed, vasteBasis, seizoenTot) {
-  let beste = null, besteSchuif = Infinity, bestePref = -1;
+  const byId = {};
+  players.forEach((p) => (byId[p.id] = p));
+  const veld = players.filter((p) => p.aanwezig && !p.keeper);
+  let beste = null, besteScore = null;
   for (let k = 0; k < 24; k++) {
     const r = bouwSchema(players, seed + k * 7919, vasteBasis, seizoenTot);
     if (r.error) return r;
-    const schuif = telDoorschuiven(r.blocks);
-    const pref = Object.values(r.stats).reduce((s2, x) => s2 + x.prefHits, 0);
-    if (schuif < besteSchuif || (schuif === besteSchuif && pref > bestePref)) {
-      beste = r; besteSchuif = schuif; bestePref = pref;
+    /* Rangorde: juiste linie > zo min mogelijk doorschuiven > voorkeuren
+       > variatie over de aangegeven linies. */
+    const score = [
+      telLijnFouten(r.blocks, byId),
+      telDoorschuiven(r.blocks),
+      -Object.values(r.stats).reduce((s2, x) => s2 + x.prefHits, 0),
+      -telLijnVariatie(r.blocks, veld),
+    ];
+    if (!besteScore || score.some((v, i) => v !== besteScore[i] && v < besteScore[i] && score.slice(0, i).every((w, j) => w === besteScore[j]))) {
+      beste = r; besteScore = score;
     }
   }
   return beste;
@@ -207,6 +242,7 @@ function bouwSchema(players, seed, vasteBasis, seizoenTot) {
   field.forEach((p) => (benchCount[p.id] = 0));
   let prevBench = new Set(), prev2Bench = new Set(), prevAssign = {};
   const thuisPos = {}; // positie uit de beginopstelling (blok 1/8) per speler
+  const lijnGespeeld = {}; // linies die een speler deze wedstrijd al speelde
   const blocks = [];
 
   // Combinaties in prioriteitsvolgorde (begrensd)
@@ -240,6 +276,32 @@ function bouwSchema(players, seed, vasteBasis, seizoenTot) {
     return winst;
   };
 
+  /* Kunnen de tien veldspelers alle posities binnen hun eigen linies bezetten?
+     Exacte toets via de voorwaarde van Hall over de drie linies: voor elke
+     combinatie van linies mogen er niet meer spelers zijn die uitsluitend
+     daarbinnen kunnen dan er plekken zijn. Veel sneller dan een matching. */
+  const LIJNEN = ["achter", "midden", "voor"];
+  const CAP = {};
+  POSITIONS.forEach((pos) => { CAP[LIJN_VAN[pos.code]] = (CAP[LIJN_VAN[pos.code]] || 0) + 1; });
+  const veldHaalbaar = (benchSet) => {
+    const opVeld = field.filter((p) => !benchSet.has(p.id));
+    if (opVeld.length !== POSITIONS.length) return true;
+    const setjes = opVeld.map((p) => lijnenVan(p));
+    for (let masker = 1; masker < 8; masker++) {
+      const deel = LIJNEN.filter((_, i) => masker & (1 << i));
+      let plekken = 0;
+      deel.forEach((l) => (plekken += CAP[l] || 0));
+      let alleen = 0;
+      for (const s of setjes) {
+        let past = true;
+        s.forEach((l) => { if (!deel.includes(l)) past = false; });
+        if (past) alleen++;
+      }
+      if (alleen > plekken) return false;
+    }
+    return true;
+  };
+
   const lijnHaalbaar = (benchSet) => {
     const inkomers = [...prevBench].filter((id) => !benchSet.has(id));
     const vrijgekomen = [...benchSet]
@@ -261,7 +323,12 @@ function bouwSchema(players, seed, vasteBasis, seizoenTot) {
         bench = [];
         for (const p of order) if (!vast.has(p.id) && bench.length < benchPerBlock) bench.push(p.id);
       } else {
-        bench = order.slice(0, benchPerBlock).map((p) => p.id);
+        const kandidaten = order.map((p) => p.id);
+        bench = null;
+        for (const keuze of combosEerste(kandidaten, benchPerBlock)) {
+          if (veldHaalbaar(new Set(keuze))) { bench = keuze; break; }
+        }
+        if (!bench) bench = kandidaten.slice(0, benchPerBlock);
       }
     } else {
       const cmpK = (a, z) => (a[0] - z[0]) || (a[1] - z[1]) || (a[2] - z[2]);
@@ -283,7 +350,7 @@ function bouwSchema(players, seed, vasteBasis, seizoenTot) {
         let beste = null, besteWinst = -1;
         for (const keuze of combosEerste(groep, kiesN)) {
           const kandidaat = new Set([...verplicht, ...keuze]);
-          if (!lijnHaalbaar(kandidaat)) continue;
+          if (!lijnHaalbaar(kandidaat) || !veldHaalbaar(kandidaat)) continue;
           const winst = thuisWinst(kandidaat);
           if (winst > besteWinst) { besteWinst = winst; beste = [...verplicht, ...keuze]; }
         }
@@ -322,19 +389,28 @@ function bouwSchema(players, seed, vasteBasis, seizoenTot) {
             if (pos.code === eigenPos) return 0;
             return 10 * (30 + lijnFout) + (9 - pref);
           }
-          // Inkomer: voorkeur (zwaarst) > eigen beginpositie > lijn van de hoogste voorkeur
+          // Inkomer: voorkeur (zwaarst) > variatie over aangegeven linies
+          //          > eigen beginpositie > lijn van de hoogste voorkeur
           const prefW = pi === 0 ? 18 : pi === 1 ? 12 : pi === 2 ? 6 : 0;
           const lijnW = pref > 0 ? 0
             : LIJN_VAN[p.prefs[0]] === LIJN_VAN[pos.code] ? 3
             : LIJN_VAN[p.prefs[1]] === LIJN_VAN[pos.code] ? 2
             : LIJN_VAN[p.prefs[2]] === LIJN_VAN[pos.code] ? 1 : 0;
           const thuis = thuisPos[p.id] === pos.code ? 5 : 0;
-          return 10 * lijnFout + (24 - prefW - lijnW - thuis) * 10;
+          /* Gaf de speler meerdere linies op, dan telt een linie die hij deze
+             wedstrijd nog niet speelde extra — zo komt hij ook echt op zijn
+             tweede (of derde) linie terecht in plaats van acht blokken op één plek. */
+          const gespeeld = lijnGespeeld[p.id];
+          const variatie = lijnen.size > 1 && lijnen.has(LIJN_VAN[pos.code]) && gespeeld && !gespeeld.has(LIJN_VAN[pos.code]) ? 10 : 0;
+          return 10 * lijnFout + (34 - prefW - lijnW - thuis - variatie) * 10;
         });
       });
       optimaleToewijzing(kosten).forEach((kol, rij) => { assign[vrijePos[kol].code] = vrijeSpelers[rij].id; });
     }
     if (b === 0) Object.entries(assign).forEach(([pos, id]) => { thuisPos[id] = pos; });
+    Object.entries(assign).forEach(([pos, id]) => {
+      (lijnGespeeld[id] || (lijnGespeeld[id] = new Set())).add(LIJN_VAN[pos]);
+    });
     blocks.push({ label: BLOCKS[b], assign, bench });
     prev2Bench = prevBench;
     prevBench = benchSet;
