@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v41";
+const APP_VERSIE = "v42";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -162,7 +162,7 @@ function telDoorschuiven(blocks) {
    varianten zonder kan. */
 function generateSchedule(players, seed, vasteBasis, seizoenTot) {
   let beste = null, besteSchuif = Infinity, bestePref = -1;
-  for (let k = 0; k < 12; k++) {
+  for (let k = 0; k < 24; k++) {
     const r = bouwSchema(players, seed + k * 7919, vasteBasis, seizoenTot);
     if (r.error) return r;
     const schuif = telDoorschuiven(r.blocks);
@@ -866,49 +866,111 @@ function HockeyWisselCoach() {
   };
 
   const herplaatsRef = useRef({});
+  /* Tik op een veldspeler = nieuwe positie regelen.
+     Voorrang: échte wissel — op een wisselmoment waar de speler vanaf de bank
+     erin komt, ruilen twee inkomers hun instap-posities (niemand schuift
+     onderwater door). Stille wissel (doorschuiven op het veld) is een
+     noodklep: alleen als geen enkele echte wissel binnen de lijnen kan,
+     en pas na expliciete bevestiging. */
   const herplaatsSpeler = (spelerId) => {
     if (!result?.blocks) return;
-    const bl = result.blocks[openBlock];
-    const posP = Object.keys(bl.assign).find((c) => bl.assign[c] === spelerId);
-    if (!posP) return;
+    const blocks = result.blocks;
     const p = playersById[spelerId];
+    if (!p) return;
     const ruilScore = (pl, code) => {
       const pi = pl.prefs.indexOf(code);
       const prefW = pi === 0 ? 18 : pi === 1 ? 12 : pi === 2 ? 6 : 0;
       const lijnen = new Set(pl.prefs.map((c2) => LIJN_VAN[c2]));
       return (lijnen.has(LIJN_VAN[code]) ? 0 : -1000) + prefW;
     };
-    const lijnenP = new Set(p.prefs.map((c2) => LIJN_VAN[c2]));
-    const kandidaten = Object.entries(bl.assign)
+    const lijnenVan = (pl) => new Set(pl.prefs.map((c2) => LIJN_VAN[c2]));
+    const lijnenP = lijnenVan(p);
+    const sleutel = `${openBlock}:${spelerId}`;
+
+    /* Een positieruil wordt als kolomruil doorgevoerd van blok t tot het
+       einde: iedereen die daarna op posP stond speelt posQ en andersom.
+       Zo blijft elke blokovergang identiek qua wie-doorspeelt-waar en kan
+       de ruil nooit verderop een nieuwe (stille) doorschuiver veroorzaken. */
+    const kolomRuilGeldig = (t, posP, posQ) => {
+      for (let i = t; i < blocks.length; i++) {
+        const aId = blocks[i].assign[posP], bId = blocks[i].assign[posQ];
+        if (aId !== undefined && !lijnenVan(playersById[aId]).has(LIJN_VAN[posQ])) return false;
+        if (bId !== undefined && !lijnenVan(playersById[bId]).has(LIJN_VAN[posP])) return false;
+      }
+      return true;
+    };
+    const voerRuilDoor = (t, posP, posQ, qId, stil) => {
+      const nieuw = blocks.map((b2, i) => {
+        if (i < t) return b2;
+        const assign = { ...b2.assign };
+        const aId = assign[posP], bId = assign[posQ];
+        if (aId !== undefined) assign[posQ] = aId; else delete assign[posQ];
+        if (bId !== undefined) assign[posP] = bId; else delete assign[posP];
+        return { ...b2, assign };
+      });
+      setResult({ ...result, blocks: nieuw });
+      setSaveMsg(stil
+        ? `\u26A0\uFE0E Stille wissel: ${p.name} \u2192 ${POS_BY_CODE[posQ].name}, ${playersById[qId]?.name} \u2192 ${POS_BY_CODE[posP].name}`
+        : `Echte wissel vanaf ${blocks[t].label}: ${p.name} erin als ${POS_BY_CODE[posQ].name}, ${playersById[qId]?.name} erin als ${POS_BY_CODE[posP].name} \u00B7 tik nogmaals voor de volgende optie`);
+      setTimeout(() => setSaveMsg(""), 5500);
+    };
+
+    // 1) Echte wissels: elk wisselmoment (vanaf het geopende blok) waar p vers
+    //    vanaf de bank erin komt en een mede-inkomer lijngeldig kan ruilen.
+    const echt = [];
+    for (let t = Math.max(1, openBlock); t < blocks.length; t++) {
+      const prevIds = new Set(Object.values(blocks[t - 1].assign));
+      if (prevIds.has(spelerId)) continue; // p speelt door: hier geen echte wissel voor p
+      const cur = blocks[t].assign;
+      const posP = Object.keys(cur).find((c) => cur[c] === spelerId);
+      if (!posP) continue; // p zit dit blok op de bank
+      for (const [posQ, qId] of Object.entries(cur)) {
+        if (qId === spelerId || prevIds.has(qId)) continue; // q moet ook inkomer zijn
+        const q = playersById[qId];
+        if (!q || !kolomRuilGeldig(t, posP, posQ)) continue; // lijncheck voor iedereen na t
+        echt.push({ t, posP, posQ, qId,
+          winst: ruilScore(p, posQ) + ruilScore(q, posP) - ruilScore(p, posP) - ruilScore(q, posQ) });
+      }
+    }
+    echt.sort((a, z) => a.t - z.t || z.winst - a.winst);
+    if (echt.length) {
+      const idx = (herplaatsRef.current[sleutel] ?? -1) + 1;
+      herplaatsRef.current[sleutel] = idx;
+      const k = echt[idx % echt.length];
+      voerRuilDoor(k.t, k.posP, k.posQ, k.qId, false);
+      return;
+    }
+
+    // 2) Noodklep: stille wissel in het geopende blok, alleen met bevestiging
+    const bl = blocks[openBlock];
+    const posNu = Object.keys(bl.assign).find((c) => bl.assign[c] === spelerId);
+    if (!posNu) return;
+    const lijst = Object.entries(bl.assign)
       .filter(([, qId]) => qId !== spelerId)
       .map(([posQ, qId]) => ({
         posQ, qId,
-        winst: ruilScore(p, posQ) + ruilScore(playersById[qId], posP) - ruilScore(p, posP) - ruilScore(playersById[qId], posQ),
-        geldig: lijnenP.has(LIJN_VAN[posQ]) && new Set(playersById[qId].prefs.map((c2) => LIJN_VAN[c2])).has(LIJN_VAN[posP]),
+        winst: ruilScore(p, posQ) + ruilScore(playersById[qId], posNu) - ruilScore(p, posNu) - ruilScore(playersById[qId], posQ),
+        geldig: kolomRuilGeldig(openBlock, posNu, posQ),
       }))
+      .filter((k) => k.geldig)
       .sort((a, z) => z.winst - a.winst);
-    const lijst = kandidaten.filter((k) => k.geldig);
     if (!lijst.length) {
-      setSaveMsg(`Geen ruil mogelijk binnen de lijnen voor ${p.name}`);
+      setSaveMsg(`Geen wissel mogelijk binnen de lijnen voor ${p.name}`);
       setTimeout(() => setSaveMsg(""), 3500);
       return;
     }
-    const sleutel = `${openBlock}:${spelerId}`;
     const idx = (herplaatsRef.current[sleutel] ?? -1) + 1;
     herplaatsRef.current[sleutel] = idx;
     const keuze = lijst[idx % lijst.length];
-    // Ruil doorvoeren vanaf dit blok, zolang beiden nog op deze posities staan
-    const blocks = result.blocks.map((b2, i) => {
-      if (i < openBlock) return b2;
-      if (b2.assign[posP] !== spelerId || b2.assign[keuze.posQ] !== keuze.qId) return b2;
-      const assign = { ...b2.assign };
-      assign[posP] = keuze.qId;
-      assign[keuze.posQ] = spelerId;
-      return { ...b2, assign };
-    });
-    setResult({ ...result, blocks });
-    setSaveMsg(`${p.name} → ${POS_BY_CODE[keuze.posQ].name}, ${playersById[keuze.qId]?.name} → ${POS_BY_CODE[posP].name} · tik nogmaals voor de volgende optie`);
-    setTimeout(() => setSaveMsg(""), 4500);
+    const q = playersById[keuze.qId];
+    const ok = window.confirm(
+      `Geen echte wissel mogelijk binnen de regels.\nStille wissel doorvoeren?\n${p.name} \u2192 ${POS_BY_CODE[keuze.posQ].name}, ${q?.name} \u2192 ${POS_BY_CODE[posNu].name}\n(Annuleren = volgende optie bij nogmaals tikken)`);
+    if (!ok) {
+      setSaveMsg("Stille wissel geannuleerd");
+      setTimeout(() => setSaveMsg(""), 2500);
+      return;
+    }
+    voerRuilDoor(openBlock, posNu, keuze.posQ, keuze.qId, true);
   };
 
   const turfDoelpunt = () => {
