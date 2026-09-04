@@ -1,0 +1,7 @@
+Sam -> SP,RB,LB
+Fons -> LA,LH,LB
+Thijmen -> RA,RH,RB
+Joep -> RB,LB,SP
+Viggo -> LH,RH,LA
+spelers: 14
+live versie: null | auto-opslag aanwezig: true
