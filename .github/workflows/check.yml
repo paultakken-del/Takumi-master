@@ -1,0 +1,25 @@
+name: check
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::add-mask::2026"
+          node -e '
+          (async () => {
+            const r = await fetch("https://takumi-master.com/api/team/jo16-5?pin=" + process.env.WC_PIN);
+            const s = JSON.parse((await r.json()).state);
+            const wil = ["Sam","Fons","Thijmen","Joep","Viggo"];
+            for (const naam of wil) {
+              const p = (s.players || []).find(x => x.name === naam);
+              console.log("RESULTAAT:", naam, "->", p ? p.prefs.join(",") : "ONTBREEKT");
+            }
+            console.log("RESULTAAT: aantal spelers:", (s.players || []).length);
+            const app = await (await fetch("https://takumi-master.com/coach-assistant.html", { headers: { "Cache-Control": "no-cache" } })).text();
+            const m = app.match(/APP_VERSIE = \"(v\d+)\"/);
+            console.log("RESULTAAT: live app-versie:", m && m[1], "| auto-opslag in code:", app.includes("Voorkeuren overgenomen en opgeslagen"));
+          })();
+          '
+        env:
+          WC_PIN: "2026"
