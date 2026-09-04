@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v40";
+const APP_VERSIE = "v41";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -1858,22 +1858,28 @@ function HockeyWisselCoach() {
           {result.blocks.map((bl, i) => {
             const subs = i === 0 ? [] : subsBetween(result.blocks[i - 1], bl, playersById);
             return (
-              <div key={bl.label} style={{ borderTop: "1px solid #999", padding: "5px 0", breakInside: "avoid" }}>
-                <div style={{ fontWeight: 800 }}>{bl.label} <span style={{ fontWeight: 400 }}>(vanaf {fmtMin((i * kwartMin) / 2)} min)</span></div>
-                {i === 0 ? (
-                  <div>Start: {POSITIONS.map((pos) => `${pos.code} ${playersById[bl.assign[pos.code]]?.name ?? "—"}`).join("  ·  ")}</div>
-                ) : subs.length === 0 ? (
-                  <div>Geen wissels</div>
-                ) : (
-                  subs.map((sub, j) => (
-                    <div key={j}>
-                      {sub.schuifId !== undefined && <>⇄ {playersById[sub.schuifId]?.name}: {POS_BY_CODE[sub.van].name} → {POS_BY_CODE[sub.naar].name}</>}
-                      {sub.inId !== undefined && <>▲ IN: {playersById[sub.inId]?.name} op {POS_BY_CODE[sub.pos].name} </>}
-                      {sub.voorId !== undefined && <>— ▼ UIT: {playersById[sub.voorId]?.name}{sub.inId === undefined ? " (niet vervangen)" : ""}</>}
-                    </div>
-                  ))
-                )}
-                <div style={{ color: "#444" }}>Bank: {bl.bench.map((id) => playersById[id]?.name).join(", ") || "—"}</div>
+              <div key={bl.label} style={{ borderTop: "1px solid #999", padding: "6px 0", breakInside: "avoid", display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <div style={{ width: 148, flexShrink: 0 }}>
+                  <Pitch block={bl} playersById={playersById} keeper={keeper}
+                    wisselIn={new Set(subs.filter((s2) => s2.inId !== undefined).map((s2) => s2.inId))} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 800 }}>{bl.label} <span style={{ fontWeight: 400 }}>(vanaf {fmtMin((i * kwartMin) / 2)} min)</span></div>
+                  {i === 0 ? (
+                    <div>Start: {POSITIONS.map((pos) => `${pos.code} ${playersById[bl.assign[pos.code]]?.name ?? "—"}`).join("  ·  ")}</div>
+                  ) : subs.length === 0 ? (
+                    <div>Geen wissels</div>
+                  ) : (
+                    subs.map((sub, j) => (
+                      <div key={j}>
+                        {sub.schuifId !== undefined && <>⇄ {playersById[sub.schuifId]?.name}: {POS_BY_CODE[sub.van].name} → {POS_BY_CODE[sub.naar].name}</>}
+                        {sub.inId !== undefined && <>▲ IN: {playersById[sub.inId]?.name} op {POS_BY_CODE[sub.pos].name} </>}
+                        {sub.voorId !== undefined && <>— ▼ UIT: {playersById[sub.voorId]?.name}{sub.inId === undefined ? " (niet vervangen)" : ""}</>}
+                      </div>
+                    ))
+                  )}
+                  <div style={{ color: "#444" }}>Bank: {bl.bench.map((id) => playersById[id]?.name).join(", ") || "—"}</div>
+                </div>
               </div>
             );
           })}
