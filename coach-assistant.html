@@ -21,7 +21,7 @@
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── Palet: krijtwit langs de lijn, diep veldgroen, hesjes-geel voor wissels ── */
-const APP_VERSIE = "v44";
+const APP_VERSIE = "v45";
 
 /* Huiskleuren Schaerweijde: rood/wit, zwarte knoppen; alleen het veld blijft groen */
 const C = {
@@ -839,13 +839,19 @@ function HockeyWisselCoach() {
     return Object.keys(gekozen).length ? gekozen : undefined;
   };
 
+  /* Elke volgende klik op Genereer levert een nieuw schema: staat er al een
+     schema, dan schakelt hij door naar de volgende variant. */
   const genereer = (newSeed) => {
-    const s = newSeed ?? seed;
-    setSeed(s);
-    setResult(generateSchedule(players, s, actieveBasis(), seizoenTot));
+    const nieuw = newSeed ?? (result?.blocks ? seed + 1 : seed);
+    setSeed(nieuw);
+    setResult(generateSchedule(players, nieuw, actieveBasis(), seizoenTot));
     setTab("schema");
     setOpenBlock(0);
     setUitvalNote(null);
+    if (newSeed === undefined && result?.blocks) {
+      setSaveMsg("Nieuw wisselschema gegenereerd \u2713");
+      setTimeout(() => setSaveMsg(""), 3000);
+    }
   };
 
   /* Speler valt uit vanaf blok X: alles vóór X blijft staan, daarna wordt de
@@ -2030,7 +2036,7 @@ function HockeyWisselCoach() {
           </div>
         )}
         <div style={{ display: "flex", gap: 8, justifyContent: "center", pointerEvents: "auto" }}>
-          <button onClick={() => genereer(seed)} style={{ ...S.btn, flex: 1, maxWidth: 200, padding: "13px 14px" }}><Ico kind="wissel" />Genereer</button>
+          <button onClick={() => genereer()} style={{ ...S.btn, flex: 1, maxWidth: 200, padding: "13px 14px" }}><Ico kind="wissel" />Genereer</button>
           <button onClick={() => opslaan()} style={{ ...S.ghost, alignSelf: "stretch", padding: "10px 14px" }}><Ico kind="opslaan" />Opslaan</button>
           {result?.blocks && (
             <>
