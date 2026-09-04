@@ -3,7 +3,7 @@ on: workflow_dispatch
 permissions:
   contents: write
 jobs:
-  check:
+  neem-over:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -12,17 +12,29 @@ jobs:
           node -e '
           const fs = require("fs");
           (async () => {
+            const POSITIONS = ["LM","VM","LA","RA","LH","MM","RH","LB","SP","RB"];
+            const base = "https://takumi-master.com/api";
+            const pin = process.env.WC_PIN;
+            const team = await (await fetch(`${base}/team/jo16-5?pin=${pin}`)).json();
+            const state = JSON.parse(team.state);
+            const inz = (await (await fetch(`${base}/voorkeur/jo16-5?pin=${pin}&inzendingen=1`)).json()).inzendingen || {};
+            const posVan = (v) => Array.isArray(v) ? v : (v && v.posities) || [];
             const uit = [];
-            const r = await fetch("https://takumi-master.com/api/team/jo16-5?pin=" + process.env.WC_PIN);
-            const s = JSON.parse((await r.json()).state);
-            for (const naam of ["Sam","Fons","Thijmen","Joep","Viggo"]) {
-              const p = (s.players || []).find(x => x.name === naam);
-              uit.push(naam + " -> " + (p ? p.prefs.join(",") : "ONTBREEKT"));
-            }
-            uit.push("spelers: " + (s.players || []).length);
-            const app = await (await fetch("https://takumi-master.com/coach-assistant.html", { headers: { "Cache-Control": "no-cache" } })).text();
-            const m = app.match(/APP_VERSIE = \"(v\\d+)\"/);
-            uit.push("live versie: " + (m && m[1]) + " | auto-opslag aanwezig: " + app.includes("overgenomen en opgeslagen"));
+            state.players = (state.players || []).map((p) => {
+              const nieuw = posVan(inz[p.name]);
+              if (!nieuw.length || p.keeper) { uit.push(p.name + " (ongewijzigd) -> " + p.prefs.join(",")); return p; }
+              const codes = nieuw.filter((c) => POSITIONS.includes(c)).slice(0, 3);
+              const rest = p.prefs.filter((c) => !codes.includes(c));
+              while (codes.length < 3) codes.push(rest.shift() || POSITIONS.find((x) => !codes.includes(x)));
+              uit.push(p.name + " -> " + codes.join(","));
+              return { ...p, prefs: codes };
+            });
+            const put = await fetch(`${base}/team/jo16-5`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pin, state: JSON.stringify(state) }) });
+            uit.push("PUT: " + put.status);
+            const na = JSON.parse((await (await fetch(`${base}/team/jo16-5?pin=${pin}`)).json()).state);
+            const sam = na.players.find((p) => p.name === "Sam");
+            uit.push("verificatie Sam op server: " + sam.prefs.join(","));
+            if (!put.ok || sam.prefs[0] !== "LB") process.exit(1);
             fs.writeFileSync("check-result.txt", uit.join("\n") + "\n");
           })();
           '
@@ -30,4 +42,4 @@ jobs:
           WC_PIN: "2026"
       - run: |
           git config user.email "check@local" && git config user.name "check"
-          git add check-result.txt && git commit -m "checkresultaat" && git push
+          git add check-result.txt && git commit -m "overname-resultaat" && git push
