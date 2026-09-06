@@ -13,7 +13,7 @@ const json = (obj, status = 200) =>
 
 const pct = (n) => (Number.isFinite(n) ? Math.round(n * 10) / 10 : null);
 
-function standBeeld(radarCrypto, radarMacro, engineLaatste, etfLaatste, etfPortfolio, btcPortfolio, ladder) {
+function standBeeld(radarCrypto, radarMacro, engineLaatste, etfLaatste, etfPortfolio, btcPortfolio, ladder, reeks) {
   const b = {};
 
   // BTC: seizoenslot = accumulatie vs capitulatie; marktslot = weekclose vs SMA30
@@ -45,6 +45,26 @@ function standBeeld(radarCrypto, radarMacro, engineLaatste, etfLaatste, etfPortf
   b.cryptoSamenvatting = cs.samenvatting || cs.synthese || null;
   b.macroSamenvatting = ms.samenvatting || ms.synthese || null;
   b.wegingDatum = radarCrypto && radarCrypto.t ? new Date(radarCrypto.t).toLocaleDateString('nl-NL') : null;
+
+  // dagdata: de verse ochtendmeting, zodat elke puls iets nieuws vertelt
+  const nu = reeks && reeks.length ? reeks[reeks.length - 1] : null;
+  const gister = reeks && reeks.length > 1 ? reeks[reeks.length - 2] : null;
+  if (nu) {
+    const doel = nu.t - 30 * 24 * 3600 * 1000;
+    let m30 = null;
+    for (const m of reeks) if (!m30 || Math.abs(m.t - doel) < Math.abs(m30.t - doel)) m30 = m;
+    const c = nu.crypto || {}, cg = (gister || {}).crypto || {}, ma = nu.macro || {}, m3 = (m30 || {}).macro || {};
+    b.vandaag = {
+      datum: new Date(nu.t).toLocaleDateString('nl-NL'),
+      btc: c.btc || null,
+      btcDag: Number.isFinite(c.btc) && Number.isFinite(cg.btc) ? ((c.btc - cg.btc) / cg.btc) * 100 : null,
+      fng: Number.isFinite(c.fng) ? c.fng : null,
+      fngGister: Number.isFinite(cg.fng) ? cg.fng : null,
+      netliq: Number.isFinite(ma.netliq) ? ma.netliq : null,
+      netliq30d: Number.isFinite(ma.netliq) && Number.isFinite(m3.netliq) ? ma.netliq - m3.netliq : null,
+      stables: Number.isFinite(c.stables) ? c.stables : null,
+    };
+  }
   return b;
 }
 
@@ -73,6 +93,12 @@ function pulsTekst(b) {
   const slot = (open) => (open ? 'OPEN' : 'dicht');
   r.push('TAKUMI DAGPULS \u00b7 afstand tot actie');
   r.push('');
+  if (b.vandaag) {
+    r.push('Vandaag (' + b.vandaag.datum + '): BTC $' + Math.round(b.vandaag.btc || 0) +
+      (b.vandaag.btcDag === null ? '' : ' (' + (b.vandaag.btcDag > 0 ? '+' : '') + pct(b.vandaag.btcDag) + '%)') +
+      ' \u00b7 F&G ' + b.vandaag.fng + ' \u00b7 netliq ' + b.vandaag.netliq + ' mrd');
+    r.push('');
+  }
   const regel = (v, volgorde) => volgorde.filter((f) => Number.isFinite(v[f])).map((f) => f + ' ' + v[f] + '%').join(' · ');
   r.push('Cryptocyclus (' + (b.wegingDatum || '?') + '): ' + regel(b.cryptoVerdeling || {}, ['accumulatie', 'expansie', 'euforie', 'distributie', 'capitulatie']));
   r.push('Macrocyclus: ' + regel(b.macroVerdeling || {}, ['vroeg', 'midden', 'laat', 'contractie']));
@@ -175,6 +201,16 @@ function pulsHtml(b, delta) {
       <div style="font:12px Georgia,serif;color:${KLEUR.gedempt}">${d} · afstand tot actie</div>
     </div>
     ${kantel}
+    ${b.vandaag ? kaart('Vandaag', 'meting ' + b.vandaag.datum, [
+      b.vandaag.btc !== null ? `<tr><td style="padding:5px 0;font:13px Georgia,serif;color:${KLEUR.inkt}">BTC (USD)
+        <span style="float:right;font:12px 'Courier New',monospace;color:${(b.vandaag.btcDag || 0) >= 0 ? KLEUR.groen : KLEUR.amber}">$${Math.round(b.vandaag.btc).toLocaleString('nl-NL')}${b.vandaag.btcDag === null ? '' : ' (' + (b.vandaag.btcDag > 0 ? '+' : '') + pct(b.vandaag.btcDag) + '% vs gisteren)'}</span></td></tr>` : '',
+      b.vandaag.fng !== null ? `<tr><td style="padding:5px 0;font:13px Georgia,serif;color:${KLEUR.inkt}">Fear &amp; Greed
+        <span style="float:right;font:12px 'Courier New',monospace;color:${KLEUR.gedempt}">${b.vandaag.fng}${b.vandaag.fngGister === null ? '' : ' (gisteren ' + b.vandaag.fngGister + ')'}</span></td></tr>` : '',
+      b.vandaag.netliq !== null ? `<tr><td style="padding:5px 0;font:13px Georgia,serif;color:${KLEUR.inkt}">Netto liquiditeit
+        <span style="float:right;font:12px 'Courier New',monospace;color:${KLEUR.gedempt}">${b.vandaag.netliq.toLocaleString('nl-NL')} mrd${b.vandaag.netliq30d === null ? '' : ' (' + (b.vandaag.netliq30d > 0 ? '+' : '') + Math.round(b.vandaag.netliq30d) + ' ov. 30d)'}</span></td></tr>` : '',
+      b.vandaag.stables !== null ? `<tr><td style="padding:5px 0;font:13px Georgia,serif;color:${KLEUR.inkt}">Stablecoin-aanbod
+        <span style="float:right;font:12px 'Courier New',monospace;color:${KLEUR.gedempt}">${b.vandaag.stables} mrd</span></td></tr>` : '',
+    ].join('')) : ''}
     ${verdelingKaart('Cryptocyclus', b.cryptoVerdeling || {}, ['accumulatie', 'expansie', 'euforie', 'distributie', 'capitulatie'], b.cryptoSamenvatting, b.wegingDatum)}
     ${kaart('BTC-mandaat', (b.btcPositie ? 'positie' : 'cash') + ' · regime ' + (b.regime || '?'), btcRijen)}
     ${verdelingKaart('Macrocyclus', b.macroVerdeling || {}, ['vroeg', 'midden', 'laat', 'contractie'], b.macroSamenvatting, b.wegingDatum)}
@@ -210,7 +246,7 @@ export async function onRequestPost({ request, env }) {
     let body = {};
     try { body = await request.json(); } catch { /* leeg is ok */ }
 
-    const [rc, rm, el, etl, etp, bp, lad, vorig] = await Promise.all([
+    const [rc, rm, el, etl, etp, bp, lad, vorig, reeks] = await Promise.all([
       env.TAKUMI_USERS.get('radar:latest:crypto', 'json'),
       env.TAKUMI_USERS.get('radar:latest:macro', 'json'),
       env.TAKUMI_USERS.get('engine:laatste', 'json'),
@@ -219,9 +255,10 @@ export async function onRequestPost({ request, env }) {
       env.TAKUMI_USERS.get('engine:portfolio', 'json'),
       env.TAKUMI_USERS.get('engine:ladder:staat', 'json'),
       env.TAKUMI_USERS.get('wachter:vorig', 'json'),
+      env.TAKUMI_USERS.get('radar:reeks', 'json'),
     ]);
 
-    const beeld = standBeeld(rc, rm, el, etl, etp, bp, lad);
+    const beeld = standBeeld(rc, rm, el, etl, etp, bp, lad, reeks);
     const delta = veranderingen(vorig, beeld);
     await env.TAKUMI_USERS.put('wachter:vorig', JSON.stringify(beeld));
 
