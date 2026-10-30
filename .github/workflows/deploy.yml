@@ -2,7 +2,7 @@ name: Deploy to Cloudflare Pages
 
 on:
   push:
-    branches: [main]
+    branches: ['**']   # main → productie; elke andere branch → preview op <branch>.takumi-master.pages.dev
   workflow_dispatch:
 
 jobs:
@@ -27,4 +27,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           wranglerVersion: "3.78.12"
-          command: pages deploy . --project-name=takumi-master --branch=main --commit-dirty=true
+          command: pages deploy . --project-name=takumi-master --branch=${{ github.ref_name }} --commit-dirty=true
