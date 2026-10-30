@@ -433,38 +433,17 @@ p { text-wrap: pretty; }
 
 /* Kompas van vandaag + de vijf ritmes: één rustige strook onder de lijn */
 .kompas-strook {
-  display: grid; grid-template-columns: minmax(0, 1.3fr) auto; align-items: center; gap: 32px 48px;
-  padding: 36px 48px; background: var(--p2); border-bottom: 1px solid var(--border);
+  padding: 30px 48px; background: var(--p2); border-bottom: 1px solid var(--border);
 }
-.kompas-tekst { min-width: 0; display: grid; gap: 10px; }
+.kompas-tekst { max-width: 760px; margin: 0 auto; min-width: 0; display: grid; gap: 8px; text-align: center; }
 .kompas-label { font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--acc); }
 .kompas-label span + span { color: var(--muted); font-weight: 500; letter-spacing: .08em; text-transform: none; margin-left: 10px; }
 .lijn-element-uit { font-family: var(--serif); font-size: clamp(19px, 2vw, 25px); line-height: 1.35; color: var(--ink); min-height: 1.3em; }
 .lijn-element-uit strong { font-weight: 600; }
 .kompas-vraag { font-family: var(--serif); font-style: italic; font-size: clamp(16px, 1.6vw, 20px); color: var(--muted); line-height: 1.4; }
-.kompas-mcp { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 11px; color: var(--muted); text-decoration: none; margin-top: 4px; transition: color .2s; }
+.kompas-mcp { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 11px; color: var(--muted); text-decoration: none; margin-top: 2px; transition: color .2s; }
 .kompas-mcp:hover { color: var(--acc); }
-.lijn-elementen { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
-.lijn-kader { width: 100%; text-align: right; font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
-.lijn-elementen button {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  font-family: var(--sans); min-width: 58px; padding: 8px 8px 7px; border-radius: 10px; cursor: pointer;
-  background: transparent; color: var(--ink); border: 1px solid rgba(28,24,21,.14);
-  transition: border-color .2s, background .2s, color .2s;
-}
-.lijn-elementen button b { font-family: serif; font-size: 19px; font-weight: 400; line-height: 1; }
-.lijn-elementen button span { font-size: 9px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-.lijn-elementen button:hover { border-color: var(--acc); }
-.lijn-elementen button:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
-.lijn-elementen button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.lijn-elementen button[aria-pressed="true"] span { color: var(--paper); opacity: .8; }
-.lijn-elementen button[data-vandaag]::after { content: ''; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--acc); margin: 2px auto 0; }
-.lijn-elementen button[aria-pressed="true"][data-vandaag]::after { background: #e8b97a; }
-@media (max-width: 860px) {
-  .kompas-strook { grid-template-columns: 1fr; gap: 22px; padding: 28px 20px; }
-  .lijn-elementen { justify-content: flex-start; }
-  .lijn-kader { text-align: left; }
-}
+@media (max-width: 860px) { .kompas-strook { padding: 26px 20px; } }
 
 /* Zelfcheck: de zeven patronen zijn aan te tikken */
 .herk-item { cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -559,22 +538,13 @@ p { text-wrap: pretty; }
   <h2 id="lijn-zin" data-i18n="wave-hero-h">In een wereld vol chaos<br>rolt een golf van <em>rust, energie en wijsheid</em>.</h2>
 </section>
 
-<!-- KOMPAS VAN VANDAAG · server-side gevuld door functions/_middleware.js (zelfde rotatie als lees_kompas).
-     De vijf ritmes: tik een element en de lijn hierboven ademt op dat tempo. -->
+<!-- KOMPAS VAN VANDAAG · server-side gevuld door functions/_middleware.js (zelfde rotatie als lees_kompas) -->
 <section class="kompas-strook" id="kompas" aria-label="Kompas van vandaag">
   <div class="kompas-tekst">
     <div class="kompas-label"><span data-i18n="kp-label">Kompas van vandaag</span><span data-kompas-datum data-nl="" data-en=""></span></div>
     <div class="lijn-element-uit" id="lijn-element-uit" aria-live="polite"></div>
     <div class="kompas-vraag"><span data-kompas="vraag">Welke vraag stel je vandaag in plaats van een antwoord te geven?</span></div>
     <a class="kompas-mcp" href="#mcp" data-stat="click_kompas"><span data-kompas="puls">ochtendpuls</span> · <span data-kompas="tijd">06:45</span> · <span data-i18n="kp-agent">zo leest een agent dit</span> →</a>
-  </div>
-  <div class="lijn-elementen" id="lijn-elementen" role="group" aria-label="Vijf ritmes">
-    <div class="lijn-kader" data-i18n="el-kader">Vijf ritmes. Elke dag leidt er één.</div>
-    <button type="button" data-el="chi" data-stat="click_element"><b>地</b><span data-i18n="el-w-chi">Aarde</span></button>
-    <button type="button" data-el="sui" data-stat="click_element"><b>水</b><span data-i18n="el-w-sui">Water</span></button>
-    <button type="button" data-el="fu" data-stat="click_element"><b>風</b><span data-i18n="el-w-fu">Wind</span></button>
-    <button type="button" data-el="ka" data-stat="click_element"><b>火</b><span data-i18n="el-w-ka">Vuur</span></button>
-    <button type="button" data-el="ku" data-stat="click_element"><b>空</b><span data-i18n="el-w-ku">Leegte</span></button>
   </div>
 </section>
 
@@ -1116,59 +1086,69 @@ var EN = {
   if (!ELEM[eid]) { try { eid = DAG[new Date(new Date().toLocaleString('en-US',{timeZone:'Europe/Amsterdam'})).getDay()]; } catch(_) { eid = 'board'; } }
   var E = ELEM[eid], VANDAAG = eid;
   var CP = [[0,0],[.10,0],[.22,.01],[.33,.07],[.42,.22],[.50,.46],[.57,.74],[.63,.94],[.675,1],[.705,.86],[.70,.64],[.715,.42],[.76,.18],[.83,.01],[.90,-.03],[.96,0],[1,0]];
-  var DR = [.04,.14,.3,.55,.85,1,.9,.62,.3,.26,.42,.72,.8,.5,.26,.12,.03];
+  var DR = [.05,.18,.36,.6,.88,1,.92,.66,.34,.3,.46,.76,.84,.56,.3,.14,.04];
+  // bij een vlakke lijn mag de krul niet terugbuigen: x-posities zonder haak, ingemengd naarmate de golf lager is
+  var CPV = CP.map(function(c,i){ return (i===9)?.69:(i===10)?.705:(i===11)?.73:c[0]; });
   function cr(a,b,c,d,t){ var t2=t*t,t3=t2*t; return .5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3); }
   function punt(u,hoog){ var n=CP.length-1,x=Math.min(u*n,n-1e-6),i=Math.floor(x),t=x-i;
     var g=function(k){return CP[Math.max(0,Math.min(n,k))];}, dr=function(k){return DR[Math.max(0,Math.min(n,k))];};
     var p0=g(i-1),p1=g(i),p2=g(i+1),p3=g(i+2);
-    return { x:cr(p0[0],p1[0],p2[0],p3[0],t), y:cr(p0[1],p1[1],p2[1],p3[1],t)*hoog, w:cr(dr(i-1),dr(i),dr(i+1),dr(i+2),t) }; }
+    var kk=Math.min(1,hoog/.3), fx=function(k){return CPV[Math.max(0,Math.min(n,k))];};
+    var xg=cr(p0[0],p1[0],p2[0],p3[0],t), xv=cr(fx(i-1),fx(i),fx(i+1),fx(i+2),t);
+    return { x:xv+(xg-xv)*kk, y:cr(p0[1],p1[1],p2[1],p3[1],t)*hoog, w:cr(dr(i-1),dr(i),dr(i+1),dr(i+2),t) }; }
   var dpr=Math.min(devicePixelRatio||1,2), W=0, Hc=0;
   function maat(){ var r=cv.getBoundingClientRect(); W=r.width; Hc=r.height; cv.width=W*dpr; cv.height=Hc*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
   addEventListener('resize', maat); maat();
   var ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1a1815';
   var paper = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#faf7f2';
-  function teken(voortgang,hoog,tijd){
+  function teken(voortgang,hoog,tijd,deel){ deel = deel === undefined ? 1 : deel;
     ctx.clearRect(0,0,W,Hc);
-    var links=W*.04, breed=W*.92, basis=Hc*.8, amp=Math.min(Hc*.62, W*.3), maxW=Math.max(9,Math.min(30,W*.024));
+    var links=W*.04, breed=W*.92, basis=Hc*.78, amp=Math.min(Hc*.6, W*.3), maxW=Math.max(13,Math.min(46,W*.036));
     var N=320, L=[], R=[], tot=Math.max(2,Math.floor(N*voortgang));
     for (var k=0;k<=tot;k++){ var u=k/N,p=punt(u,hoog),q=punt(Math.min(1,u+.002),hoog);
       var x=links+p.x*breed, y=basis-p.y*amp, tx=(q.x-p.x)*breed, ty=-(q.y-p.y)*amp, ln=Math.hypot(tx,ty)||1, nx=-ty/ln, ny=tx/ln;
-      var w=p.w*maxW*(.92+.08*Math.sin(u*60+tijd*.7)); if (voortgang<1 && k>tot-14) w*=(tot-k)/14;
+      // vlak: één rustige streek (dun, zwaar, dun); golf: de drukverdeling van de kwast over de rug en de voorkant
+      var vlak = .18 + .82*Math.pow(Math.sin(Math.PI*u), 1.3), druk = vlak + (p.w - vlak) * deel;
+      var w=druk*maxW*(.92+.08*Math.sin(u*60+tijd*.7)); if (voortgang<1 && k>tot-14) w*=(tot-k)/14;
       L.push([x+nx*w/2,y+ny*w/2]); R.push([x-nx*w/2,y-ny*w/2]); }
     function vorm(){ ctx.beginPath(); ctx.moveTo(L[0][0],L[0][1]); for(var i=1;i<L.length;i++) ctx.lineTo(L[i][0],L[i][1]); for(var j=R.length-1;j>=0;j--) ctx.lineTo(R[j][0],R[j][1]); ctx.closePath(); }
     ctx.save(); ctx.globalAlpha=.28; ctx.shadowColor=ink; ctx.shadowBlur=9; ctx.fillStyle=ink; vorm(); ctx.fill(); ctx.restore();
     ctx.fillStyle=ink; vorm(); ctx.fill();
-    ctx.save(); ctx.strokeStyle=paper; ctx.lineCap='round'; ctx.globalAlpha=.85;
+    ctx.save(); ctx.strokeStyle=paper; ctx.lineCap='round'; ctx.globalAlpha=.85*deel;
     for (var s=0;s<3;s++){ var off=[-.3,.05,.36][s]; ctx.lineWidth=[1.1,.8,1.4][s]; ctx.beginPath(); var eerste=true;
       for (var k2=0;k2<=tot;k2++){ var u2=k2/N; if(u2<.52||u2>.70) continue; var fade=Math.sin((u2-.52)/.18*Math.PI);
         var m=.5+off*fade+.03*Math.sin(u2*140+s), px=L[k2][0]+(R[k2][0]-L[k2][0])*m, py=L[k2][1]+(R[k2][1]-L[k2][1])*m;
         if(eerste){ctx.moveTo(px,py);eerste=false;} else ctx.lineTo(px,py); }
       ctx.stroke(); }
     ctx.restore();
-    if (voortgang>.68){ var top=punt(.675,hoog), sx=links+top.x*breed, sy=basis-top.y*amp; ctx.fillStyle=ink; ctx.globalAlpha=Math.min(1,(voortgang-.68)*6);
+    if (deel>.55){ var top=punt(.675,hoog), sx=links+top.x*breed, sy=basis-top.y*amp; ctx.fillStyle=ink; ctx.globalAlpha=Math.min(1,(deel-.55)*3);
       [[14,-18,1.6],[30,-26,1.1],[44,-22,.8],[22,-34,.7]].forEach(function(d){ ctx.beginPath(); ctx.arc(sx+d[0]*maxW/22, sy+d[1]*maxW/22, d[2]*maxW/22, 0, 7); ctx.fill(); }); ctx.globalAlpha=1; }
   }
   function adem(t,tempo){ var f=(t%tempo)/tempo, a=f<.42?f/.42:1-(f-.42)/.58; return a*a*(3-2*a); }
   var start=performance.now(), zichtbaar=true;
   try { new IntersectionObserver(function(e){ zichtbaar=e[0].isIntersecting; }).observe(cv); } catch(_) {}
-  function frame(now){ var t=(now-start)/1000, v=reduced?1:Math.min(1,t/3); v=v*v*(3-2*v);
-    var a=reduced?.5:adem(Math.max(0,t-3),E.tempo), hoog=E.hoogte*(.72+.28*a);
-    if (zichtbaar || v<1) teken(v,hoog,t);
-    if (t > 2.6) { var z = document.getElementById('lijn-zin'); if (z) z.classList.add('aan'); }
-    if (!reduced || v<1) requestAnimationFrame(frame); }
+  // Drie bedrijven: (1) de kwast tekent stil water, een vlakke streek, 0–2.2 s;
+  // (2) uit die lijn rijst de golf, 2.2–4.6 s, dan verschijnt de zin; (3) scrollen laat de golf
+  // weer liggen tot stil water, precies terwijl de hero uit beeld schuift.
+  function ss(a,b,x){ var q=Math.min(1,Math.max(0,(x-a)/(b-a))); return q*q*(3-2*q); }
+  var heroEl = cv.closest('.lijn-hero');
+  function frame(now){ var t=(now-start)/1000;
+    var v = reduced ? 1 : ss(0, 2.2, t);
+    var rijs = reduced ? 1 : ss(2.2, 4.6, t);
+    var a = reduced ? .5 : adem(Math.max(0, t-4.6), E.tempo);
+    var weg = 0; if (heroEl) { var r = heroEl.getBoundingClientRect(); weg = ss(0, 1, -r.top / Math.max(1, r.height * .85)); }
+    var hoog = E.hoogte * rijs * (.76 + .24 * a) * (1 - weg);
+    if (zichtbaar || t < 5) teken(v, hoog, t, rijs * (1 - weg));
+    if (t > 3.4) { var z = document.getElementById('lijn-zin'); if (z) z.classList.add('aan'); }
+    if (!reduced || t < 5) requestAnimationFrame(frame); }
   requestAnimationFrame(frame);
   // de vijf elementen: tik om de lijn op dat ritme te laten ademen
   var uit = document.getElementById('lijn-element-uit');
   window.zetElement = function(el){
-    if (!ELEM[el]) return; E = ELEM[el]; eid = el;
-    document.querySelectorAll('#lijn-elementen button').forEach(function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-el') === el ? 'true' : 'false'); });
+    if (!ELEM[el]) return;
     var T = (typeof LANG !== 'undefined' && LANG === 'en') ? EN : NL;
     if (uit) uit.innerHTML = (el === VANDAAG ? (T['el-vandaag'] || '') : '') + (T['el-' + el] || '');
   };
-  document.querySelectorAll('#lijn-elementen button').forEach(function(b){
-    if (b.getAttribute('data-el') === VANDAAG) b.setAttribute('data-vandaag', '');
-    b.addEventListener('click', function(){ window.zetElement(b.getAttribute('data-el')); });
-  });
 })();
 
 // ── KOMPAS VAN VANDAAG ────────────────────────────────────────────
@@ -1188,7 +1168,7 @@ function vulKompas(lang){
   if (KOMPAS_DATUM) document.querySelectorAll('[data-kompas-datum]').forEach(function(el){ el.textContent = KOMPAS_DATUM[lang] || KOMPAS_DATUM.nl; });
 }
 vulKompas('nl');
-if (window.zetElement) window.zetElement((function(){ var e = document.documentElement.getAttribute('data-kompas-eid'); if (e) return e; var b = document.querySelector('#lijn-elementen button[data-vandaag]'); return b ? b.getAttribute('data-el') : 'board'; })());
+if (window.zetElement) window.zetElement(document.documentElement.getAttribute('data-kompas-eid') || 'board');
 
 function applyLang(lang) {
   var T = lang === 'en' ? EN : NL;
@@ -1202,7 +1182,7 @@ function applyLang(lang) {
   LANG = lang;
   localStorage.setItem('na_lang', lang);
   if (typeof renderCheck === 'function') renderCheck();
-  if (window.zetElement) { var _b = document.querySelector('#lijn-elementen button[aria-pressed="true"]'); window.zetElement(_b ? _b.getAttribute('data-el') : 'board'); }
+  if (window.zetElement) window.zetElement(document.documentElement.getAttribute('data-kompas-eid') || 'board');
 }
 
 function toggleLang() {
