@@ -469,6 +469,11 @@ p { text-wrap: pretty; }
 .herk-result-h { font-family: var(--serif); font-size: clamp(20px, 2.4vw, 30px); font-weight: 300; line-height: 1.25; margin-bottom: 8px; }
 .herk-result-h em { font-style: italic; color: #e8b97a; }
 .herk-result-p { font-size: 14px; color: rgba(247,241,230,.7); line-height: 1.65; max-width: 560px; }
+.herk-lezing { margin: 14px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 9px 16px; max-width: 620px; }
+.herk-lezing dt { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #e8b97a; padding-top: 3px; white-space: nowrap; }
+.herk-lezing dd { margin: 0; font-size: 14px; line-height: 1.6; color: rgba(247,241,230,.82); }
+.herk-lezing dd b { color: #f7f1e6; font-weight: 600; }
+@media (max-width: 680px) { .herk-lezing { grid-template-columns: 1fr; gap: 4px 0; } .herk-lezing dd { margin-bottom: 8px; } }
 .herk-result-acties { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
 .herk-result-acties a, .herk-result-acties button {
   font-family: var(--sans); font-size: 13px; font-weight: 500; padding: 10px 18px; border-radius: 6px;
@@ -614,7 +619,7 @@ p { text-wrap: pretty; }
     <div>
       <div class="herk-result-n" id="hr-n"></div>
       <div class="herk-result-h" id="hr-h"></div>
-      <p class="herk-result-p" id="hr-p"></p>
+      <dl class="herk-lezing" id="hr-lezing"></dl>
       <div class="herk-result-acties">
         <a class="hr-prim" href="#webinar" data-stat="click_webinar_check" data-i18n="hr-webinar">Neem het mee naar het webinar →</a>
         <button type="button" class="hr-sec" id="hr-share" data-i18n="hr-share">Deel je patroon</button>
@@ -903,7 +908,38 @@ var NL = {
   'hr-p1':       'Kijk eens een week lang waar dit patroon opduikt. Meestal niet waar je het verwacht.',
   'hr-p2':       'De patronen hangen samen: zonder wortels geen ritme, zonder ritme geen leren. In het webinar laat Paul zien waar je begint.',
   'hr-p4':       'Niet harder duwen. Eerst vertragen, dan versnellen. Precies daarover gaat het boek, en het webinar is de korte route.',
-  'hr-share-txt':'Ik herken {n} van de 7 Agile-patronen uit Natuurlijk Agile: {k}. Welke herken jij?',
+  'hr-share-txt':'Ik herken {n} van de 7 Agile-patronen uit Natuurlijk Agile: {k}. Het diepste: {o}. Welke herken jij?',
+  'lz-signaal':  'Signaal', 'lz-voelt': 'Wat je voelt', 'lz-verband': 'Het verband', 'lz-stap': 'Eerste stap',
+  'lz-anders':   'Je begon bij {a}: dat ligt bovenop. Eronder ligt {b}, en daar begint het.',
+  'lz-zelfde':   'Je begon bij {a}, en dat is ook waar het begint.',
+  'nm-efficientie': 'de efficiëntieval', 'nm-wortels': 'onvoldoende wortels', 'nm-adem': 'hyperventilatie', 'nm-silo': 'de silo\'s', 'nm-godzilla': 'de Godzilla', 'nm-isolatie': 'isolatie en flowverstoring',
+  'sig-efficientie': 'Je meet snelheid, niet waarde. Velocity stijgt, en niemand kan zeggen wat er voor de klant beter werd.',
+  'sig-wortels':  'Agile als methode, zonder het waarom eronder. Dat houdt stand tot de eerste storm.',
+  'sig-adem':     'Sprint na sprint zonder herstel. Het ritme dat wendbaarheid kracht geeft, is tempo geworden.',
+  'sig-silo':     'Business en IT praten over elkaar, niet met elkaar. De sticker is nieuw, de muur is oud.',
+  'sig-godzilla': 'Fouten herhalen zich omdat niemand ze mag benoemen. De retro is een ritueel geworden.',
+  'sig-isolatie': 'De teams werken, de waarde blijft steken tussen de teams. Elk dashboard groen, de keten rood.',
+  'vb-wortels+adem':      'Zonder wortels geen ritme: wie niet weet waarom, kan ook niet vertragen.',
+  'vb-wortels+godzilla':  'Een organisatie zonder wortels kan niet leren: er is niets om naar terug te keren.',
+  'vb-wortels+silo':      'Silo\'s overleven elke methode zolang het fundament eronder ontbreekt.',
+  'vb-wortels+isolatie':  'Eilanden ontstaan waar het gezamenlijke waarom ontbreekt.',
+  'vb-wortels+efficientie': 'Zonder fundament wordt efficiëntie het doel. Zo wordt agile een bezuinigingstool.',
+  'vb-adem+godzilla':     'Wie nooit op adem komt, heeft ook geen tijd om te leren.',
+  'vb-adem+silo':         'Hyperventilatie in twee aparte werelden: iedereen rent, niemand samen.',
+  'vb-adem+isolatie':     'Tempo zonder stroom: de teams rennen, de waarde staat stil.',
+  'vb-adem+efficientie':  'Sneller zonder herstel is de grijze zone: te zwaar om van te herstellen, te licht om van te groeien.',
+  'vb-godzilla+silo':     'Fouten die zich herhalen over een muur heen: niemand ziet het hele patroon.',
+  'vb-godzilla+isolatie': 'Wat het ene team leert, bereikt het andere niet.',
+  'vb-godzilla+efficientie': 'Als de metric heilig is, wordt leren een risico. Fouten verdwijnen uit de cijfers, niet uit de organisatie.',
+  'vb-silo+isolatie':     'Dezelfde muur, van twee kanten bekeken: structuur die stroom blokkeert.',
+  'vb-silo+efficientie':  'Twee silo\'s die elk hun eigen efficiëntie meten, optimaliseren allebei het verkeerde.',
+  'vb-isolatie+efficientie': 'Lokale efficiëntie, globale stilstand: elk team groen, de keten rood.',
+  'stap-wortels':  'Vraag deze week drie mensen waarom jullie agile werken. Drie verschillende antwoorden is je diagnose.',
+  'stap-adem':     'Plan in de volgende sprint één dag zonder opgeleverde waarde in. Kijk wat de kwaliteit daarna doet.',
+  'stap-godzilla': 'Pak de retro-actie van drie maanden geleden erbij en check of hij ooit is uitgevoerd.',
+  'stap-silo':     'Laat één businessvraag en één IT-antwoord in dezelfde retrospective landen.',
+  'stap-isolatie': 'Volg één klantvraag van begin tot eind en tel de wachtmomenten.',
+  'stap-efficientie': 'Zet één sprint naast velocity één maat voor waarde: wat is er voor de klant veranderd?',
   'hr-copied':   'Link gekopieerd',
   'herk-concl':  'Dit is niet een probleem van mensen of teams. Het is een probleem van <strong>fundament</strong>, en het wordt urgenter nu AI de druk op organisaties verder vergroot.',
   'boek-label':  'Het boek',
@@ -999,7 +1035,38 @@ var EN = {
   'hr-p1':       'Watch for a week where this pattern shows up. Usually not where you expect it.',
   'hr-p2':       'The patterns are connected: no roots, no rhythm; no rhythm, no learning. In the webinar Paul shows where to start.',
   'hr-p4':       'Do not push harder. Slow down first, then speed up. That is what the book is about, and the webinar is the short route.',
-  'hr-share-txt':'I recognise {n} of the 7 Agile patterns from Natuurlijk Agile: {k}. Which ones do you recognise?',
+  'hr-share-txt':'I recognise {n} of the 7 Agile patterns from Natuurlijk Agile: {k}. The deepest: {o}. Which do you recognise?',
+  'lz-signaal':  'Signal', 'lz-voelt': 'What you feel', 'lz-verband': 'The link', 'lz-stap': 'First step',
+  'lz-anders':   'You started with {a}: that sits on top. Underneath lies {b}, and that is where it starts.',
+  'lz-zelfde':   'You started with {a}, and that is also where it starts.',
+  'nm-efficientie': 'the efficiency trap', 'nm-wortels': 'shallow roots', 'nm-adem': 'hyperventilation', 'nm-silo': 'the silos', 'nm-godzilla': 'the Godzilla', 'nm-isolatie': 'isolation and broken flow',
+  'sig-efficientie': 'You measure speed, not value. Velocity rises, and nobody can say what got better for the customer.',
+  'sig-wortels':  'Agile as a method, without the why beneath it. That holds until the first storm.',
+  'sig-adem':     'Sprint after sprint without recovery. The rhythm that gives agility its strength has become pace.',
+  'sig-silo':     'Business and IT talk about each other, not with each other. The sticker is new, the wall is old.',
+  'sig-godzilla': 'Mistakes repeat because nobody is allowed to name them. The retro has become a ritual.',
+  'sig-isolatie': 'The teams work, the value gets stuck between the teams. Every dashboard green, the chain red.',
+  'vb-wortels+adem':      'No roots, no rhythm: those who do not know why cannot slow down either.',
+  'vb-wortels+godzilla':  'An organisation without roots cannot learn: there is nothing to return to.',
+  'vb-wortels+silo':      'Silos survive every method as long as the foundation beneath is missing.',
+  'vb-wortels+isolatie':  'Islands form where the shared why is missing.',
+  'vb-wortels+efficientie': 'Without foundation, efficiency becomes the goal. That is how agile turns into a cost-cutting tool.',
+  'vb-adem+godzilla':     'Those who never catch their breath have no time to learn either.',
+  'vb-adem+silo':         'Hyperventilation in two separate worlds: everyone runs, nobody together.',
+  'vb-adem+isolatie':     'Pace without flow: the teams run, the value stands still.',
+  'vb-adem+efficientie':  'Faster without recovery is the grey zone: too heavy to recover from, too light to grow from.',
+  'vb-godzilla+silo':     'Mistakes repeating across a wall: nobody sees the whole pattern.',
+  'vb-godzilla+isolatie': 'What one team learns never reaches the other.',
+  'vb-godzilla+efficientie': 'When the metric is sacred, learning becomes a risk. Mistakes vanish from the numbers, not from the organisation.',
+  'vb-silo+isolatie':     'The same wall, seen from two sides: structure that blocks flow.',
+  'vb-silo+efficientie':  'Two silos each measuring their own efficiency both optimise the wrong thing.',
+  'vb-isolatie+efficientie': 'Local efficiency, global standstill: every team green, the chain red.',
+  'stap-wortels':  'This week, ask three people why you work agile. Three different answers is your diagnosis.',
+  'stap-adem':     'Plan one day without delivered value into the next sprint. Watch what quality does afterwards.',
+  'stap-godzilla': 'Pick up the retro action from three months ago and check whether it ever happened.',
+  'stap-silo':     'Let one business question and one IT answer land in the same retrospective.',
+  'stap-isolatie': 'Follow one customer request from start to end and count the waiting moments.',
+  'stap-efficientie': 'For one sprint, put one measure of value next to velocity: what changed for the customer?',
   'hr-copied':   'Link copied',
   'herk-concl':  'This is not a problem of people or teams. It is a problem of <strong>foundation</strong>, made more urgent as AI increases pressure on organisations.',
   'boek-label':  'The book',
@@ -1177,6 +1244,26 @@ function toggleLang() {
 // ── ZELFCHECK · zeven patronen ────────────────────────────────────
 var PAT_KANJI = { efficientie:'効', wortels:'根', adem:'息', silo:'壁', godzilla:'竜', isolatie:'孤' };
 var PAT_ORDER = ['efficientie','wortels','adem','silo','godzilla','isolatie'];
+// Diepte: wortels liggen onder ritme, ritme onder leren, leren onder structuur, structuur onder stroom, stroom onder meten.
+var PAT_DIEPTE = ['wortels','adem','godzilla','silo','isolatie','efficientie'];
+var KLIKVOLGORDE = [];
+function sleutelPaar(a, b){ return PAT_DIEPTE.indexOf(a) < PAT_DIEPTE.indexOf(b) ? a + '+' + b : b + '+' + a; }
+function lezing(g){
+  // g: gekozen patronen. Geeft { voelt, onder, verband, stap } als i18n-sleutels/namen.
+  var T = LANG === 'en' ? EN : NL;
+  var onder = PAT_DIEPTE.filter(function(p){ return g.indexOf(p) >= 0; })[0];
+  var eerste = KLIKVOLGORDE.filter(function(p){ return g.indexOf(p) >= 0; })[0] || onder;
+  var rest = PAT_DIEPTE.filter(function(p){ return g.indexOf(p) >= 0 && p !== onder; });
+  var out = [];
+  if (g.length === 1) {
+    out.push([T['lz-signaal'], T['sig-' + onder]]);
+  } else {
+    out.push([T['lz-voelt'], (eerste === onder ? T['lz-zelfde'] : T['lz-anders']).replace('{a}', '<b>' + T['nm-' + eerste] + '</b>').replace('{b}', '<b>' + T['nm-' + onder] + '</b>')]);
+    out.push([T['lz-verband'], T['vb-' + sleutelPaar(onder, rest[0])] || T['sig-' + onder]]);
+  }
+  out.push([T['lz-stap'], T['stap-' + onder]]);
+  return out;
+}
 function gekozen(){ return PAT_ORDER.filter(function(p){ var el = document.querySelector('.herk-item[data-pat="'+p+'"]'); return el && el.getAttribute('aria-pressed') === 'true'; }); }
 function beacon(ev){ try { if (navigator.sendBeacon) navigator.sendBeacon('/api/stat', new Blob([JSON.stringify({e: ev})], {type:'application/json'})); } catch(_) {} }
 function renderCheck(){
@@ -1190,14 +1277,17 @@ function renderCheck(){
   document.getElementById('hr-n').textContent = T['hr-n'].replace('{n}', n);
   var tier = n >= 4 ? '4' : (n >= 2 ? '2' : '1');
   document.getElementById('hr-h').innerHTML = T['hr-h' + tier];
-  document.getElementById('hr-p').textContent = T['hr-p' + tier];
+  document.getElementById('hr-lezing').innerHTML = lezing(g).map(function(r){ return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('');
   box.classList.add('aan');
-  history.replaceState(null, '', '?p=' + g.join(',') + '#diagnose');
+  var volg = KLIKVOLGORDE.filter(function(p){ return g.indexOf(p) >= 0; }).concat(g.filter(function(p){ return KLIKVOLGORDE.indexOf(p) < 0; }));
+  history.replaceState(null, '', '?p=' + volg.join(',') + '#diagnose');
 }
 function toggleItem(el){
   var aan = el.getAttribute('aria-pressed') !== 'true';
   el.setAttribute('aria-pressed', aan ? 'true' : 'false');
-  if (aan) beacon('check_' + el.getAttribute('data-pat'));
+  var pat = el.getAttribute('data-pat');
+  if (aan) { beacon('check_' + pat); if (KLIKVOLGORDE.indexOf(pat) < 0) KLIKVOLGORDE.push(pat); }
+  else KLIKVOLGORDE = KLIKVOLGORDE.filter(function(p){ return p !== pat; });
   renderCheck();
 }
 document.querySelectorAll('.herk-item[data-pat]').forEach(function(el){
@@ -1208,15 +1298,16 @@ document.querySelectorAll('.herk-item[data-pat]').forEach(function(el){
   // Voorselectie via gedeelde link: ?p=wortels,adem
   var q = new URLSearchParams(location.search).get('p');
   if (!q) return;
-  q.split(',').forEach(function(p){ var el = document.querySelector('.herk-item[data-pat="'+p+'"]'); if (el) el.setAttribute('aria-pressed','true'); });
+  q.split(',').forEach(function(p){ var el = document.querySelector('.herk-item[data-pat="'+p+'"]'); if (el) { el.setAttribute('aria-pressed','true'); KLIKVOLGORDE.push(p); } });
   renderCheck();
 })();
 var hrShare = document.getElementById('hr-share');
 if (hrShare) hrShare.addEventListener('click', function(){
   var T = LANG === 'en' ? EN : NL, g = gekozen();
   var n = g.length + (g.indexOf('isolatie') >= 0 ? 1 : 0);
-  var url = location.origin + '/?p=' + g.join(',') + '#diagnose';
-  var tekst = T['hr-share-txt'].replace('{n}', n).replace('{k}', g.map(function(p){ return PAT_KANJI[p]; }).join(' '));
+  var url = location.origin + location.search + '#diagnose';
+  var lz = lezing(g), onder = PAT_DIEPTE.filter(function(p){ return g.indexOf(p) >= 0; })[0];
+  var tekst = T['hr-share-txt'].replace('{n}', n).replace('{k}', g.map(function(p){ return PAT_KANJI[p]; }).join(' ')).replace('{o}', T['nm-' + onder]);
   var status = document.getElementById('hr-status');
   beacon('check_share');
   if (navigator.share) { navigator.share({ title: 'Natuurlijk Agile', text: tekst, url: url }).catch(function(){}); return; }
