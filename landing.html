@@ -68,13 +68,13 @@ nav {
   border-bottom: 1px solid var(--border);
   text-align: center;
 }
-.lijn-hero canvas { display: block; width: 100%; max-width: 1240px; margin: 0 auto; height: min(52vh, 480px); min-height: 240px; }
+.lijn-hero canvas { display: block; width: 100%; max-width: 1240px; margin: 0 auto; height: min(56vh, 520px); min-height: 280px; }
 .lijn-hero h2 {
   font-family: var(--serif);
   font-size: clamp(26px, 3.6vw, 44px);
   font-weight: 300; line-height: 1.22;
   color: var(--ink);
-  margin: 28px auto 0; max-width: 820px;
+  margin: 22px auto 0; max-width: 820px;
   opacity: 0; transform: translateY(6px); transition: opacity 1.4s ease, transform 1.4s ease;
 }
 .lijn-hero h2.aan { opacity: 1; transform: none; }
@@ -535,10 +535,10 @@ p { text-wrap: pretty; }
   <div class="lees-lijn" aria-hidden="true"></div>
 </nav>
 
-<!-- HERO · Fuji in twee streken. Verder niets: de rust is het punt. -->
-<section class="lijn-hero" aria-label="Fuji in twee kwaststreken">
-  <canvas id="lijn" role="img" aria-label="Het silhouet van de berg Fuji, in één kalligrafische kwaststreek, met een tweede streek voor de sneeuwgrens"></canvas>
-  <h2 id="lijn-zin" data-i18n="wave-hero-h">In een wereld vol chaos<br>rolt een golf van <em>rust, energie en wijsheid</em>.</h2>
+<!-- HERO · ensō in één streek. Verder niets: de rust is het punt. -->
+<section class="lijn-hero" aria-label="Ensō: een cirkel in één kwaststreek">
+  <canvas id="lijn" role="img" aria-label="Een ensō: de cirkel in één kalligrafische kwaststreek, die niet helemaal sluit"></canvas>
+  <h2 id="lijn-zin" data-i18n="wave-hero-h">Slow down <em>to speed up</em>.</h2>
 </section>
 
 <!-- KOMPAS VAN VANDAAG · server-side gevuld door functions/_middleware.js (zelfde rotatie als lees_kompas) -->
@@ -894,7 +894,7 @@ p { text-wrap: pretty; }
 var LANG = localStorage.getItem('na_lang') || 'nl';
 
 var NL = {
-  'wave-hero-h':   'In een wereld vol chaos<br>rolt een golf van <em>rust, energie en wijsheid</em>.',
+  'wave-hero-h':   'Slow down <em>to speed up</em>.',
   'wave-hero-sub': 'Natuurlijk Agile · gedachtegoed voor onze tijd',
   'hero-tag':    'Mastering Change, Naturally',
   'hero-h':      'Natuurlijk vakmanschap<br>als fundament voor elke<br><em>organisatie van de toekomst.</em>',
@@ -988,7 +988,7 @@ var NL = {
 };
 
 var EN = {
-  'wave-hero-h':   'Through a world of chaos<br>rolls a wave of <em>calm, energy and wisdom</em>.',
+  'wave-hero-h':   'Slow down <em>to speed up</em>.',
   'wave-hero-sub': 'Natural Agile · a philosophy for our time',
   'hero-tag':    'Agile by Nature',
   'hero-h':      'Natural craftsmanship<br>as the foundation for every<br><em>organisation of the future.</em>',
@@ -1083,13 +1083,11 @@ var EN = {
   'ft-tag':      'Natural craftsmanship · In symbiosis with AI',
 };
 
-// ── FUJI · hero ──────────────────────────────────────────────────
-// Twee kwaststreken op papier (canvas 2D): eerst in één gebaar het silhouet van Fuji,
-// de langgerekte, licht holle flanken met het brede vlakke platform bovenop, van links
-// naar rechts; dan een tweede, lichtere streek voor de sneeuwgrens; dan pas de zin.
-// Daarna stilstand. Het element uit <html data-kompas-eid> (middleware) wordt alleen
-// nog gebruikt voor de zin van de dag in de kompas-strook.
-(function tekenFuji(){
+// ── ENSŌ · hero ──────────────────────────────────────────────────
+// Eén kwaststreek (canvas 2D): de cirkel die niet helemaal sluit. De kwast landt zwaar
+// linksonder, zwaait met de klok mee over de top en naar beneden, wordt droger en dunner,
+// en lift net voor het beginpunt. Dan verschijnt de zin. Daarna stilstand.
+(function tekenEnso(){
   var cv = document.getElementById('lijn'); if (!cv) return;
   var ctx = cv.getContext('2d'); if (!ctx) return;
   var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1099,56 +1097,51 @@ var EN = {
   if (!ELEM[eid]) { try { eid = DAG[new Date(new Date().toLocaleString('en-US',{timeZone:'Europe/Amsterdam'})).getDay()]; } catch(_) { eid = 'board'; } }
   var VANDAAG = eid;
 
-  // Silhouet: x over de breedte (0..1), y als deel van de hoogte. Holle flanken, vlakke top met een lichte kraterrand.
-  // flanken uit echte hellingshoeken (33° bij de top, 7° aan de voet), vlakke top van 12% van de breedte
-  var SIL = [[0,0],[.055,.052],[.11,.114],[.165,.192],[.22,.291],[.275,.416],[.33,.572],[.385,.765],[.44,1],[.47,1],[.5,.985],[.53,1],[.56,1],[.615,.765],[.67,.572],[.725,.416],[.78,.291],[.835,.192],[.89,.114],[.945,.052],[1,0]];
-  // kwastdruk langs het silhouet: licht neerkomen, zwaar op de flank, iets lichter op de top, uitlopen rechts
-  var SDR = [.06,.24,.42,.56,.68,.78,.84,.8,.62,.56,.54,.56,.62,.78,.84,.78,.68,.56,.42,.24,.06];
-  // Sneeuwgrens: tweede, lichtere streek onder de top, als een rafelige rand van links naar rechts
-  // sneeuwgrens: rafelig, met tongen sneeuw die ongelijk naar beneden steken
-  var SNW = [[.352,.69],[.372,.74],[.392,.57],[.402,.61],[.428,.75],[.452,.54],[.46,.6],[.484,.72],[.508,.52],[.518,.6],[.544,.74],[.568,.57],[.578,.62],[.604,.73],[.628,.63],[.648,.7]];
-  var NDR = [.05,.26,.4,.34,.4,.44,.34,.4,.46,.34,.4,.42,.32,.36,.26,.05];
-
-  function cr(a,b,c,d,t){ var t2=t*t,t3=t2*t; return .5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3); }
-  function maakPunt(P, D){ var n=P.length-1; return function(u){
-    var x=Math.min(u*n,n-1e-6), i=Math.floor(x), t=x-i;
-    var g=function(k){return P[Math.max(0,Math.min(n,k))];}, dr=function(k){return D[Math.max(0,Math.min(n,k))];};
-    var p0=g(i-1),p1=g(i),p2=g(i+1),p3=g(i+2);
-    return { x:cr(p0[0],p1[0],p2[0],p3[0],t), y:cr(p0[1],p1[1],p2[1],p3[1],t), w:cr(dr(i-1),dr(i),dr(i+1),dr(i+2),t) }; }; }
-  var berg = maakPunt(SIL, SDR), sneeuw = maakPunt(SNW, NDR);
-
   var dpr=Math.min(devicePixelRatio||1,2), W=0, Hc=0;
   function maat(){ var r=cv.getBoundingClientRect(); W=r.width; Hc=r.height; cv.width=W*dpr; cv.height=Hc*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
   maat();
   var ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1a1815';
+  var paper = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#faf7f2';
 
-  // Eén streek: centerlijn + drukprofiel → gevulde vorm, met zachte inktrand (nijimi)
-  function streek(punt, voortgang, maxW, alpha, links, breed, basis, amp){
-    var N=360, L=[], R=[], tot=Math.max(2,Math.floor(N*voortgang));
-    for (var k=0;k<=tot;k++){ var u=k/N,p=punt(u),q=punt(Math.min(1,u+.002));
-      var x=links+p.x*breed, y=basis-p.y*amp, tx=(q.x-p.x)*breed, ty=-(q.y-p.y)*amp, ln=Math.hypot(tx,ty)||1, nx=-ty/ln, ny=tx/ln;
-      var w=p.w*maxW*(.95+.05*Math.sin(u*70)); if (voortgang<1 && k>tot-16) w*=(tot-k)/16;
-      L.push([x+nx*w/2,y+ny*w/2]); R.push([x-nx*w/2,y-ny*w/2]); }
-    function vorm(){ ctx.beginPath(); ctx.moveTo(L[0][0],L[0][1]); for(var i=1;i<L.length;i++) ctx.lineTo(L[i][0],L[i][1]); for(var j=R.length-1;j>=0;j--) ctx.lineTo(R[j][0],R[j][1]); ctx.closePath(); }
-    ctx.save(); ctx.globalAlpha=.26*alpha; ctx.shadowColor=ink; ctx.shadowBlur=8; ctx.fillStyle=ink; vorm(); ctx.fill(); ctx.restore();
-    ctx.save(); ctx.globalAlpha=alpha; ctx.fillStyle=ink; vorm(); ctx.fill(); ctx.restore();
+  var A0 = Math.PI * 150/180, SWEEP = Math.PI * 336/180; // start linksonder, 336° met de klok mee, opening linksonder
+  // druk langs de streek: landt zwaar, zakt langzaam, droogt en dunt uit aan het eind
+  function druk(t){ var d = .55 + .45*Math.sin(Math.min(1, t/.18) * Math.PI/2); d *= 1 - .45*Math.max(0, (t-.18)/.82); if (t > .86) d *= 1 - .7*((t-.86)/.14); return d; }
+  function punt(t){
+    var a = A0 + t*SWEEP;
+    var R = 1 + .022*Math.sin(2*a + .9) + .011*Math.sin(3*a - .4) + .006*Math.sin(7*a); // hand, geen passer
+    return { x: Math.cos(a)*R*1.03, y: Math.sin(a)*R, w: druk(t) };
   }
-  function teken(v1, v2){
+  function teken(v){
     ctx.clearRect(0,0,W,Hc);
-    var breed=Math.min(W*.92, Hc*4.2), links=(W-breed)/2, amp=breed*.2, basis=Hc*.52+amp*.5;
-    var maxW=Math.max(12,Math.min(40,breed*.03));
-    if (v1>0) streek(berg, v1, maxW, 1, links, breed, basis, amp);
-    if (v2>0) streek(sneeuw, v2, maxW*.5, .55, links, breed, basis, amp);
+    var r = Math.min(Hc*.42, W*.26), cx = W/2, cy = Hc*.5, maxW = Math.max(12, Math.min(44, r*.19));
+    var N=420, L=[], R_=[], tot=Math.max(2,Math.floor(N*v));
+    for (var k=0;k<=tot;k++){ var t=k/N, p=punt(t), q=punt(Math.min(1,t+.002));
+      var x=cx+p.x*r, y=cy+p.y*r, tx=(q.x-p.x), ty=(q.y-p.y), ln=Math.hypot(tx,ty)||1, nx=-ty/ln, ny=tx/ln;
+      var w=p.w*maxW*(.96+.04*Math.sin(t*90)); if (v<1 && k>tot-18) w*=(tot-k)/18;
+      L.push([x+nx*w/2,y+ny*w/2]); R_.push([x-nx*w/2,y-ny*w/2]); }
+    function vorm(){ ctx.beginPath(); ctx.moveTo(L[0][0],L[0][1]); for(var i=1;i<L.length;i++) ctx.lineTo(L[i][0],L[i][1]); for(var j=R_.length-1;j>=0;j--) ctx.lineTo(R_[j][0],R_[j][1]); ctx.closePath(); }
+    // inkt die in het papier trekt
+    ctx.save(); ctx.globalAlpha=.26; ctx.shadowColor=ink; ctx.shadowBlur=9; ctx.fillStyle=ink; vorm(); ctx.fill(); ctx.restore();
+    ctx.fillStyle=ink; vorm(); ctx.fill();
+    var p0=punt(0), w0=p0.w*maxW; ctx.beginPath(); ctx.arc(cx+p0.x*r, cy+p0.y*r, w0*.52, 0, 7); ctx.fill();
+    // droge kwast in het laatste kwart: de haren splitsen, het papier komt door
+    ctx.save(); ctx.strokeStyle=paper; ctx.lineCap='round'; ctx.globalAlpha=.8;
+    for (var s=0;s<5;s++){ var off=[-.36,-.14,.06,.24,.42][s], b0=[.70,.66,.74,.68,.72][s]; ctx.lineWidth=[1.3,.7,1.0,1.6,.8][s]; ctx.beginPath(); var eerste=true;
+      for (var k2=0;k2<=tot;k2++){ var u=k2/N; if (u<b0) continue; var fade=Math.min(1,(u-b0)/.1);
+        var m=.5+off*fade+.03*Math.sin(u*140+s*2), px=L[k2][0]+(R_[k2][0]-L[k2][0])*m, py=L[k2][1]+(R_[k2][1]-L[k2][1])*m;
+        if(eerste){ctx.moveTo(px,py);eerste=false;} else ctx.lineTo(px,py); }
+      ctx.stroke(); }
+    ctx.restore();
   }
-  function ss(a,b,x){ var q=Math.min(1,Math.max(0,(x-a)/(b-a))); return q*q*(3-2*q); }
+  function ease(x){ return x<.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2; }
   var start=performance.now(), klaar=false;
   function frame(now){ var t=(now-start)/1000;
-    var v1 = reduced ? 1 : ss(0, 2.4, t), v2 = reduced ? 1 : ss(2.6, 3.5, t);
-    teken(v1, v2);
-    if (t > 3.3) { var z = document.getElementById('lijn-zin'); if (z) z.classList.add('aan'); }
-    if (!reduced && t < 3.8) requestAnimationFrame(frame); else klaar = true; }
+    var v = reduced ? 1 : ease(Math.min(1, t/2.1));
+    teken(v);
+    if (t > 2.3) { var z = document.getElementById('lijn-zin'); if (z) z.classList.add('aan'); }
+    if (!reduced && t < 2.6) requestAnimationFrame(frame); else klaar = true; }
   requestAnimationFrame(frame);
-  addEventListener('resize', function(){ maat(); if (klaar) teken(1,1); });
+  addEventListener('resize', function(){ maat(); if (klaar) teken(1); });
 
   // zin van de dag in de kompas-strook
   var uit = document.getElementById('lijn-element-uit');
