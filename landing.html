@@ -256,6 +256,9 @@ h1 em { font-style: italic; color: var(--acc); }
 .web-kop { font-family: var(--serif); font-size: clamp(28px, 3.5vw, 48px); font-weight: 300; color: var(--ink); line-height: 1.15; margin-bottom: 20px; }
 .web-kop em { font-style: italic; color: var(--acc); }
 .web-txt { font-size: 15px; font-weight: 300; color: var(--muted); line-height: 1.85; max-width: 400px; }
+.web-foto { margin: 28px 0 0; max-width: 360px; }
+.web-foto img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--border); box-shadow: 0 8px 30px rgba(28,24,21,.08); }
+.web-foto figcaption { margin-top: 8px; font-size: 11px; letter-spacing: .06em; color: var(--muted); }
 .web-card {
   background: var(--paper); border: 1px solid var(--border);
   border-radius: 12px; overflow: hidden;
@@ -737,6 +740,10 @@ p { text-wrap: pretty; }
       <p class="web-txt" data-i18n="web-txt" data-r data-d="1">
         Geen verkooppraatje. Paul neemt je mee in zijn denken: concreet en herkenbaar. Je hoeft het boek niet gelezen te hebben.
       </p>
+      <figure class="web-foto" data-r data-d="2">
+        <img src="/paul-webinar.jpg" alt="Paul Takken in gesprek achter zijn laptop" loading="lazy" decoding="async" width="1000" height="709">
+        <figcaption data-i18n="web-foto-cap">Paul in gesprek, online</figcaption>
+      </figure>
     </div>
     <div data-r data-d="1">
       <div class="web-card">
@@ -938,6 +945,7 @@ var NL = {
   'web-label':   'Live sessie · gratis',
   'web-kop':     'Gun jezelf<br><em>een andere lens op organisaties</em>',
   'web-txt':     'Geen verkooppraatje. Paul neemt je mee in zijn denken: concreet en herkenbaar. Je hoeft het boek niet gelezen te hebben.',
+  'web-foto-cap': 'Paul in gesprek, online',
   'web-date':    'Vrijdag 4 december 2026',
   'web-time':    '10:00 – 11:30 · Online',
   'web-take-1':  'Waarom wendbaarheid een natuurverschijnsel is, en wat dat betekent in het tijdperk van AI',
@@ -1033,6 +1041,7 @@ var EN = {
   'web-label':   'Live session · free',
   'web-kop':     'Give yourself<br><em>a new lens on organisations</em>',
   'web-txt':     'No sales pitch. Paul walks you through his thinking: concrete and recognisable. No need to have read the book.',
+  'web-foto-cap': 'Paul in conversation, online',
   'web-date':    'Friday 4 December 2026',
   'web-time':    '10:00 – 11:30 · Online',
   'web-take-1':  'Why agility is a natural phenomenon, and what that means in the age of AI',
