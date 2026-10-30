@@ -544,7 +544,7 @@ p { text-wrap: pretty; }
     <div class="kompas-label"><span data-i18n="kp-label">Kompas van vandaag</span><span data-kompas-datum data-nl="" data-en=""></span></div>
     <div class="lijn-element-uit" id="lijn-element-uit" aria-live="polite"></div>
     <div class="kompas-vraag"><span data-kompas="vraag">Welke vraag stel je vandaag in plaats van een antwoord te geven?</span></div>
-    <a class="kompas-mcp" href="#mcp" data-stat="click_kompas"><span data-kompas="puls">ochtendpuls</span> · <span data-kompas="tijd">06:45</span> · <span data-i18n="kp-agent">zo leest een agent dit</span> →</a>
+    <a class="kompas-mcp" href="#mcp" data-stat="click_kompas"><span data-i18n="kp-gevraagd">gevraagd om</span> <span data-kompas="tijd">06:45</span> · <span data-i18n="kp-agent">zo leest een agent dit</span> →</a>
   </div>
 </section>
 
@@ -901,14 +901,15 @@ var NL = {
   'kp-label':    'Kompas van vandaag',
   'el-kader':    'Vijf ritmes. Elke dag leidt er één.',
   'kp-agent':    'zo leest een agent dit',
+  'kp-gevraagd': 'gevraagd om',
   'el-w-chi': 'Aarde', 'el-w-sui': 'Water', 'el-w-fu': 'Wind', 'el-w-ka': 'Vuur', 'el-w-ku': 'Leegte',
-  'el-chi':      '<strong>Aarde.</strong> Een dag om te bouwen op wat al staat.',
-  'el-sui':      '<strong>Water.</strong> Een dag waarin herstel zwaarder weegt dan doorzetten.',
-  'el-fu':       '<strong>Wind.</strong> Een dag voor het gesprek dat lucht nodig heeft.',
-  'el-ka':       '<strong>Vuur.</strong> Een dag om te beslissen wat al te lang wacht.',
-  'el-ku':       '<strong>Leegte.</strong> Een dag om iets bewust te laten liggen.',
-  'el-board':    '<strong>Vrijdag.</strong> De vijf leiden samen: een dag voor overzicht, niet voor een nieuwe stap.',
-  'el-vandaag':  'Vandaag · ',
+  'el-chi':      'Vandaag weegt het <strong>fundament</strong>: bouw op wat al staat.',
+  'el-sui':      'Vandaag weegt <strong>herstel</strong> zwaarder dan doorzetten.',
+  'el-fu':       'Vandaag vraagt een gesprek om <strong>lucht</strong>.',
+  'el-ka':       'Vandaag wacht een <strong>beslissing</strong> al te lang.',
+  'el-ku':       'Vandaag mag iets bewust <strong>blijven liggen</strong>.',
+  'el-board':    'Vandaag weegt het <strong>overzicht</strong>: geen nieuwe stap, maar het geheel.',
+  'el-vandaag':  '',
   'herk-hint':   'Tik de patronen aan die je herkent. Niets wordt opgeslagen, alleen geteld.',
   'hr-webinar':  'Neem het mee naar het webinar →',
   'hr-share':    'Deel je patroon',
@@ -995,14 +996,15 @@ var EN = {
   'kp-label':    'Today\'s compass',
   'el-kader':    'Five rhythms. Each day, one leads.',
   'kp-agent':    'how an agent reads this',
+  'kp-gevraagd': 'asked at',
   'el-w-chi': 'Earth', 'el-w-sui': 'Water', 'el-w-fu': 'Wind', 'el-w-ka': 'Fire', 'el-w-ku': 'Emptiness',
-  'el-chi':      '<strong>Earth.</strong> A day to build on what already stands.',
-  'el-sui':      '<strong>Water.</strong> A day when recovery weighs more than pushing on.',
-  'el-fu':       '<strong>Wind.</strong> A day for the conversation that needs air.',
-  'el-ka':       '<strong>Fire.</strong> A day to decide what has waited too long.',
-  'el-ku':       '<strong>Emptiness.</strong> A day to leave something deliberately undone.',
-  'el-board':    '<strong>Friday.</strong> The five lead together: a day for overview, not for a new step.',
-  'el-vandaag':  'Today · ',
+  'el-chi':      'Today the <strong>foundation</strong> weighs most: build on what already stands.',
+  'el-sui':      'Today <strong>recovery</strong> weighs more than pushing on.',
+  'el-fu':       'Today a conversation needs <strong>air</strong>.',
+  'el-ka':       'Today a <strong>decision</strong> has waited long enough.',
+  'el-ku':       'Today something may deliberately be <strong>left undone</strong>.',
+  'el-board':    'Today the <strong>overview</strong> weighs most: no new step, but the whole.',
+  'el-vandaag':  '',
   'herk-hint':   'Tap the patterns you recognise. Nothing is stored, only counted.',
   'hr-webinar':  'Bring it to the webinar →',
   'hr-share':    'Share your pattern',
