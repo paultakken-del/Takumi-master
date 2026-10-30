@@ -28,8 +28,8 @@ export async function onRequest(context) {
     return vulKompas(res);
   }
 
-  // /landing.html direct opgevraagd (preview, tests): ook vullen
-  if (url.pathname === '/landing.html') {
+  // /landing of /landing.html direct opgevraagd (preview, tests): ook vullen
+  if (url.pathname === '/landing.html' || url.pathname === '/landing' || url.pathname === '/landing/') {
     return vulKompas(await next());
   }
 
