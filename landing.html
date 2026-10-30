@@ -91,6 +91,19 @@ nav {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(6px); }
 }
+/* de vijf elementen (en de raad): tik om de lijn op dat ritme te laten ademen */
+.lijn-elementen { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 10px; margin: 26px auto 0; max-width: 560px; }
+.lijn-elementen button {
+  font-family: serif; font-size: 19px; width: 42px; height: 42px; border-radius: 10px; cursor: pointer;
+  background: transparent; color: var(--ink); border: 1px solid rgba(28,24,21,.15);
+  transition: border-color .2s, background .2s, color .2s;
+}
+.lijn-elementen button:hover { border-color: var(--acc); }
+.lijn-elementen button:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+.lijn-elementen button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.lijn-elementen button[data-vandaag]::after { content: ''; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--acc); margin: 1px auto 0; }
+.lijn-elementen button[aria-pressed="true"][data-vandaag]::after { background: #e8b97a; }
+.lijn-element-uit { width: 100%; font-family: var(--serif); font-style: italic; font-size: 16px; color: var(--muted); min-height: 1.5em; margin-top: 4px; }
 @media (max-width: 680px) {
   .lijn-hero { padding: 12px 20px 36px; }
   .lijn-hero canvas { height: 40vh; min-height: 200px; }
@@ -567,6 +580,15 @@ p { text-wrap: pretty; }
   <canvas id="lijn" role="img" aria-label="Een enkele kalligrafische inktlijn, getekend als een golf, die rustig ademt"></canvas>
   <h2 data-i18n="wave-hero-h">In een wereld vol chaos<br>rolt een golf van <em>rust, energie en wijsheid</em>.</h2>
   <div class="lijn-hero-sub" data-i18n="wave-hero-sub">Natuurlijk Agile · gedachtegoed voor onze tijd</div>
+  <div class="lijn-elementen" id="lijn-elementen" role="group" aria-label="Vijf elementen">
+    <button type="button" data-el="chi" title="Chi · Aarde" data-stat="click_element">地</button>
+    <button type="button" data-el="sui" title="Sui · Water" data-stat="click_element">水</button>
+    <button type="button" data-el="fu" title="Fū · Wind" data-stat="click_element">風</button>
+    <button type="button" data-el="ka" title="Ka · Vuur" data-stat="click_element">火</button>
+    <button type="button" data-el="ku" title="Kū · Leegte" data-stat="click_element">空</button>
+    <button type="button" data-el="board" title="Council · Synthese" data-stat="click_element">匠</button>
+    <div class="lijn-element-uit" id="lijn-element-uit"></div>
+  </div>
   <div class="lijn-hero-scroll">scroll ↓</div>
 </section>
 
@@ -931,6 +953,13 @@ var NL = {
   'getuige-q':   '“Hij duikt als het ware in het hart van de machine en draait daar de knoppen om.”',
   'herk-kop':    'Zeven patronen.<br>Waarschijnlijk herken je<br>er <em>meerdere.</em>',
   'kp-label':    'Kompas van vandaag',
+  'el-chi':      '地 Aarde. Laag en gedragen: het fundament onder de dag.',
+  'el-sui':      '水 Water. Het laagst en het traagst: herstel weegt.',
+  'el-fu':       '風 Wind. Lichter en sneller: de lijn krijgt lucht.',
+  'el-ka':       '火 Vuur. De hoogste golf, het kortste ritme.',
+  'el-ku':       '空 Leegte. Bijna vlak, bijna stil.',
+  'el-board':    '匠 De raad. Het midden van de vijf.',
+  'el-vandaag':  '· vandaag',
   'herk-hint':   'Tik de patronen aan die je herkent. Niets wordt opgeslagen, alleen geteld.',
   'hr-webinar':  'Neem het mee naar het webinar →',
   'hr-share':    'Deel je patroon',
@@ -1015,6 +1044,13 @@ var EN = {
   'getuige-q':   '“He dives into the very heart of the machine and turns the right knobs.”',
   'herk-kop':    'Seven patterns.<br>You probably recognise<br><em>several of them.</em>',
   'kp-label':    'Today\'s compass',
+  'el-chi':      '地 Earth. Low and steady: the ground beneath the day.',
+  'el-sui':      '水 Water. Lowest and slowest: recovery weighs most.',
+  'el-fu':       '風 Wind. Lighter and quicker: the line gets air.',
+  'el-ka':       '火 Fire. The highest wave, the shortest rhythm.',
+  'el-ku':       '空 Emptiness. Almost flat, almost still.',
+  'el-board':    '匠 The council. The middle of the five.',
+  'el-vandaag':  '· today',
   'herk-hint':   'Tap the patterns you recognise. Nothing is stored, only counted.',
   'hr-webinar':  'Bring it to the webinar →',
   'hr-share':    'Share your pattern',
@@ -1096,7 +1132,7 @@ var EN = {
   var DAG = { 1:'chi', 2:'sui', 3:'fu', 4:'ka', 5:'board', 6:'ku', 0:'ku' };
   var eid = document.documentElement.getAttribute('data-kompas-eid');
   if (!ELEM[eid]) { try { eid = DAG[new Date(new Date().toLocaleString('en-US',{timeZone:'Europe/Amsterdam'})).getDay()]; } catch(_) { eid = 'board'; } }
-  var E = ELEM[eid];
+  var E = ELEM[eid], VANDAAG = eid;
   var CP = [[0,0],[.10,0],[.22,.01],[.33,.07],[.42,.22],[.50,.46],[.57,.74],[.63,.94],[.675,1],[.705,.86],[.70,.64],[.715,.42],[.76,.18],[.83,.01],[.90,-.03],[.96,0],[1,0]];
   var DR = [.04,.14,.3,.55,.85,1,.9,.62,.3,.26,.42,.72,.8,.5,.26,.12,.03];
   function cr(a,b,c,d,t){ var t2=t*t,t3=t2*t; return .5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3); }
@@ -1138,6 +1174,18 @@ var EN = {
     if (zichtbaar || v<1) teken(v,hoog,t);
     if (!reduced || v<1) requestAnimationFrame(frame); }
   requestAnimationFrame(frame);
+  // de vijf elementen: tik om de lijn op dat ritme te laten ademen
+  var uit = document.getElementById('lijn-element-uit');
+  window.zetElement = function(el){
+    if (!ELEM[el]) return; E = ELEM[el]; eid = el;
+    document.querySelectorAll('#lijn-elementen button').forEach(function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-el') === el ? 'true' : 'false'); });
+    var T = (typeof LANG !== 'undefined' && LANG === 'en') ? EN : NL;
+    if (uit) uit.textContent = (T['el-' + el] || '') + (el === VANDAAG ? ' ' + (T['el-vandaag'] || '') : '');
+  };
+  document.querySelectorAll('#lijn-elementen button').forEach(function(b){
+    if (b.getAttribute('data-el') === VANDAAG) b.setAttribute('data-vandaag', '');
+    b.addEventListener('click', function(){ window.zetElement(b.getAttribute('data-el')); });
+  });
 })();
 
 // ── KOMPAS VAN VANDAAG ────────────────────────────────────────────
@@ -1157,6 +1205,7 @@ function vulKompas(lang){
   if (KOMPAS_DATUM) document.querySelectorAll('[data-kompas-datum]').forEach(function(el){ el.textContent = KOMPAS_DATUM[lang] || KOMPAS_DATUM.nl; });
 }
 vulKompas('nl');
+if (window.zetElement) window.zetElement(document.documentElement.getAttribute('data-kompas-eid') || document.querySelector('#lijn-elementen button[data-vandaag]').getAttribute('data-el'));
 
 function applyLang(lang) {
   var T = lang === 'en' ? EN : NL;
@@ -1170,6 +1219,7 @@ function applyLang(lang) {
   LANG = lang;
   localStorage.setItem('na_lang', lang);
   if (typeof renderCheck === 'function') renderCheck();
+  if (window.zetElement) window.zetElement(document.querySelector('#lijn-elementen button[aria-pressed="true"]').getAttribute('data-el'));
 }
 
 function toggleLang() {

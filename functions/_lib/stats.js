@@ -9,7 +9,7 @@
 export const CLICK_EVENTS = [
   'click_webinar', 'click_app', 'click_boek', 'click_spiegel',
   // laag 1: kompas-strook en zelfcheck op de zeven patronen
-  'click_kompas', 'click_webinar_check', 'check_share',
+  'click_kompas', 'click_webinar_check', 'check_share', 'click_element',
   'check_efficientie', 'check_wortels', 'check_adem', 'check_silo', 'check_godzilla', 'check_isolatie',
 ];
 
