@@ -17,7 +17,6 @@
 <meta name="twitter:description" content="Slow down to speed up. Boek, webinar en Takumi.">
 <meta name="twitter:image" content="https://www.takumi-master.com/icon-1024.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://upload.wikimedia.org" crossorigin>
 <script type="speculationrules">{"prerender":[{"where":{"href_matches":"/(spiegel|manifest|agents|weegschaal)"},"eagerness":"moderate"}]}</script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -60,63 +59,43 @@ nav {
 .nav-btn { background: var(--acc); color: #fff; padding: 9px 20px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; transition: background .2s; white-space: nowrap; }
 .nav-btn:hover { background: #a8461f; }
 
-/* WAVE-HERO, Hokusai's Great Wave als visuele opener.
-   Filosofie: een wereld in chaos, hier rolt een golf van rust over.
-   Public domain print (1831) via Wikimedia Commons. */
-.wave-hero {
-  position: relative;
-  width: 100%;
-  height: 70vh;
-  min-height: 480px;
-  max-height: 720px;
-  overflow: hidden;
-  background: #0e1928;
+/* LIJN-HERO: één kalligrafische lijn op papier die zichzelf tekent en daarna ademt
+   op het tempo van de dagleider (element uit _middleware.js via <html data-kompas-eid>).
+   Geen afbeelding, geen bibliotheek: canvas 2D, zie tekenLijn() onderaan. */
+.lijn-hero {
+  position: relative; width: 100%;
+  padding: 24px 32px 44px;
   border-bottom: 1px solid var(--border);
-}
-.wave-hero img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  object-position: center 35%;
-  display: block;
-  filter: brightness(.85) saturate(1.05);
-}
-.wave-hero-overlay {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: flex-end;
-  padding: 0 32px 80px;
-  background: linear-gradient(180deg, rgba(14,25,40,0) 30%, rgba(14,25,40,.35) 65%, rgba(14,25,40,.7) 100%);
   text-align: center;
 }
-.wave-hero h2 {
+.lijn-hero canvas { display: block; width: 100%; max-width: 1240px; margin: 0 auto; height: min(44vh, 400px); min-height: 220px; }
+.lijn-hero h2 {
   font-family: var(--serif);
   font-size: clamp(28px, 4vw, 48px);
-  font-weight: 300; line-height: 1.25;
-  color: #f7f1e6;
-  margin: 0 0 18px;
-  text-shadow: 0 2px 24px rgba(0,0,0,.5);
-  max-width: 820px;
+  font-weight: 300; line-height: 1.22;
+  color: var(--ink);
+  margin: 12px auto 16px; max-width: 820px;
 }
-.wave-hero h2 em { font-style: italic; color: #e8b97a; font-weight: 400; }
-.wave-hero-sub {
-  font-size: 14px; letter-spacing: .12em; text-transform: uppercase;
-  color: rgba(247,241,230,.75); font-weight: 500;
-  text-shadow: 0 2px 12px rgba(0,0,0,.5);
+.lijn-hero h2 em { font-style: italic; color: var(--acc); font-weight: 400; }
+.lijn-hero-sub {
+  font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted); font-weight: 500;
 }
-.wave-hero-scroll {
-  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+.lijn-hero-scroll {
+  margin-top: 26px;
   font-size: 11px; letter-spacing: .2em; text-transform: uppercase;
-  color: rgba(247,241,230,.55);
+  color: var(--muted);
   animation: wave-bob 2s ease-in-out infinite;
 }
 @keyframes wave-bob {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50%      { transform: translateX(-50%) translateY(6px); }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(6px); }
 }
 @media (max-width: 680px) {
-  .wave-hero { height: 60vh; min-height: 380px; }
-  .wave-hero-overlay { padding: 0 20px 60px; }
+  .lijn-hero { padding: 12px 20px 36px; }
+  .lijn-hero canvas { height: 40vh; min-height: 200px; }
 }
+@media (prefers-reduced-motion: reduce) { .lijn-hero-scroll { animation: none; } }
 
 /* HERO, centered, single-column. Portret wordt klein rond avatar bij de naam,
    geen vol-hoog beeld meer naast de pitch (zou Wave concurreren). */
@@ -450,7 +429,7 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
    ══════════════════════════════════════════════════════════════════ */
 
 /* Typografie: koppen in balans, alinea's zonder weduwen (browsers zonder steun negeren het) */
-h1, h2, h3, .wave-hero h2, .herk-kop { text-wrap: balance; }
+h1, h2, h3, .lijn-hero h2, .herk-kop { text-wrap: balance; }
 p { text-wrap: pretty; }
 
 /* Leesvoortgang onder de nav: puur CSS, animatie gekoppeld aan de scrollpositie */
@@ -552,8 +531,6 @@ p { text-wrap: pretty; }
   .herk-item-kanji { animation: drijf-klein linear both; animation-timeline: view(); animation-range: entry 0% exit 100%; }
   @keyframes drijf       { from { transform: translateY(60px); } to { transform: translateY(-60px); } }
   @keyframes drijf-klein { from { transform: translateY(14px); } to { transform: translateY(-14px); } }
-  .wave-hero img { animation: golf-zoom linear both; animation-timeline: view(); animation-range: exit 0% exit 100%; }
-  @keyframes golf-zoom { from { transform: scale(1); } to { transform: scale(1.08) translateY(6%); } }
 }
 
 /* Paginaovergangen: zachte crossfade naar /spiegel, /manifest, /agents (beide pagina's doen mee) */
@@ -561,12 +538,9 @@ p { text-wrap: pretty; }
 ::view-transition-old(root) { animation-duration: .25s; }
 ::view-transition-new(root) { animation-duration: .35s; }
 
-/* Golf-fallback als Wikimedia niet antwoordt: inktzee in plaats van een leeg vlak */
-.wave-hero.geen-beeld img { display: none; }
-.wave-hero.geen-beeld { background: radial-gradient(ellipse at 30% 110%, #1f3a5a 0%, #0e1928 60%); }
 
 @media (prefers-reduced-motion: reduce) {
-  .lees-lijn, .noorden-kanji, .herk-item-kanji, .wave-hero img { animation: none !important; }
+  .lees-lijn, .noorden-kanji, .herk-item-kanji { animation: none !important; }
   .herk-result, .herk-vink { transition: none; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
@@ -588,15 +562,12 @@ p { text-wrap: pretty; }
   <div class="lees-lijn" aria-hidden="true"></div>
 </nav>
 
-<!-- HERO -->
-<section class="wave-hero" aria-label="The Great Wave off Kanagawa">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/The_Great_Wave_off_Kanagawa.jpg/1920px-The_Great_Wave_off_Kanagawa.jpg"
-       alt="The Great Wave off Kanagawa, Katsushika Hokusai, ca. 1831" fetchpriority="high" decoding="async" width="1920" height="1316" onerror="this.closest('.wave-hero').classList.add('geen-beeld')">
-  <div class="wave-hero-overlay">
-    <h2 data-i18n="wave-hero-h">In een wereld vol chaos<br>rolt een golf van <em>rust, energie en wijsheid</em>.</h2>
-    <div class="wave-hero-sub" data-i18n="wave-hero-sub">Natuurlijk Agile · gedachtegoed voor onze tijd</div>
-  </div>
-  <div class="wave-hero-scroll">scroll ↓</div>
+<!-- HERO · één lijn die ademt -->
+<section class="lijn-hero" aria-label="Eén inktlijn: stil water dat één keer oprijst tot een golf en weer gaat liggen">
+  <canvas id="lijn" role="img" aria-label="Een enkele kalligrafische inktlijn, getekend als een golf, die rustig ademt"></canvas>
+  <h2 data-i18n="wave-hero-h">In een wereld vol chaos<br>rolt een golf van <em>rust, energie en wijsheid</em>.</h2>
+  <div class="lijn-hero-sub" data-i18n="wave-hero-sub">Natuurlijk Agile · gedachtegoed voor onze tijd</div>
+  <div class="lijn-hero-scroll">scroll ↓</div>
 </section>
 
 <!-- KOMPAS VAN VANDAAG · server-side gevuld door functions/_middleware.js (zelfde rotatie als lees_kompas) -->
@@ -1112,6 +1083,62 @@ var EN = {
   'ct-invalid':  'Please fill in your name, a valid email address and a message.',
   'ft-tag':      'Natural craftsmanship · In symbiosis with AI',
 };
+
+// ── DE LIJN · hero ────────────────────────────────────────────────
+// Eén kalligrafische streek (canvas 2D). Tekent zichzelf in 3 s en ademt daarna op het
+// tempo van de dagleider: <html data-kompas-eid> komt uit _middleware.js; zonder dat
+// attribuut valt hij terug op de dag-rotatie (zelfde tabel als functions/_lib/pulse.js).
+(function tekenLijn(){
+  var cv = document.getElementById('lijn'); if (!cv) return;
+  var ctx = cv.getContext('2d'); if (!ctx) return;
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var ELEM = { chi:{hoogte:.62,tempo:7}, sui:{hoogte:.5,tempo:8.5}, fu:{hoogte:.78,tempo:5}, ka:{hoogte:1,tempo:4.2}, ku:{hoogte:.4,tempo:9.5}, board:{hoogte:.72,tempo:6} };
+  var DAG = { 1:'chi', 2:'sui', 3:'fu', 4:'ka', 5:'board', 6:'ku', 0:'ku' };
+  var eid = document.documentElement.getAttribute('data-kompas-eid');
+  if (!ELEM[eid]) { try { eid = DAG[new Date(new Date().toLocaleString('en-US',{timeZone:'Europe/Amsterdam'})).getDay()]; } catch(_) { eid = 'board'; } }
+  var E = ELEM[eid];
+  var CP = [[0,0],[.10,0],[.22,.01],[.33,.07],[.42,.22],[.50,.46],[.57,.74],[.63,.94],[.675,1],[.705,.86],[.70,.64],[.715,.42],[.76,.18],[.83,.01],[.90,-.03],[.96,0],[1,0]];
+  var DR = [.04,.14,.3,.55,.85,1,.9,.62,.3,.26,.42,.72,.8,.5,.26,.12,.03];
+  function cr(a,b,c,d,t){ var t2=t*t,t3=t2*t; return .5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3); }
+  function punt(u,hoog){ var n=CP.length-1,x=Math.min(u*n,n-1e-6),i=Math.floor(x),t=x-i;
+    var g=function(k){return CP[Math.max(0,Math.min(n,k))];}, dr=function(k){return DR[Math.max(0,Math.min(n,k))];};
+    var p0=g(i-1),p1=g(i),p2=g(i+1),p3=g(i+2);
+    return { x:cr(p0[0],p1[0],p2[0],p3[0],t), y:cr(p0[1],p1[1],p2[1],p3[1],t)*hoog, w:cr(dr(i-1),dr(i),dr(i+1),dr(i+2),t) }; }
+  var dpr=Math.min(devicePixelRatio||1,2), W=0, Hc=0;
+  function maat(){ var r=cv.getBoundingClientRect(); W=r.width; Hc=r.height; cv.width=W*dpr; cv.height=Hc*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
+  addEventListener('resize', maat); maat();
+  var ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1a1815';
+  var paper = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#faf7f2';
+  function teken(voortgang,hoog,tijd){
+    ctx.clearRect(0,0,W,Hc);
+    var links=W*.04, breed=W*.92, basis=Hc*.8, amp=Math.min(Hc*.62, W*.3), maxW=Math.max(9,Math.min(30,W*.024));
+    var N=320, L=[], R=[], tot=Math.max(2,Math.floor(N*voortgang));
+    for (var k=0;k<=tot;k++){ var u=k/N,p=punt(u,hoog),q=punt(Math.min(1,u+.002),hoog);
+      var x=links+p.x*breed, y=basis-p.y*amp, tx=(q.x-p.x)*breed, ty=-(q.y-p.y)*amp, ln=Math.hypot(tx,ty)||1, nx=-ty/ln, ny=tx/ln;
+      var w=p.w*maxW*(.92+.08*Math.sin(u*60+tijd*.7)); if (voortgang<1 && k>tot-14) w*=(tot-k)/14;
+      L.push([x+nx*w/2,y+ny*w/2]); R.push([x-nx*w/2,y-ny*w/2]); }
+    function vorm(){ ctx.beginPath(); ctx.moveTo(L[0][0],L[0][1]); for(var i=1;i<L.length;i++) ctx.lineTo(L[i][0],L[i][1]); for(var j=R.length-1;j>=0;j--) ctx.lineTo(R[j][0],R[j][1]); ctx.closePath(); }
+    ctx.save(); ctx.globalAlpha=.28; ctx.shadowColor=ink; ctx.shadowBlur=9; ctx.fillStyle=ink; vorm(); ctx.fill(); ctx.restore();
+    ctx.fillStyle=ink; vorm(); ctx.fill();
+    ctx.save(); ctx.strokeStyle=paper; ctx.lineCap='round'; ctx.globalAlpha=.85;
+    for (var s=0;s<3;s++){ var off=[-.3,.05,.36][s]; ctx.lineWidth=[1.1,.8,1.4][s]; ctx.beginPath(); var eerste=true;
+      for (var k2=0;k2<=tot;k2++){ var u2=k2/N; if(u2<.52||u2>.70) continue; var fade=Math.sin((u2-.52)/.18*Math.PI);
+        var m=.5+off*fade+.03*Math.sin(u2*140+s), px=L[k2][0]+(R[k2][0]-L[k2][0])*m, py=L[k2][1]+(R[k2][1]-L[k2][1])*m;
+        if(eerste){ctx.moveTo(px,py);eerste=false;} else ctx.lineTo(px,py); }
+      ctx.stroke(); }
+    ctx.restore();
+    if (voortgang>.68){ var top=punt(.675,hoog), sx=links+top.x*breed, sy=basis-top.y*amp; ctx.fillStyle=ink; ctx.globalAlpha=Math.min(1,(voortgang-.68)*6);
+      [[14,-18,1.6],[30,-26,1.1],[44,-22,.8],[22,-34,.7]].forEach(function(d){ ctx.beginPath(); ctx.arc(sx+d[0]*maxW/22, sy+d[1]*maxW/22, d[2]*maxW/22, 0, 7); ctx.fill(); }); ctx.globalAlpha=1; }
+  }
+  function adem(t,tempo){ var f=(t%tempo)/tempo, a=f<.42?f/.42:1-(f-.42)/.58; return a*a*(3-2*a); }
+  var start=performance.now(), zichtbaar=true;
+  try { new IntersectionObserver(function(e){ zichtbaar=e[0].isIntersecting; }).observe(cv); } catch(_) {}
+  function frame(now){ var t=(now-start)/1000, v=reduced?1:Math.min(1,t/3); v=v*v*(3-2*v);
+    var a=reduced?.5:adem(Math.max(0,t-3),E.tempo), hoog=E.hoogte*(.72+.28*a);
+    if (zichtbaar || v<1) teken(v,hoog,t);
+    if (!reduced || v<1) requestAnimationFrame(frame); }
+  requestAnimationFrame(frame);
+})();
 
 // ── KOMPAS VAN VANDAAG ────────────────────────────────────────────
 // De waarden staan al in de HTML (server-side gevuld door _middleware.js).
