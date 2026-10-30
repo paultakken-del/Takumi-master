@@ -8,6 +8,9 @@
 <link rel="icon" href="/favicon.ico">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
+/* Zachte paginaovergang van en naar de landingspagina (beide kanten doen mee) */
+@view-transition { navigation: auto; }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
   :root{
     --bg:#1a1815; --surface:#1e1d1a; --line:#33302a;
     --ink:#ede9e0; --muted:#9c937f;

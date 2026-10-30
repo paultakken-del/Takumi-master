@@ -17,6 +17,8 @@
 <meta name="twitter:description" content="Slow down to speed up. Boek, webinar en Takumi.">
 <meta name="twitter:image" content="https://www.takumi-master.com/icon-1024.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://upload.wikimedia.org" crossorigin>
+<script type="speculationrules">{"prerender":[{"where":{"href_matches":"/(spiegel|manifest|agents|weegschaal)"},"eagerness":"moderate"}]}</script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -443,6 +445,131 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
   .tak-photo { max-height: 440px; object-fit: cover; object-position: center; }
   footer { padding: 32px 24px; }
 }
+/* ══════════════════════════════════════════════════════════════════
+   LAAG 1 · de site leeft (progressive enhancement, valt stil terug)
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Typografie: koppen in balans, alinea's zonder weduwen (browsers zonder steun negeren het) */
+h1, h2, h3, .wave-hero h2, .herk-kop { text-wrap: balance; }
+p { text-wrap: pretty; }
+
+/* Leesvoortgang onder de nav: puur CSS, animatie gekoppeld aan de scrollpositie */
+.lees-lijn {
+  position: absolute; left: 0; bottom: -1px; height: 2px; width: 100%;
+  background: var(--acc); transform-origin: 0 50%; transform: scaleX(0);
+  pointer-events: none;
+}
+@supports (animation-timeline: scroll()) {
+  .lees-lijn { animation: lees-groei linear both; animation-timeline: scroll(root); }
+  @keyframes lees-groei { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+}
+
+/* Kompas van vandaag: strook onder de golf, server-side gevuld door _middleware.js */
+.kompas-strook {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 28px;
+  padding: 18px 48px; background: var(--p2); border-bottom: 1px solid var(--border);
+  color: var(--ink); text-decoration: none;
+}
+.kompas-strook:hover .kompas-mcp { color: var(--acc); }
+.kompas-kanji {
+  width: 52px; height: 52px; border-radius: 10px; flex-shrink: 0;
+  background: var(--ink); color: #f7f1e6; font-family: serif; font-size: 28px;
+  display: flex; align-items: center; justify-content: center;
+}
+.kompas-tekst { min-width: 0; }
+.kompas-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--acc); margin-bottom: 4px;
+}
+.kompas-label span { color: var(--muted); font-weight: 500; letter-spacing: .08em; text-transform: none; margin-left: 8px; }
+.kompas-vraag {
+  font-family: var(--serif); font-size: clamp(17px, 1.8vw, 22px); font-weight: 400; font-style: italic;
+  line-height: 1.35; color: var(--ink);
+}
+.kompas-vraag b { font-style: normal; font-weight: 600; margin-right: 6px; }
+.kompas-mcp {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 11px; color: var(--muted);
+  white-space: nowrap; transition: color .2s;
+}
+@media (max-width: 760px) {
+  .kompas-strook { grid-template-columns: auto 1fr; gap: 16px; padding: 16px 20px; }
+  .kompas-mcp { display: none; }
+}
+
+/* Zelfcheck: de zeven patronen zijn aan te tikken */
+.herk-item { cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+.herk-item:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+.herk-vink {
+  position: absolute; top: 14px; right: 14px; width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid rgba(28,24,21,.2); background: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s, border-color .2s, transform .2s;
+}
+.herk-vink svg { width: 12px; height: 12px; stroke: #fff; stroke-width: 2.5; fill: none; opacity: 0; transition: opacity .15s; }
+.herk-item[aria-pressed="true"] { border-color: var(--acc); background: #fff; box-shadow: 0 4px 24px rgba(196,83,42,.12); }
+.herk-item[aria-pressed="true"] .herk-vink { background: var(--acc); border-color: var(--acc); transform: scale(1.05); }
+.herk-item[aria-pressed="true"] .herk-vink svg { opacity: 1; }
+.herk-item[aria-pressed="true"] .herk-item-kanji { color: rgba(196,83,42,.16); }
+.herk-hint { margin-top: 14px; font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+.herk-hint::before { content: '↑ '; color: var(--acc); }
+
+/* Resultaatkaart: verschijnt zodra één patroon is aangetikt (@starting-style voor de intrede) */
+.herk-result {
+  margin-top: 40px; display: none; grid-template-columns: auto 1fr; gap: 28px; align-items: center;
+  padding: 28px 32px; background: var(--ink); color: #f7f1e6; border-radius: 12px;
+  opacity: 1; transform: none; transition: opacity .5s ease, transform .5s ease, display .5s allow-discrete;
+}
+.herk-result.aan { display: grid; }
+@starting-style { .herk-result.aan { opacity: 0; transform: translateY(12px); } }
+.herk-result-kanji { display: flex; gap: 6px; flex-wrap: wrap; max-width: 180px; }
+.herk-result-kanji span {
+  font-family: serif; font-size: 30px; line-height: 1; width: 48px; height: 48px; border-radius: 8px;
+  background: rgba(247,241,230,.08); border: 1px solid rgba(247,241,230,.14);
+  display: flex; align-items: center; justify-content: center; color: #e8b97a;
+}
+.herk-result-n { font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #e8b97a; margin-bottom: 8px; }
+.herk-result-h { font-family: var(--serif); font-size: clamp(20px, 2.4vw, 30px); font-weight: 300; line-height: 1.25; margin-bottom: 8px; }
+.herk-result-h em { font-style: italic; color: #e8b97a; }
+.herk-result-p { font-size: 14px; color: rgba(247,241,230,.7); line-height: 1.65; max-width: 560px; }
+.herk-result-acties { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.herk-result-acties a, .herk-result-acties button {
+  font-family: var(--sans); font-size: 13px; font-weight: 500; padding: 10px 18px; border-radius: 6px;
+  cursor: pointer; text-decoration: none; transition: background .2s, border-color .2s;
+}
+.hr-prim { background: var(--acc); color: #fff; border: 1px solid var(--acc); }
+.hr-prim:hover { background: #a8461f; }
+.hr-sec { background: transparent; color: #f7f1e6; border: 1px solid rgba(247,241,230,.3); }
+.hr-sec:hover { border-color: #f7f1e6; }
+.hr-status { font-size: 12px; color: #e8b97a; align-self: center; min-height: 1em; }
+@media (max-width: 680px) {
+  .herk-result { grid-template-columns: 1fr; gap: 18px; padding: 22px 20px; }
+  .herk-result-kanji { max-width: none; }
+}
+
+/* Scroll-gedreven diepte: watermerk-kanji drijven traag mee met de scroll (geen JS) */
+@supports (animation-timeline: view()) {
+  .noorden-kanji { animation: drijf linear both; animation-timeline: view(); animation-range: entry 0% exit 100%; }
+  .herk-item-kanji { animation: drijf-klein linear both; animation-timeline: view(); animation-range: entry 0% exit 100%; }
+  @keyframes drijf       { from { transform: translateY(60px); } to { transform: translateY(-60px); } }
+  @keyframes drijf-klein { from { transform: translateY(14px); } to { transform: translateY(-14px); } }
+  .wave-hero img { animation: golf-zoom linear both; animation-timeline: view(); animation-range: exit 0% exit 100%; }
+  @keyframes golf-zoom { from { transform: scale(1); } to { transform: scale(1.08) translateY(6%); } }
+}
+
+/* Paginaovergangen: zachte crossfade naar /spiegel, /manifest, /agents (beide pagina's doen mee) */
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation-duration: .25s; }
+::view-transition-new(root) { animation-duration: .35s; }
+
+/* Golf-fallback als Wikimedia niet antwoordt: inktzee in plaats van een leeg vlak */
+.wave-hero.geen-beeld img { display: none; }
+.wave-hero.geen-beeld { background: radial-gradient(ellipse at 30% 110%, #1f3a5a 0%, #0e1928 60%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lees-lijn, .noorden-kanji, .herk-item-kanji, .wave-hero img { animation: none !important; }
+  .herk-result, .herk-vink { transition: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
 </style>
 <link rel="icon" type="image/svg+xml" href="/takumi-mcp.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -458,18 +585,29 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
     <span class="nav-sub" data-i18n="nav-sub">Mastering Change, Naturally</span>
   </a>
   <div style="display:flex;align-items:center;gap:12px"><button id="lang-toggle" onclick="toggleLang()" style="background:none;border:1px solid rgba(28,24,21,.15);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--muted);cursor:pointer;transition:all .2s;font-family:var(--sans)" onmouseover="this.style.borderColor='var(--acc)';this.style.color='var(--acc)'" onmouseout="this.style.borderColor='rgba(28,24,21,.15)';this.style.color='var(--muted)'">EN</button><a class="nav-btn" href="#webinar" data-i18n="nav-cta" data-nl="Webinar aanmelden" data-en="Join webinar">Webinar aanmelden</a></div>
+  <div class="lees-lijn" aria-hidden="true"></div>
 </nav>
 
 <!-- HERO -->
 <section class="wave-hero" aria-label="The Great Wave off Kanagawa">
   <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/The_Great_Wave_off_Kanagawa.jpg/1920px-The_Great_Wave_off_Kanagawa.jpg"
-       alt="The Great Wave off Kanagawa, Katsushika Hokusai, ca. 1831" fetchpriority="high">
+       alt="The Great Wave off Kanagawa, Katsushika Hokusai, ca. 1831" fetchpriority="high" decoding="async" width="1920" height="1316" onerror="this.closest('.wave-hero').classList.add('geen-beeld')">
   <div class="wave-hero-overlay">
     <h2 data-i18n="wave-hero-h">In een wereld vol chaos<br>rolt een golf van <em>rust, energie en wijsheid</em>.</h2>
     <div class="wave-hero-sub" data-i18n="wave-hero-sub">Natuurlijk Agile · gedachtegoed voor onze tijd</div>
   </div>
   <div class="wave-hero-scroll">scroll ↓</div>
 </section>
+
+<!-- KOMPAS VAN VANDAAG · server-side gevuld door functions/_middleware.js (zelfde rotatie als lees_kompas) -->
+<a class="kompas-strook" href="#mcp" id="kompas" data-stat="click_kompas" aria-label="Kompas van vandaag">
+  <div class="kompas-kanji" data-kompas="kanji">匠</div>
+  <div class="kompas-tekst">
+    <div class="kompas-label"><span style="margin:0" data-i18n="kp-label">Kompas van vandaag</span><span data-kompas-datum data-nl="" data-en=""></span></div>
+    <div class="kompas-vraag"><b><span data-kompas="kanji">匠</span> <span data-kompas="naam">Takumi</span></b> <span data-kompas="vraag">Welke vraag stel je vandaag in plaats van een antwoord te geven?</span></div>
+  </div>
+  <div class="kompas-mcp"><span data-kompas="puls">ochtendpuls</span> · <span data-kompas="tijd">06:45</span> · lees_kompas → <span data-kompas="element">Master Council · Synthese</span></div>
+</a>
 
 <section class="hero" id="hero">
   <p class="hero-tag" data-i18n="hero-tag" data-r>Mastering Change, Naturally</p>
@@ -508,43 +646,65 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
     Zeven patronen.<br>Waarschijnlijk herken je<br>er <em>meerdere.</em>
   </h2>
   <div class="herk-rij" data-r data-d="1">
-    <div class="herk-item">
+    <div class="herk-item" role="button" tabindex="0" aria-pressed="false" data-pat="efficientie">
+      <span class="herk-vink" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
       <span class="herk-n" data-i18n="v01-n">Valkuil 01</span>
       <h3 data-i18n="v01-h">De efficiëntieval</h3>
       <p data-i18n="v01-p">Agile als bezuinigingstool. Velocity als heilige metric. De waarde die er echt toe doet, wordt niet gemeten.</p>
       <div class="herk-item-kanji">効</div>
     </div>
-    <div class="herk-item">
+    <div class="herk-item" role="button" tabindex="0" aria-pressed="false" data-pat="wortels">
+      <span class="herk-vink" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
       <span class="herk-n" data-i18n="v02-n">Valkuil 02</span>
       <h3 data-i18n="v02-h">Onvoldoende wortels</h3>
       <p data-i18n="v02-p">Agile ingevoerd zonder filosofisch fundament. Een boom zonder wortels staat, totdat de eerste storm komt.</p>
       <div class="herk-item-kanji">根</div>
     </div>
-    <div class="herk-item">
+    <div class="herk-item" role="button" tabindex="0" aria-pressed="false" data-pat="adem">
+      <span class="herk-vink" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
       <span class="herk-n" data-i18n="v03-n">Valkuil 03</span>
       <h3 data-i18n="v03-h">Agile hyperventilatie</h3>
       <p data-i18n="v03-p">Sprint na sprint, zonder ademruimte. Het ritme dat wendbaarheid kracht geeft, is verdwenen.</p>
       <div class="herk-item-kanji">息</div>
     </div>
-    <div class="herk-item">
+    <div class="herk-item" role="button" tabindex="0" aria-pressed="false" data-pat="silo">
+      <span class="herk-vink" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
       <span class="herk-n" data-i18n="v04-n">Valkuil 04</span>
       <h3 data-i18n="v04-h">Silo's in een nieuw jasje</h3>
       <p data-i18n="v04-p">Business en IT in aparte werelden. Andere taal, andere doelen, nu met een Agile-sticker erop.</p>
       <div class="herk-item-kanji">壁</div>
     </div>
-    <div class="herk-item">
+    <div class="herk-item" role="button" tabindex="0" aria-pressed="false" data-pat="godzilla">
+      <span class="herk-vink" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
       <span class="herk-n" data-i18n="v05-n">Valkuil 05</span>
       <h3 data-i18n="v05-h">Corporate Godzilla</h3>
       <p data-i18n="v05-p">Retrospectives die niets veranderen. Fouten die zich herhalen. De organisatie die niet kan leren.</p>
       <div class="herk-item-kanji">竜</div>
     </div>
-    <div class="herk-item">
+    <div class="herk-item" role="button" tabindex="0" aria-pressed="false" data-pat="isolatie">
+      <span class="herk-vink" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
       <span class="herk-n" data-i18n="v06-n">Valkuil 06 · 07</span>
       <h3 data-i18n="v06-h">Splendid Isolation & Flowverstoring</h3>
       <p data-i18n="v06-p">Teams die eilanden worden. Waarde die blijft steken. De dashboards groen, de energie weg.</p>
       <div class="herk-item-kanji">孤</div>
     </div>
   </div>
+  <p class="herk-hint" data-i18n="herk-hint" data-r data-d="1">Tik de patronen aan die je herkent. Niets wordt opgeslagen, alleen geteld.</p>
+
+  <div class="herk-result" id="herk-result" aria-live="polite">
+    <div class="herk-result-kanji" id="hr-kanji"></div>
+    <div>
+      <div class="herk-result-n" id="hr-n"></div>
+      <div class="herk-result-h" id="hr-h"></div>
+      <p class="herk-result-p" id="hr-p"></p>
+      <div class="herk-result-acties">
+        <a class="hr-prim" href="#webinar" data-stat="click_webinar_check" data-i18n="hr-webinar">Neem het mee naar het webinar →</a>
+        <button type="button" class="hr-sec" id="hr-share" data-i18n="hr-share">Deel je patroon</button>
+        <span class="hr-status" id="hr-status"></span>
+      </div>
+    </div>
+  </div>
+
   <p class="herk-concl" data-i18n="herk-concl" data-r data-d="2">
     Dit is niet een probleem van mensen of teams.<br>Het is een probleem van <strong>fundament</strong>, en het wordt urgenter nu AI de druk op organisaties verder vergroot.
   </p>
@@ -693,7 +853,7 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
     <div data-r data-d="1">
       <div class="term">
         <div class="term-bar"><div class="term-dot"></div><div class="term-dot"></div><div class="term-dot"></div><div class="term-title">ochtendpuls · takumi mcp</div></div>
-        <div class="term-body" data-r data-i18n="ag-term"><span class="tl cm">## 06:45 · ochtendpuls · agent draait autonoom</span>
+        <div class="term-body" data-r data-i18n="ag-term"><span class="tl cm">## <span data-kompas="tijd">06:45</span> · <span data-kompas="puls">ochtendpuls</span>, <span data-kompas-datum></span></span>
 <span class="tl tl-out"><span class="ar">→</span> strava.laatste_activiteit()</span>
 <span class="tl tl-in"><span class="ar">←</span> gisteren · 50 km gravel · Z2</span>
 <span class="tl tl-out"><span class="ar">→</span> agenda.vandaag()</span>
@@ -702,9 +862,9 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
 <span class="tl tl-out">    <span class="ky">orientatie</span>: "pulse/morning",</span>
 <span class="tl tl-out">    <span class="ky">coordinaten</span>: { beweging: "gereden", agenda: "vol" }</span>
 <span class="tl tl-out">  })</span>
-<span class="tl tl-in"><span class="ar">←</span> <span class="ky">leider</span>: 水 Sui: herstel weegt vandaag zwaarst</span>
-<span class="tl tl-in"><span class="ar">←</span> <span class="ky">vraag</span>: "Wat laat je vandaag bewust liggen?"</span>
-<span class="tl cm">## het oordeel blijft bij jou</span></div>
+<span class="tl tl-in"><span class="ar">←</span> <span class="ky">leider</span>: <span data-kompas="kanji">水</span> <span data-kompas="naam">Sui</span> · <span data-kompas="element">Water · Flow</span></span>
+<span class="tl tl-in"><span class="ar">←</span> <span class="ky">vraag</span>: "<span data-kompas="vraag">Wat laat je vandaag bewust liggen?</span>"</span>
+<span class="tl cm">## dit is de puls van vandaag · het oordeel blijft bij jou</span></div>
       </div>
     </div>
   </div>
@@ -799,6 +959,19 @@ var NL = {
   'nav-sub':     'Mastering Change, Naturally',
   'getuige-q':   '“Hij duikt als het ware in het hart van de machine en draait daar de knoppen om.”',
   'herk-kop':    'Zeven patronen.<br>Waarschijnlijk herken je<br>er <em>meerdere.</em>',
+  'kp-label':    'Kompas van vandaag',
+  'herk-hint':   'Tik de patronen aan die je herkent. Niets wordt opgeslagen, alleen geteld.',
+  'hr-webinar':  'Neem het mee naar het webinar →',
+  'hr-share':    'Deel je patroon',
+  'hr-n':        'Je herkent {n} van zeven',
+  'hr-h1':       'Eén patroon is <em>een signaal.</em>',
+  'hr-h2':       'Meerdere patronen wijzen zelden op mensen, <em>bijna altijd op fundament.</em>',
+  'hr-h4':       'Dit is geen teamprobleem. <em>Dit is de grond onder de organisatie.</em>',
+  'hr-p1':       'Kijk eens een week lang waar dit patroon opduikt. Meestal niet waar je het verwacht.',
+  'hr-p2':       'De patronen hangen samen: zonder wortels geen ritme, zonder ritme geen leren. In het webinar laat Paul zien waar je begint.',
+  'hr-p4':       'Niet harder duwen. Eerst vertragen, dan versnellen. Precies daarover gaat het boek, en het webinar is de korte route.',
+  'hr-share-txt':'Ik herken {n} van de 7 Agile-patronen uit Natuurlijk Agile: {k}. Welke herken jij?',
+  'hr-copied':   'Link gekopieerd',
   'herk-concl':  'Dit is niet een probleem van mensen of teams. Het is een probleem van <strong>fundament</strong>, en het wordt urgenter nu AI de druk op organisaties verder vergroot.',
   'boek-label':  'Het boek',
   'badge-nominatie': 'Genomineerd · Managementboek van het Jaar 2023',
@@ -842,7 +1015,7 @@ var NL = {
   'ag-kop':      'Elke ochtend om 06:45<br>vraagt een agent <em>het kompas</em>.',
   'ag-p':        'Dit is geen demo maar dagelijkse praktijk: een AI-agent leest de fietsrit van gisteren en de agenda van vandaag, en vraagt Takumi om de weging van de dag. Via <strong>MCP</strong>, het open protocol waarmee AI-assistenten tools aanroepen, kan jouw agent precies hetzelfde. Het kompas leest alleen en weegt deterministisch: <strong>AI als hartslagmeter, niet als gaspedaal.</strong>',
   'ag-cta':      'Sluit je agent aan →',
-  'ag-term':     '<span class="tl cm">## 06:45 · ochtendpuls · agent draait autonoom</span><span class="tl tl-out"><span class="ar">→</span> strava.laatste_activiteit()</span><span class="tl tl-in"><span class="ar">←</span> gisteren · 50 km gravel · Z2</span><span class="tl tl-out"><span class="ar">→</span> agenda.vandaag()</span><span class="tl tl-in"><span class="ar">←</span> 4 afspraken · middag vol</span><span class="tl tl-out"><span class="ar">→</span> takumi.lees_kompas({</span><span class="tl tl-out">    <span class="ky">orientatie</span>: "pulse/morning",</span><span class="tl tl-out">    <span class="ky">coordinaten</span>: { beweging: "gereden", agenda: "vol" }</span><span class="tl tl-out">  })</span><span class="tl tl-in"><span class="ar">←</span> <span class="ky">leider</span>: 水 Sui: herstel weegt vandaag zwaarst</span><span class="tl tl-in"><span class="ar">←</span> <span class="ky">vraag</span>: "Wat laat je vandaag bewust liggen?"</span><span class="tl cm">## het oordeel blijft bij jou</span>',
+  'ag-term':     '<span class="tl cm">## <span data-kompas="tijd">06:45</span> · <span data-kompas="puls">ochtendpuls</span>, <span data-kompas-datum></span></span><span class="tl tl-out"><span class="ar">→</span> strava.laatste_activiteit()</span><span class="tl tl-in"><span class="ar">←</span> gisteren · 50 km gravel · Z2</span><span class="tl tl-out"><span class="ar">→</span> agenda.vandaag()</span><span class="tl tl-in"><span class="ar">←</span> 4 afspraken · middag vol</span><span class="tl tl-out"><span class="ar">→</span> takumi.lees_kompas({</span><span class="tl tl-out">    <span class="ky">orientatie</span>: "pulse/morning",</span><span class="tl tl-out">    <span class="ky">coordinaten</span>: { beweging: "gereden", agenda: "vol" }</span><span class="tl tl-out">  })</span><span class="tl tl-in"><span class="ar">←</span> <span class="ky">leider</span>: <span data-kompas="kanji">水</span> <span data-kompas="naam">Sui</span> · <span data-kompas="element">Water · Flow</span></span><span class="tl tl-in"><span class="ar">←</span> <span class="ky">vraag</span>: "<span data-kompas="vraag">Wat laat je vandaag bewust liggen?</span>"</span><span class="tl cm">## dit is de puls van vandaag · het oordeel blijft bij jou</span>',
   'ct-label':    'Contact',
   'ct-kop':      'Een vraag, een casus,<br>of gewoon <em>even sparren?</em>',
   'ct-p':        'Over het boek, het webinar, Takumi of een grijze zone in jouw organisatie. Stuur een bericht. Je krijgt persoonlijk antwoord, meestal binnen twee werkdagen.',
@@ -870,6 +1043,19 @@ var EN = {
   'hero-naam-s': 'Author · Agile Philosopher · AI in Practice',
   'getuige-q':   '“He dives into the very heart of the machine and turns the right knobs.”',
   'herk-kop':    'Seven patterns.<br>You probably recognise<br><em>several of them.</em>',
+  'kp-label':    'Today\'s compass',
+  'herk-hint':   'Tap the patterns you recognise. Nothing is stored, only counted.',
+  'hr-webinar':  'Bring it to the webinar →',
+  'hr-share':    'Share your pattern',
+  'hr-n':        'You recognise {n} of seven',
+  'hr-h1':       'One pattern is <em>a signal.</em>',
+  'hr-h2':       'Several patterns rarely point to people, <em>almost always to foundation.</em>',
+  'hr-h4':       'This is not a team problem. <em>This is the ground beneath the organisation.</em>',
+  'hr-p1':       'Watch for a week where this pattern shows up. Usually not where you expect it.',
+  'hr-p2':       'The patterns are connected: no roots, no rhythm; no rhythm, no learning. In the webinar Paul shows where to start.',
+  'hr-p4':       'Do not push harder. Slow down first, then speed up. That is what the book is about, and the webinar is the short route.',
+  'hr-share-txt':'I recognise {n} of the 7 Agile patterns from Natuurlijk Agile: {k}. Which ones do you recognise?',
+  'hr-copied':   'Link copied',
   'herk-concl':  'This is not a problem of people or teams. It is a problem of <strong>foundation</strong>, made more urgent as AI increases pressure on organisations.',
   'boek-label':  'The book',
   'badge-nominatie': 'Nominated · Dutch Management Book of the Year 2023',
@@ -913,7 +1099,7 @@ var EN = {
   'ag-kop':      'Every morning at 06:45<br>an agent asks <em>the compass</em>.',
   'ag-p':        'Not a demo but daily practice: an AI agent reads yesterday\'s ride and today\'s calendar, then asks Takumi for the weighting of the day. Through <strong>MCP</strong>, the open protocol that lets AI assistants call tools, your agent can do exactly the same. The compass only reads and weighs deterministically: <strong>AI as heart-rate monitor, not accelerator.</strong>',
   'ag-cta':      'Connect your agent →',
-  'ag-term':     '<span class="tl cm">## 06:45 · morning pulse · agent runs autonomously</span><span class="tl tl-out"><span class="ar">→</span> strava.latest_activity()</span><span class="tl tl-in"><span class="ar">←</span> yesterday · 50 km gravel · Z2</span><span class="tl tl-out"><span class="ar">→</span> calendar.today()</span><span class="tl tl-in"><span class="ar">←</span> 4 meetings · afternoon full</span><span class="tl tl-out"><span class="ar">→</span> takumi.lees_kompas({</span><span class="tl tl-out">    <span class="ky">orientatie</span>: "pulse/morning",</span><span class="tl tl-out">    <span class="ky">coordinaten</span>: { beweging: "gereden", agenda: "vol" }</span><span class="tl tl-out">  })</span><span class="tl tl-in"><span class="ar">←</span> <span class="ky">leider</span>: 水 Sui, recovery carries the most weight today</span><span class="tl tl-in"><span class="ar">←</span> <span class="ky">vraag</span>: "What will you deliberately leave undone today?"</span><span class="tl cm">## the judgment stays with you</span>',
+  'ag-term':     '<span class="tl cm">## <span data-kompas="tijd">06:45</span> · <span data-kompas="puls">ochtendpuls</span>, <span data-kompas-datum></span></span><span class="tl tl-out"><span class="ar">→</span> strava.latest_activity()</span><span class="tl tl-in"><span class="ar">←</span> yesterday · 50 km gravel · Z2</span><span class="tl tl-out"><span class="ar">→</span> calendar.today()</span><span class="tl tl-in"><span class="ar">←</span> 4 meetings · afternoon full</span><span class="tl tl-out"><span class="ar">→</span> takumi.lees_kompas({</span><span class="tl tl-out">    <span class="ky">orientatie</span>: "pulse/morning",</span><span class="tl tl-out">    <span class="ky">coordinaten</span>: { beweging: "gereden", agenda: "vol" }</span><span class="tl tl-out">  })</span><span class="tl tl-in"><span class="ar">←</span> <span class="ky">leider</span>: <span data-kompas="kanji">水</span> <span data-kompas="naam">Sui</span> · <span data-kompas="element">Water · Flow</span></span><span class="tl tl-in"><span class="ar">←</span> <span class="ky">vraag</span>: "<span data-kompas="vraag">Wat laat je vandaag bewust liggen?</span>"</span><span class="tl cm">## this is today\'s pulse · the judgment stays with you</span>',
   'ct-label':    'Contact',
   'ct-kop':      'A question, a case,<br>or just <em>a chat?</em>',
   'ct-p':        'About the book, the webinar, Takumi or a grey zone in your organisation. Send a message. You will get a personal reply, usually within two working days.',
@@ -927,19 +1113,92 @@ var EN = {
   'ft-tag':      'Natural craftsmanship · In symbiosis with AI',
 };
 
+// ── KOMPAS VAN VANDAAG ────────────────────────────────────────────
+// De waarden staan al in de HTML (server-side gevuld door _middleware.js).
+// We bewaren ze één keer, zodat een taalwissel ze niet overschrijft.
+var KOMPAS = {};
+document.querySelectorAll('[data-kompas]').forEach(function(el){
+  var k = el.getAttribute('data-kompas');
+  if (KOMPAS[k] === undefined) KOMPAS[k] = el.textContent;
+});
+var KOMPAS_DATUM = (function(){ var el = document.querySelector('[data-kompas-datum]'); return el ? { nl: el.getAttribute('data-nl') || el.textContent, en: el.getAttribute('data-en') || el.textContent } : null; })();
+function vulKompas(lang){
+  document.querySelectorAll('[data-kompas]').forEach(function(el){
+    var k = el.getAttribute('data-kompas');
+    if (KOMPAS[k] !== undefined) el.textContent = (lang === 'en' && k === 'puls') ? (KOMPAS[k] === 'avondpuls' ? 'evening pulse' : 'morning pulse') : KOMPAS[k];
+  });
+  if (KOMPAS_DATUM) document.querySelectorAll('[data-kompas-datum]').forEach(function(el){ el.textContent = KOMPAS_DATUM[lang] || KOMPAS_DATUM.nl; });
+}
+vulKompas('nl');
+
 function applyLang(lang) {
   var T = lang === 'en' ? EN : NL;
   document.querySelectorAll('[data-i18n]').forEach(function(el) {
     var k = el.getAttribute('data-i18n');
     if (T[k] !== undefined) el.innerHTML = T[k];
   });
+  vulKompas(lang);
   document.getElementById('lang-toggle').textContent = lang === 'nl' ? 'EN' : 'NL';
   document.documentElement.lang = lang;
   LANG = lang;
   localStorage.setItem('na_lang', lang);
+  if (typeof renderCheck === 'function') renderCheck();
 }
 
-function toggleLang() { applyLang(LANG === 'nl' ? 'en' : 'nl'); }
+function toggleLang() {
+  var next = LANG === 'nl' ? 'en' : 'nl';
+  if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(function(){ applyLang(next); });
+  else applyLang(next);
+}
+
+// ── ZELFCHECK · zeven patronen ────────────────────────────────────
+var PAT_KANJI = { efficientie:'効', wortels:'根', adem:'息', silo:'壁', godzilla:'竜', isolatie:'孤' };
+var PAT_ORDER = ['efficientie','wortels','adem','silo','godzilla','isolatie'];
+function gekozen(){ return PAT_ORDER.filter(function(p){ var el = document.querySelector('.herk-item[data-pat="'+p+'"]'); return el && el.getAttribute('aria-pressed') === 'true'; }); }
+function beacon(ev){ try { if (navigator.sendBeacon) navigator.sendBeacon('/api/stat', new Blob([JSON.stringify({e: ev})], {type:'application/json'})); } catch(_) {} }
+function renderCheck(){
+  var box = document.getElementById('herk-result'); if (!box) return;
+  var T = LANG === 'en' ? EN : NL;
+  var g = gekozen();
+  // isolatie-kaart telt voor twee patronen (06 · 07)
+  var n = g.length + (g.indexOf('isolatie') >= 0 ? 1 : 0);
+  if (!n) { box.classList.remove('aan'); history.replaceState(null, '', location.pathname + location.hash); return; }
+  document.getElementById('hr-kanji').innerHTML = g.map(function(p){ return '<span>' + PAT_KANJI[p] + '</span>'; }).join('');
+  document.getElementById('hr-n').textContent = T['hr-n'].replace('{n}', n);
+  var tier = n >= 4 ? '4' : (n >= 2 ? '2' : '1');
+  document.getElementById('hr-h').innerHTML = T['hr-h' + tier];
+  document.getElementById('hr-p').textContent = T['hr-p' + tier];
+  box.classList.add('aan');
+  history.replaceState(null, '', '?p=' + g.join(',') + '#diagnose');
+}
+function toggleItem(el){
+  var aan = el.getAttribute('aria-pressed') !== 'true';
+  el.setAttribute('aria-pressed', aan ? 'true' : 'false');
+  if (aan) beacon('check_' + el.getAttribute('data-pat'));
+  renderCheck();
+}
+document.querySelectorAll('.herk-item[data-pat]').forEach(function(el){
+  el.addEventListener('click', function(){ toggleItem(el); });
+  el.addEventListener('keydown', function(e){ if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleItem(el); } });
+});
+(function(){
+  // Voorselectie via gedeelde link: ?p=wortels,adem
+  var q = new URLSearchParams(location.search).get('p');
+  if (!q) return;
+  q.split(',').forEach(function(p){ var el = document.querySelector('.herk-item[data-pat="'+p+'"]'); if (el) el.setAttribute('aria-pressed','true'); });
+  renderCheck();
+})();
+var hrShare = document.getElementById('hr-share');
+if (hrShare) hrShare.addEventListener('click', function(){
+  var T = LANG === 'en' ? EN : NL, g = gekozen();
+  var n = g.length + (g.indexOf('isolatie') >= 0 ? 1 : 0);
+  var url = location.origin + '/?p=' + g.join(',') + '#diagnose';
+  var tekst = T['hr-share-txt'].replace('{n}', n).replace('{k}', g.map(function(p){ return PAT_KANJI[p]; }).join(' '));
+  var status = document.getElementById('hr-status');
+  beacon('check_share');
+  if (navigator.share) { navigator.share({ title: 'Natuurlijk Agile', text: tekst, url: url }).catch(function(){}); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(tekst + '\n' + url).then(function(){ status.textContent = T['hr-copied']; setTimeout(function(){ status.textContent = ''; }, 2500); });
+});
 
 // ── KLIK-BEACONS (stats) ──────────────────────────────────────────
 document.addEventListener('click', function(e){

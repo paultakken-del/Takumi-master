@@ -6,7 +6,12 @@
  * volume prima; tellingen zijn indicatief, geen boekhouding.
  */
 
-export const CLICK_EVENTS = ['click_webinar', 'click_app', 'click_boek', 'click_spiegel'];
+export const CLICK_EVENTS = [
+  'click_webinar', 'click_app', 'click_boek', 'click_spiegel',
+  // laag 1: kompas-strook en zelfcheck op de zeven patronen
+  'click_kompas', 'click_webinar_check', 'check_share',
+  'check_efficientie', 'check_wortels', 'check_adem', 'check_silo', 'check_godzilla', 'check_isolatie',
+];
 
 export const BOT_RE = /bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|pingdom|uptime/i;
 
