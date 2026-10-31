@@ -117,6 +117,27 @@ h1 em { font-style: italic; color: var(--acc); }
 }
 .hero-tekst strong { color: var(--ink); font-weight: 400; }
 
+/* DE KERN: twee tekstkolommen met één dunne lijn ertussen, geen kaders */
+.kern { padding: 72px 64px 64px; border-bottom: 1px solid var(--border); }
+.kern-label { font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--acc); margin: 0 auto 36px; max-width: 960px; }
+.kern-kolommen { display: grid; grid-template-columns: 1fr 1fr; gap: 0 64px; max-width: 960px; margin: 0 auto; }
+.kern-kolom + .kern-kolom { border-left: 1px solid var(--border); padding-left: 64px; }
+.kern-kolom h3 { font-family: var(--serif); font-size: clamp(24px, 2.6vw, 32px); font-weight: 400; color: var(--ink); margin: 0 0 14px; line-height: 1.15; }
+.kern-kolom h3 span { font-family: var(--sans); font-size: 12px; font-weight: 500; letter-spacing: .06em; color: var(--muted); display: block; margin-top: 6px; }
+.kern-kolom p { font-size: 15px; font-weight: 300; color: var(--muted); line-height: 1.8; margin: 0 0 18px; max-width: 46ch; }
+.kern-kolom ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.kern-kolom li { font-size: 14px; color: var(--ink); line-height: 1.6; padding-left: 18px; position: relative; }
+.kern-kolom li::before { content: ''; position: absolute; left: 0; top: .66em; width: 8px; height: 1.5px; background: var(--acc); }
+.kern-figuur { display: block; width: 100%; max-width: 960px; height: 110px; margin: 40px auto 0; }
+.kern-brug { max-width: 960px; margin: 10px auto 0; font-family: var(--serif); font-size: clamp(20px, 2.4vw, 28px); font-weight: 300; color: var(--ink); line-height: 1.4; }
+.kern-brug em { font-style: italic; color: var(--acc); }
+@media (max-width: 760px) {
+  .kern { padding: 48px 20px 44px; }
+  .kern-kolommen { grid-template-columns: 1fr; gap: 36px; }
+  .kern-kolom + .kern-kolom { border-left: 0; padding-left: 0; border-top: 1px solid var(--border); padding-top: 36px; }
+  .kern-figuur { height: 80px; margin-top: 28px; }
+  .kern-brug { margin-top: 8px; }
+}
 .hero-acties { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
 .btn-prim {
   background: var(--acc); color: #fff;
@@ -163,15 +184,18 @@ h1 em { font-style: italic; color: var(--acc); }
 /* QUOTE STRIP */
 .quote-strip {
   border-bottom: 1px solid var(--border);
-  padding: 48px 64px;
+  padding: 64px 64px;
   display: grid; grid-template-columns: 1fr auto;
-  gap: 40px; align-items: center;
-  background: var(--paper);
+  gap: 48px; align-items: center;
+  background: var(--p2);
+  position: relative;
 }
+.quote-strip::before { content: '\201C'; position: absolute; left: 44px; top: 18px; font-family: var(--serif); font-size: 140px; line-height: 1; color: rgba(196,83,42,.16); pointer-events: none; }
 .quote-strip blockquote {
-  font-family: var(--serif); font-size: clamp(18px, 2.2vw, 26px);
+  position: relative;
+  font-family: var(--serif); font-size: clamp(22px, 2.8vw, 34px);
   font-weight: 300; font-style: italic;
-  color: var(--ink); line-height: 1.55; max-width: 680px;
+  color: var(--ink); line-height: 1.45; max-width: 760px; margin: 0; text-wrap: balance;
 }
 .quote-strip cite {
   font-size: 12px; font-weight: 600; letter-spacing: .08em;
@@ -179,7 +203,7 @@ h1 em { font-style: italic; color: var(--acc); }
   font-style: normal; white-space: nowrap;
   display: flex; flex-direction: column; gap: 4px; text-align: right;
 }
-.quote-strip cite span { color: var(--acc); font-size: 13px; }
+.quote-strip cite span { color: var(--acc); font-size: 14px; }
 
 /* HERKENNING */
 .herk {
@@ -403,7 +427,8 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
 /* RESPONSIVE */
 @media (max-width: 900px) {
   nav { padding: 14px 20px; }
-  .quote-strip { padding: 36px 24px; grid-template-columns: 1fr; }
+  .quote-strip { padding: 44px 24px; grid-template-columns: 1fr; gap: 20px; }
+  .quote-strip::before { left: 14px; top: 8px; font-size: 100px; }
   .quote-strip cite { text-align: left; }
   .herk { padding: 60px 24px; }
   .herk-rij { grid-template-columns: 1fr; }
@@ -540,6 +565,7 @@ p { text-wrap: pretty; }
   <p class="hero-tekst" data-i18n="hero-tekst" data-r data-d="1">
     De meeste organisaties zoeken houvast in frameworks en technologie. Maar de organisaties die werkelijk floreren bouwen op iets diepers: <strong>natuurlijke principes</strong> die al eeuwen werken, nu in symbiose met AI.
   </p>
+
   <div class="hero-acties" data-r data-d="2">
     <a class="btn-prim" href="#webinar" data-i18n="hero-prim">Kom naar het webinar →</a>
     <a class="btn-sec"  href="#boek" data-i18n="hero-sec">Lees het boek</a>
@@ -559,9 +585,36 @@ p { text-wrap: pretty; }
 
 <!-- QUOTE STRIP -->
 <div class="quote-strip" data-r>
-  <blockquote data-i18n="getuige-q">"Hij duikt als het ware in het hart van de machine en draait daar de knoppen om."</blockquote>
+  <blockquote data-i18n="getuige-q">Hij duikt als het ware in het hart van de machine en draait daar de knoppen om.</blockquote>
   <cite><span>Jan Rotmans</span>Hoogleraar duurzaamheidstransities<br>Erasmus Universiteit Rotterdam</cite>
 </div>
+
+<!-- DE KERN: wat is Natuurlijk Agile, wat is Takumi, hoe horen ze bij elkaar -->
+<section class="kern" id="kern">
+  <p class="kern-label" data-i18n="kern-label" data-r>In het kort</p>
+  <div class="kern-kolommen">
+    <div class="kern-kolom" data-r data-d="1">
+      <h3 data-i18n="kern-na-h">Natuurlijk Agile <span data-i18n="kern-na-sub">· het gedachtegoed</span></h3>
+      <p data-i18n="kern-na-lead">Wendbaarheid is geen methode maar een natuurverschijnsel. Organisaties zijn levende systemen: ze hebben ritme nodig, seizoenen, herstel. Het boek legt het fundament bloot dat onder elke methode ligt.</p>
+      <ul>
+        <li data-i18n="kern-na-1">Wendbaarheid is een natuurverschijnsel, geen framework.</li>
+        <li data-i18n="kern-na-2">Ritme boven tempo: seizoenen in plaats van een sprintkalender.</li>
+        <li data-i18n="kern-na-3">Mens boven methode: het fundament zit in mensen die weten waarom.</li>
+      </ul>
+    </div>
+    <div class="kern-kolom" data-r data-d="2">
+      <h3 data-i18n="kern-tk-h">Takumi <span data-i18n="kern-tk-sub">· de praktijk, met AI</span></h3>
+      <p data-i18n="kern-tk-lead">Takumi is Japans voor meester-vakman. Het is Natuurlijk Agile doorgetrokken naar werken met AI: een laag tussen jou en je AI-agents die bijhoudt welk werk je aan de machine overlaat en welk werk bij jou hoort. Het leest en weegt, het handelt niet.</p>
+      <ul>
+        <li data-i18n="kern-tk-1">De machine voert uit, het oordeel blijft bij jou.</li>
+        <li data-i18n="kern-tk-2">Vijf elementen als leesraster: aarde, water, wind, vuur, leegte.</li>
+        <li data-i18n="kern-tk-3">AI als hartslagmeter, niet als gaspedaal.</li>
+      </ul>
+    </div>
+  </div>
+  <canvas class="kern-figuur" id="kern-figuur" role="img" aria-label="Eén kwaststreek die links deint als seizoenen en rechts tot rust komt in een rechte lijn: van ritme naar richting"></canvas>
+  <p class="kern-brug" data-i18n="kern-brug" data-r data-d="2">Natuurlijk Agile is het <em>waarom</em>. Takumi is het <em>dagelijks oefenen</em>, in het tijdperk van AI.</p>
+</section>
 
 <!-- HERKENNING -->
 <section class="herk" id="diagnose">
@@ -880,11 +933,23 @@ var NL = {
   'hero-tag':    'Mastering Change, Naturally',
   'hero-h':      'Natuurlijk vakmanschap<br>als fundament voor elke<br><em>organisatie van de toekomst.</em>',
   'hero-tekst':  'De meeste organisaties zoeken houvast in frameworks en technologie. Maar de organisaties die werkelijk floreren bouwen op iets diepers: <strong>natuurlijke principes</strong> die al eeuwen werken, nu in symbiose met AI.',
+  'kern-label': 'In het kort',
+  'kern-na-h': 'Natuurlijk Agile <span data-i18n="kern-na-sub">· het gedachtegoed</span>',
+  'kern-na-lead': 'Wendbaarheid is geen methode maar een natuurverschijnsel. Organisaties zijn levende systemen: ze hebben ritme nodig, seizoenen, herstel. Het boek legt het fundament bloot dat onder elke methode ligt.',
+  'kern-na-1': 'Wendbaarheid is een natuurverschijnsel, geen framework.',
+  'kern-na-2': 'Ritme boven tempo: seizoenen in plaats van een sprintkalender.',
+  'kern-na-3': 'Mens boven methode: het fundament zit in mensen die weten waarom.',
+  'kern-tk-h': 'Takumi <span data-i18n="kern-tk-sub">· de praktijk, met AI</span>',
+  'kern-tk-lead': 'Takumi is Japans voor meester-vakman. Het is Natuurlijk Agile doorgetrokken naar werken met AI: een laag tussen jou en je AI-agents die bijhoudt welk werk je aan de machine overlaat en welk werk bij jou hoort. Het leest en weegt, het handelt niet.',
+  'kern-tk-1': 'De machine voert uit, het oordeel blijft bij jou.',
+  'kern-tk-2': 'Vijf elementen als leesraster: aarde, water, wind, vuur, leegte.',
+  'kern-tk-3': 'AI als hartslagmeter, niet als gaspedaal.',
+  'kern-brug': 'Natuurlijk Agile is het <em>waarom</em>. Takumi is het <em>dagelijks oefenen</em>, in het tijdperk van AI.',
   'hero-prim':   'Kom naar het webinar →',
   'hero-sec':    'Lees het boek',
   'nav-cta':     'Webinar aanmelden',
   'nav-sub':     'Mastering Change, Naturally',
-  'getuige-q':   '“Hij duikt als het ware in het hart van de machine en draait daar de knoppen om.”',
+  'getuige-q':   'Hij duikt als het ware in het hart van de machine en draait daar de knoppen om.',
   'herk-kop':    'Zeven patronen.<br>Waarschijnlijk herken je<br>er <em>meerdere.</em>',
   'kp-label':    'Kompas van vandaag',
   'el-kader':    'Vijf ritmes. Elke dag leidt er één.',
@@ -1005,13 +1070,25 @@ var EN = {
   'hero-tag':    'Agile by Nature',
   'hero-h':      'Natural craftsmanship<br>as the foundation for every<br><em>organisation of the future.</em>',
   'hero-tekst':  'Most organisations seek certainty in frameworks and technology. But the ones that truly flourish build on something deeper: <strong>natural principles</strong> that have worked for centuries, now in symbiosis with AI.',
+  'kern-label': 'In short',
+  'kern-na-h': 'Natuurlijk Agile <span data-i18n="kern-na-sub">· the thinking</span>',
+  'kern-na-lead': 'Agility is not a method but a natural phenomenon. Organisations are living systems: they need rhythm, seasons, recovery. The book lays bare the foundation beneath every method.',
+  'kern-na-1': 'Agility is a natural phenomenon, not a framework.',
+  'kern-na-2': 'Rhythm over pace: seasons instead of a sprint calendar.',
+  'kern-na-3': 'People over method: the foundation is people who know why.',
+  'kern-tk-h': 'Takumi <span data-i18n="kern-tk-sub">· the practice, with AI</span>',
+  'kern-tk-lead': 'Takumi is Japanese for master craftsman. It is Natuurlijk Agile carried into working with AI: a layer between you and your AI agents that keeps track of which work you hand to the machine and which work belongs to you. It reads and weighs, it does not act.',
+  'kern-tk-1': 'The machine executes, the judgment stays with you.',
+  'kern-tk-2': 'Five elements as a reading grid: earth, water, wind, fire, emptiness.',
+  'kern-tk-3': 'AI as a heart-rate monitor, not as an accelerator.',
+  'kern-brug': 'Natuurlijk Agile is the <em>why</em>. Takumi is the <em>daily practice</em>, in the age of AI.',
   'hero-prim':   'Join the webinar →',
   'hero-sec':    'Read the book',
   'nav-name':    'Agile by Nature',
   'nav-cta':     'Join webinar',
   'nav-sub':     'Mastering Change, Naturally',
   'hero-naam-s': 'Author · Agile Philosopher · AI in Practice',
-  'getuige-q':   '“He dives into the very heart of the machine and turns the right knobs.”',
+  'getuige-q':   'He dives into the very heart of the machine and turns the right knobs.',
   'herk-kop':    'Seven patterns.<br>You probably recognise<br><em>several of them.</em>',
   'kp-label':    'Today\'s compass',
   'el-kader':    'Five rhythms. Each day, one leads.',
@@ -1201,6 +1278,61 @@ var EN = {
     if (!reduced && t < 4.0) requestAnimationFrame(frame); else klaar = true; }
   requestAnimationFrame(frame);
   addEventListener('resize', function(){ maat(); if (klaar) teken(1, 99); });
+})();
+
+// ── VERBINDING · kern ────────────────────────────────────────────
+// Eén kwaststreek van links naar rechts: links deint hij (ritme, seizoenen: Natuurlijk Agile),
+// naar rechts komt hij tot rust in een rechte lijn en eindigt met een vaste druk (richting,
+// het merkteken van de vakman: Takumi). Tekent zichzelf één keer, zodra hij in beeld komt.
+(function tekenVerbinding(){
+  var cv = document.getElementById('kern-figuur'); if (!cv) return;
+  var ctx = cv.getContext('2d'); if (!ctx) return;
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var dpr=Math.min(devicePixelRatio||1,2), W=0, Hc=0;
+  function maat(){ var r=cv.getBoundingClientRect(); W=r.width; Hc=r.height; cv.width=W*dpr; cv.height=Hc*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
+  var ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1a1815';
+  var paper = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#faf7f2';
+  function punt(t){
+    // deining links die uitdooft naar het midden; rechts recht, met aan het eind een lichte buiging omlaag (de kwast drukt)
+    var golf = Math.sin(t * Math.PI * 2 * 2 + .3) * Math.pow(Math.max(0, 1 - t / .58), 1.2);
+    var y = -golf * 1.35 + (t > .9 ? Math.pow((t - .9) / .1, 2) * .15 : 0);
+    // druk: licht landen, ritmisch meedeinen met de golf, zwaarder en gelijkmatiger op het rechte stuk, stevige stop
+    var d = .25 + .25 * Math.sin(Math.min(1, t / .1) * Math.PI / 2);
+    d += .22 * (.5 + .5 * Math.cos(t * Math.PI * 2 * 2 + .3)) * Math.max(0, 1 - t / .58);
+    d += .38 * Math.pow(Math.min(1, Math.max(0, (t - .45) / .4)), .8);
+    if (t > .93) d += .35 * Math.pow((t - .93) / .07, 1.6);
+    return { x: t, y: y, w: d };
+  }
+  function teken(v){
+    ctx.clearRect(0,0,W,Hc);
+    var links = W*.02, breed = W*.96, basis = Hc*.5, amp = Hc*.3, maxW = Math.max(8, Math.min(22, W*.02));
+    var N=360, L=[], R=[], tot=Math.max(2, Math.floor(N*v));
+    for (var k=0;k<=tot;k++){ var t=k/N, p=punt(t), q=punt(Math.min(1,t+.002));
+      var x=links+p.x*breed, y=basis+p.y*amp, tx=(q.x-p.x)*breed, ty=(q.y-p.y)*amp, ln=Math.hypot(tx,ty)||1, nx=-ty/ln, ny=tx/ln;
+      var w=p.w*maxW*(.95+.05*Math.sin(t*80)); if (v<1 && k>tot-14) w*=(tot-k)/14;
+      L.push([x+nx*w/2,y+ny*w/2]); R.push([x-nx*w/2,y-ny*w/2]); }
+    function vorm(){ ctx.beginPath(); ctx.moveTo(L[0][0],L[0][1]); for(var i=1;i<L.length;i++) ctx.lineTo(L[i][0],L[i][1]); for(var j=R.length-1;j>=0;j--) ctx.lineTo(R[j][0],R[j][1]); ctx.closePath(); }
+    ctx.save(); ctx.globalAlpha=.24; ctx.shadowColor=ink; ctx.shadowBlur=7; ctx.fillStyle=ink; vorm(); ctx.fill(); ctx.restore();
+    ctx.fillStyle=ink; vorm(); ctx.fill();
+    // de stop: een ronde, vaste inktdot waar de kwast lift
+    if (v >= 1) { var e=punt(1); ctx.beginPath(); ctx.arc(links+e.x*breed, basis+e.y*amp, e.w*maxW*.42, 0, 7); ctx.fill(); }
+    // vezels op het rechte stuk: de kwast loopt droger
+    ctx.save(); ctx.strokeStyle=paper; ctx.lineCap='round';
+    var haren=[[-.28,.55,.9,.5],[.1,.6,.7,.45],[.34,.66,1.1,.55]];
+    for (var s=0;s<haren.length;s++){ ctx.lineWidth=haren[s][2]; ctx.globalAlpha=haren[s][3]; ctx.beginPath(); var eerste=true;
+      for (var k2=0;k2<=tot;k2++){ var u=k2/N; if (u<haren[s][1] || u>.92) continue; var fade=Math.min(1,(u-haren[s][1])/.08);
+        var m=.5+haren[s][0]*fade+.03*Math.sin(u*120+s), px=L[k2][0]+(R[k2][0]-L[k2][0])*m, py=L[k2][1]+(R[k2][1]-L[k2][1])*m;
+        if(eerste){ctx.moveTo(px,py);eerste=false;} else ctx.lineTo(px,py); }
+      ctx.stroke(); }
+    ctx.restore();
+  }
+  function ease(x){ return x<.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2; }
+  var gestart=false, klaar=false, start=0;
+  function frame(now){ if(!start) start=now; var t=(now-start)/1000, v = reduced ? 1 : ease(Math.min(1, t/1.8));
+    teken(v); if (v<1) requestAnimationFrame(frame); else klaar=true; }
+  function go(){ if (gestart) return; gestart=true; maat(); requestAnimationFrame(frame); }
+  try { new IntersectionObserver(function(e, io){ if (e[0].isIntersecting) { go(); io.disconnect(); } }, { threshold: .4 }).observe(cv); } catch(_) { go(); }
+  addEventListener('resize', function(){ if (klaar) { maat(); teken(1); } });
 })();
 
 // ── KOMPAS VAN VANDAAG ────────────────────────────────────────────
