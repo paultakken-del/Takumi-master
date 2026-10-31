@@ -117,6 +117,21 @@ h1 em { font-style: italic; color: var(--acc); }
 }
 .hero-tekst strong { color: var(--ink); font-weight: 400; }
 
+/* DE KERN: twee blokken, links het gedachtegoed, rechts de praktijk, met een brug eronder */
+.kern { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 940px; margin: 56px auto 44px; text-align: left; }
+.kern-blok { padding: 28px 28px 24px; background: var(--paper); border: 1px solid var(--border); border-radius: 10px; }
+.kern-kop { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.kern-kanji { font-family: serif; font-size: 30px; line-height: 1; color: var(--acc); min-width: 56px; height: 56px; padding: 0 12px; border-radius: 10px; background: rgba(196,83,42,.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; letter-spacing: -.04em; white-space: nowrap; }
+.kern-label { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+.kern-kop h3 { font-family: var(--serif); font-size: 26px; font-weight: 400; color: var(--ink); margin: 0; line-height: 1.1; }
+.kern-lead { font-size: 14.5px; color: var(--muted); line-height: 1.75; margin: 0 0 16px; }
+.kern-punten { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.kern-punten li { font-size: 14px; color: var(--muted); line-height: 1.6; padding-left: 18px; position: relative; }
+.kern-punten li::before { content: ''; position: absolute; left: 0; top: .62em; width: 8px; height: 1.5px; background: var(--acc); }
+.kern-punten strong { color: var(--ink); font-weight: 600; }
+.kern-brug { grid-column: 1 / -1; text-align: center; font-family: var(--serif); font-size: clamp(18px, 2vw, 23px); font-weight: 300; color: var(--ink); line-height: 1.5; margin: 8px auto 0; max-width: 680px; }
+.kern-brug em { font-style: italic; color: var(--acc); }
+@media (max-width: 760px) { .kern { grid-template-columns: 1fr; gap: 16px; margin: 40px auto 36px; } .kern-blok { padding: 22px 20px 20px; } }
 .hero-acties { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
 .btn-prim {
   background: var(--acc); color: #fff;
@@ -540,6 +555,30 @@ p { text-wrap: pretty; }
   <p class="hero-tekst" data-i18n="hero-tekst" data-r data-d="1">
     De meeste organisaties zoeken houvast in frameworks en technologie. Maar de organisaties die werkelijk floreren bouwen op iets diepers: <strong>natuurlijke principes</strong> die al eeuwen werken, nu in symbiose met AI.
   </p>
+
+  <!-- DE KERN: wat is Natuurlijk Agile, wat is Takumi, hoe horen ze bij elkaar -->
+  <div class="kern" data-r data-d="2">
+    <div class="kern-blok">
+      <div class="kern-kop"><span class="kern-kanji" aria-hidden="true">自然</span><div><p class="kern-label" data-i18n="kern-na-label">Het gedachtegoed · boek, 2022</p><h3 data-i18n="kern-na-h">Natuurlijk Agile</h3></div></div>
+      <p class="kern-lead" data-i18n="kern-na-lead">Wendbaarheid is geen methode maar een natuurverschijnsel. Organisaties zijn levende systemen: ze hebben ritme nodig, seizoenen, herstel. Agile werd de afgelopen jaren vooral ingezet om efficiënter te worden; dat doet het onrecht aan. Natuurlijk Agile legt het fundament eronder bloot.</p>
+      <ul class="kern-punten">
+        <li data-i18n="kern-na-1"><strong>Wendbaarheid is een natuurverschijnsel</strong>, geen framework.</li>
+        <li data-i18n="kern-na-2"><strong>Ritme boven tempo</strong>: seizoenen in plaats van een sprintkalender.</li>
+        <li data-i18n="kern-na-3"><strong>Mens boven methode</strong>: het fundament zit in mensen die weten waarom.</li>
+      </ul>
+    </div>
+    <div class="kern-blok">
+      <div class="kern-kop"><span class="kern-kanji" aria-hidden="true">匠</span><div><p class="kern-label" data-i18n="kern-tk-label">De praktijk · in het tijdperk van AI</p><h3 data-i18n="kern-tk-h">Takumi</h3></div></div>
+      <p class="kern-lead" data-i18n="kern-tk-lead">Takumi is Japans voor meester-vakman. Het is Natuurlijk Agile doorgetrokken naar werken met AI: een laag tussen jou en je AI-agents die bijhoudt welk werk je aan de machine overlaat en welk werk bij jou hoort. Het leest en weegt, het handelt niet. AI als hartslagmeter, niet als gaspedaal.</p>
+      <ul class="kern-punten">
+        <li data-i18n="kern-tk-1"><strong>De machine voert uit</strong>, het oordeel blijft bij jou.</li>
+        <li data-i18n="kern-tk-2"><strong>Vijf elementen als leesraster</strong>: aarde, water, wind, vuur, leegte.</li>
+        <li data-i18n="kern-tk-3"><strong>Een dagelijkse oefening</strong>, geen tool die alles weet.</li>
+      </ul>
+    </div>
+    <p class="kern-brug" data-i18n="kern-brug">Natuurlijk Agile is het <em>waarom</em>. Takumi is het <em>dagelijks oefenen</em>. De zeven patronen hieronder zijn waar je ziet dat het ene zonder het andere niet werkt.</p>
+  </div>
+
   <div class="hero-acties" data-r data-d="2">
     <a class="btn-prim" href="#webinar" data-i18n="hero-prim">Kom naar het webinar →</a>
     <a class="btn-sec"  href="#boek" data-i18n="hero-sec">Lees het boek</a>
@@ -1005,6 +1044,17 @@ var EN = {
   'hero-tag':    'Agile by Nature',
   'hero-h':      'Natural craftsmanship<br>as the foundation for every<br><em>organisation of the future.</em>',
   'hero-tekst':  'Most organisations seek certainty in frameworks and technology. But the ones that truly flourish build on something deeper: <strong>natural principles</strong> that have worked for centuries, now in symbiosis with AI.',
+  'kern-na-label': 'The thinking · book, 2022', 'kern-na-h': 'Natuurlijk Agile',
+  'kern-na-lead': 'Agility is not a method but a natural phenomenon. Organisations are living systems: they need rhythm, seasons, recovery. In recent years agile was mostly used to become more efficient; that does it an injustice. Natuurlijk Agile lays bare the foundation beneath it.',
+  'kern-na-1': '<strong>Agility is a natural phenomenon</strong>, not a framework.',
+  'kern-na-2': '<strong>Rhythm over pace</strong>: seasons instead of a sprint calendar.',
+  'kern-na-3': '<strong>People over method</strong>: the foundation is people who know why.',
+  'kern-tk-label': 'The practice · in the age of AI', 'kern-tk-h': 'Takumi',
+  'kern-tk-lead': 'Takumi is Japanese for master craftsman. It is Natuurlijk Agile carried into working with AI: a layer between you and your AI agents that keeps track of which work you hand to the machine and which work belongs to you. It reads and weighs, it does not act. AI as a heart-rate monitor, not as an accelerator.',
+  'kern-tk-1': '<strong>The machine executes</strong>, the judgment stays with you.',
+  'kern-tk-2': '<strong>Five elements as a reading grid</strong>: earth, water, wind, fire, emptiness.',
+  'kern-tk-3': '<strong>A daily practice</strong>, not a tool that knows everything.',
+  'kern-brug': 'Natuurlijk Agile is the <em>why</em>. Takumi is the <em>daily practice</em>. The seven patterns below are where you see that one does not work without the other.',
   'hero-prim':   'Join the webinar →',
   'hero-sec':    'Read the book',
   'nav-name':    'Agile by Nature',
