@@ -184,15 +184,18 @@ h1 em { font-style: italic; color: var(--acc); }
 /* QUOTE STRIP */
 .quote-strip {
   border-bottom: 1px solid var(--border);
-  padding: 48px 64px;
+  padding: 64px 64px;
   display: grid; grid-template-columns: 1fr auto;
-  gap: 40px; align-items: center;
-  background: var(--paper);
+  gap: 48px; align-items: center;
+  background: var(--p2);
+  position: relative;
 }
+.quote-strip::before { content: '\201C'; position: absolute; left: 44px; top: 18px; font-family: var(--serif); font-size: 140px; line-height: 1; color: rgba(196,83,42,.16); pointer-events: none; }
 .quote-strip blockquote {
-  font-family: var(--serif); font-size: clamp(18px, 2.2vw, 26px);
+  position: relative;
+  font-family: var(--serif); font-size: clamp(22px, 2.8vw, 34px);
   font-weight: 300; font-style: italic;
-  color: var(--ink); line-height: 1.55; max-width: 680px;
+  color: var(--ink); line-height: 1.45; max-width: 760px; margin: 0; text-wrap: balance;
 }
 .quote-strip cite {
   font-size: 12px; font-weight: 600; letter-spacing: .08em;
@@ -200,7 +203,7 @@ h1 em { font-style: italic; color: var(--acc); }
   font-style: normal; white-space: nowrap;
   display: flex; flex-direction: column; gap: 4px; text-align: right;
 }
-.quote-strip cite span { color: var(--acc); font-size: 13px; }
+.quote-strip cite span { color: var(--acc); font-size: 14px; }
 
 /* HERKENNING */
 .herk {
@@ -424,7 +427,8 @@ footer { padding: 40px 64px; display: flex; align-items: center; justify-content
 /* RESPONSIVE */
 @media (max-width: 900px) {
   nav { padding: 14px 20px; }
-  .quote-strip { padding: 36px 24px; grid-template-columns: 1fr; }
+  .quote-strip { padding: 44px 24px; grid-template-columns: 1fr; gap: 20px; }
+  .quote-strip::before { left: 14px; top: 8px; font-size: 100px; }
   .quote-strip cite { text-align: left; }
   .herk { padding: 60px 24px; }
   .herk-rij { grid-template-columns: 1fr; }
@@ -579,6 +583,12 @@ p { text-wrap: pretty; }
   </div>
 </section>
 
+<!-- QUOTE STRIP -->
+<div class="quote-strip" data-r>
+  <blockquote data-i18n="getuige-q">Hij duikt als het ware in het hart van de machine en draait daar de knoppen om.</blockquote>
+  <cite><span>Jan Rotmans</span>Hoogleraar duurzaamheidstransities<br>Erasmus Universiteit Rotterdam</cite>
+</div>
+
 <!-- DE KERN: wat is Natuurlijk Agile, wat is Takumi, hoe horen ze bij elkaar -->
 <section class="kern" id="kern">
   <p class="kern-label" data-i18n="kern-label" data-r>In het kort</p>
@@ -605,12 +615,6 @@ p { text-wrap: pretty; }
   <canvas class="kern-figuur" id="kern-figuur" role="img" aria-label="Eén kwaststreek die links deint als seizoenen en rechts tot rust komt in een rechte lijn: van ritme naar richting"></canvas>
   <p class="kern-brug" data-i18n="kern-brug" data-r data-d="2">Natuurlijk Agile is het <em>waarom</em>. Takumi is het <em>dagelijks oefenen</em>, in het tijdperk van AI.</p>
 </section>
-
-<!-- QUOTE STRIP -->
-<div class="quote-strip" data-r>
-  <blockquote data-i18n="getuige-q">"Hij duikt als het ware in het hart van de machine en draait daar de knoppen om."</blockquote>
-  <cite><span>Jan Rotmans</span>Hoogleraar duurzaamheidstransities<br>Erasmus Universiteit Rotterdam</cite>
-</div>
 
 <!-- HERKENNING -->
 <section class="herk" id="diagnose">
@@ -945,7 +949,7 @@ var NL = {
   'hero-sec':    'Lees het boek',
   'nav-cta':     'Webinar aanmelden',
   'nav-sub':     'Mastering Change, Naturally',
-  'getuige-q':   '“Hij duikt als het ware in het hart van de machine en draait daar de knoppen om.”',
+  'getuige-q':   'Hij duikt als het ware in het hart van de machine en draait daar de knoppen om.',
   'herk-kop':    'Zeven patronen.<br>Waarschijnlijk herken je<br>er <em>meerdere.</em>',
   'kp-label':    'Kompas van vandaag',
   'el-kader':    'Vijf ritmes. Elke dag leidt er één.',
@@ -1084,7 +1088,7 @@ var EN = {
   'nav-cta':     'Join webinar',
   'nav-sub':     'Mastering Change, Naturally',
   'hero-naam-s': 'Author · Agile Philosopher · AI in Practice',
-  'getuige-q':   '“He dives into the very heart of the machine and turns the right knobs.”',
+  'getuige-q':   'He dives into the very heart of the machine and turns the right knobs.',
   'herk-kop':    'Seven patterns.<br>You probably recognise<br><em>several of them.</em>',
   'kp-label':    'Today\'s compass',
   'el-kader':    'Five rhythms. Each day, one leads.',
