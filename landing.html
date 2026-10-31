@@ -128,13 +128,15 @@ h1 em { font-style: italic; color: var(--acc); }
 .kern-kolom ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .kern-kolom li { font-size: 14px; color: var(--ink); line-height: 1.6; padding-left: 18px; position: relative; }
 .kern-kolom li::before { content: ''; position: absolute; left: 0; top: .66em; width: 8px; height: 1.5px; background: var(--acc); }
-.kern-brug { max-width: 960px; margin: 48px auto 0; font-family: var(--serif); font-size: clamp(20px, 2.4vw, 28px); font-weight: 300; color: var(--ink); line-height: 1.4; }
+.kern-figuur { display: block; width: 100%; max-width: 960px; height: 110px; margin: 40px auto 0; }
+.kern-brug { max-width: 960px; margin: 10px auto 0; font-family: var(--serif); font-size: clamp(20px, 2.4vw, 28px); font-weight: 300; color: var(--ink); line-height: 1.4; }
 .kern-brug em { font-style: italic; color: var(--acc); }
 @media (max-width: 760px) {
   .kern { padding: 48px 20px 44px; }
   .kern-kolommen { grid-template-columns: 1fr; gap: 36px; }
   .kern-kolom + .kern-kolom { border-left: 0; padding-left: 0; border-top: 1px solid var(--border); padding-top: 36px; }
-  .kern-brug { margin-top: 36px; }
+  .kern-figuur { height: 80px; margin-top: 28px; }
+  .kern-brug { margin-top: 8px; }
 }
 .hero-acties { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
 .btn-prim {
@@ -600,6 +602,7 @@ p { text-wrap: pretty; }
       </ul>
     </div>
   </div>
+  <canvas class="kern-figuur" id="kern-figuur" role="img" aria-label="Eén kwaststreek die links deint als seizoenen en rechts tot rust komt in een rechte lijn: van ritme naar richting"></canvas>
   <p class="kern-brug" data-i18n="kern-brug" data-r data-d="2">Natuurlijk Agile is het <em>waarom</em>. Takumi is het <em>dagelijks oefenen</em>, in het tijdperk van AI.</p>
 </section>
 
@@ -1271,6 +1274,61 @@ var EN = {
     if (!reduced && t < 4.0) requestAnimationFrame(frame); else klaar = true; }
   requestAnimationFrame(frame);
   addEventListener('resize', function(){ maat(); if (klaar) teken(1, 99); });
+})();
+
+// ── VERBINDING · kern ────────────────────────────────────────────
+// Eén kwaststreek van links naar rechts: links deint hij (ritme, seizoenen: Natuurlijk Agile),
+// naar rechts komt hij tot rust in een rechte lijn en eindigt met een vaste druk (richting,
+// het merkteken van de vakman: Takumi). Tekent zichzelf één keer, zodra hij in beeld komt.
+(function tekenVerbinding(){
+  var cv = document.getElementById('kern-figuur'); if (!cv) return;
+  var ctx = cv.getContext('2d'); if (!ctx) return;
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var dpr=Math.min(devicePixelRatio||1,2), W=0, Hc=0;
+  function maat(){ var r=cv.getBoundingClientRect(); W=r.width; Hc=r.height; cv.width=W*dpr; cv.height=Hc*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
+  var ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1a1815';
+  var paper = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#faf7f2';
+  function punt(t){
+    // deining links die uitdooft naar het midden; rechts recht, met aan het eind een lichte buiging omlaag (de kwast drukt)
+    var golf = Math.sin(t * Math.PI * 2 * 2 + .3) * Math.pow(Math.max(0, 1 - t / .58), 1.2);
+    var y = -golf * 1.35 + (t > .9 ? Math.pow((t - .9) / .1, 2) * .15 : 0);
+    // druk: licht landen, ritmisch meedeinen met de golf, zwaarder en gelijkmatiger op het rechte stuk, stevige stop
+    var d = .25 + .25 * Math.sin(Math.min(1, t / .1) * Math.PI / 2);
+    d += .22 * (.5 + .5 * Math.cos(t * Math.PI * 2 * 2 + .3)) * Math.max(0, 1 - t / .58);
+    d += .38 * Math.pow(Math.min(1, Math.max(0, (t - .45) / .4)), .8);
+    if (t > .93) d += .35 * Math.pow((t - .93) / .07, 1.6);
+    return { x: t, y: y, w: d };
+  }
+  function teken(v){
+    ctx.clearRect(0,0,W,Hc);
+    var links = W*.02, breed = W*.96, basis = Hc*.5, amp = Hc*.3, maxW = Math.max(8, Math.min(22, W*.02));
+    var N=360, L=[], R=[], tot=Math.max(2, Math.floor(N*v));
+    for (var k=0;k<=tot;k++){ var t=k/N, p=punt(t), q=punt(Math.min(1,t+.002));
+      var x=links+p.x*breed, y=basis+p.y*amp, tx=(q.x-p.x)*breed, ty=(q.y-p.y)*amp, ln=Math.hypot(tx,ty)||1, nx=-ty/ln, ny=tx/ln;
+      var w=p.w*maxW*(.95+.05*Math.sin(t*80)); if (v<1 && k>tot-14) w*=(tot-k)/14;
+      L.push([x+nx*w/2,y+ny*w/2]); R.push([x-nx*w/2,y-ny*w/2]); }
+    function vorm(){ ctx.beginPath(); ctx.moveTo(L[0][0],L[0][1]); for(var i=1;i<L.length;i++) ctx.lineTo(L[i][0],L[i][1]); for(var j=R.length-1;j>=0;j--) ctx.lineTo(R[j][0],R[j][1]); ctx.closePath(); }
+    ctx.save(); ctx.globalAlpha=.24; ctx.shadowColor=ink; ctx.shadowBlur=7; ctx.fillStyle=ink; vorm(); ctx.fill(); ctx.restore();
+    ctx.fillStyle=ink; vorm(); ctx.fill();
+    // de stop: een ronde, vaste inktdot waar de kwast lift
+    if (v >= 1) { var e=punt(1); ctx.beginPath(); ctx.arc(links+e.x*breed, basis+e.y*amp, e.w*maxW*.42, 0, 7); ctx.fill(); }
+    // vezels op het rechte stuk: de kwast loopt droger
+    ctx.save(); ctx.strokeStyle=paper; ctx.lineCap='round';
+    var haren=[[-.28,.55,.9,.5],[.1,.6,.7,.45],[.34,.66,1.1,.55]];
+    for (var s=0;s<haren.length;s++){ ctx.lineWidth=haren[s][2]; ctx.globalAlpha=haren[s][3]; ctx.beginPath(); var eerste=true;
+      for (var k2=0;k2<=tot;k2++){ var u=k2/N; if (u<haren[s][1] || u>.92) continue; var fade=Math.min(1,(u-haren[s][1])/.08);
+        var m=.5+haren[s][0]*fade+.03*Math.sin(u*120+s), px=L[k2][0]+(R[k2][0]-L[k2][0])*m, py=L[k2][1]+(R[k2][1]-L[k2][1])*m;
+        if(eerste){ctx.moveTo(px,py);eerste=false;} else ctx.lineTo(px,py); }
+      ctx.stroke(); }
+    ctx.restore();
+  }
+  function ease(x){ return x<.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2; }
+  var gestart=false, klaar=false, start=0;
+  function frame(now){ if(!start) start=now; var t=(now-start)/1000, v = reduced ? 1 : ease(Math.min(1, t/1.8));
+    teken(v); if (v<1) requestAnimationFrame(frame); else klaar=true; }
+  function go(){ if (gestart) return; gestart=true; maat(); requestAnimationFrame(frame); }
+  try { new IntersectionObserver(function(e, io){ if (e[0].isIntersecting) { go(); io.disconnect(); } }, { threshold: .4 }).observe(cv); } catch(_) { go(); }
+  addEventListener('resize', function(){ if (klaar) { maat(); teken(1); } });
 })();
 
 // ── KOMPAS VAN VANDAAG ────────────────────────────────────────────
